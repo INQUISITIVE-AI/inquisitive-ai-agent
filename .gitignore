@@ -141,3 +141,10 @@ CREATOR_INFO.md
 
 # Local Netlify folder
 .netlify
+
+# Foundry dependencies & broadcast
+lib/
+broadcast/
+
+# Build artifacts
+tsconfig.tsbuildinfo
