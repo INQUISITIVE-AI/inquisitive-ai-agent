@@ -1,5 +1,5 @@
 import { createConfig, http } from 'wagmi';
-import { injected, walletConnect } from 'wagmi/connectors';
+import { injected } from 'wagmi/connectors';
 import { mainnet, polygon, arbitrum, base, optimism } from 'wagmi/chains';
 
 // WalletConnect Project ID — register at https://cloud.walletconnect.com
@@ -33,16 +33,6 @@ export const wagmiConfig = createConfig({
   chains: [mainnet, polygon, arbitrum, base, optimism],
   connectors: [
     injected(),
-    walletConnect({
-      projectId:   WC_PROJECT_ID,
-      showQrModal: true,
-      metadata: {
-        name:        'INQUISITIVE',
-        description: 'AI-managed digital asset portfolio. 65 assets. Proprietary strategies.',
-        url:         'https://inquisitiveai.io',
-        icons:       ['https://inquisitiveai.io/logo.png'],
-      },
-    }),
   ],
   transports: {
     [mainnet.id]:  http(),
