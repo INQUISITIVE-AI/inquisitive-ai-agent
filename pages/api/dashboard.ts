@@ -2,65 +2,70 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { ASSET_REGISTRY, PORTFOLIO_WEIGHTS, scoreAsset, getRegime } from './inquisitiveAI/_brain';
 import type { AssetInput, FGIndex } from './inquisitiveAI/_brain';
 
-const MID    = Math.ceil(ASSET_REGISTRY.length / 2);
-const BATCH1 = ASSET_REGISTRY.slice(0, MID);
-const BATCH2 = ASSET_REGISTRY.slice(MID);
+const NO_CC   = new Set(['CC', 'JUPSOL']);
+const ALL_CGS = ASSET_REGISTRY.map(a => a.cgId).join(',');
 
-async function fetchMarkets(ids: string): Promise<any[]> {
-  const url = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${ids}&order=market_cap_desc&per_page=100&sparkline=false&price_change_percentage=1h,24h,7d`;
-  const r = await fetch(url, { signal: AbortSignal.timeout(9000) });
+async function fetchMarkets(): Promise<any[]> {
+  const url = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${ALL_CGS}&order=market_cap_desc&per_page=100&sparkline=false&price_change_percentage=1h,24h,7d`;
+  const r = await fetch(url, { signal: AbortSignal.timeout(12000) });
   if (!r.ok) throw new Error(`CG ${r.status}`);
   return r.json();
 }
 
 async function buildInputMap(): Promise<Map<string, AssetInput>> {
   const map = new Map<string, AssetInput>();
-  const [r1, r2] = await Promise.allSettled([
-    fetchMarkets(BATCH1.map(a => a.cgId).join(',')),
-    fetchMarkets(BATCH2.map(a => a.cgId).join(',')),
-  ]);
-  for (const result of [r1, r2]) {
-    if (result.status !== 'fulfilled') continue;
-    for (const coin of result.value) {
-      const meta = ASSET_REGISTRY.find(a => a.cgId === coin.id);
-      if (!meta) continue;
-      map.set(meta.symbol, {
-        symbol:    meta.symbol,
-        category:  meta.category,
-        weight:    PORTFOLIO_WEIGHTS[meta.symbol] ?? 0,
-        stakeable: meta.stakeable,
-        lendable:  meta.lendable,
-        yieldable: meta.yieldable,
-        priceUsd:  coin.current_price ?? 0,
-        change24h: (coin.price_change_percentage_24h ?? 0) / 100,
-        change7d:  (coin.price_change_percentage_7d_in_currency ?? 0) / 100,
-        volume24h: coin.total_volume ?? 0,
-        marketCap: coin.market_cap ?? 0,
-        athChange: (coin.ath_change_percentage ?? 0) / 100,
-      });
-    }
+
+  let coins: any[] = [];
+  try { coins = await fetchMarkets(); } catch {}
+
+  for (const coin of coins) {
+    const meta = ASSET_REGISTRY.find(a => a.cgId === coin.id);
+    if (!meta) continue;
+    map.set(meta.symbol, {
+      symbol:    meta.symbol,
+      category:  meta.category,
+      weight:    PORTFOLIO_WEIGHTS[meta.symbol] ?? 0,
+      stakeable: meta.stakeable,
+      lendable:  meta.lendable,
+      yieldable: meta.yieldable,
+      priceUsd:  coin.current_price ?? 0,
+      change24h: (coin.price_change_percentage_24h ?? 0) / 100,
+      change7d:  (coin.price_change_percentage_7d_in_currency ?? 0) / 100,
+      volume24h: coin.total_volume ?? 0,
+      marketCap: coin.market_cap ?? 0,
+      athChange: (coin.ath_change_percentage ?? 0) / 100,
+    });
   }
-  const missing = ASSET_REGISTRY.filter(a => !map.has(a.symbol) && a.symbol !== 'CC' && a.symbol !== 'JUPSOL');
+
+  // CryptoCompare fallback — parallel batches of 20
+  const missing = ASSET_REGISTRY.filter(a => !map.has(a.symbol) && !NO_CC.has(a.symbol));
   if (missing.length > 0) {
-    try {
-      const fsyms = missing.map(a => a.symbol).join(',');
+    const BSIZ = 20;
+    const chunks: (typeof ASSET_REGISTRY)[] = [];
+    for (let i = 0; i < missing.length; i += BSIZ) chunks.push(missing.slice(i, i + BSIZ));
+    const results = await Promise.allSettled(chunks.map(async ch => {
+      const fsyms = ch.map(a => a.symbol).join(',');
       const r = await fetch(`https://min-api.cryptocompare.com/data/pricemultifull?fsyms=${fsyms}&tsyms=USD`, { signal: AbortSignal.timeout(8000) });
-      if (r.ok) {
-        const d = await r.json();
-        const raw = d?.RAW || {};
-        for (const meta of missing) {
-          const c = raw[meta.symbol]?.USD;
-          if (c?.PRICE > 0) {
-            map.set(meta.symbol, {
-              symbol: meta.symbol, category: meta.category, weight: PORTFOLIO_WEIGHTS[meta.symbol] ?? 0,
-              stakeable: meta.stakeable, lendable: meta.lendable, yieldable: meta.yieldable,
-              priceUsd: c.PRICE, change24h: (c.CHANGEPCT24HOUR ?? 0) / 100,
-              change7d: 0, volume24h: c.VOLUME24HOURTO ?? 0, marketCap: c.MKTCAP ?? 0, athChange: 0,
-            });
-          }
+      if (!r.ok) return {} as Record<string, any>;
+      const d = await r.json();
+      return (d?.RAW || {}) as Record<string, any>;
+    }));
+    for (let i = 0; i < chunks.length; i++) {
+      const res = results[i];
+      if (res.status !== 'fulfilled') continue;
+      const raw = res.value;
+      for (const meta of chunks[i]) {
+        const c = raw[meta.symbol]?.USD;
+        if (c?.PRICE > 0) {
+          map.set(meta.symbol, {
+            symbol: meta.symbol, category: meta.category, weight: PORTFOLIO_WEIGHTS[meta.symbol] ?? 0,
+            stakeable: meta.stakeable, lendable: meta.lendable, yieldable: meta.yieldable,
+            priceUsd: c.PRICE, change24h: (c.CHANGEPCT24HOUR ?? 0) / 100,
+            change7d: 0, volume24h: c.VOLUME24HOURTO ?? 0, marketCap: c.MKTCAP ?? 0, athChange: 0,
+          });
         }
       }
-    } catch {}
+    }
   }
   return map;
 }

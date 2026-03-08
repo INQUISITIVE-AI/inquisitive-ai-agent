@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { ASSET_REGISTRY, PORTFOLIO_WEIGHTS, scoreAsset, getRegime } from './_brain';
 import type { AssetInput, FGIndex } from './_brain';
 
-const NO_PRICE_EXCHANGE = new Set(['CC', 'JUPSOL']);
+const NO_CC = new Set(['CC', 'JUPSOL']); // no reliable CryptoCompare ticker
 
 function buildBaseAsset(meta: typeof ASSET_REGISTRY[0], coin: any, source: string) {
   return {
@@ -31,77 +31,84 @@ function buildBaseAsset(meta: typeof ASSET_REGISTRY[0], coin: any, source: strin
   };
 }
 
-async function fetchBatch(batch: typeof ASSET_REGISTRY): Promise<any[]> {
-  const ids = batch.map(a => a.cgId).join(',');
-  const url = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${ids}&order=market_cap_desc&per_page=100&sparkline=false&price_change_percentage=1h,24h,7d`;
-  const r = await fetch(url, { signal: AbortSignal.timeout(9000) });
+// Single request — CoinGecko supports up to 250 coins per call; 65 is fine
+const ALL_CGS = ASSET_REGISTRY.map(a => a.cgId).join(',');
+async function fetchAllMarkets(): Promise<any[]> {
+  const url = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${ALL_CGS}&order=market_cap_desc&per_page=100&sparkline=false&price_change_percentage=1h,24h,7d`;
+  const r = await fetch(url, { signal: AbortSignal.timeout(12000) });
   if (!r.ok) throw new Error(`CoinGecko ${r.status}`);
   return r.json();
 }
 
-async function fetchViaCryptoCompare(missing: typeof ASSET_REGISTRY): Promise<Map<string, any>> {
+// CryptoCompare fallback in parallel batches of 20 (avoids huge URL)
+async function fetchCCBatch(batch: typeof ASSET_REGISTRY): Promise<Map<string, any>> {
   const result  = new Map<string, any>();
-  const toFetch = missing.filter(a => !NO_PRICE_EXCHANGE.has(a.symbol));
+  const toFetch = batch.filter(a => !NO_CC.has(a.symbol));
   if (!toFetch.length) return result;
   const fsyms = toFetch.map(a => a.symbol).join(',');
   try {
-    const r = await fetch(`https://min-api.cryptocompare.com/data/pricemultifull?fsyms=${fsyms}&tsyms=USD`, { signal: AbortSignal.timeout(10000) });
+    const r = await fetch(
+      `https://min-api.cryptocompare.com/data/pricemultifull?fsyms=${fsyms}&tsyms=USD`,
+      { signal: AbortSignal.timeout(10000) },
+    );
     if (!r.ok) return result;
     const d   = await r.json();
     const raw = d?.RAW || {};
-    for (const asset of toFetch) {
-      const c = raw[asset.symbol]?.USD;
-      if (!c) continue;
-      result.set(asset.symbol, {
-        current_price:                          c.PRICE             ?? 0,
-        price_change_percentage_24h:            c.CHANGEPCT24HOUR   ?? 0,
-        price_change_percentage_7d_in_currency: 0,
-        price_change_percentage_1h_in_currency: c.CHANGEPCTHOUR     ?? 0,
-        total_volume:                           c.VOLUME24HOURTO    ?? 0,
-        market_cap:                             c.MKTCAP            ?? 0,
-        high_24h:                               c.HIGH24HOUR        ?? 0,
-        low_24h:                                c.LOW24HOUR         ?? 0,
-        circulating_supply:                     c.CIRCULATINGSUPPLY ?? 0,
-        ath: 0, ath_change_percentage: 0,
-      });
+    for (const meta of toFetch) {
+      const c = raw[meta.symbol]?.USD;
+      if (c?.PRICE > 0) result.set(meta.symbol, c);
     }
   } catch {}
   return result;
 }
 
 async function getAssets() {
-  const mid    = Math.ceil(ASSET_REGISTRY.length / 2);
-  const batch1 = ASSET_REGISTRY.slice(0, mid);
-  const batch2 = ASSET_REGISTRY.slice(mid);
   const baseMap = new Map<string, any>();
 
-  // Fetch both CoinGecko batches + Fear & Greed in PARALLEL
-  const [r1, r2, fgRes] = await Promise.allSettled([
-    fetchBatch(batch1),
-    fetchBatch(batch2),
+  // Single CoinGecko request for all 65 + Fear & Greed in parallel
+  const [cgRes, fgRes] = await Promise.allSettled([
+    fetchAllMarkets(),
     fetch('https://api.alternative.me/fng/', { signal: AbortSignal.timeout(5000) }),
   ]);
 
-  for (const result of [r1, r2]) {
-    if (result.status === 'fulfilled') {
-      for (const coin of result.value) {
-        const meta = ASSET_REGISTRY.find(a => a.cgId === coin.id);
-        if (meta) baseMap.set(meta.symbol, buildBaseAsset(meta, coin, 'coingecko'));
+  if (cgRes.status === 'fulfilled') {
+    for (const coin of cgRes.value) {
+      const meta = ASSET_REGISTRY.find(a => a.cgId === coin.id);
+      if (meta) baseMap.set(meta.symbol, buildBaseAsset(meta, coin, 'coingecko'));
+    }
+  }
+
+  // CryptoCompare fallback — parallel batches of 20
+  const missing = ASSET_REGISTRY.filter(a => !baseMap.has(a.symbol));
+  if (missing.length > 0) {
+    const BSIZ = 20;
+    const chunks: (typeof ASSET_REGISTRY)[] = [];
+    for (let i = 0; i < missing.length; i += BSIZ) chunks.push(missing.slice(i, i + BSIZ));
+    const ccResults = await Promise.allSettled(chunks.map(ch => fetchCCBatch(ch)));
+    for (let i = 0; i < chunks.length; i++) {
+      const res = ccResults[i];
+      if (res.status !== 'fulfilled') continue;
+      for (const meta of chunks[i]) {
+        if (baseMap.has(meta.symbol)) continue;
+        const c = res.value.get(meta.symbol);
+        if (!c) continue;
+        baseMap.set(meta.symbol, buildBaseAsset(meta, {
+          current_price:                          c.PRICE             ?? 0,
+          price_change_percentage_24h:            c.CHANGEPCT24HOUR   ?? 0,
+          price_change_percentage_7d_in_currency: 0,
+          price_change_percentage_1h_in_currency: c.CHANGEPCTHOUR     ?? 0,
+          total_volume:                           c.VOLUME24HOURTO    ?? 0,
+          market_cap:                             c.MKTCAP            ?? 0,
+          high_24h:                               c.HIGH24HOUR        ?? 0,
+          low_24h:                                c.LOW24HOUR         ?? 0,
+          circulating_supply:                     c.CIRCULATINGSUPPLY ?? 0,
+          ath: 0, ath_change_percentage: 0,
+        }, 'cryptocompare'));
       }
     }
   }
 
-  // CryptoCompare fallback for still-missing assets
-  const missing = ASSET_REGISTRY.filter(a => !baseMap.has(a.symbol));
-  if (missing.length > 0) {
-    const ccData = await fetchViaCryptoCompare(missing);
-    for (const meta of missing) {
-      const coin = ccData.get(meta.symbol);
-      if (coin) baseMap.set(meta.symbol, buildBaseAsset(meta, coin, 'cryptocompare'));
-    }
-  }
-
-  // Parse Fear & Greed for Reasoning Engine
+  // Parse Fear & Greed
   let fg: FGIndex | null = null;
   if (fgRes.status === 'fulfilled' && fgRes.value.ok) {
     try {
