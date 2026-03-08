@@ -72,27 +72,48 @@ function buildFeed(signals: any[], cycle: number) {
 
 export default function Dashboard() {
   const router = useRouter();
-  const [dash, setDash]           = useState<any>(null);
-  const [positions, setPositions] = useState<any[]>([]);
-  const [wsStatus, setWsStatus]   = useState<'connecting'|'live'|'off'>('connecting');
+  const [dash, setDash]               = useState<any>(null);
+  const [positions, setPositions]     = useState<any[]>([]);
+  const [wsStatus, setWsStatus]       = useState<'connecting'|'live'|'off'>('connecting');
+  const [hasLiveData, setHasLiveData] = useState(false);
   const [equityCurve, setEquityCurve] = useState<any[]>([]);
-  const [tradeFeed, setTradeFeed] = useState<any[]>([]);
+  const [tradeFeed, setTradeFeed]     = useState<any[]>([]);
   const wsRef = useRef<WebSocket | null>(null);
 
   const load = useCallback(async () => {
     try {
-      const [dr, pr, eq] = await Promise.all([
+      const [dd, dr, pr, eq] = await Promise.allSettled([
+        fetch('/api/dashboard'),
         fetch('/api/inquisitiveAI/dashboard'),
         fetch('/api/inquisitiveAI/portfolio/positions'),
         fetch('/api/inquisitiveAI/chart/portfolio'),
       ]);
-      if (dr.ok) {
-        const d = await dr.json();
-        setDash(d);
-        setTradeFeed(buildFeed(d?.aiSignals?.topBuys || [], d?.aiSignals?.cycleCount || 0));
+
+      // Parse fallback data once and reuse (avoids double-read bug)
+      let fallback: any = null;
+      if (dd.status === 'fulfilled' && dd.value.ok) {
+        fallback = await dd.value.json();
+        setDash((prev: any) => ({ ...prev, ...fallback, aiSignals: { ...fallback.aiSignals, ...prev?.aiSignals } }));
+        setHasLiveData(true);
       }
-      if (pr.ok) { const d = await pr.json(); setPositions(d.positions || []); }
-      if (eq.ok) { const d = await eq.json(); setEquityCurve(d.curve || []); }
+
+      // Local server data overrides fallback if available
+      if (dr.status === 'fulfilled' && dr.value.ok) {
+        const d = await dr.value.json();
+        setDash((prev: any) => ({ ...prev, ...d, aiSignals: { ...d.aiSignals, ...prev?.aiSignals } }));
+        setTradeFeed(buildFeed(d?.aiSignals?.topBuys || [], d?.aiSignals?.cycleCount || 0));
+      } else if (fallback) {
+        setTradeFeed(buildFeed(fallback?.aiSignals?.topBuys || [], fallback?.aiSignals?.cycleCount || 0));
+      }
+
+      if (pr.status === 'fulfilled' && pr.value.ok) {
+        const d = await pr.value.json();
+        setPositions(d.positions || []);
+      }
+      if (eq.status === 'fulfilled' && eq.value.ok) {
+        const d = await eq.value.json();
+        setEquityCurve(d.curve || []);
+      }
     } catch {}
   }, []);
 
@@ -113,7 +134,7 @@ export default function Dashboard() {
   }, []);
 
   const d      = dash;
-  const fg     = d?.risk?.fearGreed;
+  const fg     = d?.risk?.fearGreed || d?.macro?.fearGreed;
   const regime = d?.risk?.regime || '—';
   const regCol = regime === 'BULL' ? '#10b981' : regime === 'BEAR' ? '#ef4444' : '#f59e0b';
   const pnl    = d?.performance?.totalPnL || 0;
@@ -133,7 +154,7 @@ export default function Dashboard() {
     { label: 'Risk per Trade',  val: '2.0%',                                                limit: 'hard cap',  ok: true                               },
     { label: 'R:R Minimum',     val: '2:1',                                                 limit: 'required',  ok: true                               },
     { label: 'Confidence Floor',val: '70%',                                                 limit: 'threshold', ok: true                               },
-    { label: 'AI Status',       val: d?.risk?.isLive ? 'ACTIVE' : 'PAPER',                 limit: '',          ok: !!d?.risk?.isLive                  },
+    { label: 'Data Feed',       val: hasLiveData ? 'LIVE' : 'LOADING',                    limit: '',          ok: hasLiveData                        },
   ];
 
   const topSignals = (d?.aiSignals?.topBuys || []).slice(0, 6);
@@ -159,8 +180,8 @@ export default function Dashboard() {
             </button>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: wsStatus === 'live' ? '#10b981' : '#ef4444', display: 'inline-block', boxShadow: wsStatus === 'live' ? '0 0 8px #10b981' : undefined }} className={wsStatus === 'live' ? 'anim-blink' : undefined} />
-                {wsStatus === 'live' ? 'Live' : 'Offline'}
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: (wsStatus === 'live' || hasLiveData) ? '#10b981' : '#ef4444', display: 'inline-block', boxShadow: (wsStatus === 'live' || hasLiveData) ? '0 0 8px #10b981' : undefined }} className={(wsStatus === 'live' || hasLiveData) ? 'anim-blink' : undefined} />
+                {(wsStatus === 'live' || hasLiveData) ? 'Live' : 'Offline'}
               </span>
               <span>Regime <strong style={{ color: regCol }}>{regime}</strong></span>
               <span>F&amp;G <strong style={{ color: fg?.value < 30 ? '#ef4444' : fg?.value > 70 ? '#10b981' : '#f59e0b' }}>{fg?.value || '—'}</strong></span>
@@ -376,11 +397,11 @@ export default function Dashboard() {
             </div>
             <div style={{ padding: '12px 16px', flex: 1, overflowY: 'auto' }}>
               <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 10 }}>Macro Conditions</div>
-              {d?.macro?.fearGreed && (
+              {fg && (
                 <div style={{ padding: '10px 12px', background: 'rgba(124,58,237,0.06)', border: '1px solid rgba(124,58,237,0.12)', borderRadius: 8, marginBottom: 10 }}>
                   <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', marginBottom: 4 }}>Fear &amp; Greed Index</div>
-                  <div style={{ fontSize: 22, fontWeight: 900, color: d.macro.fearGreed.value < 30 ? '#ef4444' : d.macro.fearGreed.value > 70 ? '#10b981' : '#f59e0b', fontFamily: 'monospace' }}>{d.macro.fearGreed.value}</div>
-                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 600, marginTop: 2 }}>{d.macro.fearGreed.valueClassification}</div>
+                  <div style={{ fontSize: 22, fontWeight: 900, color: fg.value < 30 ? '#ef4444' : fg.value > 70 ? '#10b981' : '#f59e0b', fontFamily: 'monospace' }}>{fg.value}</div>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 600, marginTop: 2 }}>{fg.valueClassification}</div>
                 </div>
               )}
               {Object.values(d?.macro?.indicators || {}).slice(0, 4).map((v: any) => (

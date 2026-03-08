@@ -148,3 +148,4 @@ broadcast/
 
 # Build artifacts
 tsconfig.tsbuildinfo
+.vercel

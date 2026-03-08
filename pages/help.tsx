@@ -453,9 +453,6 @@ export default function HelpPage() {
             {m:'GET', p:'/chart/portfolio',           d:'Portfolio equity curve (48-hour window) reflecting trading engine P&L state'},
             {m:'GET', p:'/chart/categories',          d:'Market cap allocation by asset category — used for the donut chart in Analytics'},
             {m:'POST',p:'/initialize',                d:'Re-initialize the AI agent and all services — triggers fresh price + macro fetch'},
-            {m:'POST',p:'/trading/start',             d:'Start automated AI trading cycles'},
-            {m:'POST',p:'/trading/stop',              d:'Stop automated AI trading cycles'},
-            {m:'POST',p:'/trade',                     d:'Execute a manual trade — body: {action, symbol, amount, params}'},
           ].map(e=>(
             <div key={e.p} style={{display:'flex',alignItems:'center',gap:12,background:'rgba(13,13,32,0.8)',border:'1px solid rgba(255,255,255,0.05)',borderRadius:10,padding:'10px 14px',backdropFilter:'blur(12px)'}}>
               <span style={{fontSize:10,fontWeight:700,padding:'3px 8px',borderRadius:5,flexShrink:0,background:e.m==='GET'?'rgba(16,185,129,0.15)':'rgba(59,130,246,0.15)',color:e.m==='GET'?'#34d399':'#60a5fa',border:`1px solid ${e.m==='GET'?'rgba(16,185,129,0.25)':'rgba(59,130,246,0.25)'}`}}>{e.m}</span>
@@ -463,26 +460,6 @@ export default function HelpPage() {
               <span style={{fontSize:11,color:'rgba(255,255,255,0.4)',flex:1}}>{e.d}</span>
             </div>
           ))}
-        </div>
-        <div style={{background:'rgba(0,0,0,0.3)',border:'1px solid rgba(255,255,255,0.06)',borderRadius:12,padding:16,marginTop:20}}>
-          <div style={{fontSize:11,fontWeight:700,color:'rgba(255,255,255,0.5)',marginBottom:8}}>Trade Request Body</div>
-          <pre style={{fontSize:12,color:'#c4b5fd',margin:0,fontFamily:'monospace',lineHeight:1.6}}>{`{
-  "action":  "BUY|SELL|SWAP|LEND|YIELD|BORROW|LOOP|STAKE|MULTIPLY|EARN|REWARDS",
-  "symbol":  "BTC",
-  "amount":  1000,
-  "params": {
-    "leverage":      2,         // MULTIPLY — max 3x major, 2x DeFi
-    "maxLoops":      3,         // LOOP — max 5, default 3
-    "targetLTV":     0.65,      // LOOP — max 80%
-    "protocol":      "AAVE",    // LEND / BORROW — AAVE|COMPOUND|SPARK|MORPHO|MAPLE
-    "poolType":      "stable",  // YIELD — stable|volatile|leveraged
-    "toSymbol":      "USDC",    // SWAP — destination token
-    "borrowSymbol":  "USDC",    // BORROW — token to borrow against collateral
-    "ltv":           0.60,      // BORROW — max 0.65
-    "autoCompound":  true,      // REWARDS — reinvest immediately
-    "slippage":      0.003      // SWAP — default 0.003 (0.3%)
-  }
-}`}</pre>
         </div>
       </div>
     ),

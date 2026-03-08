@@ -51,14 +51,34 @@ export default function AnalyticsPage() {
 
   const load = useCallback(async () => {
     try {
-      const [dr, er, cr] = await Promise.all([
+      const [dd, dr, er, cr] = await Promise.allSettled([
+        fetch('/api/dashboard'),
         fetch('/api/inquisitiveAI/dashboard'),
         fetch('/api/inquisitiveAI/chart/portfolio'),
         fetch('/api/inquisitiveAI/chart/categories'),
       ]);
-      if (dr.ok) setData(await dr.json());
-      if (er.ok) { const d = await er.json(); setEquity(d.curve || []); }
-      if (cr.ok) { const d = await cr.json(); setCats(d.categories || []); }
+
+      // Parse fallback once and reuse (avoids double-read bug)
+      let fallback: any = null;
+      if (dd.status === 'fulfilled' && dd.value.ok) {
+        fallback = await dd.value.json();
+        setData((prev: any) => ({ ...prev, ...fallback, aiSignals: { ...fallback.aiSignals, ...prev?.aiSignals } }));
+      }
+
+      // Secondary endpoint merges — preserve existing signals if secondary has empty topBuys
+      if (dr.status === 'fulfilled' && dr.value.ok) {
+        const d = await dr.value.json();
+        setData((prev: any) => ({ ...prev, ...d, aiSignals: { ...d.aiSignals, ...prev?.aiSignals } }));
+      }
+
+      if (er.status === 'fulfilled' && er.value.ok) {
+        const d = await er.value.json();
+        setEquity(d.curve || []);
+      }
+      if (cr.status === 'fulfilled' && cr.value.ok) {
+        const d = await cr.value.json();
+        setCats(d.categories || []);
+      }
     } catch {}
     setLoading(false);
   }, []);
@@ -66,8 +86,8 @@ export default function AnalyticsPage() {
   useEffect(() => { load(); const t = setInterval(load, 15000); return () => clearInterval(t); }, [load]);
 
   const regime   = data?.risk?.regime || '—';
-  const fg       = data?.risk?.fearGreed?.value ?? '—';
-  const fgLabel  = data?.risk?.fearGreed?.valueClassification || '';
+  const fg       = data?.risk?.fearGreed?.value ?? data?.macro?.fearGreed?.value ?? '—';
+  const fgLabel  = data?.risk?.fearGreed?.valueClassification || data?.macro?.fearGreed?.valueClassification || '';
   const cycles   = data?.aiSignals?.cycleCount || 0;
   const buys     = data?.aiSignals?.buys   || 0;
   const sells    = data?.aiSignals?.sells  || 0;

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';
-import { useAccount, useBalance, useSendTransaction, useWriteContract } from 'wagmi';
+import { useAccount, useBalance, useConnect, useSendTransaction, useWriteContract } from 'wagmi';
 import { parseEther, parseUnits, erc20Abi } from 'viem';
 import { mainnet } from 'wagmi/chains';
 import { INQAI_TOKEN } from '../src/config/wagmi';
@@ -32,13 +32,25 @@ export default function BuyPage() {
   const [txHash, setTxHash]         = useState<string | null>(null);
   const [error, setError]           = useState<string | null>(null);
   const [step, setStep]             = useState<1|2|3>(1);
-  const [ethPrice, setEthPrice]     = useState<number>(3200);
-  const [btcPrice, setBtcPrice]     = useState<number>(85000);
-  const [solPrice, setSolPrice]     = useState<number>(140);
-  const [showManual, setShowManual] = useState(false);
+  const [ethPrice, setEthPrice]         = useState<number>(3200);
+  const [btcPrice, setBtcPrice]         = useState<number>(85000);
+  const [solPrice, setSolPrice]         = useState<number>(140);
+  const [showManual, setShowManual]     = useState(false);
+  const [chargeId, setChargeId]         = useState<string | null>(null);
+  const [chargeAddress, setChargeAddress] = useState<string | null>(null);
+  const [chargeAmount, setChargeAmount] = useState<string | null>(null);
+  const [chargeExpiry, setChargeExpiry] = useState<string | null>(null);
+  const [chargeStatus, setChargeStatus] = useState<'pending'|'confirmed'|'expired'|'failed' | null>(null);
+  const [copied, setCopied]             = useState(false);
 
+  const { connect, connectors }     = useConnect();
   const { sendTransactionAsync }    = useSendTransaction();
   const { writeContractAsync }      = useWriteContract();
+
+  const openWalletModal = () => {
+    const wc = connectors.find(c => c.id === 'walletConnect') ?? connectors[0];
+    if (wc) connect({ connector: wc });
+  };
 
   useEffect(() => {
     fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum,bitcoin,solana&vs_currencies=usd')
@@ -71,15 +83,49 @@ export default function BuyPage() {
     if (isConnected) setStep(s => s === 1 ? 2 : s);
   }, [isConnected]);
 
-  const payAddress = payToken === 'BTC' ? INQAI_TOKEN.btcAddress : INQAI_TOKEN.solAddress;
   const payAmount  = payToken === 'BTC'
     ? (usd / btcPrice).toFixed(8)
     : payToken === 'SOL' ? (usd / solPrice).toFixed(4) : '0';
 
+  useEffect(() => {
+    if (!chargeId || chargeStatus === 'confirmed' || chargeStatus === 'expired' || chargeStatus === 'failed') return;
+    const poll = setInterval(async () => {
+      try {
+        const r = await fetch(`/api/payment/check-charge?id=${chargeId}`);
+        const d = await r.json();
+        if (d.status === 'confirmed') { setChargeStatus('confirmed'); setStep(3); clearInterval(poll); }
+        if (d.status === 'expired' || d.status === 'failed') { setChargeStatus(d.status); clearInterval(poll); }
+      } catch {}
+    }, 15000);
+    return () => clearInterval(poll);
+  }, [chargeId, chargeStatus]);
+
   const handleBuy = async () => {
     setError(null);
     if (usd < 10) { setError('Minimum purchase is $10'); return; }
-    if (payToken === 'BTC' || payToken === 'SOL') { setShowManual(true); return; }
+    if (payToken === 'BTC' || payToken === 'SOL') {
+      setIsBuying(true);
+      try {
+        const r = await fetch('/api/payment/create-charge', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ usdAmount: usd, inqaiAmount: inqaiAmt, payToken, walletAddress: address }),
+        });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || 'Failed to create payment address');
+        setChargeId(data.chargeId);
+        setChargeAddress(data.address);
+        setChargeAmount(data.amount);
+        setChargeExpiry(data.expiresAt);
+        setChargeStatus('pending');
+        setShowManual(true);
+      } catch (e: any) {
+        setError(e.message);
+      } finally {
+        setIsBuying(false);
+      }
+      return;
+    }
     if (chain?.id !== mainnet.id) { setError('Switch to Ethereum Mainnet to continue'); return; }
     setIsBuying(true);
     try {
@@ -173,6 +219,20 @@ export default function BuyPage() {
                     <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Connect Your Wallet</h3>
                     <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', marginBottom: 26, lineHeight: 1.7 }}>
                       Connect your wallet to proceed. INQAI tokens are delivered directly to your wallet address. Non-custodial. No intermediary holds your assets.
+                    </p>
+                    <button
+                      onClick={openWalletModal}
+                      style={{
+                        width: '100%', padding: '14px', borderRadius: 14, fontSize: 15, fontWeight: 800,
+                        background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff',
+                        border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer',
+                        boxShadow: '0 6px 24px rgba(124,58,237,0.45)', letterSpacing: '-0.2px',
+                      }}
+                    >
+                      Connect Wallet
+                    </button>
+                    <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', marginTop: 12 }}>
+                      MetaMask · Coinbase · WalletConnect · Brave · and 300+ more
                     </p>
                   </div>
                 )}
@@ -280,21 +340,44 @@ export default function BuyPage() {
                       </div>
                     )}
 
-                    {/* BTC / SOL manual payment panel */}
+                    {/* BTC / SOL — NOWPayments unique address panel */}
                     {showManual && (payToken === 'BTC' || payToken === 'SOL') && (
                       <div style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 14, padding: '18px', marginBottom: 18 }}>
-                        <div style={{ fontSize: 12, color: '#6ee7b7', fontWeight: 700, marginBottom: 12 }}>
-                          Send exactly {payAmount} {payToken} to receive {inqaiAmt} INQAI
-                        </div>
-                        <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{payToken} Payment Address</div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(0,0,0,0.3)', borderRadius: 10, padding: '10px 12px', marginBottom: 10 }}>
-                          <span style={{ fontSize: 11, color: '#fff', fontFamily: 'monospace', wordBreak: 'break-all', flex: 1 }}>{payAddress}</span>
-                          <button onClick={() => navigator.clipboard.writeText(payAddress)} style={{ background: 'rgba(124,58,237,0.3)', border: '1px solid rgba(124,58,237,0.4)', borderRadius: 6, color: '#a78bfa', fontSize: 10, padding: '4px 8px', cursor: 'pointer', whiteSpace: 'nowrap' }}>Copy</button>
-                        </div>
-                        <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', lineHeight: 1.6 }}>
-                          After sending, email <strong style={{ color: 'rgba(255,255,255,0.5)' }}>support@inquisitiveai.io</strong> with your tx hash and wallet address. INQAI tokens will be delivered within 24 hours.
-                        </div>
-                        <button onClick={() => setShowManual(false)} style={{ marginTop: 10, background: 'none', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: 'rgba(255,255,255,0.4)', fontSize: 11, padding: '5px 12px', cursor: 'pointer' }}>← Back</button>
+                        {chargeStatus === 'confirmed' ? (
+                          <div style={{ textAlign: 'center', padding: '8px 0' }}>
+                            <CheckCircle2 size={32} color="#10b981" strokeWidth={1.5} style={{ marginBottom: 8 }} />
+                            <div style={{ fontSize: 13, color: '#6ee7b7', fontWeight: 700 }}>Payment Confirmed!</div>
+                            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>{inqaiAmt} INQAI will be delivered within 24 hours.</div>
+                          </div>
+                        ) : chargeStatus === 'expired' ? (
+                          <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: 12, color: '#f87171', marginBottom: 8 }}>Address expired. Generate a new one.</div>
+                            <button onClick={() => { setShowManual(false); setChargeId(null); setChargeAddress(null); setChargeStatus(null); }} style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, color: '#f87171', fontSize: 11, padding: '5px 14px', cursor: 'pointer' }}>Generate New Address</button>
+                          </div>
+                        ) : (
+                          <>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                              <div style={{ fontSize: 12, color: '#6ee7b7', fontWeight: 700 }}>Send exactly {chargeAmount || payAmount} {payToken}</div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: 'rgba(255,255,255,0.3)' }}>
+                                <span className="anim-blink" style={{ width: 5, height: 5, borderRadius: '50%', background: '#f59e0b', display: 'inline-block' }} />
+                                Awaiting payment
+                              </div>
+                            </div>
+                            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 4 }}>You receive: <strong style={{ color: '#a78bfa' }}>{inqaiAmt} INQAI</strong></div>
+                            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Unique {payToken} Payment Address</div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(0,0,0,0.3)', borderRadius: 10, padding: '10px 12px', marginBottom: 8 }}>
+                              <span style={{ fontSize: 11, color: '#fff', fontFamily: 'monospace', wordBreak: 'break-all', flex: 1 }}>{chargeAddress || '…'}</span>
+                              <button onClick={() => { if (chargeAddress) { navigator.clipboard.writeText(chargeAddress); setCopied(true); setTimeout(() => setCopied(false), 2000); } }} style={{ background: copied ? 'rgba(16,185,129,0.2)' : 'rgba(124,58,237,0.3)', border: `1px solid ${copied ? 'rgba(16,185,129,0.4)' : 'rgba(124,58,237,0.4)'}`, borderRadius: 6, color: copied ? '#6ee7b7' : '#a78bfa', fontSize: 10, padding: '4px 8px', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s' }}>{copied ? '✓ Copied' : 'Copy'}</button>
+                            </div>
+                            {chargeExpiry && (
+                              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', marginBottom: 8 }}>Address expires: {new Date(chargeExpiry).toLocaleTimeString()}</div>
+                            )}
+                            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', lineHeight: 1.7, padding: '8px 10px', background: 'rgba(0,0,0,0.2)', borderRadius: 8 }}>
+                              This address is <strong style={{ color: 'rgba(255,255,255,0.5)' }}>unique to your purchase</strong>. Send the exact amount above. Payment is detected automatically. INQAI tokens delivered within 24 hours.
+                            </div>
+                            <button onClick={() => { setShowManual(false); setChargeId(null); setChargeAddress(null); setChargeStatus(null); }} style={{ marginTop: 10, background: 'none', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: 'rgba(255,255,255,0.4)', fontSize: 11, padding: '5px 12px', cursor: 'pointer' }}>← Back</button>
+                          </>
+                        )}
                       </div>
                     )}
 

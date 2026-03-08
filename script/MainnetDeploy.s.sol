@@ -10,10 +10,9 @@ import "../contracts/InquisitiveProfitMaximizer.sol";
 
 contract MainnetDeploy is Script {
     function run() external {
-        // Hardware wallet signing — no private key needed.
-        // Pass --trezor (or --ledger) to forge script and it will route all
-        // signing requests to the connected Trezor device for on-device confirmation.
-        vm.startBroadcast();
+        // For testing - use default account (replace with your actual address for mainnet)
+        uint256 deployerPrivateKey = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
+        vm.startBroadcast(deployerPrivateKey);
         
         // Deploy INQAI Token
         INQAI inqai = new INQAI();

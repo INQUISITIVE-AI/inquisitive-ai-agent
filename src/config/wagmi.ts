@@ -1,5 +1,5 @@
 import { createConfig, http } from 'wagmi';
-import { injected } from 'wagmi/connectors';
+import { walletConnect } from 'wagmi/connectors';
 import { mainnet, polygon, arbitrum, base, optimism } from 'wagmi/chains';
 
 // WalletConnect Project ID — register at https://cloud.walletconnect.com
@@ -32,7 +32,16 @@ export const INQAI_TOKEN = {
 export const wagmiConfig = createConfig({
   chains: [mainnet, polygon, arbitrum, base, optimism],
   connectors: [
-    injected(),
+    walletConnect({
+      projectId: WC_PROJECT_ID,
+      showQrModal: true,
+      metadata: {
+        name:        'INQUISITIVE',
+        description: 'AI-powered cryptocurrency portfolio platform',
+        url:         'https://getinqai.com',
+        icons:       ['https://getinqai.com/logo.png'],
+      },
+    }),
   ],
   transports: {
     [mainnet.id]:  http(),
@@ -41,5 +50,5 @@ export const wagmiConfig = createConfig({
     [base.id]:     http(),
     [optimism.id]: http(),
   },
-  ssr: false,
+  ssr: true,
 });
