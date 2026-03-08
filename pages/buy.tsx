@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import dynamic from 'next/dynamic';
-import { useAccount, useBalance, useConnect, useSendTransaction, useWriteContract } from 'wagmi';
+import { useAccount, useBalance, useSendTransaction, useWriteContract } from 'wagmi';
 import { parseEther, parseUnits, erc20Abi } from 'viem';
 import { mainnet } from 'wagmi/chains';
 import { INQAI_TOKEN } from '../src/config/wagmi';
 import { Lock, CheckCircle2, Loader, Shield, ExternalLink, AlertTriangle, Info } from 'lucide-react';
 
-const WalletButton = dynamic(() => import('../src/components/WalletButton'), { ssr: false });
+const OpenWalletButton = dynamic(() => import('../src/components/OpenWalletButton'), { ssr: false, loading: () => null });
 
 const fmtUsd = (n: number) => {
   if (!n) return '$0';
@@ -43,14 +43,8 @@ export default function BuyPage() {
   const [chargeStatus, setChargeStatus] = useState<'pending'|'confirmed'|'expired'|'failed' | null>(null);
   const [copied, setCopied]             = useState(false);
 
-  const { connect, connectors }     = useConnect();
   const { sendTransactionAsync }    = useSendTransaction();
   const { writeContractAsync }      = useWriteContract();
-
-  const openWalletModal = () => {
-    const wc = connectors.find(c => c.id === 'walletConnect') ?? connectors[0];
-    if (wc) connect({ connector: wc });
-  };
 
   useEffect(() => {
     fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum,bitcoin,solana&vs_currencies=usd')
@@ -183,9 +177,6 @@ export default function BuyPage() {
               }}>{n.l}</button>
             ))}
           </div>
-          <div style={{ marginLeft: 'auto' }}>
-            <WalletButton label="Connect Wallet" />
-          </div>
         </nav>
 
         {/* PAGE CONTENT */}
@@ -220,8 +211,7 @@ export default function BuyPage() {
                     <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', marginBottom: 26, lineHeight: 1.7 }}>
                       Connect your wallet to proceed. INQAI tokens are delivered directly to your wallet address. Non-custodial. No intermediary holds your assets.
                     </p>
-                    <button
-                      onClick={openWalletModal}
+                    <OpenWalletButton
                       style={{
                         width: '100%', padding: '14px', borderRadius: 14, fontSize: 15, fontWeight: 800,
                         background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff',
@@ -230,7 +220,7 @@ export default function BuyPage() {
                       }}
                     >
                       Connect Wallet
-                    </button>
+                    </OpenWalletButton>
                     <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', marginTop: 12 }}>
                       MetaMask · Coinbase · WalletConnect · Brave · and 300+ more
                     </p>
