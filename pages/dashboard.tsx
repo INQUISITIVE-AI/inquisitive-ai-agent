@@ -157,7 +157,7 @@ export default function Dashboard() {
     { label: 'Data Feed',       val: hasLiveData ? 'LIVE' : 'LOADING',                    limit: '',          ok: hasLiveData                        },
   ];
 
-  const topSignals = (d?.aiSignals?.topBuys || []).slice(0, 6);
+  const topSignals = (d?.aiSignals?.topBuys || []).slice(0, 10);
 
   const equityChange = (() => {
     if (equityCurve.length < 2) return 0;
