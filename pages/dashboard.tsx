@@ -93,14 +93,14 @@ export default function Dashboard() {
       let fallback: any = null;
       if (dd.status === 'fulfilled' && dd.value.ok) {
         fallback = await dd.value.json();
-        setDash((prev: any) => ({ ...prev, ...fallback, aiSignals: { ...fallback.aiSignals, ...prev?.aiSignals } }));
+        setDash((prev: any) => ({ ...prev, ...fallback, aiSignals: { ...prev?.aiSignals, ...fallback.aiSignals } }));
         setHasLiveData(true);
       }
 
       // Local server data overrides fallback if available
       if (dr.status === 'fulfilled' && dr.value.ok) {
         const d = await dr.value.json();
-        setDash((prev: any) => ({ ...prev, ...d, aiSignals: { ...d.aiSignals, ...prev?.aiSignals } }));
+        setDash((prev: any) => ({ ...prev, ...d, aiSignals: { ...prev?.aiSignals, ...d.aiSignals } }));
         setTradeFeed(buildFeed(d?.aiSignals?.topBuys || [], d?.aiSignals?.cycleCount || 0));
       } else if (fallback) {
         setTradeFeed(buildFeed(fallback?.aiSignals?.topBuys || [], fallback?.aiSignals?.cycleCount || 0));

@@ -62,13 +62,13 @@ export default function AnalyticsPage() {
       let fallback: any = null;
       if (dd.status === 'fulfilled' && dd.value.ok) {
         fallback = await dd.value.json();
-        setData((prev: any) => ({ ...prev, ...fallback, aiSignals: { ...fallback.aiSignals, ...prev?.aiSignals } }));
+        setData((prev: any) => ({ ...prev, ...fallback, aiSignals: { ...prev?.aiSignals, ...fallback.aiSignals } }));
       }
 
       // Secondary endpoint merges — preserve existing signals if secondary has empty topBuys
       if (dr.status === 'fulfilled' && dr.value.ok) {
         const d = await dr.value.json();
-        setData((prev: any) => ({ ...prev, ...d, aiSignals: { ...d.aiSignals, ...prev?.aiSignals } }));
+        setData((prev: any) => ({ ...prev, ...d, aiSignals: { ...prev?.aiSignals, ...d.aiSignals } }));
       }
 
       if (er.status === 'fulfilled' && er.value.ok) {

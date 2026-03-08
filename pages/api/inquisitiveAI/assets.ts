@@ -114,14 +114,10 @@ function buildAsset(meta: typeof ASSET_REGISTRY[0], coin: any, source: string) {
   };
 }
 
-async function fetchBatch(batch: typeof ASSET_REGISTRY, attempt = 0): Promise<any[]> {
+async function fetchBatch(batch: typeof ASSET_REGISTRY): Promise<any[]> {
   const ids = batch.map(a => a.cgId).join(',');
   const url = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${ids}&order=market_cap_desc&per_page=100&sparkline=false&price_change_percentage=1h,24h,7d`;
-  const r = await fetch(url, { signal: AbortSignal.timeout(12000) });
-  if (r.status === 429 && attempt < 2) {
-    await new Promise(res => setTimeout(res, (attempt + 1) * 15000));
-    return fetchBatch(batch, attempt + 1);
-  }
+  const r = await fetch(url, { signal: AbortSignal.timeout(9000) });
   if (!r.ok) throw new Error(`CoinGecko ${r.status}`);
   return r.json();
 }
@@ -162,22 +158,16 @@ async function getAssets() {
   const batch2 = ASSET_REGISTRY.slice(mid);
   const priceMap = new Map<string, any>();
 
-  try {
-    const data1 = await fetchBatch(batch1);
-    for (const coin of data1) {
-      const meta = ASSET_REGISTRY.find(a => a.cgId === coin.id);
-      if (meta) priceMap.set(meta.symbol, buildAsset(meta, coin, 'coingecko'));
+  // Fetch both batches in PARALLEL — avoids Vercel 10s timeout from sequential calls
+  const [r1, r2] = await Promise.allSettled([fetchBatch(batch1), fetchBatch(batch2)]);
+  for (const result of [r1, r2]) {
+    if (result.status === 'fulfilled') {
+      for (const coin of result.value) {
+        const meta = ASSET_REGISTRY.find(a => a.cgId === coin.id);
+        if (meta) priceMap.set(meta.symbol, buildAsset(meta, coin, 'coingecko'));
+      }
     }
-  } catch {}
-
-  try {
-    await new Promise(r => setTimeout(r, 1200));
-    const data2 = await fetchBatch(batch2);
-    for (const coin of data2) {
-      const meta = ASSET_REGISTRY.find(a => a.cgId === coin.id);
-      if (meta) priceMap.set(meta.symbol, buildAsset(meta, coin, 'coingecko'));
-    }
-  } catch {}
+  }
 
   const missing = ASSET_REGISTRY.filter(a => !priceMap.has(a.symbol));
   if (missing.length > 0) {
