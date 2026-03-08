@@ -1,4 +1,5 @@
-import { useAccount, useConnect, useDisconnect } from 'wagmi';
+import { useAppKit } from '@reown/appkit/react';
+import { useAccount, useDisconnect } from 'wagmi';
 import { Wallet } from 'lucide-react';
 
 interface WalletButtonProps {
@@ -6,14 +7,9 @@ interface WalletButtonProps {
 }
 
 export default function WalletButton({ label = 'Connect Wallet' }: WalletButtonProps) {
+  const { open } = useAppKit();
   const { address, isConnected } = useAccount();
-  const { connect, connectors, isPending } = useConnect();
   const { disconnect } = useDisconnect();
-
-  const openModal = () => {
-    const wc = connectors.find(c => c.id === 'walletConnect') ?? connectors[0];
-    if (wc) connect({ connector: wc });
-  };
 
   if (isConnected && address) {
     return (
@@ -50,22 +46,20 @@ export default function WalletButton({ label = 'Connect Wallet' }: WalletButtonP
 
   return (
     <button
-      onClick={openModal}
-      disabled={isPending}
+      onClick={() => open()}
       style={{
         display: 'flex', alignItems: 'center', gap: 7,
         padding: '7px 18px', borderRadius: 10,
-        cursor: isPending ? 'wait' : 'pointer',
-        background: isPending ? 'rgba(124,58,237,0.4)' : 'linear-gradient(135deg,#7c3aed,#4f46e5)',
+        cursor: 'pointer',
+        background: 'linear-gradient(135deg,#7c3aed,#4f46e5)',
         border: '1px solid rgba(255,255,255,0.1)',
         color: '#fff', fontSize: 13, fontWeight: 700,
-        boxShadow: isPending ? 'none' : '0 2px 12px rgba(124,58,237,0.35)',
-        opacity: isPending ? 0.7 : 1,
+        boxShadow: '0 2px 12px rgba(124,58,237,0.35)',
         transition: 'all 0.15s',
       }}
     >
       <Wallet size={14} strokeWidth={2.5} />
-      {isPending ? 'Connecting…' : label}
+      {label}
     </button>
   );
 }

@@ -6,6 +6,14 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  transpilePackages: [
+    '@reown/appkit',
+    '@reown/appkit-adapter-wagmi',
+    '@reown/appkit-common',
+    '@reown/appkit-controllers',
+    '@reown/appkit-wallet',
+    '@walletconnect/universal-provider',
+  ],
   async headers() {
     return [
       {
@@ -27,11 +35,12 @@ const nextConfig = {
         net: false,
         tls: false,
       };
-      config.resolve.alias = {
-        ...config.resolve.alias,
-        '@react-native-async-storage/async-storage': false,
-      };
     }
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@react-native-async-storage/async-storage': false,
+      // @wagmi/core resolved via npm overrides in package.json
+    };
     return config;
   },
 };

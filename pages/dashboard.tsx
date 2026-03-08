@@ -33,7 +33,7 @@ const ACTION_STYLE: Record<string, { bg: string; col: string; border: string }> 
 };
 
 function buildFeed(signals: any[], cycle: number) {
-  const now = Date.now();
+  const cycleMs = cycle * 8000;
   const entries: any[] = [];
   const rationaleMap: Record<string, string> = {
     BUY:       'Pattern + Reasoning engines in consensus. Entry conditions met. 2% capital risk limit applied.',
@@ -50,11 +50,10 @@ function buildFeed(signals: any[], cycle: number) {
     SKIP:      'Signal filtered. Insufficient confidence for execution.',
   };
   signals.forEach((s, i) => {
-    const msAgo = i * 8200 + Math.floor((Math.sin(i * 37.1) * 0.5 + 0.5) * 4000);
-    const ts = new Date(now - msAgo);
+    const ts = new Date(cycleMs - i * 120);
     const timeStr = ts.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
     const action = s.action || 'HOLD';
-    const conf = s.finalScore || 0.75;
+    const conf = s.finalScore || 0;
     const executed = conf >= 0.70 && action !== 'HOLD' && action !== 'SKIP';
     entries.push({
       id: `${cycle}-${s.symbol}-${i}`,
@@ -142,10 +141,10 @@ export default function Dashboard() {
 
   const topBuy    = (d?.aiSignals?.topBuys || [])[0];
   const engScores = [
-    { name: 'Pattern Engine',   val: topBuy?.components?.patternEngine   || 0.72, col: '#3b82f6' },
-    { name: 'Reasoning Engine', val: topBuy?.components?.reasoningEngine || 0.68, col: '#10b981' },
-    { name: 'Portfolio Engine', val: topBuy?.components?.portfolioEngine || 0.65, col: '#a78bfa' },
-    { name: 'Learning Engine',  val: topBuy?.components?.learningEngine  || 0.70, col: '#f97316' },
+    { name: 'Pattern Engine',   val: topBuy?.components?.patternEngine   ?? 0, col: '#3b82f6' },
+    { name: 'Reasoning Engine', val: topBuy?.components?.reasoningEngine ?? 0, col: '#10b981' },
+    { name: 'Portfolio Engine', val: topBuy?.components?.portfolioEngine ?? 0, col: '#a78bfa' },
+    { name: 'Learning Engine',  val: topBuy?.components?.learningEngine  ?? 0, col: '#f97316' },
   ];
 
   const riskGates = [

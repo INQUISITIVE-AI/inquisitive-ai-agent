@@ -1,10 +1,19 @@
-import { createConfig, http } from 'wagmi';
-import { walletConnect } from 'wagmi/connectors';
-import { mainnet, polygon, arbitrum, base, optimism } from 'wagmi/chains';
+import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
+import { mainnet, polygon, arbitrum, base, optimism } from '@reown/appkit/networks';
 
 // WalletConnect Project ID — register at https://cloud.walletconnect.com
 export const WC_PROJECT_ID =
   process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'd9390e89fa6f82be32c7b64211d743d4';
+
+export const appkitNetworks = [mainnet, polygon, arbitrum, base, optimism] as const;
+
+export const wagmiAdapter = new WagmiAdapter({
+  ssr: true,
+  networks: appkitNetworks,
+  projectId: WC_PROJECT_ID,
+});
+
+export const wagmiConfig = wagmiAdapter.wagmiConfig;
 
 // INQAI Token — ERC-20 asset-backed token on Ethereum mainnet
 export const INQAI_TOKEN = {
@@ -28,27 +37,3 @@ export const INQAI_TOKEN = {
     { symbol: 'USDC', name: 'USD Coin', decimals: 6, address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48' as `0x${string}` },
   ],
 };
-
-export const wagmiConfig = createConfig({
-  chains: [mainnet, polygon, arbitrum, base, optimism],
-  connectors: [
-    walletConnect({
-      projectId: WC_PROJECT_ID,
-      showQrModal: true,
-      metadata: {
-        name:        'INQUISITIVE',
-        description: 'AI-powered cryptocurrency portfolio platform',
-        url:         'https://getinqai.com',
-        icons:       ['https://getinqai.com/logo.png'],
-      },
-    }),
-  ],
-  transports: {
-    [mainnet.id]:  http(),
-    [polygon.id]:  http(),
-    [arbitrum.id]: http(),
-    [base.id]:     http(),
-    [optimism.id]: http(),
-  },
-  ssr: true,
-});
