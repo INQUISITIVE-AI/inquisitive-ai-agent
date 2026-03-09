@@ -6,25 +6,50 @@ import { wagmiAdapter, wagmiConfig, WC_PROJECT_ID, appkitNetworks } from '../src
 import '../styles/globals.css';
 
 if (typeof window !== 'undefined') {
-  createAppKit({
-    adapters:       [wagmiAdapter],
-    projectId:      WC_PROJECT_ID,
-    networks:       appkitNetworks,
-    defaultNetwork: appkitNetworks[0],
-    metadata: {
-      name:        'INQUISITIVE',
-      description: 'AI-powered cryptocurrency portfolio platform',
-      url:         'https://getinqai.com',
-      icons:       ['https://getinqai.com/logo.png'],
-    },
-    features: {
-      analytics: false,
-      email:     false,
-      socials:   false,
-      onramp:    false,
-      swaps:     false,
-    },
-  });
+  // Wait for DOM to be ready before initializing AppKit
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      createAppKit({
+        adapters:       [wagmiAdapter],
+        projectId:      WC_PROJECT_ID,
+        networks:       appkitNetworks,
+        defaultNetwork: appkitNetworks[0],
+        metadata: {
+          name:        'INQUISITIVE',
+          description: 'AI-powered cryptocurrency portfolio platform',
+          url:         'https://getinqai.com',
+          icons:       ['https://getinqai.com/logo.png'],
+        },
+        features: {
+          analytics: false,
+          email:     false,
+          socials:   false,
+          onramp:    false,
+          swaps:     false,
+        },
+      });
+    });
+  } else {
+    createAppKit({
+      adapters:       [wagmiAdapter],
+      projectId:      WC_PROJECT_ID,
+      networks:       appkitNetworks,
+      defaultNetwork: appkitNetworks[0],
+      metadata: {
+        name:        'INQUISITIVE',
+        description: 'AI-powered cryptocurrency portfolio platform',
+        url:         'https://getinqai.com',
+        icons:       ['https://getinqai.com/logo.png'],
+      },
+      features: {
+        analytics: false,
+        email:     false,
+        socials:   false,
+        onramp:    false,
+        swaps:     false,
+      },
+    });
+  }
 }
 
 const queryClient = new QueryClient();
