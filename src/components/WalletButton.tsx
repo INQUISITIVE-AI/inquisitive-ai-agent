@@ -1,4 +1,6 @@
+import { useEffect } from 'react';
 import { useAppKit } from '@reown/appkit/react';
+import { ApiController } from '@reown/appkit-controllers';
 import { useAccount, useDisconnect } from 'wagmi';
 import { Wallet } from 'lucide-react';
 
@@ -10,6 +12,10 @@ export default function WalletButton({ label = 'Connect Wallet' }: WalletButtonP
   const { open } = useAppKit();
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
+
+  useEffect(() => {
+    ApiController.prefetch();
+  }, []);
 
   if (isConnected && address) {
     return (
