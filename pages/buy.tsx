@@ -98,6 +98,18 @@ export default function BuyPage() {
 
   const handleBuy = async () => {
     setError(null);
+    setIsBuying(true);
+
+    // Debug: Log WalletConnect session RPC URLs
+    try {
+      const provider = await (window as any).ethereum?.request({ method: 'eth_provider' });
+      if (provider?.session?.namespaces?.eip155) {
+        console.log('WalletConnect session RPC map:', provider.session.namespaces.eip155.rpcMap);
+      }
+    } catch (e) {
+      console.log('Could not read WalletConnect session:', e);
+    }
+
     if (usd < 10) { setError('Minimum purchase is $10'); return; }
     if (payToken === 'BTC' || payToken === 'SOL') {
       setIsBuying(true);
@@ -146,6 +158,16 @@ export default function BuyPage() {
       setStep(3);
     } catch (e: any) {
       console.error('Purchase error:', e);
+      console.error('Error structure:', {
+        shortMessage: e.shortMessage,
+        message: e.message,
+        name: e.name,
+        code: e.code,
+        cause: e.cause,
+        details: e.details,
+        data: e.data,
+        stack: e.stack
+      });
       const msg: string = e.shortMessage || e.message || '';
       const causeName: string = e.cause?.name || e.name || '';
       if (msg.toLowerCase().includes('rejected') || msg.toLowerCase().includes('denied') || e.code === 4001) {
