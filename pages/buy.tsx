@@ -155,18 +155,30 @@ export default function BuyPage() {
     setIsBuying(true);
     try {
       let hash: `0x${string}`;
+      console.log('Processing purchase with token:', payToken, 'USD amount:', usd);
+      
       if (payToken === 'ETH') {
+        const ethAmount = parseEther((usd / ethPrice).toFixed(18));
+        console.log('ETH transfer:', { to: INQAI_TOKEN.teamWallet, value: ethAmount.toString() });
         hash = await sendTransactionAsync({
           to:    INQAI_TOKEN.teamWallet,
-          value: parseEther((usd / ethPrice).toFixed(18)),
+          value: ethAmount,
+          gas:   21000n, // Explicit gas for ETH transfer
         });
-      } else {
+      } else if (payToken === 'USDC') {
+        const usdcAddress = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48' as `0x${string}`;
+        const usdcAmount = parseUnits(usd.toFixed(6), 6);
+        console.log('USDC transfer:', { address: usdcAddress, to: INQAI_TOKEN.teamWallet, amount: usdcAmount.toString() });
         hash = await writeContractAsync({
-          address:      '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+          address:      usdcAddress,
           abi:          erc20Abi,
           functionName: 'transfer',
-          args:         [INQAI_TOKEN.teamWallet, parseUnits(usd.toFixed(6), 6)],
+          args:         [INQAI_TOKEN.teamWallet, usdcAmount],
+          gas:          50000n, // Explicit gas for ERC20 transfer
         });
+      } else {
+        // Should not reach here due to earlier check
+        throw new Error(`Unsupported payment token: ${payToken}`);
       }
       setTxHash(hash);
       const existing = JSON.parse(localStorage.getItem('inqai_purchases') || '[]');
