@@ -4,7 +4,33 @@ import { mainnet, polygon, arbitrum, base, optimism } from '@reown/appkit/networ
 // WalletConnect Project ID — register at https://cloud.walletconnect.com
 export const WC_PROJECT_ID = 'd9390e89fa6f82be32c7b64211d743d4';
 
-export const appkitNetworks = [mainnet, polygon, arbitrum, base, optimism];
+// Configure mainnet with multiple RPC endpoints for reliability
+const mainnetWithRPC = {
+  ...mainnet,
+  rpcUrls: {
+    ...mainnet.rpcUrls,
+    default: {
+      http: [
+        'https://eth.llamarpc.com',
+        'https://eth-mainnet.g.alchemy.com/v2/demo',
+        'https://rpc.ankr.com/eth',
+        'https://ethereum.publicnode.com',
+        'https://mainnet.eth.cloudflare.com',
+      ],
+    },
+    public: {
+      http: [
+        'https://eth.llamarpc.com',
+        'https://eth-mainnet.g.alchemy.com/v2/demo',
+        'https://rpc.ankr.com/eth',
+        'https://ethereum.publicnode.com',
+        'https://mainnet.eth.cloudflare.com',
+      ],
+    },
+  },
+};
+
+export const appkitNetworks = [mainnetWithRPC, polygon, arbitrum, base, optimism];
 
 export const wagmiAdapter = new WagmiAdapter({
   ssr: true,

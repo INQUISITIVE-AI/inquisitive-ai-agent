@@ -31,6 +31,7 @@ export default function BuyPage() {
   const [isBuying, setIsBuying]     = useState(false);
   const [txHash, setTxHash]         = useState<string | null>(null);
   const [error, setError]           = useState<string | null>(null);
+  const [retryCount, setRetryCount]   = useState(0);
   const [step, setStep]             = useState<1|2|3>(1);
   const [ethPrice, setEthPrice]         = useState<number>(3200);
   const [btcPrice, setBtcPrice]         = useState<number>(85000);
@@ -138,12 +139,32 @@ export default function BuyPage() {
         });
       }
       setTxHash(hash);
+      setRetryCount(0); // Reset retry count on success
       const existing = JSON.parse(localStorage.getItem('inqai_purchases') || '[]');
       existing.push({ txHash: hash, timestamp: Date.now(), amount: parseFloat(inqaiAmt), usdAmount: usd, payToken, address, price: INQAI_TOKEN.presalePrice });
       localStorage.setItem('inqai_purchases', JSON.stringify(existing));
       setStep(3);
     } catch (e: any) {
-      setError(e.shortMessage || e.message || 'Transaction failed');
+      console.error('Purchase error:', e);
+      // Handle specific RPC errors with retry logic
+      if ((e.message?.includes('unknown rpc') || e.message?.includes('RPC')) && retryCount < 2) {
+        setRetryCount(prev => prev + 1);
+        setError(`Network error occurred. Retrying... (${retryCount + 1}/3)`);
+        setTimeout(() => {
+          handleBuy(); // Auto retry
+        }, 2000);
+        return;
+      } else if (e.message?.includes('unknown rpc') || e.message?.includes('RPC')) {
+        setError('Network error: Please check your internet connection and try again. If the issue persists, switch to a different wallet network.');
+      } else if (e.shortMessage?.includes('rejected') || e.message?.includes('rejected')) {
+        setError('Transaction was rejected by user');
+      } else if (e.shortMessage?.includes('insufficient') || e.message?.includes('insufficient')) {
+        setError('Insufficient balance for this transaction');
+      } else if (e.shortMessage?.includes('gas') || e.message?.includes('gas')) {
+        setError('Gas estimation failed. Try again or adjust network settings.');
+      } else {
+        setError(e.shortMessage || e.message || 'Transaction failed');
+      }
     } finally {
       setIsBuying(false);
     }
