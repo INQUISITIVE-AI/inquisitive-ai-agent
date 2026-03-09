@@ -2,10 +2,9 @@ import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
 import { mainnet, polygon, arbitrum, base, optimism } from '@reown/appkit/networks';
 
 // WalletConnect Project ID — register at https://cloud.walletconnect.com
-export const WC_PROJECT_ID =
-  process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'd9390e89fa6f82be32c7b64211d743d4';
+export const WC_PROJECT_ID = 'd9390e89fa6f82be32c7b64211d743d4';
 
-export const appkitNetworks = [mainnet, polygon, arbitrum, base, optimism] as [typeof mainnet, ...typeof mainnet[]];
+export const appkitNetworks = [mainnet, polygon, arbitrum, base, optimism];
 
 export const wagmiAdapter = new WagmiAdapter({
   ssr: true,
