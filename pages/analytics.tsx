@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';
@@ -95,14 +95,39 @@ export default function AnalyticsPage() {
   const riskScore = data?.risk?.riskScore || 0;
   const regimeCol = regime === 'BULL' ? '#10b981' : regime === 'BEAR' ? '#ef4444' : '#f59e0b';
 
-  const portfolioValue = data?.portfolio?.totalValue || 0;
-  const totalPnL  = data?.performance?.totalPnL || 0;
-  const roiPct    = portfolioValue > 0 && totalPnL !== 0 ? totalPnL / (portfolioValue - totalPnL) : 0;
-  
-  // Calculate user's INQAI holdings
+  // Calculate user's INQAI holdings from localStorage purchases
   const totalInqaiHolding = purchases.reduce((sum, p) => sum + p.amount, 0);
-  const totalUsdInvested = purchases.reduce((sum, p) => sum + p.usdAmount, 0);
-  const currentValue = totalInqaiHolding * INQAI_TOKEN.presalePrice; // Using presale price for now
+  const totalUsdInvested  = purchases.reduce((sum, p) => sum + p.usdAmount, 0);
+  const currentValue      = totalInqaiHolding * INQAI_TOKEN.presalePrice;
+
+  // User's actual INQAI value takes precedence over the API's hardcoded zeros
+  const portfolioValue = currentValue > 0 ? currentValue : (data?.portfolio?.totalValue  || 0);
+  const totalPnL       = currentValue > 0 ? (currentValue - totalUsdInvested) : (data?.performance?.totalPnL || 0);
+  const roiPct         = totalUsdInvested > 0 && currentValue > 0
+    ? (currentValue - totalUsdInvested) / totalUsdInvested
+    : 0;
+
+  // Generate equity curve from purchases when API returns empty
+  const userEquity = useMemo(() => {
+    if (purchases.length === 0) return [];
+    const sorted = [...purchases].sort((a, b) => a.timestamp - b.timestamp);
+    const first = sorted[0].timestamp;
+    const now   = Date.now();
+    const step  = Math.max(3600000, Math.floor((now - first) / 60));
+    const points: { v: number; ts: string }[] = [];
+    let cumulative = 0;
+    let pi = 0;
+    for (let t = first; t <= now + step; t += step) {
+      while (pi < sorted.length && sorted[pi].timestamp <= t) {
+        cumulative += sorted[pi].amount;
+        pi++;
+      }
+      points.push({ v: cumulative * INQAI_TOKEN.presalePrice, ts: new Date(t).toLocaleDateString() });
+    }
+    return points;
+  }, [purchases]);
+
+  const chartData = equity.length > 0 ? equity : userEquity;
 
   // ── MAIN ANALYTICS ─────────────────────────────────────────
   return (
@@ -216,7 +241,7 @@ export default function AnalyticsPage() {
                         ))}
                       </div>
                     </div>
-                    <PortfolioChart data={equity} height={200} />
+                    <PortfolioChart data={chartData} height={200} />
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 12, fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>
                       <span>Token value: {fmtUsd(portfolioValue)}</span>
                       <span style={{ color: grc(totalPnL), fontWeight: 700 }}>P&L: {fmtUsd(totalPnL)}{totalPnL !== 0 ? ` (${pct(roiPct)})` : ''}</span>
