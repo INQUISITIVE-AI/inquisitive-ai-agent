@@ -14,7 +14,10 @@ export default function WalletButton({ label = 'Connect Wallet' }: WalletButtonP
   const { disconnect } = useDisconnect();
 
   useEffect(() => {
-    ApiController.prefetch();
+    ApiController.prefetch().then(() => {
+      (ApiController.state as any).recommended = [];
+      (ApiController.state as any).featured    = [];
+    });
   }, []);
 
   if (isConnected && address) {
@@ -52,7 +55,7 @@ export default function WalletButton({ label = 'Connect Wallet' }: WalletButtonP
 
   return (
     <button
-      onClick={() => open({ view: 'ConnectingWalletConnect' })}
+      onClick={() => open()}
       style={{
         display: 'flex', alignItems: 'center', gap: 7,
         padding: '7px 18px', borderRadius: 10,
