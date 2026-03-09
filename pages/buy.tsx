@@ -31,7 +31,6 @@ export default function BuyPage() {
   const [isBuying, setIsBuying]     = useState(false);
   const [txHash, setTxHash]         = useState<string | null>(null);
   const [error, setError]           = useState<string | null>(null);
-  const [retryCount, setRetryCount]   = useState(0);
   const [step, setStep]             = useState<1|2|3>(1);
   const [ethPrice, setEthPrice]         = useState<number>(3200);
   const [btcPrice, setBtcPrice]         = useState<number>(85000);
@@ -139,27 +138,26 @@ export default function BuyPage() {
         });
       }
       setTxHash(hash);
-      setRetryCount(0); // Reset retry count on success
       const existing = JSON.parse(localStorage.getItem('inqai_purchases') || '[]');
       existing.push({ txHash: hash, timestamp: Date.now(), amount: parseFloat(inqaiAmt), usdAmount: usd, payToken, address, price: INQAI_TOKEN.presalePrice });
       localStorage.setItem('inqai_purchases', JSON.stringify(existing));
       setStep(3);
     } catch (e: any) {
-      console.error('Purchase error - full object:', e);
-      console.error('Error message:', e.message);
-      console.error('Error shortMessage:', e.shortMessage);
-      console.error('Error cause:', e.cause);
-      console.error('Error code:', e.code);
-      console.error('Error data:', e.data);
-      
-      // Log the complete error structure for debugging
-      setError(`Debug: ${JSON.stringify({
-        message: e.message,
-        shortMessage: e.shortMessage,
-        code: e.code,
-        cause: e.cause,
-        data: e.data
-      }, null, 2)}`);
+      console.error('Purchase error:', e);
+      const msg: string = e.shortMessage || e.message || '';
+      if (msg.toLowerCase().includes('rejected') || msg.toLowerCase().includes('denied') || e.code === 4001) {
+        setError('Transaction rejected. Please try again.');
+      } else if (msg.toLowerCase().includes('insufficient')) {
+        setError('Insufficient balance to cover the amount and gas fees.');
+      } else if (msg.toLowerCase().includes('gas')) {
+        setError('Gas estimation failed. Ensure you have enough ETH for gas.');
+      } else if (msg.toLowerCase().includes('network') || msg.toLowerCase().includes('rpc') || msg.toLowerCase().includes('fetch')) {
+        setError('Network error — please check your connection and try again.');
+      } else if (msg) {
+        setError(msg);
+      } else {
+        setError('Transaction failed. Please try again.');
+      }
     } finally {
       setIsBuying(false);
     }
@@ -238,7 +236,7 @@ export default function BuyPage() {
                       Connect Wallet
                     </OpenWalletButton>
                     <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', marginTop: 12 }}>
-                      MetaMask · Coinbase · WalletConnect · Brave · and 300+ more
+                      WalletConnect · 530+ mobile wallets supported
                     </p>
                   </div>
                 )}

@@ -271,7 +271,7 @@ export default function AnalyticsPage() {
                       { label: 'DeFi & AI Protocols',          pct: 20, col: '#7c3aed',  detail: 'High-growth sector exposure with staking yield' },
                       { label: 'Lending & Borrowing',          pct: 14, col: '#0ea5e9',  detail: 'Aave V3 / Morpho Blue — earn spread on collateral' },
                       { label: 'Liquid Staking',               pct: 10, col: '#f59e0b',  detail: 'JitoSOL, JUPSOL — auto-compounding SOL yield' },
-                      { label: 'Layer 2 & Interop',            pct: 10, col: '#06b6d4',  detail: 'ARB, OP, STX, ZRO — scaling infrastructure' },
+                      { label: 'Layer 2 & Interop',            pct: 10, col: '#06b6d4',  detail: 'ARB, OP, STRK, ZRO — scaling infrastructure' },
                       { label: 'Stablecoins & RWA',            pct: 8,  col: '#10b981',  detail: 'USDC, PAXG, ONDO — capital preservation base' },
                     ].map(s => (
                       <div key={s.label} style={{ marginBottom: 14 }}>
@@ -334,7 +334,7 @@ export default function AnalyticsPage() {
                       { label: 'Sell Signals', val: sells,  col: '#ef4444', icon: 'down' },
                       { label: 'Regime',       val: regime, col: regimeCol, icon: regime==='BULL'?'up':regime==='BEAR'?'down':'scale' },
                       { label: 'Fear & Greed', val: fg,     col: typeof fg==='number'&&fg<30?'#ef4444':typeof fg==='number'&&fg>70?'#10b981':'#f59e0b', icon: 'brain' },
-                      { label: 'Active Assets',val: data?.portfolio?.assetCount||57, col: '#60a5fa', icon: 'target' },
+                      { label: 'Active Assets',val: data?.portfolio?.assetCount||65, col: '#60a5fa', icon: 'target' },
                     ].map(m => (
                       <div key={m.label} style={{ textAlign: 'center', padding: '16px 12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12 }}>
                         <div style={{ marginBottom: 6, display:'flex', justifyContent:'center' }}>

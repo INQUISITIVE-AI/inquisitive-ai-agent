@@ -1,41 +1,30 @@
+import { http, fallback } from 'viem';
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
 import { mainnet, polygon, arbitrum, base, optimism } from '@reown/appkit/networks';
 
 // WalletConnect Project ID — register at https://cloud.walletconnect.com
 export const WC_PROJECT_ID = 'd9390e89fa6f82be32c7b64211d743d4';
 
-// Configure mainnet with multiple RPC endpoints for reliability
-const mainnetWithRPC = {
-  ...mainnet,
-  rpcUrls: {
-    ...mainnet.rpcUrls,
-    default: {
-      http: [
-        'https://eth.llamarpc.com',
-        'https://eth-mainnet.g.alchemy.com/v2/demo',
-        'https://rpc.ankr.com/eth',
-        'https://ethereum.publicnode.com',
-        'https://mainnet.eth.cloudflare.com',
-      ],
-    },
-    public: {
-      http: [
-        'https://eth.llamarpc.com',
-        'https://eth-mainnet.g.alchemy.com/v2/demo',
-        'https://rpc.ankr.com/eth',
-        'https://ethereum.publicnode.com',
-        'https://mainnet.eth.cloudflare.com',
-      ],
-    },
-  },
-};
+export const appkitNetworks = [mainnet, polygon, arbitrum, base, optimism];
 
-export const appkitNetworks = [mainnetWithRPC, polygon, arbitrum, base, optimism];
+// Explicit fallback transport for Ethereum mainnet — bypasses AppKit's extendCaipNetwork
+// which discards custom rpcUrls.default and uses only the Reown RPC for the project ID.
+// extendWagmiTransports wraps this with the Reown RPC as additional fallback.
+const mainnetTransport = fallback([
+  http('https://eth.llamarpc.com'),
+  http('https://rpc.ankr.com/eth'),
+  http('https://ethereum.publicnode.com'),
+  http('https://mainnet.eth.cloudflare.com'),
+  http('https://1rpc.io/eth'),
+]);
 
 export const wagmiAdapter = new WagmiAdapter({
   ssr: true,
   networks: appkitNetworks,
   projectId: WC_PROJECT_ID,
+  transports: {
+    [mainnet.id]: mainnetTransport,
+  },
 });
 
 export const wagmiConfig = wagmiAdapter.wagmiConfig;
