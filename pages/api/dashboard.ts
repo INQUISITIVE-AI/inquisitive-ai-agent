@@ -109,6 +109,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const buys  = signals.filter(s => s.action === 'BUY' || s.action === 'ACCUMULATE').length;
     const sells = signals.filter(s => s.action === 'SELL' || s.action === 'REDUCE').length;
 
+    // Real portfolio composition: live prices × portfolio weights + current AI signal per asset
+    const composition = ASSET_REGISTRY
+      .filter(meta => (PORTFOLIO_WEIGHTS[meta.symbol] ?? 0) > 0)
+      .map(meta => {
+        const inp    = inputMap.get(meta.symbol);
+        const signal = signals.find(s => s.symbol === meta.symbol);
+        return {
+          symbol:     meta.symbol,
+          name:       meta.name,
+          category:   meta.category,
+          weight:     PORTFOLIO_WEIGHTS[meta.symbol] ?? 0,
+          priceUsd:   inp?.priceUsd  ?? 0,
+          change24h:  inp?.change24h ?? 0,
+          action:     signal?.action     || 'HOLD',
+          confidence: signal?.finalScore || 0,
+        };
+      })
+      .sort((a, b) => b.weight - a.weight);
+
     res.setHeader('Cache-Control', 's-maxage=15, stale-while-revalidate=30');
     res.status(200).json({
       aiSignals: {
@@ -125,7 +144,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         isLive: true,
       },
       performance: { totalPnL: 0, winRate: 0, totalTrades: 0, equityCurve: [] },
-      portfolio:   { totalValue: 0, assetCount: ASSET_REGISTRY.length },
+      portfolio:   { totalValue: 0, assetCount: ASSET_REGISTRY.length, composition },
       macro: {
         fearGreed: fg,
         indicators: {

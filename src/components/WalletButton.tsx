@@ -46,7 +46,7 @@ export default function WalletButton({ label = 'Connect Wallet' }: WalletButtonP
 
   return (
     <button
-      onClick={() => open()}
+      onClick={() => open({ view: 'ConnectingWalletConnect' })}
       style={{
         display: 'flex', alignItems: 'center', gap: 7,
         padding: '7px 18px', borderRadius: 10,

@@ -77,6 +77,7 @@ export default function Dashboard() {
   const [hasLiveData, setHasLiveData] = useState(false);
   const [equityCurve, setEquityCurve] = useState<any[]>([]);
   const [tradeFeed, setTradeFeed]     = useState<any[]>([]);
+  const [composition, setComposition] = useState<any[]>([]);
   const wsRef = useRef<WebSocket | null>(null);
 
   const load = useCallback(async () => {
@@ -108,6 +109,11 @@ export default function Dashboard() {
       if (pr.status === 'fulfilled' && pr.value.ok) {
         const d = await pr.value.json();
         setPositions(d.positions || []);
+      }
+
+      // Pull composition from the dashboard endpoint (fallback)
+      if (fallback?.portfolio?.composition?.length) {
+        setComposition(fallback.portfolio.composition);
       }
       if (eq.status === 'fulfilled' && eq.value.ok) {
         const d = await eq.value.json();
@@ -246,7 +252,7 @@ export default function Dashboard() {
                       </div>
                       <div style={{ textAlign: 'right' }}>
                         <div style={{ fontSize: 11, fontWeight: 700, color: '#a78bfa', fontFamily: 'monospace' }}>{(entry.confidence * 100).toFixed(0)}%</div>
-                        <div style={{ fontSize: 9, color: entry.executed ? '#10b981' : 'rgba(255,255,255,0.2)' }}>{entry.executed ? '✓ executed' : '— skipped'}</div>
+                        <div style={{ fontSize: 9, color: entry.executed ? '#10b981' : 'rgba(255,255,255,0.2)' }}>{entry.executed ? '✓ signal' : '— below threshold'}</div>
                       </div>
                     </div>
                     <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', lineHeight: 1.5, marginBottom: 3 }}>{entry.rationale}</div>
@@ -271,10 +277,10 @@ export default function Dashboard() {
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', borderBottom: '1px solid rgba(255,255,255,0.05)', flexShrink: 0, background: 'rgba(8,8,22,0.4)' }}>
               {[
-                { label: 'Win Rate',     val: ((d?.performance?.winRate || 0) * 100).toFixed(1) + '%', col: '#a78bfa' },
-                { label: 'Avg Win',      val: fmtUsd(d?.performance?.avgWin || 0),                      col: '#10b981' },
-                { label: 'Avg Loss',     val: fmtUsd(d?.performance?.avgLoss || 0),                     col: '#ef4444' },
-                { label: 'Total Trades', val: String(d?.performance?.totalTrades || 0),                  col: '#e5e7eb' },
+                { label: 'AI Buy Signals',  val: String(d?.aiSignals?.buys  || 0), col: '#34d399' },
+                { label: 'AI Sell Signals', val: String(d?.aiSignals?.sells || 0), col: '#f87171' },
+                { label: 'Assets Tracked',  val: String(d?.portfolio?.assetCount || 65), col: '#60a5fa' },
+                { label: 'Brain Cycles',    val: (d?.aiSignals?.cycleCount || 0).toLocaleString(), col: '#a78bfa' },
               ].map(m => (
                 <div key={m.label} style={{ padding: '10px 16px', borderRight: '1px solid rgba(255,255,255,0.04)' }}>
                   <div style={{ fontSize: 14, fontWeight: 800, color: m.col, fontFamily: 'monospace' }}>{m.val}</div>
@@ -283,39 +289,46 @@ export default function Dashboard() {
               ))}
             </div>
             <div style={{ padding: '10px 20px 6px', borderBottom: '1px solid rgba(255,255,255,0.05)', flexShrink: 0 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                Active Positions <span style={{ color: 'rgba(255,255,255,0.2)', fontWeight: 400 }}>({positions.length})</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '1px' }}>Managed Portfolio</div>
+                <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)' }}>Live prices · {composition.filter(c => c.priceUsd > 0).length} assets priced</div>
               </div>
             </div>
-            {positions.length > 0 && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr 1fr 1fr', padding: '5px 20px', flexShrink: 0, background: 'rgba(8,8,22,0.5)', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                {['Symbol', 'Type', 'Entry', 'Current', 'P&L', 'P&L %'].map(h => (
-                  <span key={h} style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px', textAlign: h === 'Symbol' ? 'left' : 'right' }}>{h}</span>
+            {composition.length > 0 && (
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr', padding: '5px 20px', flexShrink: 0, background: 'rgba(8,8,22,0.5)', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                {['Asset', 'Weight', 'Price', '24h', 'AI Signal'].map(h => (
+                  <span key={h} style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px', textAlign: h === 'Asset' ? 'left' : 'right' }}>{h}</span>
                 ))}
               </div>
             )}
             <div style={{ flex: 1, overflowY: 'auto' }}>
-              {positions.length === 0 ? (
+              {composition.length === 0 ? (
                 <div style={{ padding: '28px 20px', textAlign: 'center' }}>
                   <Activity size={26} color="rgba(255,255,255,0.1)" strokeWidth={1.5} style={{ marginBottom: 8 }} />
-                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)' }}>No open positions</div>
-                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.12)', marginTop: 4 }}>The AI agent is evaluating entry opportunities</div>
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)' }}>Loading portfolio data…</div>
                 </div>
-              ) : positions.map((p: any) => (
-                <div key={p.id} style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr 1fr 1fr', padding: '8px 20px', borderBottom: '1px solid rgba(255,255,255,0.03)', alignItems: 'center', transition: 'background 0.12s' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(124,58,237,0.04)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: 13 }}>{p.symbol}</div>
-                    <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', textTransform: 'capitalize', marginTop: 1 }}>{p.category || 'asset'}</div>
+              ) : composition.map((c: any) => {
+                const sty = ACTION_STYLE[c.action] || ACTION_STYLE.HOLD;
+                const fmtPrice = c.priceUsd >= 1000 ? '$' + (c.priceUsd/1000).toFixed(1) + 'K' :
+                                 c.priceUsd >= 1 ? '$' + c.priceUsd.toFixed(2) :
+                                 c.priceUsd > 0  ? '$' + c.priceUsd.toFixed(4) : '—';
+                return (
+                  <div key={c.symbol} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr', padding: '7px 20px', borderBottom: '1px solid rgba(255,255,255,0.025)', alignItems: 'center', transition: 'background 0.12s' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(124,58,237,0.04)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    <div>
+                      <span style={{ fontWeight: 700, fontSize: 12 }}>{c.symbol}</span>
+                      <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.22)', textTransform: 'capitalize', marginLeft: 6 }}>{c.category}</span>
+                    </div>
+                    <div style={{ textAlign: 'right', fontSize: 11, fontWeight: 700, color: '#60a5fa', fontFamily: 'monospace' }}>{c.weight}%</div>
+                    <div style={{ textAlign: 'right', fontSize: 11, fontFamily: 'monospace', color: 'rgba(255,255,255,0.7)' }}>{fmtPrice}</div>
+                    <div style={{ textAlign: 'right', fontSize: 11, fontWeight: 600, color: c.change24h >= 0 ? '#34d399' : '#f87171', fontFamily: 'monospace' }}>{c.change24h >= 0 ? '+' : ''}{(c.change24h * 100).toFixed(1)}%</div>
+                    <div style={{ textAlign: 'right' }}>
+                      <span style={{ ...sty, fontSize: 8, fontWeight: 700, padding: '2px 5px', borderRadius: 3, border: `1px solid ${sty.border}` }}>{c.action}</span>
+                    </div>
                   </div>
-                  <div style={{ textAlign: 'right', fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>{p.type}</div>
-                  <div style={{ textAlign: 'right', fontSize: 11, fontFamily: 'monospace' }}>${p.entryPrice?.toFixed?.(4) || '—'}</div>
-                  <div style={{ textAlign: 'right', fontSize: 11, fontFamily: 'monospace' }}>${p.currentPrice?.toFixed?.(4) || '—'}</div>
-                  <div style={{ textAlign: 'right', fontSize: 12, fontWeight: 700, color: grc(p.unrealizedPnl || 0), fontFamily: 'monospace' }}>{(p.unrealizedPnl || 0) >= 0 ? '+' : ''}{fmtUsd(p.unrealizedPnl || 0)}</div>
-                  <div style={{ textAlign: 'right', fontSize: 11, fontWeight: 600, color: grc(p.pnlPct || 0) }}>{pct(p.pnlPct || 0)}</div>
-                </div>
-              ))}
+                );
+              })}
               <div style={{ margin: '16px 20px', padding: '14px 16px', background: 'rgba(124,58,237,0.05)', border: '1px solid rgba(124,58,237,0.12)', borderRadius: 10 }}>
                 <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>Standard of Procedure</div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
