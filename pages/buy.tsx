@@ -145,26 +145,21 @@ export default function BuyPage() {
       localStorage.setItem('inqai_purchases', JSON.stringify(existing));
       setStep(3);
     } catch (e: any) {
-      console.error('Purchase error:', e);
-      // Handle specific RPC errors with retry logic
-      if ((e.message?.includes('unknown rpc') || e.message?.includes('RPC')) && retryCount < 2) {
-        setRetryCount(prev => prev + 1);
-        setError(`Network error occurred. Retrying... (${retryCount + 1}/3)`);
-        setTimeout(() => {
-          handleBuy(); // Auto retry
-        }, 2000);
-        return;
-      } else if (e.message?.includes('unknown rpc') || e.message?.includes('RPC')) {
-        setError('Network error: Please check your internet connection and try again. If the issue persists, switch to a different wallet network.');
-      } else if (e.shortMessage?.includes('rejected') || e.message?.includes('rejected')) {
-        setError('Transaction was rejected by user');
-      } else if (e.shortMessage?.includes('insufficient') || e.message?.includes('insufficient')) {
-        setError('Insufficient balance for this transaction');
-      } else if (e.shortMessage?.includes('gas') || e.message?.includes('gas')) {
-        setError('Gas estimation failed. Try again or adjust network settings.');
-      } else {
-        setError(e.shortMessage || e.message || 'Transaction failed');
-      }
+      console.error('Purchase error - full object:', e);
+      console.error('Error message:', e.message);
+      console.error('Error shortMessage:', e.shortMessage);
+      console.error('Error cause:', e.cause);
+      console.error('Error code:', e.code);
+      console.error('Error data:', e.data);
+      
+      // Log the complete error structure for debugging
+      setError(`Debug: ${JSON.stringify({
+        message: e.message,
+        shortMessage: e.shortMessage,
+        code: e.code,
+        cause: e.cause,
+        data: e.data
+      }, null, 2)}`);
     } finally {
       setIsBuying(false);
     }
