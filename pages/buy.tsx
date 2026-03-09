@@ -5,7 +5,7 @@ import { useRouter } from 'next/router';
 import { useAccount, useBalance, useSendTransaction, useWriteContract, useDisconnect } from 'wagmi';
 import { parseEther, parseUnits, erc20Abi } from 'viem';
 import { mainnet } from 'wagmi/chains';
-import { INQAI_TOKEN } from '../src/config/wagmi';
+import { INQAI_TOKEN, wagmiConfig } from '../src/config/wagmi';
 import { Lock, CheckCircle2, Loader, Shield, ExternalLink, AlertTriangle, Info } from 'lucide-react';
 
 const OpenWalletButton = dynamic(() => import('../src/components/OpenWalletButton'), { ssr: false, loading: () => null });
@@ -180,7 +180,21 @@ export default function BuyPage() {
         // Should not reach here due to earlier check
         throw new Error(`Unsupported payment token: ${payToken}`);
       }
+      
+      console.log('Transaction sent, hash:', hash);
       setTxHash(hash);
+      
+      // Wait for transaction confirmation
+      console.log('Waiting for transaction confirmation...');
+      const publicClient = wagmiConfig.getClient({ chainId: mainnet.id });
+      const receipt = await publicClient.waitForTransaction({ 
+        hash,
+        confirmations: 1,
+        timeout: 60000 // 60 seconds
+      });
+      
+      console.log('Transaction confirmed:', receipt);
+      
       const existing = JSON.parse(localStorage.getItem('inqai_purchases') || '[]');
       existing.push({ txHash: hash, timestamp: Date.now(), amount: parseFloat(inqaiAmt), usdAmount: usd, payToken, address, price: INQAI_TOKEN.presalePrice });
       localStorage.setItem('inqai_purchases', JSON.stringify(existing));
@@ -199,35 +213,47 @@ export default function BuyPage() {
         walk: e.walk ? e.walk() : 'no walk method'
       });
       
-      // Try to walk the error chain to find the real cause
-      let currentError = e;
-      let foundUnknownRpcError = false;
-      while (currentError) {
-        console.log('Checking error:', currentError.name, currentError.message);
-        if (currentError.name === 'UnknownRpcError' || (currentError.message && currentError.message.includes('unknown RPC'))) {
-          foundUnknownRpcError = true;
-          break;
-        }
-        currentError = currentError.cause;
-      }
-      
-      const msg: string = e.shortMessage || e.message || '';
-      const causeName: string = e.cause?.name || e.name || '';
-      if (msg.toLowerCase().includes('rejected') || msg.toLowerCase().includes('denied') || e.code === 4001) {
-        setError('Transaction rejected. Please try again.');
+      // Check for specific transaction confirmation errors
+      if (e.name === 'TransactionNotFoundError' || e.message?.includes('transaction not found')) {
+        setError('Transaction was sent but not found on network. It may still be processing - please check your wallet.');
         setShowReconnect(false);
-      } else if (msg.toLowerCase().includes('insufficient')) {
-        setError('Insufficient balance to cover the amount and gas fees.');
+      } else if (e.name === 'TransactionReceiptNotFoundError' || e.message?.includes('receipt not found')) {
+        setError('Transaction confirmed but receipt not available. Please check the transaction hash on Etherscan.');
         setShowReconnect(false);
-      } else if (foundUnknownRpcError || causeName === 'UnknownRpcError' || msg.toLowerCase().includes('unknown rpc') || msg.toLowerCase().includes('rpc') || msg.toLowerCase().includes('fetch')) {
-        setError('Wallet session issue — your WalletConnect session may have expired or the RPC is unreachable. Disconnect and reconnect your wallet to create a fresh session.');
-        setShowReconnect(true);
-      } else if (msg) {
-        setError(msg);
+      } else if (e.name === 'TimeoutError' || e.message?.includes('timeout')) {
+        setError('Transaction is taking longer than expected. It may still succeed - please check your wallet and Etherscan.');
         setShowReconnect(false);
       } else {
-        setError('Transaction failed. Please try again.');
-        setShowReconnect(false);
+        // Try to walk the error chain to find the real cause
+        let currentError = e;
+        let foundUnknownRpcError = false;
+        while (currentError) {
+          console.log('Checking error:', currentError.name, currentError.message);
+          if (currentError.name === 'UnknownRpcError' || (currentError.message && currentError.message.includes('unknown RPC'))) {
+            foundUnknownRpcError = true;
+            break;
+          }
+          currentError = currentError.cause;
+        }
+        
+        const msg: string = e.shortMessage || e.message || '';
+        const causeName: string = e.cause?.name || e.name || '';
+        if (msg.toLowerCase().includes('rejected') || msg.toLowerCase().includes('denied') || e.code === 4001) {
+          setError('Transaction rejected. Please try again.');
+          setShowReconnect(false);
+        } else if (msg.toLowerCase().includes('insufficient')) {
+          setError('Insufficient balance to cover the amount and gas fees.');
+          setShowReconnect(false);
+        } else if (foundUnknownRpcError || causeName === 'UnknownRpcError' || msg.toLowerCase().includes('unknown rpc') || msg.toLowerCase().includes('rpc') || msg.toLowerCase().includes('fetch')) {
+          setError('Wallet session issue — your WalletConnect session may have expired or the RPC is unreachable. Disconnect and reconnect your wallet to create a fresh session.');
+          setShowReconnect(true);
+        } else if (msg) {
+          setError(msg);
+          setShowReconnect(false);
+        } else {
+          setError('Transaction failed. Please try again.');
+          setShowReconnect(false);
+        }
       }
     } finally {
       setIsBuying(false);
