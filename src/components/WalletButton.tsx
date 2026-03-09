@@ -15,8 +15,10 @@ export default function WalletButton({ label = 'Connect Wallet' }: WalletButtonP
 
   useEffect(() => {
     ApiController.prefetch().then(() => {
-      (ApiController.state as any).recommended = [];
-      (ApiController.state as any).featured    = [];
+      setTimeout(() => {
+        (ApiController.state as any).recommended = [];
+        (ApiController.state as any).featured    = [];
+      }, 300);
     });
   }, []);
 
