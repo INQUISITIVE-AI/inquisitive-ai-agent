@@ -100,17 +100,34 @@ export default function BuyPage() {
     setError(null);
     setIsBuying(true);
 
+    // Debug: Log network and connection details
+    console.log('Network details:', {
+      chainId: chain?.id,
+      chainName: chain?.name,
+      isConnected,
+      address,
+      isTestnet: chain?.testnet,
+    });
+
     // Debug: Log WalletConnect session RPC URLs
     try {
       const provider = await (window as any).ethereum?.request({ method: 'eth_provider' });
       if (provider?.session?.namespaces?.eip155) {
         console.log('WalletConnect session RPC map:', provider.session.namespaces.eip155.rpcMap);
+        console.log('WalletConnect session chains:', provider.session.namespaces.eip155.chains);
       }
     } catch (e) {
       console.log('Could not read WalletConnect session:', e);
     }
 
     if (usd < 10) { setError('Minimum purchase is $10'); return; }
+    
+    // Prevent purchases on testnets or simulation mode
+    if (chain?.id !== mainnet.id) {
+      setError(`Purchase requires Ethereum Mainnet. Current network: ${chain?.name || 'Unknown'} (Chain ID: ${chain?.id})`);
+      setIsBuying(false);
+      return;
+    }
     if (payToken === 'BTC' || payToken === 'SOL') {
       setIsBuying(true);
       try {
