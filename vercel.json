@@ -9,7 +9,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self' 'unsafe-eval' 'unsafe-inline' data: blob:; connect-src 'self' https://explorer-api.walletconnect.com https://rpc.walletconnect.com https://relay.walletconnect.com wss://relay.walletconnect.com; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.walletconnect.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:;"
+          "value": "default-src 'self' 'unsafe-eval' 'unsafe-inline' data: blob:; connect-src 'self' https://api.web3modal.org https://api.web3modal.com https://explorer-api.walletconnect.com https://rpc.walletconnect.org https://rpc.walletconnect.com https://relay.walletconnect.com https://pulse.walletconnect.org https://keys.walletconnect.com https://verify.walletconnect.org wss://relay.walletconnect.com wss://relay.walletconnect.org https://api.coingecko.com https://min-api.cryptocompare.com https://api.alternative.me; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:;"
         }
       ]
     }
