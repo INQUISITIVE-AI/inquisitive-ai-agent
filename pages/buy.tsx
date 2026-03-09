@@ -166,8 +166,22 @@ export default function BuyPage() {
         cause: e.cause,
         details: e.details,
         data: e.data,
-        stack: e.stack
+        stack: e.stack,
+        walk: e.walk ? e.walk() : 'no walk method'
       });
+      
+      // Try to walk the error chain to find the real cause
+      let currentError = e;
+      let foundUnknownRpcError = false;
+      while (currentError) {
+        console.log('Checking error:', currentError.name, currentError.message);
+        if (currentError.name === 'UnknownRpcError' || (currentError.message && currentError.message.includes('unknown RPC'))) {
+          foundUnknownRpcError = true;
+          break;
+        }
+        currentError = currentError.cause;
+      }
+      
       const msg: string = e.shortMessage || e.message || '';
       const causeName: string = e.cause?.name || e.name || '';
       if (msg.toLowerCase().includes('rejected') || msg.toLowerCase().includes('denied') || e.code === 4001) {
@@ -176,7 +190,7 @@ export default function BuyPage() {
       } else if (msg.toLowerCase().includes('insufficient')) {
         setError('Insufficient balance to cover the amount and gas fees.');
         setShowReconnect(false);
-      } else if (causeName === 'UnknownRpcError' || msg.toLowerCase().includes('unknown rpc') || msg.toLowerCase().includes('rpc') || msg.toLowerCase().includes('fetch')) {
+      } else if (foundUnknownRpcError || causeName === 'UnknownRpcError' || msg.toLowerCase().includes('unknown rpc') || msg.toLowerCase().includes('rpc') || msg.toLowerCase().includes('fetch')) {
         setError('Wallet session issue — your WalletConnect session may have expired or the RPC is unreachable. Disconnect and reconnect your wallet to create a fresh session.');
         setShowReconnect(true);
       } else if (msg) {

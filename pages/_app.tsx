@@ -25,6 +25,15 @@ if (typeof window !== 'undefined') {
       onramp:    false,
       swaps:     false,
     },
+    // Ensure WalletConnect session uses reliable RPC URLs
+    customRpcUrls: {
+      'eip155:1': [
+        { url: 'https://eth.llamarpc.com' },
+        { url: 'https://rpc.ankr.com/eth' },
+        { url: 'https://ethereum.publicnode.com' },
+        { url: 'https://mainnet.eth.cloudflare.com' },
+      ],
+    },
   });
 }
 
