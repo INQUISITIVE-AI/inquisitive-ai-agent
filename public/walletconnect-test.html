@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WalletConnect Test</title>
+</head>
+<body>
+    <h1>WalletConnect Explorer API Test</h1>
+    <div id="results"></div>
+    
+    <script>
+        const projectId = 'd9390e89fa6f82be32c7b64211d743d4';
+        const apiUrl = `https://explorer-api.walletconnect.com/v3/wallets?projectId=${projectId}&entries=5&page=1`;
+        
+        fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+                const results = document.getElementById('results');
+                results.innerHTML = `
+                    <h2>Results for Project ID: ${projectId}</h2>
+                    <p>Total Wallets: ${data.total}</p>
+                    <p>Listings Count: ${Object.keys(data.listings || {}).length}</p>
+                    <h3>Sample Wallets:</h3>
+                    <ul>
+                        ${Object.values(data.listings || {}).slice(0, 3).map(wallet => 
+                            `<li>${wallet.name} - ${wallet.homepage}</li>`
+                        ).join('')}
+                    </ul>
+                `;
+            })
+            .catch(error => {
+                document.getElementById('results').innerHTML = `<p>Error: ${error.message}</p>`;
+            });
+    </script>
+</body>
+</html>
