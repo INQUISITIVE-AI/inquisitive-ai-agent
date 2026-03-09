@@ -18,12 +18,24 @@ const mainnetTransport = fallback([
   http('https://1rpc.io/eth'),
 ]);
 
+// customRpcUrls feeds into WcHelpersUtil.createNamespaces → rpcMap[chainId].
+// Without this, the WalletConnect session rpcMap is set to ONLY the Reown Blockchain
+// API URL, so eth_chainId (required before eth_sendTransaction) fails when that
+// endpoint is rate-limited/down → UnknownRpcError before any wallet popup appears.
 export const wagmiAdapter = new WagmiAdapter({
   ssr: true,
   networks: appkitNetworks,
   projectId: WC_PROJECT_ID,
   transports: {
     [mainnet.id]: mainnetTransport,
+  },
+  customRpcUrls: {
+    'eip155:1': [
+      { url: 'https://eth.llamarpc.com' },
+      { url: 'https://rpc.ankr.com/eth' },
+      { url: 'https://ethereum.publicnode.com' },
+      { url: 'https://mainnet.eth.cloudflare.com' },
+    ],
   },
 });
 

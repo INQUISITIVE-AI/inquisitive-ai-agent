@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import { useAccount, useBalance, useSendTransaction, useWriteContract } from 'wagmi';
+import { useAccount, useBalance, useSendTransaction, useWriteContract, useDisconnect } from 'wagmi';
 import { parseEther, parseUnits, erc20Abi } from 'viem';
 import { mainnet } from 'wagmi/chains';
 import { INQAI_TOKEN } from '../src/config/wagmi';
@@ -31,6 +31,7 @@ export default function BuyPage() {
   const [isBuying, setIsBuying]     = useState(false);
   const [txHash, setTxHash]         = useState<string | null>(null);
   const [error, setError]           = useState<string | null>(null);
+  const [showReconnect, setShowReconnect] = useState(false);
   const [step, setStep]             = useState<1|2|3>(1);
   const [ethPrice, setEthPrice]         = useState<number>(3200);
   const [btcPrice, setBtcPrice]         = useState<number>(85000);
@@ -45,6 +46,7 @@ export default function BuyPage() {
 
   const { sendTransactionAsync }    = useSendTransaction();
   const { writeContractAsync }      = useWriteContract();
+  const { disconnect }              = useDisconnect();
 
   useEffect(() => {
     fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum,bitcoin,solana&vs_currencies=usd')
@@ -145,18 +147,22 @@ export default function BuyPage() {
     } catch (e: any) {
       console.error('Purchase error:', e);
       const msg: string = e.shortMessage || e.message || '';
+      const causeName: string = e.cause?.name || e.name || '';
       if (msg.toLowerCase().includes('rejected') || msg.toLowerCase().includes('denied') || e.code === 4001) {
         setError('Transaction rejected. Please try again.');
+        setShowReconnect(false);
       } else if (msg.toLowerCase().includes('insufficient')) {
         setError('Insufficient balance to cover the amount and gas fees.');
-      } else if (msg.toLowerCase().includes('gas')) {
-        setError('Gas estimation failed. Ensure you have enough ETH for gas.');
-      } else if (msg.toLowerCase().includes('network') || msg.toLowerCase().includes('rpc') || msg.toLowerCase().includes('fetch')) {
-        setError('Network error — please check your connection and try again.');
+        setShowReconnect(false);
+      } else if (causeName === 'UnknownRpcError' || msg.toLowerCase().includes('unknown rpc') || msg.toLowerCase().includes('rpc') || msg.toLowerCase().includes('fetch')) {
+        setError('Wallet session issue — your WalletConnect session may have expired or the RPC is unreachable. Disconnect and reconnect your wallet to create a fresh session.');
+        setShowReconnect(true);
       } else if (msg) {
         setError(msg);
+        setShowReconnect(false);
       } else {
         setError('Transaction failed. Please try again.');
+        setShowReconnect(false);
       }
     } finally {
       setIsBuying(false);
@@ -332,8 +338,16 @@ export default function BuyPage() {
 
                     {/* Error */}
                     {error && (
-                      <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 10, padding: '10px 14px', marginBottom: 16 }}>
-                        <span style={{ fontSize: 12, color: '#f87171' }}>{error}</span>
+                      <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 10, padding: '12px 14px', marginBottom: 16 }}>
+                        <span style={{ fontSize: 12, color: '#f87171', display: 'block', lineHeight: 1.6 }}>{error}</span>
+                        {showReconnect && (
+                          <button
+                            onClick={() => { setError(null); setShowReconnect(false); disconnect(); }}
+                            style={{ marginTop: 10, padding: '6px 14px', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer', background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171' }}
+                          >
+                            Disconnect Wallet
+                          </button>
+                        )}
                       </div>
                     )}
 
