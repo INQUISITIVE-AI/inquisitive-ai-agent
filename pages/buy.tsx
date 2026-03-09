@@ -5,7 +5,7 @@ import { useRouter } from 'next/router';
 import { useAccount, useBalance, useSendTransaction, useWriteContract, useDisconnect } from 'wagmi';
 import { parseEther, parseUnits, erc20Abi } from 'viem';
 import { mainnet } from 'wagmi/chains';
-import { INQAI_TOKEN, wagmiConfig } from '../src/config/wagmi';
+import { INQAI_TOKEN } from '../src/config/wagmi';
 import { Lock, CheckCircle2, Loader, Shield, ExternalLink, AlertTriangle, Info } from 'lucide-react';
 
 const OpenWalletButton = dynamic(() => import('../src/components/OpenWalletButton'), { ssr: false, loading: () => null });
@@ -98,38 +98,17 @@ export default function BuyPage() {
 
   const handleBuy = async () => {
     setError(null);
+    setShowReconnect(false);
     setIsBuying(true);
 
-    // Debug: Log network and connection details
-    console.log('Network details:', {
-      chainId: chain?.id,
-      chainName: chain?.name,
-      isConnected,
-      address,
-      isTestnet: chain?.testnet,
-    });
-
-    // Debug: Log WalletConnect session RPC URLs
-    try {
-      const provider = await (window as any).ethereum?.request({ method: 'eth_provider' });
-      if (provider?.session?.namespaces?.eip155) {
-        console.log('WalletConnect session RPC map:', provider.session.namespaces.eip155.rpcMap);
-        console.log('WalletConnect session chains:', provider.session.namespaces.eip155.chains);
-      }
-    } catch (e) {
-      console.log('Could not read WalletConnect session:', e);
-    }
-
-    if (usd < 10) { setError('Minimum purchase is $10'); return; }
-    
-    // Prevent purchases on testnets or simulation mode
+    if (usd < 10) { setError('Minimum purchase is $10'); setIsBuying(false); return; }
     if (chain?.id !== mainnet.id) {
-      setError(`Purchase requires Ethereum Mainnet. Current network: ${chain?.name || 'Unknown'} (Chain ID: ${chain?.id})`);
+      setError('Switch to Ethereum Mainnet in your wallet to continue.');
       setIsBuying(false);
       return;
     }
+
     if (payToken === 'BTC' || payToken === 'SOL') {
-      setIsBuying(true);
       try {
         const r = await fetch('/api/payment/create-charge', {
           method:  'POST',
@@ -145,115 +124,59 @@ export default function BuyPage() {
         setChargeStatus('pending');
         setShowManual(true);
       } catch (e: any) {
-        setError(e.message);
+        setError(e.message || 'Failed to create payment address.');
       } finally {
         setIsBuying(false);
       }
       return;
     }
-    if (chain?.id !== mainnet.id) { setError('Switch to Ethereum Mainnet to continue'); return; }
-    setIsBuying(true);
+
     try {
       let hash: `0x${string}`;
-      console.log('Processing purchase with token:', payToken, 'USD amount:', usd);
-      
       if (payToken === 'ETH') {
-        const ethAmount = parseEther((usd / ethPrice).toFixed(18));
-        console.log('ETH transfer:', { to: INQAI_TOKEN.teamWallet, value: ethAmount.toString() });
         hash = await sendTransactionAsync({
           to:    INQAI_TOKEN.teamWallet,
-          value: ethAmount,
-          gas:   21000n, // Explicit gas for ETH transfer
-        });
-      } else if (payToken === 'USDC') {
-        const usdcAddress = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48' as `0x${string}`;
-        const usdcAmount = parseUnits(usd.toFixed(6), 6);
-        console.log('USDC transfer:', { address: usdcAddress, to: INQAI_TOKEN.teamWallet, amount: usdcAmount.toString() });
-        hash = await writeContractAsync({
-          address:      usdcAddress,
-          abi:          erc20Abi,
-          functionName: 'transfer',
-          args:         [INQAI_TOKEN.teamWallet, usdcAmount],
-          gas:          50000n, // Explicit gas for ERC20 transfer
+          value: parseEther((usd / ethPrice).toFixed(18)),
+          gas:   21000n,
         });
       } else {
-        // Should not reach here due to earlier check
-        throw new Error(`Unsupported payment token: ${payToken}`);
+        // USDC
+        hash = await writeContractAsync({
+          address:      '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48' as `0x${string}`,
+          abi:          erc20Abi,
+          functionName: 'transfer',
+          args:         [INQAI_TOKEN.teamWallet, parseUnits(usd.toFixed(6), 6)],
+          gas:          65000n,
+        });
       }
-      
-      console.log('Transaction sent, hash:', hash);
       setTxHash(hash);
-      
-      // Wait for transaction confirmation
-      console.log('Waiting for transaction confirmation...');
-      const publicClient = wagmiConfig.getClient({ chainId: mainnet.id });
-      const receipt = await publicClient.waitForTransaction({ 
-        hash,
-        confirmations: 1,
-        timeout: 60000 // 60 seconds
-      });
-      
-      console.log('Transaction confirmed:', receipt);
-      
       const existing = JSON.parse(localStorage.getItem('inqai_purchases') || '[]');
       existing.push({ txHash: hash, timestamp: Date.now(), amount: parseFloat(inqaiAmt), usdAmount: usd, payToken, address, price: INQAI_TOKEN.presalePrice });
       localStorage.setItem('inqai_purchases', JSON.stringify(existing));
       setStep(3);
     } catch (e: any) {
       console.error('Purchase error:', e);
-      console.error('Error structure:', {
-        shortMessage: e.shortMessage,
-        message: e.message,
-        name: e.name,
-        code: e.code,
-        cause: e.cause,
-        details: e.details,
-        data: e.data,
-        stack: e.stack,
-        walk: e.walk ? e.walk() : 'no walk method'
-      });
-      
-      // Check for specific transaction confirmation errors
-      if (e.name === 'TransactionNotFoundError' || e.message?.includes('transaction not found')) {
-        setError('Transaction was sent but not found on network. It may still be processing - please check your wallet.');
-        setShowReconnect(false);
-      } else if (e.name === 'TransactionReceiptNotFoundError' || e.message?.includes('receipt not found')) {
-        setError('Transaction confirmed but receipt not available. Please check the transaction hash on Etherscan.');
-        setShowReconnect(false);
-      } else if (e.name === 'TimeoutError' || e.message?.includes('timeout')) {
-        setError('Transaction is taking longer than expected. It may still succeed - please check your wallet and Etherscan.');
-        setShowReconnect(false);
+      // Walk error chain for UnknownRpcError
+      let cur = e;
+      let isRpcError = false;
+      while (cur) {
+        if (cur.name === 'UnknownRpcError' || String(cur.message).toLowerCase().includes('unknown rpc')) {
+          isRpcError = true; break;
+        }
+        cur = cur.cause;
+      }
+      const msg: string = e.shortMessage || e.message || '';
+      if (msg.toLowerCase().includes('rejected') || msg.toLowerCase().includes('denied') || e.code === 4001) {
+        setError('Transaction rejected. Please try again.');
+      } else if (msg.toLowerCase().includes('insufficient')) {
+        setError('Insufficient balance to cover the amount and gas fees.');
+      } else if (isRpcError || e.name === 'UnknownRpcError') {
+        setError('Wallet session issue — disconnect and reconnect your wallet to create a fresh session.');
+        setShowReconnect(true);
+      } else if (msg) {
+        setError(msg);
       } else {
-        // Try to walk the error chain to find the real cause
-        let currentError = e;
-        let foundUnknownRpcError = false;
-        while (currentError) {
-          console.log('Checking error:', currentError.name, currentError.message);
-          if (currentError.name === 'UnknownRpcError' || (currentError.message && currentError.message.includes('unknown RPC'))) {
-            foundUnknownRpcError = true;
-            break;
-          }
-          currentError = currentError.cause;
-        }
-        
-        const msg: string = e.shortMessage || e.message || '';
-        const causeName: string = e.cause?.name || e.name || '';
-        if (msg.toLowerCase().includes('rejected') || msg.toLowerCase().includes('denied') || e.code === 4001) {
-          setError('Transaction rejected. Please try again.');
-          setShowReconnect(false);
-        } else if (msg.toLowerCase().includes('insufficient')) {
-          setError('Insufficient balance to cover the amount and gas fees.');
-          setShowReconnect(false);
-        } else if (foundUnknownRpcError || causeName === 'UnknownRpcError' || msg.toLowerCase().includes('unknown rpc') || msg.toLowerCase().includes('rpc') || msg.toLowerCase().includes('fetch')) {
-          setError('Wallet session issue — your WalletConnect session may have expired or the RPC is unreachable. Disconnect and reconnect your wallet to create a fresh session.');
-          setShowReconnect(true);
-        } else if (msg) {
-          setError(msg);
-          setShowReconnect(false);
-        } else {
-          setError('Transaction failed. Please try again.');
-          setShowReconnect(false);
-        }
+        setError('Transaction failed. Please try again.');
       }
     } finally {
       setIsBuying(false);

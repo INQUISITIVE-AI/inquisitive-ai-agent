@@ -3,13 +3,14 @@ import { WagmiProvider } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createAppKit } from '@reown/appkit/react';
 import { wagmiAdapter, wagmiConfig, WC_PROJECT_ID, appkitNetworks } from '../src/config/wagmi';
+import type { AppKitNetwork } from '@reown/appkit/networks';
 import '../styles/globals.css';
 
 if (typeof window !== 'undefined') {
   createAppKit({
     adapters:       [wagmiAdapter],
     projectId:      WC_PROJECT_ID,
-    networks:       appkitNetworks,
+    networks:       appkitNetworks as unknown as [AppKitNetwork, ...AppKitNetwork[]],
     defaultNetwork: appkitNetworks[0],
     allWallets:     'SHOW',
     metadata: {
