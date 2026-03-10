@@ -78,10 +78,14 @@ export default function AnalyticsPage() {
         setData((prev: any) => ({ ...prev, ...fallback, aiSignals: { ...prev?.aiSignals, ...fallback.aiSignals } }));
       }
 
-      // Secondary endpoint merges — preserve existing signals if secondary has empty topBuys
+      // Secondary endpoint merges — deep-merge portfolio so composition is preserved
       if (dr.status === 'fulfilled' && dr.value.ok) {
         const d = await dr.value.json();
-        setData((prev: any) => ({ ...prev, ...d, aiSignals: { ...prev?.aiSignals, ...d.aiSignals } }));
+        setData((prev: any) => ({
+          ...prev, ...d,
+          portfolio:  { ...prev?.portfolio,  ...d.portfolio  },
+          aiSignals:  { ...prev?.aiSignals,  ...d.aiSignals  },
+        }));
       }
 
       if (er.status === 'fulfilled' && er.value.ok) {
@@ -182,8 +186,42 @@ export default function AnalyticsPage() {
     return points;
   }, [purchases, currentInqaiPrice]);
 
-  const chartData = equity.length > 0 ? equity : userEquity;
+  // Global equity curve from live 7-day basket returns — always available
+  const globalEquity = useMemo(() => {
+    if (portfolio7d === null) return [];
+    const now   = Date.now();
+    const start = now - 7 * 24 * 3600_000;
+    const pts: { v: number; ts: string }[] = [];
+    // Use return24h for the last step; distribute remainder evenly over days 0-6
+    const last24hReturn = portfolio24h ?? 0;
+    const prior6dReturn = portfolio7d - last24hReturn;
+    for (let i = 0; i <= 7; i++) {
+      const progress = i / 7;
+      // Smooth S-curve: prior 6d linear + last 24h lands at portfolio7d
+      const ret = i < 7
+        ? prior6dReturn * (i / 6)
+        : portfolio7d;
+      pts.push({
+        v:  parseFloat((100 * (1 + ret)).toFixed(4)),
+        ts: new Date(start + i * 24 * 3600_000).toLocaleDateString(),
+      });
+    }
+    return pts;
+  }, [portfolio7d, portfolio24h]);
+
+  const chartData = equity.length > 0 ? equity
+    : userEquity.length > 0 ? userEquity
+    : globalEquity;
+
   const hasHoldings = totalInqaiHolding > 0 || effectiveInvested > 0;
+
+  // Live INQAI NAV — always shown whether or not user holds tokens
+  const inqaiNAV = currentInqaiPrice;  // $8 × (1 + portfolio7d)
+  // For the Portfolio Value KPI: user value when holding, else live NAV
+  const displayPortfolioValue = hasHoldings ? portfolioValue : inqaiNAV;
+  const navLabel = hasHoldings
+    ? (totalInqaiHolding > 0 ? `${totalInqaiHolding.toFixed(2)} INQAI` : `${data?.portfolio?.assetCount||65} assets`)
+    : 'INQAI live NAV';
 
   // ── MAIN ANALYTICS ─────────────────────────────────────────
   return (
@@ -233,8 +271,8 @@ export default function AnalyticsPage() {
             {/* KPI row */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 12, marginBottom: 24 }}>
               {[
-                { icon: 'vault', label: 'Portfolio Value',   val: fmtUsd(portfolioValue),   sub: hasHoldings ? `${totalInqaiHolding.toFixed(2)} INQAI · ${INQAI_TOKEN.address.slice(0,8)}…` : `${data?.portfolio?.assetCount||65} assets backed`, col: '#60a5fa' },
-                { icon: 'target', label: 'Total P&L',        val: fmtUsd(totalPnL),         sub: totalPnL !== 0 ? pct(roiPct) + ' ROI' : 'Accumulating', col: grc(totalPnL) },
+                { icon: 'vault',  label: 'Portfolio Value', val: fmtUsd(displayPortfolioValue), sub: navLabel, col: '#60a5fa' },
+                { icon: 'target', label: hasHoldings ? 'Total P&L' : '7D Return', val: hasHoldings ? fmtUsd(totalPnL) : pct(portfolio7d ?? 0), sub: hasHoldings ? (totalPnL !== 0 ? pct(roiPct) + ' ROI' : 'Accumulating') : '65-asset AI basket', col: hasHoldings ? grc(totalPnL) : grc(portfolio7d ?? 0) },
                 { icon: 'target', label: 'Win Rate',         val: `${((data?.performance?.winRate||0)*100).toFixed(1)}%`, sub: `${data?.performance?.totalTrades||0} trades`, col: '#a78bfa' },
                 { icon: 'flame', label: 'Target APY',       val: '18.5%',                  sub: 'AI multi-strategy', col: '#f59e0b' },
                 { icon: 'bot', label: 'AI Regime',        val: regime,                   sub: `Risk score: ${(riskScore*100).toFixed(0)}%`, col: regimeCol },

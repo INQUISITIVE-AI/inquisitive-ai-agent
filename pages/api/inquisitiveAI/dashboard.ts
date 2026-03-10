@@ -152,6 +152,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         assetCount: ASSET_REGISTRY.length,
         return24h,
         return7d,
+        composition: ASSET_REGISTRY
+          .filter(meta => (PORTFOLIO_WEIGHTS[meta.symbol] ?? 0) > 0)
+          .map(meta => {
+            const inp    = inputMap.get(meta.symbol);
+            const signal = signals.find(s => s.symbol === meta.symbol);
+            return {
+              symbol:     meta.symbol,
+              name:       meta.name,
+              category:   meta.category,
+              weight:     PORTFOLIO_WEIGHTS[meta.symbol] ?? 0,
+              priceUsd:   inp?.priceUsd  ?? 0,
+              change24h:  inp?.change24h ?? 0,
+              change7d:   inp?.change7d  ?? 0,
+              action:     signal?.action     || 'HOLD',
+              confidence: signal?.finalScore || 0,
+            };
+          })
+          .sort((a, b) => b.weight - a.weight),
       },
       macro: {
         fearGreed: fg,
