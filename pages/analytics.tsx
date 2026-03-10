@@ -2,13 +2,24 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';
-import { useAccount, useReadContract } from 'wagmi';
+import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { erc20Abi } from 'viem';
+
 import {
   Brain, DollarSign, Target, Flame, Bot, TrendingUp, TrendingDown,
   Scale, Wallet, Layers, Activity, BarChart3, Zap, Shield, AlertTriangle,
 } from 'lucide-react';
 import { INQAI_TOKEN } from '../src/config/wagmi';
+
+const VAULT_ADDR = '0x506F72eABc90793ae8aC788E650bC9407ED853Fa' as `0x${string}`;
+const VAULT_ABI = [
+  { name:'checkUpkeep',        type:'function', stateMutability:'view',      inputs:[{name:'',type:'bytes'}],        outputs:[{name:'upkeepNeeded',type:'bool'},{name:'performData',type:'bytes'}] },
+  { name:'performUpkeep',      type:'function', stateMutability:'nonpayable', inputs:[{name:'performData',type:'bytes'}], outputs:[] },
+  { name:'getPortfolioLength', type:'function', stateMutability:'view',      inputs:[],                             outputs:[{name:'',type:'uint256'}] },
+  { name:'getETHBalance',      type:'function', stateMutability:'view',      inputs:[],                             outputs:[{name:'',type:'uint256'}] },
+  { name:'automationEnabled',  type:'function', stateMutability:'view',      inputs:[],                             outputs:[{name:'',type:'bool'}] },
+  { name:'cycleCount',         type:'function', stateMutability:'view',      inputs:[],                             outputs:[{name:'',type:'uint256'}] },
+] as const;
 
 const WalletButton   = dynamic(() => import('../src/components/WalletButton'),  { ssr: false });
 const PortfolioChart = dynamic(() => import('../src/components/charts/LiveCharts').then(m => m.PortfolioChart), { ssr: false });
@@ -51,6 +62,37 @@ export default function AnalyticsPage() {
   const [tab,       setTab]      = useState<'portfolio'|'ai'|'positions'|'execute'|'fees'>('portfolio');
   const [posFilter, setPosFilter]= useState<string>('all');
   const [purchases, setPurchases]= useState<any[]>([]);
+
+  // ── Vault on-chain state (live reads, no private key) ─────────────────────
+  const { data: checkUpkeepData } = useReadContract({
+    address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'checkUpkeep',
+    args: ['0x'], chainId: 1, query: { refetchInterval: 15000 },
+  });
+  const { data: vaultPortfolioLen } = useReadContract({
+    address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'getPortfolioLength',
+    chainId: 1, query: { refetchInterval: 30000 },
+  });
+  const { data: vaultEthBal } = useReadContract({
+    address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'getETHBalance',
+    chainId: 1, query: { refetchInterval: 15000 },
+  });
+  const { data: automationEnabledData } = useReadContract({
+    address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'automationEnabled',
+    chainId: 1, query: { refetchInterval: 30000 },
+  });
+  const { data: vaultCycleCount } = useReadContract({
+    address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'cycleCount',
+    chainId: 1, query: { refetchInterval: 15000 },
+  });
+  const upkeepNeeded    = (checkUpkeepData as any)?.[0] === true;
+  const vaultEthOnChain = vaultEthBal ? Number(vaultEthBal) / 1e18 : 0;
+  const portfolioOnChain= vaultPortfolioLen ? Number(vaultPortfolioLen) : 0;
+  const automationOn    = automationEnabledData === true;
+  const cyclesOnChain   = vaultCycleCount ? Number(vaultCycleCount) : 0;
+
+  // ── performUpkeep write — any connected wallet can trigger execution ──────
+  const { writeContract: triggerExecution, data: triggerData, isPending: triggerPending, error: triggerError } = useWriteContract();
+  const { isLoading: triggerConfirming, isSuccess: triggerSuccess } = useWaitForTransactionReceipt({ hash: triggerData });
 
   // On-chain INQAI balance — source of truth once tokens are delivered
   const { data: onChainRaw } = useReadContract({
@@ -564,6 +606,60 @@ export default function AnalyticsPage() {
               return (
               <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
 
+                {/* ── COMMUNITY TRIGGER EXECUTION PANEL ── */}
+                <div style={{ background: upkeepNeeded ? 'rgba(16,185,129,0.06)' : 'rgba(13,13,32,0.9)', border:`1px solid ${upkeepNeeded?'rgba(16,185,129,0.3)':'rgba(255,255,255,0.07)'}`, borderRadius:20, padding:'24px', backdropFilter:'blur(12px)' }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:14, flexWrap:'wrap' }}>
+                    <div style={{ flex:1, minWidth:240 }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:6 }}>
+                        <Zap size={18} color={upkeepNeeded ? '#10b981' : '#6366f1'} />
+                        <h3 style={{ fontSize:15, fontWeight:800, color:'#fff', margin:0 }}>
+                          Community Execution — Anyone Can Trigger
+                        </h3>
+                        <span style={{ fontSize:9, padding:'1px 6px', borderRadius:100, background:'rgba(16,185,129,0.1)', color:'#34d399', border:'1px solid rgba(16,185,129,0.25)', fontWeight:700 }}>ZERO PRIVATE KEY</span>
+                      </div>
+                      <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)', lineHeight:1.7 }}>
+                        Connect any wallet → click Trigger → pay ~$0.50 gas. The vault deploys ETH across all 65 assets.
+                        This is how YFI, Compound, and Aave bootstrapped. <strong style={{color:'rgba(255,255,255,0.7)'}}>No private key in code. Ever.</strong>
+                      </div>
+                    </div>
+                    <div style={{ display:'flex', flexDirection:'column', gap:8, alignItems:'flex-end', minWidth:180 }}>
+                      {/* Live vault stats */}
+                      <div style={{ display:'flex', gap:10 }}>
+                        {[
+                          { l:'Vault ETH', v: vaultEthOnChain.toFixed(4), c:'#60a5fa' },
+                          { l:'Portfolio', v: portfolioOnChain ? `${portfolioOnChain} assets` : 'Not set', c: portfolioOnChain ? '#10b981' : '#f59e0b' },
+                          { l:'Cycles',    v: cyclesOnChain.toString(), c:'#a78bfa' },
+                          { l:'Upkeep',    v: upkeepNeeded ? 'NEEDED' : 'IDLE', c: upkeepNeeded ? '#10b981' : 'rgba(255,255,255,0.3)' },
+                        ].map(s => (
+                          <div key={s.l} style={{ textAlign:'center' }}>
+                            <div style={{ fontSize:9, color:'rgba(255,255,255,0.3)', marginBottom:1 }}>{s.l}</div>
+                            <div style={{ fontSize:11, fontWeight:800, color:s.c, fontFamily:'monospace' }}>{s.v}</div>
+                          </div>
+                        ))}
+                      </div>
+                      {/* Trigger button */}
+                      {address ? (
+                        <button
+                          disabled={!upkeepNeeded || triggerPending || triggerConfirming}
+                          onClick={() => triggerExecution({ address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'performUpkeep', args: ['0x'] })}
+                          style={{ padding:'11px 22px', borderRadius:12, fontSize:13, fontWeight:800, cursor: (!upkeepNeeded||triggerPending||triggerConfirming) ? 'not-allowed' : 'pointer', border:'none', color:'#fff', background: triggerSuccess ? 'linear-gradient(135deg,#10b981,#059669)' : upkeepNeeded ? 'linear-gradient(135deg,#6366f1,#4f46e5)' : 'rgba(255,255,255,0.07)', opacity: (!upkeepNeeded&&!triggerSuccess) ? 0.5 : 1, transition:'all 0.2s', minWidth:160 }}>
+                          {triggerSuccess ? '✓ Executed!' : triggerConfirming ? 'Confirming…' : triggerPending ? 'Signing…' : upkeepNeeded ? '⚡ Trigger Execution' : 'Vault Idle'}
+                        </button>
+                      ) : (
+                        <div style={{ fontSize:11, color:'rgba(255,255,255,0.35)', textAlign:'center', padding:'8px 16px', borderRadius:10, border:'1px solid rgba(255,255,255,0.1)' }}>
+                          Connect wallet to trigger
+                        </div>
+                      )}
+                      {triggerError && (
+                        <div style={{ fontSize:10, color:'#f87171', maxWidth:180, textAlign:'right' }}>{(triggerError as any).shortMessage || triggerError.message}</div>
+                      )}
+                      {triggerData && (
+                        <a href={`https://etherscan.io/tx/${triggerData}`} target="_blank" rel="noopener noreferrer" style={{ fontSize:10, color:'#60a5fa', textDecoration:'none' }}>View tx ↗</a>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
                 {/* System status header */}
                 <div style={{ background: isLive?'rgba(16,185,129,0.06)':'rgba(13,13,32,0.85)', border:`1px solid ${rColor}30`, borderRadius:20, padding:'24px', backdropFilter:'blur(12px)' }}>
                   <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:18 }}>
@@ -585,10 +681,10 @@ export default function AnalyticsPage() {
                   </div>
                   <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12 }}>
                     {[
-                      { l:'Vault ETH',      v:(ss?.vaultETH??0).toFixed(4)+' ETH',       c:'#60a5fa' },
-                      { l:'Portfolio',      v:ss?.portfolioLength ? ss.portfolioLength+' assets' : 'Not set',  c: ss?.portfolioLength ? '#10b981':'#f59e0b' },
-                      { l:'Automation',     v:ss?.automationActive ? 'ACTIVE' : 'DISABLED',                    c: ss?.automationActive ? '#10b981':'#ef4444' },
-                      { l:'Cycles run',     v:(ss?.cycleCount??0).toString(),             c:'#a78bfa' },
+                      { l:'Vault ETH',      v: vaultEthOnChain.toFixed(4)+' ETH',                                                         c:'#60a5fa' },
+                      { l:'Portfolio',      v: portfolioOnChain ? portfolioOnChain+' / 22 tokens' : (ss?.portfolioLength ? ss.portfolioLength+' assets' : 'Not set'), c: portfolioOnChain ? '#10b981':'#f59e0b' },
+                      { l:'Automation',     v: automationOn ? 'ACTIVE' : (ss?.automationActive ? 'ACTIVE' : 'DISABLED'),                   c: (automationOn||ss?.automationActive) ? '#10b981':'#ef4444' },
+                      { l:'Cycles run',     v: (cyclesOnChain || ss?.cycleCount || 0).toString(),                                         c:'#a78bfa' },
                     ].map(s => (
                       <div key={s.l} style={{ background:'rgba(255,255,255,0.04)', borderRadius:12, padding:'12px' }}>
                         <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)', marginBottom:3 }}>{s.l}</div>

@@ -50,22 +50,96 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const executorKey = process.env.EXECUTOR_PRIVATE_KEY;
 
-  // ── No executor key: return setup instructions ────────────────────────────
+  // ── No executor key: try Gelato callWithSyncFee (keyless relay) ─────────
+  // Gelato relays performUpkeep() and deducts its fee from vault ETH.
+  // No API key required. Works as long as vault has ETH to pay relay fee.
   if (!executorKey) {
+    // First check if upkeep is needed via read-only RPC
+    let provider: ethers.JsonRpcProvider | null = null;
+    for (const url of RPC_URLS) {
+      try {
+        const p = new ethers.JsonRpcProvider(url);
+        await p.getBlockNumber();
+        provider = p;
+        break;
+      } catch {}
+    }
+    if (!provider) {
+      return res.status(200).json({ status: 'RPC_UNAVAILABLE', autonomous: false, timestamp: new Date().toISOString() });
+    }
+
+    const readVault = new ethers.Contract(VAULT_ADDR, VAULT_ABI, provider);
+    const [upkeepNeeded, ethBalRaw, portfolioLen] = await Promise.all([
+      readVault.checkUpkeep('0x').then(([needed]: [boolean]) => needed).catch(() => false),
+      provider.getBalance(VAULT_ADDR),
+      readVault.getPortfolioLength().catch(() => 0n),
+    ]);
+
+    const vaultETH = parseFloat(ethers.formatEther(ethBalRaw));
+
+    // No portfolio set yet
+    if (Number(portfolioLen) === 0) {
+      return res.status(200).json({
+        status: 'PORTFOLIO_NOT_SET', autonomous: false,
+        message: 'Run: node scripts/generate-portfolio-calldata.js → Etherscan Write → setPortfolio()',
+        vaultETH, timestamp: new Date().toISOString(),
+      });
+    }
+
+    // No upkeep needed
+    if (!upkeepNeeded) {
+      return res.status(200).json({
+        status: 'IDLE', autonomous: true,
+        reason: vaultETH < 0.005 ? 'Vault ETH below 0.005 ETH threshold' : 'Cooldown active',
+        vaultETH, assetCount: Number(portfolioLen), timestamp: new Date().toISOString(),
+      });
+    }
+
+    // Try Gelato callWithSyncFee — no API key, fee deducted from vault ETH
+    try {
+      const performData = readVault.interface.encodeFunctionData('performUpkeep', ['0x']);
+      const gelatoRes = await fetch('https://relay.gelato.digital/relays/v2/call-with-sync-fee', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chainId:      1,
+          target:       VAULT_ADDR,
+          data:         performData,
+          feeToken:     '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE', // ETH
+          isRelayContext: false,
+        }),
+        signal: AbortSignal.timeout(20000),
+      });
+
+      if (gelatoRes.ok) {
+        const gelatoData: any = await gelatoRes.json();
+        if (gelatoData.taskId) {
+          return res.status(200).json({
+            status:     'GELATO_RELAYED',
+            autonomous: true,
+            method:     'gelato-callWithSyncFee',
+            taskId:     gelatoData.taskId,
+            gelato:     `https://relay.gelato.digital/tasks/status/${gelatoData.taskId}`,
+            vaultETH,   assetCount: Number(portfolioLen),
+            message:    'Gelato is relaying performUpkeep() — fee deducted from vault ETH. No API key used.',
+            timestamp:  new Date().toISOString(),
+          });
+        }
+      }
+    } catch (gelatoErr: any) {
+      console.warn('Gelato relay failed:', gelatoErr.message);
+    }
+
+    // Gelato failed — vault needs Chainlink or community trigger
     return res.status(200).json({
-      status:      'SETUP_REQUIRED',
-      autonomous:  false,
-      message:     'Add EXECUTOR_PRIVATE_KEY to Vercel environment variables to activate autonomous execution.',
-      setup: {
-        step1: 'Generate executor wallet: node -e "const {Wallet}=require(\'ethers\'); const w=Wallet.createRandom(); console.log(\'Address:\',w.address,\'\\nKey:\',w.privateKey);"',
-        step2: 'Add EXECUTOR_PRIVATE_KEY=0x... to Vercel > Project Settings > Environment Variables',
-        step3: 'Send 0.01 ETH to the executor address for gas',
-        step4: 'Call vault.setAIExecutor(executorAddress) once from your deployer wallet via Etherscan Write',
-        step5: 'Vercel Cron will call this endpoint every 60 seconds automatically',
-        note:  'The executor key is stored ONLY in Vercel\'s encrypted env vars — never in code or git',
-        security: 'Executor wallet can ONLY call performUpkeep — cannot withdraw funds from vault',
-      },
-      timestamp: new Date().toISOString(),
+      status:     'AWAITING_KEEPER',
+      autonomous: false,
+      message:    'Upkeep needed. Options: (1) Register Chainlink Automation at automation.chain.link, (2) Community clicks Trigger Execution on analytics page, (3) Add EXECUTOR_PRIVATE_KEY to Vercel env vars.',
+      vaultETH,  assetCount: Number(portfolioLen),
+      upkeepNeeded: true,
+      community:  'Anyone can call performUpkeep() from the analytics page — costs ~$0.50 gas, no private key needed',
+      chainlink:  'automation.chain.link → New Upkeep → Custom Logic → vault address → fund 1 LINK (~$15/month)',
+      timestamp:  new Date().toISOString(),
     });
   }
 
