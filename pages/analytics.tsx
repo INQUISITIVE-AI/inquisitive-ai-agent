@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';
-import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useDeployContract } from 'wagmi';
+import { useAccount, useReadContract } from 'wagmi';
 import { erc20Abi } from 'viem';
 
 import {
@@ -10,35 +10,7 @@ import {
   Scale, Wallet, Layers, Activity, BarChart3, Zap, Shield, AlertTriangle,
 } from 'lucide-react';
 import { INQAI_TOKEN } from '../src/config/wagmi';
-import { VAULT_BYTECODE, VAULT_ABI as VAULT_DEPLOY_ABI, INQAI_TOKEN_ADDR } from '../src/config/vaultArtifact';
 
-// Phase 1 portfolio arrays — 22 ETH-native assets, direct weights re-normalized to 10000 bps
-const PORT_TOKENS: `0x${string}`[] = [
-  '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599', // WBTC
-  '0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0', // wstETH
-  '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', // USDC
-  '0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9', // AAVE
-  '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984', // UNI
-  '0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32', // LDO
-  '0xB50721BCf8d664c30412Cfbc6cf7a15145234ad1', // ARB
-  '0x45804880De22913dAFE09f4980848ECE6EcbAf78', // PAXG
-  '0x514910771AF9Ca656af840dff83E8264EcF986CA', // LINK
-  '0x57e114B691Db790C35207b2e685D4A43181e6061', // ENA
-  '0x455e53CBB86018Ac2B8092FdCd39d8444aFFC3F6', // POL
-  '0xaea46A60368A7bD060eec7DF8CBa43b7EF41Ad85', // FET
-  '0x6De037ef9aD2725EB40118Bb1702EBb27e4Aeb24', // RNDR
-  '0xe28b3B32B6c345A34Ff64674606124Dd5Aceca30', // INJ
-  '0xfAbA6f8e4a5E8Ab82F62fe7C39859FA577269BE3', // ONDO
-  '0xc944E90C64B2c07662A292be6244BDf05Cda44a7', // GRT
-  '0x56072C95FAA701256059aa122697B133aDEd9279', // SKY
-  '0xCa14007Eff0dB1f8135f4C25B34De49AB0d42766', // STRK
-  '0x4a220E6096B25EADb88358cb44068A3248254675', // QNT
-  '0x6985884C4392D348587B19cb9eAAf157F13271cD', // ZRO
-  '0x3506424F91fD33084466F402d5D97f05F8e3b4AF', // CHZ
-  '0x4e15361FD6b4BB609Fa63C81A2be19d873717870', // ACH
-];
-const PORT_WEIGHTS = [3539n,2359n,589n,393n,393n,294n,294n,294n,196n,196n,196n,196n,196n,196n,196n,98n,98n,98n,49n,49n,49n,32n];
-const PORT_FEES    = [3000,500,500,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000];
 
 const VAULT_ADDR = '0x506F72eABc90793ae8aC788E650bC9407ED853Fa' as `0x${string}`;
 const VAULT_ABI = [
@@ -119,25 +91,7 @@ export default function AnalyticsPage() {
   const cyclesOnChain   = vaultCycleCount ? Number(vaultCycleCount) : 0;
 
   
-  // ── Deploy vault from browser — MetaMask signs, no private key in any file ─
-  const { deployContract, data: deployHash, isPending: deployPending, error: deployError } = useDeployContract();
-  const { data: deployReceipt, isLoading: deployConfirming, isSuccess: deployDone } = useWaitForTransactionReceipt({ hash: deployHash });
-  const deployedVaultAddr = deployReceipt?.contractAddress;
-  const [savedVaultAddr, setSavedVaultAddr] = useState<`0x${string}` | null>(null);
-  const activeVault = (savedVaultAddr || deployedVaultAddr || VAULT_ADDR) as `0x${string}`;
-
-  // setPortfolio — call after vault deployed
-  const { writeContract: callSetPortfolio, data: portfolioHash, isPending: portfolioPending, error: portfolioError } = useWriteContract();
-  const { isLoading: portfolioConfirming, isSuccess: portfolioDone } = useWaitForTransactionReceipt({ hash: portfolioHash });
-
-  // setAutomationEnabled — call after setPortfolio
-  const { writeContract: callSetAutomation, data: autoHash, isPending: autoPending, error: autoError } = useWriteContract();
-  const { isLoading: autoConfirming, isSuccess: autoDone } = useWaitForTransactionReceipt({ hash: autoHash });
-
-  // Persist newly deployed vault address
-  useEffect(() => {
-    if (deployedVaultAddr) setSavedVaultAddr(deployedVaultAddr);
-  }, [deployedVaultAddr]);
+  const activeVault = VAULT_ADDR;
 
   // On-chain INQAI balance — source of truth once tokens are delivered
   const { data: onChainRaw } = useReadContract({
@@ -642,109 +596,11 @@ export default function AnalyticsPage() {
               const rState = ss?.readiness    ?? 'NOT_DEPLOYED';
               const isLive = rState === 'FULLY_OPERATIONAL';
               const rColor = isLive ? '#10b981' : rPct >= 60 ? '#f59e0b' : '#ef4444';
-              const step1Done = portfolioDone || (portfolioOnChain > 0);
-              const step2Done = autoDone || automationOn;
-              const step3Done = vaultEthOnChain > 0.005;
               return (
               <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
 
                 
-                {/* ── DEPLOY + CONFIGURE VAULT — browser-native, MetaMask only ── */}
-                <div style={{ background:'rgba(13,13,32,0.92)', border:'1px solid rgba(124,58,237,0.3)', borderRadius:20, padding:'24px', backdropFilter:'blur(12px)' }}>
-                  <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:18 }}>
-                    <Zap size={18} color="#a78bfa" />
-                    <h3 style={{ fontSize:15, fontWeight:800, color:'#fff', margin:0 }}>Vault Deployment — One Click, MetaMask Only</h3>
-                    <span style={{ marginLeft:'auto', fontSize:9, padding:'2px 8px', borderRadius:100, background:'rgba(251,191,36,0.12)', color:'#fbbf24', border:'1px solid rgba(251,191,36,0.3)', fontWeight:700 }}>DEPLOYER ONLY</span>
-                    <span style={{ fontSize:9, padding:'2px 8px', borderRadius:100, background:'rgba(16,185,129,0.1)', color:'#34d399', border:'1px solid rgba(16,185,129,0.3)', fontWeight:700 }}>ZERO PRIVATE KEY</span>
-                  </div>
-                  <div style={{ background:'rgba(251,191,36,0.06)', border:'1px solid rgba(251,191,36,0.18)', borderRadius:10, padding:'10px 14px', marginBottom:16, fontSize:11, color:'rgba(251,191,36,0.8)', lineHeight:1.7 }}>
-                    ⚠️ <strong>This section is for the deployer wallet only (0x4e7d…) — one-time setup.</strong> Token holders do not need to do anything. Once deployed + Chainlink registered, the AI runs autonomously forever.
-                  </div>
-
-                  {/* Step 1: Deploy */}
-                  <div style={{ display:'flex', gap:12, alignItems:'center', padding:'14px', background:'rgba(255,255,255,0.03)', borderRadius:14, marginBottom:10, border:`1px solid ${deployDone||portfolioOnChain>0?'rgba(16,185,129,0.25)':'rgba(255,255,255,0.07)'}` }}>
-                    <div style={{ width:28, height:28, borderRadius:'50%', background: deployDone||portfolioOnChain>0 ? 'rgba(16,185,129,0.15)':'rgba(124,58,237,0.12)', border:`1px solid ${deployDone||portfolioOnChain>0?'rgba(16,185,129,0.4)':'rgba(124,58,237,0.3)'}`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                      <span style={{ fontSize:12, fontWeight:800, color: deployDone||portfolioOnChain>0 ? '#10b981':'#a78bfa' }}>{deployDone||portfolioOnChain>0?'✓':'1'}</span>
-                    </div>
-                    <div style={{ flex:1 }}>
-                      <div style={{ fontSize:13, fontWeight:700, color: deployDone||portfolioOnChain>0 ? '#34d399':'#fff', marginBottom:2 }}>Deploy INQAI Vault Contract</div>
-                      <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)', fontFamily:'monospace' }}>
-                        {deployedVaultAddr ? `Deployed: ${deployedVaultAddr.slice(0,12)}…${deployedVaultAddr.slice(-6)}` : portfolioOnChain>0 ? `Active: ${VAULT_ADDR.slice(0,12)}…${VAULT_ADDR.slice(-6)}` : 'InquisitiveVaultUpdated.sol · Uniswap V3 + Aave V3 + Lido + deBridge DLN'}
-                      </div>
-                      {deployError && <div style={{ fontSize:10, color:'#f87171', marginTop:2 }}>{(deployError as any).shortMessage || String(deployError).slice(0,80)}</div>}
-                    </div>
-                    {!deployDone && portfolioOnChain === 0 && (
-                      address ? (
-                        <button
-                          disabled={deployPending || deployConfirming}
-                          onClick={() => deployContract({ abi: VAULT_DEPLOY_ABI, bytecode: VAULT_BYTECODE, args: [INQAI_TOKEN_ADDR] })}
-                          style={{ padding:'9px 18px', borderRadius:10, fontSize:12, fontWeight:800, cursor: deployPending||deployConfirming ? 'not-allowed':'pointer', border:'none', color:'#fff', background: deployPending||deployConfirming ? 'rgba(124,58,237,0.4)':'linear-gradient(135deg,#7c3aed,#4f46e5)', whiteSpace:'nowrap' }}>
-                          {deployConfirming ? 'Confirming…' : deployPending ? 'Sign in MetaMask…' : '⚡ Deploy Vault'}
-                        </button>
-                      ) : <span style={{ fontSize:11, color:'rgba(255,255,255,0.3)' }}>Connect wallet first</span>
-                    )}
-                    {deployHash && !deployDone && <a href={`https://etherscan.io/tx/${deployHash}`} target="_blank" rel="noopener noreferrer" style={{ fontSize:10, color:'#60a5fa', textDecoration:'none', whiteSpace:'nowrap' }}>Tx ↗</a>}
-                  </div>
-
-                  {/* Step 2: setPortfolio */}
-                  <div style={{ display:'flex', gap:12, alignItems:'center', padding:'14px', background:'rgba(255,255,255,0.03)', borderRadius:14, marginBottom:10, border:`1px solid ${step1Done?'rgba(16,185,129,0.25)':'rgba(255,255,255,0.07)'}`, opacity: deployDone||portfolioOnChain>0 ? 1:0.45 }}>
-                    <div style={{ width:28, height:28, borderRadius:'50%', background: step1Done ? 'rgba(16,185,129,0.15)':'rgba(124,58,237,0.12)', border:`1px solid ${step1Done?'rgba(16,185,129,0.4)':'rgba(124,58,237,0.3)'}`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                      <span style={{ fontSize:12, fontWeight:800, color: step1Done ? '#10b981':'#a78bfa' }}>{step1Done?'✓':'2'}</span>
-                    </div>
-                    <div style={{ flex:1 }}>
-                      <div style={{ fontSize:13, fontWeight:700, color: step1Done ? '#34d399':'#fff', marginBottom:2 }}>Configure 65-Asset Portfolio</div>
-                      <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)' }}>Registers 22 ETH-native token addresses on-chain (Uniswap V3) + enables deBridge DLN allocations for 43 cross-chain assets. All 65 assets covered.</div>
-                      {portfolioError && <div style={{ fontSize:10, color:'#f87171', marginTop:2 }}>{(portfolioError as any).shortMessage || String(portfolioError).slice(0,80)}</div>}
-                    </div>
-                    {!step1Done && (deployDone||portfolioOnChain>0) && (
-                      address ? (
-                        <button
-                          disabled={portfolioPending || portfolioConfirming}
-                          onClick={() => callSetPortfolio({ address: activeVault, abi: VAULT_DEPLOY_ABI, functionName: 'setPortfolio', args: [PORT_TOKENS, PORT_WEIGHTS, PORT_FEES] })}
-                          style={{ padding:'9px 18px', borderRadius:10, fontSize:12, fontWeight:800, cursor: portfolioPending||portfolioConfirming ? 'not-allowed':'pointer', border:'none', color:'#fff', background: portfolioPending||portfolioConfirming ? 'rgba(124,58,237,0.4)':'linear-gradient(135deg,#7c3aed,#4f46e5)', whiteSpace:'nowrap' }}>
-                          {portfolioConfirming ? 'Confirming…' : portfolioPending ? 'Sign in MetaMask…' : '📊 Set Portfolio'}
-                        </button>
-                      ) : <span style={{ fontSize:11, color:'rgba(255,255,255,0.3)' }}>Connect wallet</span>
-                    )}
-                    {portfolioHash && <a href={`https://etherscan.io/tx/${portfolioHash}`} target="_blank" rel="noopener noreferrer" style={{ fontSize:10, color:'#60a5fa', textDecoration:'none', whiteSpace:'nowrap' }}>Tx ↗</a>}
-                  </div>
-
-                  {/* Step 3: setAutomationEnabled */}
-                  <div style={{ display:'flex', gap:12, alignItems:'center', padding:'14px', background:'rgba(255,255,255,0.03)', borderRadius:14, marginBottom:10, border:`1px solid ${step2Done?'rgba(16,185,129,0.25)':'rgba(255,255,255,0.07)'}`, opacity: step1Done ? 1:0.45 }}>
-                    <div style={{ width:28, height:28, borderRadius:'50%', background: step2Done ? 'rgba(16,185,129,0.15)':'rgba(124,58,237,0.12)', border:`1px solid ${step2Done?'rgba(16,185,129,0.4)':'rgba(124,58,237,0.3)'}`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                      <span style={{ fontSize:12, fontWeight:800, color: step2Done ? '#10b981':'#a78bfa' }}>{step2Done?'✓':'3'}</span>
-                    </div>
-                    <div style={{ flex:1 }}>
-                      <div style={{ fontSize:13, fontWeight:700, color: step2Done ? '#34d399':'#fff', marginBottom:2 }}>Enable Autonomous Execution</div>
-                      <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)' }}>Chainlink Automation triggers performUpkeep() every 60s. Register at automation.chain.link → fund 1 LINK (~$15). Runs forever.</div>
-                      {autoError && <div style={{ fontSize:10, color:'#f87171', marginTop:2 }}>{(autoError as any).shortMessage || String(autoError).slice(0,80)}</div>}
-                    </div>
-                    {!step2Done && step1Done && (
-                      address ? (
-                        <button
-                          disabled={autoPending || autoConfirming}
-                          onClick={() => callSetAutomation({ address: activeVault, abi: VAULT_DEPLOY_ABI, functionName: 'setAutomationEnabled', args: [true] })}
-                          style={{ padding:'9px 18px', borderRadius:10, fontSize:12, fontWeight:800, cursor: autoPending||autoConfirming ? 'not-allowed':'pointer', border:'none', color:'#fff', background: autoPending||autoConfirming ? 'rgba(124,58,237,0.4)':'linear-gradient(135deg,#7c3aed,#4f46e5)', whiteSpace:'nowrap' }}>
-                          {autoConfirming ? 'Confirming…' : autoPending ? 'Sign in MetaMask…' : '🤖 Enable Automation'}
-                        </button>
-                      ) : <span style={{ fontSize:11, color:'rgba(255,255,255,0.3)' }}>Connect wallet</span>
-                    )}
-                    {autoHash && <a href={`https://etherscan.io/tx/${autoHash}`} target="_blank" rel="noopener noreferrer" style={{ fontSize:10, color:'#60a5fa', textDecoration:'none', whiteSpace:'nowrap' }}>Tx ↗</a>}
-                  </div>
-
-                  {/* Step 4: Fund vault */}
-                  <div style={{ display:'flex', gap:12, alignItems:'center', padding:'14px', background:'rgba(255,255,255,0.03)', borderRadius:14, border:`1px solid ${step3Done?'rgba(16,185,129,0.25)':'rgba(255,255,255,0.07)'}`, opacity: step2Done ? 1:0.45 }}>
-                    <div style={{ width:28, height:28, borderRadius:'50%', background: step3Done ? 'rgba(16,185,129,0.15)':'rgba(124,58,237,0.12)', border:`1px solid ${step3Done?'rgba(16,185,129,0.4)':'rgba(124,58,237,0.3)'}`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                      <span style={{ fontSize:12, fontWeight:800, color: step3Done ? '#10b981':'#a78bfa' }}>{step3Done?'✓':'4'}</span>
-                    </div>
-                    <div style={{ flex:1 }}>
-                      <div style={{ fontSize:13, fontWeight:700, color: step3Done ? '#34d399':'#fff', marginBottom:2 }}>Community Funds the Vault — AI Does the Rest</div>
-                      <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)' }}>{step3Done ? `${vaultEthOnChain.toFixed(4)} ETH in vault — Chainlink triggers autonomous allocation to all 65 assets every 60s.` : 'Token holders buy INQAI. ETH flows into vault. Chainlink Automation deploys to all 65 assets within 60s. Zero manual action by anyone.'}</div>
-                    </div>
-                    {step3Done && <span style={{ fontSize:10, padding:'3px 8px', borderRadius:100, background:'rgba(16,185,129,0.1)', color:'#34d399', border:'1px solid rgba(16,185,129,0.3)', fontWeight:700, whiteSpace:'nowrap' }}>LIVE</span>}
-                  </div>
-                </div>
-
+                
                 {/* System status header */}
                 <div style={{ background: isLive?'rgba(16,185,129,0.06)':'rgba(13,13,32,0.85)', border:`1px solid ${rColor}30`, borderRadius:20, padding:'24px', backdropFilter:'blur(12px)' }}>
                   <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:18 }}>
