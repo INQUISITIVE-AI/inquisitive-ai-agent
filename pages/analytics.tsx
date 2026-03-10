@@ -793,14 +793,14 @@ export default function AnalyticsPage() {
                         Full 65-Asset Allocation — Live AI Signals
                       </h3>
                       <span style={{ marginLeft:'auto', fontSize:10, color:'rgba(255,255,255,0.35)' }}>
-                        {monitor.allocation.plan.length} assets · {monitor?.architecture?.directOnChain ?? 22} on-chain · {monitor?.architecture?.proxied ?? 43} proxied
+                        {monitor.allocation.plan.length} assets · {monitor.allocation.plan.filter((t:any) => t.executionMode === 'ETH-DIRECT').length} ETH-direct · {monitor.allocation.plan.filter((t:any) => t.executionMode === 'BRIDGE').length} bridge
                       </span>
                     </div>
                     {/* Architecture summary chips */}
                     <div style={{ display:'flex', gap:8, marginBottom:14, flexWrap:'wrap' }}>
                       {[
-                        { label:'ON-CHAIN DIRECT',  n: monitor?.architecture?.directOnChain ?? 22, c:'#10b981', bg:'rgba(16,185,129,0.08)', border:'rgba(16,185,129,0.25)', desc:'Uniswap V3 ERC-20' },
-                        { label:'PROXIED',           n: monitor?.architecture?.proxied ?? 43,       c:'#f59e0b', bg:'rgba(251,191,36,0.08)',  border:'rgba(251,191,36,0.25)',  desc:'Cross-chain → ETH proxy' },
+                        { label:'ETH-DIRECT', n: monitor?.architecture?.ethDirect ?? 22, c:'#10b981', bg:'rgba(16,185,129,0.08)', border:'rgba(16,185,129,0.25)', desc:'Uniswap V3 + Lido + Aave' },
+                        { label:'BRIDGE',     n: monitor?.architecture?.bridge ?? 43,    c:'#6366f1', bg:'rgba(99,102,241,0.08)', border:'rgba(99,102,241,0.25)', desc:'deBridge DLN → native chain DEX' },
                       ].map(chip => (
                         <div key={chip.label} style={{ display:'flex', alignItems:'center', gap:6, padding:'4px 10px', borderRadius:100, background:chip.bg, border:`1px solid ${chip.border}` }}>
                           <span style={{ fontSize:10, fontWeight:800, color:chip.c }}>{chip.n} {chip.label}</span>
@@ -816,25 +816,24 @@ export default function AnalyticsPage() {
                       <span style={{textAlign:'right'}}>Wt%</span>
                       <span style={{textAlign:'right'}}>Signal</span>
                       <span style={{textAlign:'right'}}>Score</span>
-                      <span style={{textAlign:'right'}}>Exec via</span>
+                      <span style={{textAlign:'right'}}>Chain</span>
                     </div>
                     {monitor.allocation.plan.map((t: any) => {
-                      const isDirect = t.executionMode === 'DIRECT';
+                      const isEthDirect = t.executionMode === 'ETH-DIRECT';
+                      const chainLabel  = (t.nativeChain || 'Unknown').replace('Ethereum','ETH').replace('BNB Chain','BSC').replace('Bitcoin Cash','BCH');
                       return (
                         <div key={t.symbol} style={{ display:'grid', gridTemplateColumns:'58px 1fr 70px 60px 64px 64px 70px', gap:4, padding:'6px 0', borderBottom:'1px solid rgba(255,255,255,0.025)', alignItems:'center' }}>
-                          <span style={{ fontWeight:800, fontSize:12, color: isDirect ? '#fff' : 'rgba(255,255,255,0.65)' }}>{t.symbol}</span>
+                          <span style={{ fontWeight:800, fontSize:12, color:'#fff' }}>{t.symbol}</span>
                           <div>
                             <div style={{ fontSize:10, color:'rgba(255,255,255,0.5)', lineHeight:1.3 }}>{t.name}</div>
-                            {!isDirect && t.proxyRationale && (
-                              <div style={{ fontSize:8, color:'rgba(251,191,36,0.6)', lineHeight:1.2, marginTop:1 }}>{t.proxyRationale}</div>
-                            )}
+                            <div style={{ fontSize:8, color: isEthDirect ? 'rgba(16,185,129,0.6)' : 'rgba(99,102,241,0.6)', lineHeight:1.2, marginTop:1 }}>{t.bridgeProtocol}</div>
                           </div>
                           <div style={{ display:'flex', justifyContent:'center' }}>
                             <span style={{ fontSize:8, padding:'1px 5px', borderRadius:100, fontWeight:800,
-                              background: isDirect ? 'rgba(16,185,129,0.12)' : 'rgba(251,191,36,0.1)',
-                              color:      isDirect ? '#34d399'               : '#fbbf24',
-                              border:     `1px solid ${isDirect ? 'rgba(16,185,129,0.3)' : 'rgba(251,191,36,0.25)'}` }}>
-                              {isDirect ? 'DIRECT' : 'PROXY'}
+                              background: isEthDirect ? 'rgba(16,185,129,0.12)' : 'rgba(99,102,241,0.1)',
+                              color:      isEthDirect ? '#34d399'              : '#818cf8',
+                              border:     `1px solid ${isEthDirect ? 'rgba(16,185,129,0.3)' : 'rgba(99,102,241,0.25)'}` }}>
+                              {isEthDirect ? 'ETH' : 'BRIDGE'}
                             </span>
                           </div>
                           <span style={{ textAlign:'right', fontSize:10, fontFamily:'monospace', color:'rgba(255,255,255,0.45)' }}>{t.allocPct?.toFixed(2)}%</span>
@@ -849,8 +848,8 @@ export default function AnalyticsPage() {
                           <span style={{ textAlign:'right', fontSize:10, fontFamily:'monospace', color: (t.confidence??0)>=0.7?'#10b981':(t.confidence??0)>=0.5?'#f59e0b':'rgba(255,255,255,0.35)' }}>
                             {((t.confidence??0)*100).toFixed(0)}%
                           </span>
-                          <span style={{ textAlign:'right', fontSize:9, color: isDirect ? '#34d399' : '#f59e0b', fontFamily:'monospace' }}>
-                            {isDirect ? t.symbol : (t.proxyTarget ?? '—')}
+                          <span style={{ textAlign:'right', fontSize:9, color: isEthDirect ? '#34d399' : '#818cf8', fontFamily:'monospace' }}>
+                            {chainLabel}
                           </span>
                         </div>
                       );

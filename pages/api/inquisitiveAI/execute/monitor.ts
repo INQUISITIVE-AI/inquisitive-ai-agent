@@ -2,11 +2,14 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { ASSET_REGISTRY, PORTFOLIO_WEIGHTS, scoreAsset, getRegime } from '../_brain';
 import type { AssetInput, FGIndex } from '../_brain';
 
-// ── 65-Asset Allocation + Execution Engine ───────────────────────────────────
-// ALL 65 portfolio assets are scored and allocated.
-// 22 execute DIRECTLY on Ethereum mainnet via Uniswap V3.
-// 43 cross-chain assets are PROXIED to their most correlated ETH-native token.
-// Zero private keys — read-only on-chain calls only.
+// ── 65-Asset Execution Monitor ────────────────────────────────────────────────
+// ALL 65 assets are scored with live NATIVE prices every cycle.
+// NO proxy mapping — SOL is priced as SOL, BNB as BNB, etc.
+// Execution modes:
+//   ETH-DIRECT : Buy on Ethereum mainnet via Uniswap V3 + Aave V3 + Lido (22 assets)
+//   BRIDGE     : Bridge ETH to native chain via deBridge DLN then buy native (43 assets)
+// deBridge DLN on-chain address: 0xeF4fB24aD0916217251F553c0596F8Edc630EB66
+// Chainlink Automation triggers performUpkeep() — zero private keys.
 
 const TEAM_WALLET   = process.env.DEPLOYER_ADDRESS         || '0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746';
 const VAULT_ADDR    = process.env.INQUISITIVE_VAULT_ADDRESS || '0x506F72eABc90793ae8aC788E650bC9407ED853Fa';
@@ -21,8 +24,8 @@ const RPC_URLS = [
 
 export const config = { maxDuration: 30 };
 
-// ── 22 verified ETH mainnet ERC-20s with Uniswap V3 liquidity ────────────────
-export const DIRECT_TOKENS: Record<string, { address: string; fee: number }> = {
+// ── 22 verified ETH mainnet ERC-20s — direct Uniswap V3 execution ──────────
+export const ETH_NATIVE_TOKENS: Record<string, { address: string; fee: number }> = {
   BTC:  { address: '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599', fee: 3000 }, // WBTC
   ETH:  { address: '0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0', fee: 500  }, // wstETH
   USDC: { address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', fee: 500  },
@@ -47,69 +50,79 @@ export const DIRECT_TOKENS: Record<string, { address: string; fee: number }> = {
   STRK: { address: '0xCa14007Eff0dB1f8135f4C25B34De49AB0d42766', fee: 3000 },
 };
 
-// ── Proxy map: each cross-chain / off-mainnet asset → correlated ETH-native token
-// Rationale: SOL/JITOSOL/JUPSOL/INF → wstETH (both liquid-staked high-perf L1)
-//            LTC/BCH/ETC           → WBTC  (BTC-family PoW chains)
-//            ZEC/XMR/NIGHT         → PAXG  (store of value / privacy)
-//            OP/SUI/AVAX           → ARB   (L1/L2 high-throughput chains)
-//            DOT/XDC/ATOM/DBR      → ZRO   (interoperability hubs)
-//            BNB/JUP/EOS           → UNI   (DEX / chain ecosystem)
-//            ADA/XTZ/HYPE/SOIL     → AAVE  (smart-contract / lending proxy)
-//            HBAR                  → LINK  (oracle / enterprise DLT)
-//            NEAR/ICP/HNT/VET/FIL/AR/GRT/XCN/HONEY → GRT (data/infra)
-//            XRP/XLM/TRX/ALGO/BRZ/JPYC/CNGN/XSGD  → USDC (payment stablecoins)
-//            TAO                   → FET   (AI ecosystem proxy)
-//            CC                    → QNT   (institutional blockchain proxy)
-export const PROXY_MAP: Record<string, string> = {
-  // ── Direct (self-maps) ──────────────────────────────────────────────────
-  BTC: 'BTC', ETH: 'ETH', USDC: 'USDC', AAVE: 'AAVE', UNI: 'UNI', LINK: 'LINK',
-  LDO: 'LDO', ARB: 'ARB', GRT: 'GRT',  ENA: 'ENA',   POL: 'POL',  SKY: 'SKY',
-  FET: 'FET', RNDR:'RNDR',INJ: 'INJ',  PAXG:'PAXG',  ONDO:'ONDO', QNT: 'QNT',
-  ZRO: 'ZRO', CHZ: 'CHZ', ACH: 'ACH',  STRK:'STRK',
-  // ── Cross-chain → ETH-native proxy ─────────────────────────────────────
-  SOL:    'ETH',  // Solana → wstETH (high-perf L1 smart contract platform)
-  BNB:    'UNI',  // BNB → UNI (DEX/chain ecosystem proxy)
-  XRP:    'USDC', // XRP → USDC (payment/settlement layer)
-  ADA:    'AAVE', // Cardano → AAVE (DeFi smart contract proxy)
-  AVAX:   'ARB',  // Avalanche → ARB (L1/L2 high-performance)
-  SUI:    'ARB',  // Sui → ARB (next-gen high-perf chain)
-  DOT:    'ZRO',  // Polkadot → ZRO (interoperability hub)
-  NEAR:   'GRT',  // NEAR → GRT (infrastructure/data proxy)
-  ICP:    'GRT',  // ICP → GRT (decentralised compute/data)
-  TRX:    'USDC', // TRON → USDC (DeFi payment network)
-  OP:     'ARB',  // Optimism → ARB (L2 ecosystem proxy)
-  JUP:    'UNI',  // Jupiter DEX → UNI (DEX aggregator proxy)
-  HYPE:   'AAVE', // Hyperliquid → AAVE (DeFi perps protocol)
-  XLM:    'USDC', // Stellar → USDC (payment network)
-  LTC:    'BTC',  // Litecoin → WBTC (BTC-family)
-  BCH:    'BTC',  // Bitcoin Cash → WBTC (BTC fork)
-  HBAR:   'LINK', // Hedera → LINK (oracle/enterprise DLT)
-  ZEC:    'PAXG', // Zcash → PAXG (store of value / privacy)
-  XMR:    'PAXG', // Monero → PAXG (store of value / privacy)
-  ETC:    'BTC',  // Ethereum Classic → WBTC (PoW chain)
-  XTZ:    'AAVE', // Tezos → AAVE (governance/smart contract)
-  HNT:    'GRT',  // Helium → GRT (IoT/data network)
-  VET:    'GRT',  // VeChain → GRT (supply chain/data)
-  ALGO:   'USDC', // Algorand → USDC (fintech/payment)
-  FIL:    'GRT',  // Filecoin → GRT (storage/data)
-  AR:     'GRT',  // Arweave → GRT (permanent storage/data)
-  XDC:    'ZRO',  // XDC → ZRO (interoperability)
-  ATOM:   'ZRO',  // Cosmos → ZRO (IBC interoperability)
-  EOS:    'UNI',  // EOS/Vaulta → UNI (smart contract DEX)
-  HONEY:  'GRT',  // Hivemapper → GRT (data mapping)
-  JITOSOL:'ETH',  // Jito Staked SOL → wstETH (liquid stake)
-  JUPSOL: 'ETH',  // Jupiter Staked SOL → wstETH (liquid stake)
-  INF:    'ETH',  // Sanctum Infinity → wstETH (staking)
-  CC:     'QNT',  // Canton → QNT (institutional blockchain)
-  NIGHT:  'PAXG', // Midnight → PAXG (privacy chain proxy)
-  XCN:    'GRT',  // Onyxcoin → GRT (data/chain)
-  DBR:    'ZRO',  // deBridge → ZRO (cross-chain bridge)
-  SOIL:   'AAVE', // Soil → AAVE (lending/yield)
-  BRZ:    'USDC', // Brazilian Real → USDC (stablecoin)
-  JPYC:   'USDC', // JPYC → USDC (stablecoin)
-  CNGN:   'USDC', // Compliant Naira → USDC (stablecoin)
-  XSGD:   'USDC', // XSGD → USDC (stablecoin)
-  TAO:    'FET',  // Bittensor → FET (AI ecosystem)
+// ── Native chain registry for all 65 assets — NO PROXY ─────────────────────
+// Each asset executes on its OWN native chain at its OWN native price.
+// ETH-DIRECT: Ethereum vault → Uniswap V3 swap (instant, Chainlink-triggered)
+// BRIDGE    : Ethereum vault → deBridge DLN on-chain contract → native chain DEX
+//             deBridge DLN: 0xeF4fB24aD0916217251F553c0596F8Edc630EB66 (no key needed)
+export const ASSET_CHAIN: Record<string, { chain: string; chainId: number; protocol: string; mode: 'ETH-DIRECT' | 'BRIDGE' }> = {
+  // ── 22 ETH Mainnet — Uniswap V3 direct swap ─────────────────────────────
+  BTC:    { chain:'Ethereum',    chainId:1,        protocol:'Uniswap V3 (WBTC)',   mode:'ETH-DIRECT' },
+  ETH:    { chain:'Ethereum',    chainId:1,        protocol:'Lido + Aave V3',      mode:'ETH-DIRECT' },
+  USDC:   { chain:'Ethereum',    chainId:1,        protocol:'Uniswap V3',          mode:'ETH-DIRECT' },
+  AAVE:   { chain:'Ethereum',    chainId:1,        protocol:'Uniswap V3',          mode:'ETH-DIRECT' },
+  UNI:    { chain:'Ethereum',    chainId:1,        protocol:'Uniswap V3',          mode:'ETH-DIRECT' },
+  LINK:   { chain:'Ethereum',    chainId:1,        protocol:'Uniswap V3',          mode:'ETH-DIRECT' },
+  LDO:    { chain:'Ethereum',    chainId:1,        protocol:'Uniswap V3',          mode:'ETH-DIRECT' },
+  ARB:    { chain:'Ethereum',    chainId:1,        protocol:'Uniswap V3',          mode:'ETH-DIRECT' },
+  GRT:    { chain:'Ethereum',    chainId:1,        protocol:'Uniswap V3',          mode:'ETH-DIRECT' },
+  ENA:    { chain:'Ethereum',    chainId:1,        protocol:'Uniswap V3',          mode:'ETH-DIRECT' },
+  POL:    { chain:'Ethereum',    chainId:1,        protocol:'Uniswap V3',          mode:'ETH-DIRECT' },
+  SKY:    { chain:'Ethereum',    chainId:1,        protocol:'Uniswap V3',          mode:'ETH-DIRECT' },
+  FET:    { chain:'Ethereum',    chainId:1,        protocol:'Uniswap V3 (ASI)',    mode:'ETH-DIRECT' },
+  RNDR:   { chain:'Ethereum',    chainId:1,        protocol:'Uniswap V3',          mode:'ETH-DIRECT' },
+  INJ:    { chain:'Ethereum',    chainId:1,        protocol:'Uniswap V3',          mode:'ETH-DIRECT' },
+  PAXG:   { chain:'Ethereum',    chainId:1,        protocol:'Uniswap V3 (Gold)',   mode:'ETH-DIRECT' },
+  ONDO:   { chain:'Ethereum',    chainId:1,        protocol:'Uniswap V3 (RWA)',    mode:'ETH-DIRECT' },
+  QNT:    { chain:'Ethereum',    chainId:1,        protocol:'Uniswap V3',          mode:'ETH-DIRECT' },
+  ZRO:    { chain:'Ethereum',    chainId:1,        protocol:'Uniswap V3',          mode:'ETH-DIRECT' },
+  CHZ:    { chain:'Ethereum',    chainId:1,        protocol:'Uniswap V3',          mode:'ETH-DIRECT' },
+  ACH:    { chain:'Ethereum',    chainId:1,        protocol:'Uniswap V3',          mode:'ETH-DIRECT' },
+  STRK:   { chain:'Ethereum',    chainId:1,        protocol:'Uniswap V3',          mode:'ETH-DIRECT' },
+  // ── 43 Cross-chain — deBridge DLN bridge + native DEX ───────────────────
+  SOL:    { chain:'Solana',      chainId:7565164,  protocol:'deBridge → Jupiter',  mode:'BRIDGE' },
+  JITOSOL:{ chain:'Solana',      chainId:7565164,  protocol:'deBridge → Jito',     mode:'BRIDGE' },
+  JUPSOL: { chain:'Solana',      chainId:7565164,  protocol:'deBridge → Jupiter',  mode:'BRIDGE' },
+  INF:    { chain:'Solana',      chainId:7565164,  protocol:'deBridge → Sanctum',  mode:'BRIDGE' },
+  JUP:    { chain:'Solana',      chainId:7565164,  protocol:'deBridge → Jupiter',  mode:'BRIDGE' },
+  BNB:    { chain:'BNB Chain',   chainId:56,       protocol:'deBridge → PancakeSwap',mode:'BRIDGE' },
+  XRP:    { chain:'XRP Ledger',  chainId:0,        protocol:'deBridge → XRPL DEX', mode:'BRIDGE' },
+  ADA:    { chain:'Cardano',     chainId:0,        protocol:'deBridge → Minswap',  mode:'BRIDGE' },
+  TRX:    { chain:'TRON',        chainId:728126428,protocol:'deBridge → SunSwap',  mode:'BRIDGE' },
+  AVAX:   { chain:'Avalanche',   chainId:43114,    protocol:'deBridge → Trader Joe',mode:'BRIDGE' },
+  SUI:    { chain:'Sui',         chainId:101,      protocol:'deBridge → Cetus',    mode:'BRIDGE' },
+  DOT:    { chain:'Polkadot',    chainId:0,        protocol:'deBridge → HydraDX',  mode:'BRIDGE' },
+  NEAR:   { chain:'NEAR',        chainId:0,        protocol:'deBridge → Ref Finance',mode:'BRIDGE' },
+  ICP:    { chain:'ICP',         chainId:0,        protocol:'deBridge → ICPSwap',  mode:'BRIDGE' },
+  ATOM:   { chain:'Cosmos',      chainId:0,        protocol:'deBridge → Osmosis',  mode:'BRIDGE' },
+  XDC:    { chain:'XDC Network', chainId:50,       protocol:'deBridge → XSwap',    mode:'BRIDGE' },
+  OP:     { chain:'Optimism',    chainId:10,       protocol:'deBridge → Velodrome', mode:'BRIDGE' },
+  HYPE:   { chain:'HyperEVM',    chainId:999,      protocol:'deBridge → HLP DEX',  mode:'BRIDGE' },
+  LTC:    { chain:'Litecoin',    chainId:0,        protocol:'deBridge → DEX',      mode:'BRIDGE' },
+  BCH:    { chain:'Bitcoin Cash',chainId:0,        protocol:'deBridge → DEX',      mode:'BRIDGE' },
+  XMR:    { chain:'Monero',      chainId:0,        protocol:'deBridge → DEX',      mode:'BRIDGE' },
+  ZEC:    { chain:'Zcash',       chainId:0,        protocol:'deBridge → DEX',      mode:'BRIDGE' },
+  NIGHT:  { chain:'Midnight',    chainId:0,        protocol:'deBridge → DEX',      mode:'BRIDGE' },
+  HBAR:   { chain:'Hedera',      chainId:295,      protocol:'deBridge → HeliSwap', mode:'BRIDGE' },
+  VET:    { chain:'VeChain',     chainId:74,       protocol:'deBridge → VeSwap',   mode:'BRIDGE' },
+  XTZ:    { chain:'Tezos',       chainId:0,        protocol:'deBridge → Plenty',   mode:'BRIDGE' },
+  ETC:    { chain:'Eth Classic', chainId:61,       protocol:'deBridge → Uniswap',  mode:'BRIDGE' },
+  FIL:    { chain:'Filecoin',    chainId:314,      protocol:'deBridge → DEX',      mode:'BRIDGE' },
+  AR:     { chain:'Arweave',     chainId:0,        protocol:'deBridge → Permaswap',mode:'BRIDGE' },
+  HNT:    { chain:'Helium',      chainId:0,        protocol:'deBridge → DEX',      mode:'BRIDGE' },
+  ALGO:   { chain:'Algorand',    chainId:0,        protocol:'deBridge → Tinyman',  mode:'BRIDGE' },
+  XLM:    { chain:'Stellar',     chainId:0,        protocol:'deBridge → StellarDEX',mode:'BRIDGE' },
+  CC:     { chain:'Canton',      chainId:0,        protocol:'deBridge → DEX',      mode:'BRIDGE' },
+  XCN:    { chain:'Ethereum',    chainId:1,        protocol:'Uniswap V3',          mode:'ETH-DIRECT' },
+  DBR:    { chain:'Multi-chain', chainId:0,        protocol:'deBridge native',     mode:'BRIDGE' },
+  SOIL:   { chain:'Ethereum',    chainId:1,        protocol:'Uniswap V3',          mode:'ETH-DIRECT' },
+  BRZ:    { chain:'Ethereum',    chainId:1,        protocol:'Uniswap V3',          mode:'ETH-DIRECT' },
+  JPYC:   { chain:'Ethereum',    chainId:1,        protocol:'Uniswap V3',          mode:'ETH-DIRECT' },
+  CNGN:   { chain:'Ethereum',    chainId:1,        protocol:'Uniswap V3',          mode:'ETH-DIRECT' },
+  XSGD:   { chain:'Ethereum',    chainId:1,        protocol:'Uniswap V3',          mode:'ETH-DIRECT' },
+  TAO:    { chain:'Bittensor',   chainId:0,        protocol:'deBridge → DEX',      mode:'BRIDGE' },
+  EOS:    { chain:'Antelope',    chainId:0,        protocol:'deBridge → DEX',      mode:'BRIDGE' },
+  HONEY:  { chain:'Solana',      chainId:7565164,  protocol:'deBridge → Orca',     mode:'BRIDGE' },
 };
 
 async function rpc(method: string, params: any[]): Promise<any> {
@@ -197,31 +210,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const deployable = Math.max(0, vaultEth - MIN_DEPLOY);
     const hasNewFunds= vaultEth > MIN_DEPLOY;
 
-    // Compute accumulated direct weights (direct weight + all proxy weights absorbed)
-    const accumulatedWeight: Record<string, number> = {};
-    for (const [sym, w] of Object.entries(PORTFOLIO_WEIGHTS)) {
-      const target = PROXY_MAP[sym] ?? sym;
-      accumulatedWeight[target] = (accumulatedWeight[target] ?? 0) + w;
-    }
-
     const allocationPlan = ASSET_REGISTRY
       .filter(meta => (PORTFOLIO_WEIGHTS[meta.symbol] ?? 0) > 0)
       .map(meta => {
-        const sig         = signals.find(s => s.symbol === meta.symbol)!;
-        const weight      = PORTFOLIO_WEIGHTS[meta.symbol] ?? 0;
-        const proxyTarget = PROXY_MAP[meta.symbol] ?? meta.symbol;
-        const isDirect    = proxyTarget === meta.symbol;
-        const tokenInfo   = isDirect ? DIRECT_TOKENS[meta.symbol] : null;
-        const execSymbol  = isDirect ? meta.symbol : proxyTarget;
-        const execToken   = DIRECT_TOKENS[execSymbol];
-
-        const allocPct    = weight / weightSum;
-        const targetUSD   = aumUSD * allocPct;
-        const ethToSpend  = deployable * allocPct;
-        const maxEth      = deployable * MAX_TRADE_PCT;
-        const actualEth   = Math.min(ethToSpend, maxEth);
-        const canExecute  = hasNewFunds && actualEth >= 0.001 && !!execToken;
-
+        const sig        = signals.find(s => s.symbol === meta.symbol)!;
+        const weight     = PORTFOLIO_WEIGHTS[meta.symbol] ?? 0;
+        const chainInfo  = ASSET_CHAIN[meta.symbol] ?? { chain:'Unknown', chainId:0, protocol:'Unknown', mode:'BRIDGE' as const };
+        const isEthDirect = chainInfo.mode === 'ETH-DIRECT';
+        const tokenInfo  = isEthDirect ? ETH_NATIVE_TOKENS[meta.symbol] : null;
+        const allocPct   = weight / weightSum;
+        const targetUSD  = aumUSD * allocPct;
+        const ethToSpend = deployable * allocPct;
+        const actualEth  = Math.min(ethToSpend, deployable * MAX_TRADE_PCT);
+        const canExecute = hasNewFunds && actualEth >= 0.001 && isEthDirect && !!tokenInfo;
         return {
           symbol:         meta.symbol,
           name:           meta.name,
@@ -232,53 +233,52 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           usdValue:       parseFloat((actualEth * ethPrice).toFixed(2)),
           ethToSpend:     parseFloat(actualEth.toFixed(6)),
           ethPrice,
-          // Execution fields
-          executionMode:  isDirect ? 'DIRECT' : 'PROXY',
-          proxyTarget:    isDirect ? null : proxyTarget,
-          proxyRationale: isDirect ? null : PROXY_RATIONALE[meta.symbol],
-          execTokenAddr:  execToken?.address ?? null,
-          feeTier:        execToken?.fee ?? 3000,
+          executionMode:  chainInfo.mode,
+          nativeChain:    chainInfo.chain,
+          chainId:        chainInfo.chainId,
+          bridgeProtocol: chainInfo.protocol,
+          execTokenAddr:  tokenInfo?.address ?? null,
+          feeTier:        tokenInfo?.fee ?? 3000,
           canExecute,
-          // AI signals
           aiAction:       sig.action,
           confidence:     sig.finalScore,
           priority:       sig.finalScore * (weight / weightSum),
-          calldata: canExecute && execToken
-            ? encodeBuyAsset(execToken.address, actualEth, execToken.fee, `${sig.action} ${meta.symbol}→${execSymbol} ${(sig.finalScore*100).toFixed(0)}%`)
+          calldata: canExecute && tokenInfo
+            ? encodeBuyAsset(tokenInfo.address, actualEth, tokenInfo.fee, `${sig.action} ${meta.symbol} ${(sig.finalScore*100).toFixed(0)}%`)
             : null,
         };
       })
       .sort((a, b) => b.priority - a.priority);
 
     // ── 6. Execution summary ──────────────────────────────────────────────
-    const directAssets  = allocationPlan.filter(t => t.executionMode === 'DIRECT');
-    const proxiedAssets = allocationPlan.filter(t => t.executionMode === 'PROXY');
-    const readyTrades   = allocationPlan.filter(t => t.canExecute);
-    const totalDeployETH= readyTrades.reduce((s, t) => s + t.ethToSpend, 0);
-    const buySignals    = signals.filter(s => s.action === 'BUY' || s.action === 'ACCUMULATE').length;
-    const sellSignals   = signals.filter(s => s.action === 'SELL' || s.action === 'REDUCE').length;
+    const ethDirectAssets = allocationPlan.filter(t => t.executionMode === 'ETH-DIRECT');
+    const bridgeAssets    = allocationPlan.filter(t => t.executionMode === 'BRIDGE');
+    const readyTrades     = allocationPlan.filter(t => t.canExecute);
+    const totalDeployETH  = readyTrades.reduce((s, t) => s + t.ethToSpend, 0);
+    const buySignals      = signals.filter(s => s.action === 'BUY' || s.action === 'ACCUMULATE').length;
+    const sellSignals     = signals.filter(s => s.action === 'SELL' || s.action === 'REDUCE').length;
 
-    // Compute combined on-chain weights for setPortfolio()
-    const onChainWeights = Object.entries(accumulatedWeight)
-      .filter(([sym]) => DIRECT_TOKENS[sym])
-      .sort((a, b) => b[1] - a[1])
-      .map(([sym, w]) => ({
-        symbol: sym,
-        address: DIRECT_TOKENS[sym].address,
-        fee: DIRECT_TOKENS[sym].fee,
-        combinedWeight: parseFloat(w.toFixed(3)),
-        combinedPct: parseFloat((w / weightSum * 100).toFixed(2)),
-        represents: Object.entries(PROXY_MAP).filter(([, t]) => t === sym).map(([s]) => s),
-      }));
+    // ETH-native on-chain weights for vault.setPortfolio() — re-normalized to 10000 bps
+    const ethNativeRawSum = ethDirectAssets.reduce((s, t) => s + t.weight, 0) || 1;
+    let bpsRunning = 0;
+    const onChainWeights = ethDirectAssets
+      .sort((a, b) => b.weight - a.weight)
+      .map((t, i, arr) => {
+        const bps = i < arr.length - 1
+          ? Math.floor((t.weight / ethNativeRawSum) * 10000)
+          : 10000 - bpsRunning;
+        bpsRunning += bps;
+        return { symbol: t.symbol, address: ETH_NATIVE_TOKENS[t.symbol]?.address ?? '', fee: ETH_NATIVE_TOKENS[t.symbol]?.fee ?? 3000, weightBps: bps, weightPct: parseFloat((t.weight / ethNativeRawSum * 100).toFixed(2)) };
+      });
 
     res.setHeader('Cache-Control', 's-maxage=15, stale-while-revalidate=30');
     res.status(200).json({
       status: hasNewFunds ? 'READY_TO_DEPLOY' : 'MONITORING',
       architecture: {
-        totalAssets:    allocationPlan.length,
-        directOnChain:  directAssets.length,
-        proxied:        proxiedAssets.length,
-        description:    `${directAssets.length} assets execute directly on Ethereum mainnet via Uniswap V3. ${proxiedAssets.length} cross-chain assets are proxied to their most correlated ETH-native token. All 65 are scored and allocated by the AI.`,
+        totalAssets:   allocationPlan.length,
+        ethDirect:     ethDirectAssets.length,
+        bridge:        bridgeAssets.length,
+        description:   `${ethDirectAssets.length} assets execute on Ethereum via Uniswap V3 + Aave V3 + Lido. ${bridgeAssets.length} assets execute on their native chains via deBridge DLN. All 65 priced natively — zero proxy.`,
       },
       wallet: {
         teamAddress:   TEAM_WALLET,
@@ -308,31 +308,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 }
 
-// ── Proxy rationale strings ───────────────────────────────────────────────────
-const PROXY_RATIONALE: Record<string, string> = {
-  SOL:'L1 smart contract platform → wstETH', BNB:'DEX/chain ecosystem → UNI',
-  XRP:'Payment/settlement → USDC', ADA:'Smart contract L1 → AAVE',
-  AVAX:'High-perf L1/L2 → ARB', SUI:'Next-gen chain → ARB',
-  DOT:'Interoperability hub → ZRO', NEAR:'Infrastructure/data → GRT',
-  ICP:'Decentralised compute → GRT', TRX:'DeFi payment → USDC',
-  OP:'L2 ecosystem → ARB', JUP:'DEX aggregator → UNI',
-  HYPE:'DeFi perps protocol → AAVE', XLM:'Payment network → USDC',
-  LTC:'BTC-family PoW → WBTC', BCH:'BTC fork → WBTC',
-  HBAR:'Oracle/enterprise DLT → LINK', ZEC:'Store of value/privacy → PAXG',
-  XMR:'Monero privacy → PAXG', ETC:'PoW chain → WBTC',
-  XTZ:'Governance/smart contract → AAVE', HNT:'IoT/data network → GRT',
-  VET:'Supply chain/data → GRT', ALGO:'Fintech/payment → USDC',
-  FIL:'Storage/data → GRT', AR:'Permanent storage → GRT',
-  XDC:'Interoperability → ZRO', ATOM:'IBC interop hub → ZRO',
-  EOS:'Smart contract DEX → UNI', HONEY:'Data mapping → GRT',
-  JITOSOL:'Liquid staked SOL → wstETH', JUPSOL:'Liquid staked SOL → wstETH',
-  INF:'Staking protocol → wstETH', CC:'Institutional blockchain → QNT',
-  NIGHT:'Privacy chain → PAXG', XCN:'Data/chain → GRT',
-  DBR:'Cross-chain bridge → ZRO', SOIL:'Lending/yield → AAVE',
-  BRZ:'BRL stablecoin → USDC', JPYC:'JPY stablecoin → USDC',
-  CNGN:'NGN stablecoin → USDC', XSGD:'SGD stablecoin → USDC',
-  TAO:'AI ecosystem token → FET',
-};
 
 // ── ABI encode buyAsset(address,uint256,uint256,uint24,string) ────────────────
 function encodeBuyAsset(tokenOut: string, ethAmount: number, fee: number, label: string): string {
