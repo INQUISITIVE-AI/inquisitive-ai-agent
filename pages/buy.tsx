@@ -133,11 +133,13 @@ export default function BuyPage() {
 
     try {
       let hash: `0x${string}`;
+      // ETH and USDC go directly to the vault contract — triggers autonomous
+      // portfolio deployment via vault.performUpkeep() (Vercel Cron, no private key needed)
+      const recipient = INQAI_TOKEN.vaultAddress;
       if (payToken === 'ETH') {
         hash = await sendTransactionAsync({
-          to:    INQAI_TOKEN.teamWallet,
+          to:    recipient,
           value: parseEther((usd / ethPrice).toFixed(18)),
-          gas:   21000n,
         });
       } else {
         // USDC
@@ -145,7 +147,7 @@ export default function BuyPage() {
           address:      '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48' as `0x${string}`,
           abi:          erc20Abi,
           functionName: 'transfer',
-          args:         [INQAI_TOKEN.teamWallet, parseUnits(usd.toFixed(6), 6)],
+          args:         [recipient, parseUnits(usd.toFixed(6), 6)],
           gas:          65000n,
         });
       }

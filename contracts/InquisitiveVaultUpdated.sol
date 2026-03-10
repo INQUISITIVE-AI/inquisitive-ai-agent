@@ -135,76 +135,107 @@ contract InquisitiveVaultUpdated is IAutomationCompatible {
         performanceFee = _fee;
     }
 
-    // ── Chainlink Automation — keyless scheduled execution ────────────────────
+    // ── On-chain portfolio weights (65 assets) ────────────────────────────────
+    // Set once by deployer via setPortfolio(). performUpkeep deploys ETH per weights.
+    address[] public portfolioTokens;   // ERC-20 token addresses
+    uint256[] public portfolioWeights;  // basis points (must sum to 10000)
+    uint24[]  public portfolioFees;     // Uniswap V3 fee tier per token
+    uint256   public lastDeployTime;    // timestamp of last performUpkeep run
+    uint256   public MIN_REDEPLOY_GAP = 60; // seconds between auto-deploy cycles
 
-    /// @notice Pending trades queued by the AI backend (no private key needed to queue)
-    /// The AI API generates these and stores them here via queueTrade()
-    struct PendingTrade {
-        address token;
-        uint256 ethAmount;
-        uint24  fee;
-        bool    executed;
-        uint256 timestamp;
+    event PortfolioSet(uint256 assetCount, uint256 weightSum);
+    event FundsDeployed(uint256 cycleNumber, uint256 ethDeployed, uint256 assetsTraded);
+
+    /// @notice Store portfolio weights on-chain — called ONCE after deployment
+    /// @param _tokens   Array of ERC-20 token addresses (use WETH for ETH-native)
+    /// @param _weights  Basis points per token (must sum to exactly 10000)
+    /// @param _fees     Uniswap V3 fee tier per token (500, 3000, or 10000)
+    function setPortfolio(
+        address[] calldata _tokens,
+        uint256[] calldata _weights,
+        uint24[]  calldata _fees
+    ) external onlyOwner {
+        require(_tokens.length == _weights.length && _weights.length == _fees.length, "Length mismatch");
+        require(_tokens.length > 0 && _tokens.length <= 70, "Invalid token count");
+        uint256 sum = 0;
+        for (uint256 i = 0; i < _weights.length; i++) sum += _weights[i];
+        require(sum == 10000, "Weights must sum to 10000");
+        portfolioTokens  = _tokens;
+        portfolioWeights = _weights;
+        portfolioFees    = _fees;
+        emit PortfolioSet(_tokens.length, sum);
     }
-    PendingTrade[] public pendingTrades;
 
-    event TradeQueued(address indexed token, uint256 ethAmount, uint24 fee, uint256 index);
+    function getPortfolioLength() external view returns (uint256) { return portfolioTokens.length; }
 
-    /// @notice Chainlink Automation check — returns true when there are undeployed funds
+    // ── Chainlink Automation / Vercel Cron — fully autonomous execution ────────
+
+    /// @notice Returns true when: (a) portfolio is configured AND (b) vault has deployable ETH
     function checkUpkeep(bytes calldata) external view override returns (bool upkeepNeeded, bytes memory performData) {
-        upkeepNeeded = automationEnabled && (
-            address(this).balance >= MIN_DEPLOY ||
-            _hasPendingTrades()
-        );
+        bool hasWeights    = portfolioTokens.length > 0;
+        bool hasFunds      = address(this).balance >= MIN_DEPLOY;
+        bool cooldownPassed= block.timestamp >= lastDeployTime + MIN_REDEPLOY_GAP;
+        upkeepNeeded = automationEnabled && hasWeights && hasFunds && cooldownPassed;
         performData  = abi.encode(upkeepNeeded);
     }
 
-    /// @notice Chainlink Automation execute — called by Chainlink registry, no private key needed
+    /// @notice Autonomous fund deployment — called by Chainlink Automation OR Vercel Cron executor
+    /// Distributes ALL vault ETH proportionally across portfolio tokens via Uniswap V3.
+    /// NO private key needed for Chainlink. For Vercel Cron, only a minimal executor key
+    /// stored in Vercel's encrypted env vars (never in code) is needed.
     function performUpkeep(bytes calldata) external override {
         require(automationEnabled, "Automation disabled");
         require(
-            msg.sender == CHAINLINK_REGISTRY || msg.sender == aiExecutor || msg.sender == owner,
-            "Not authorized"
+            msg.sender == CHAINLINK_REGISTRY ||
+            msg.sender == GELATO_RELAY       ||
+            msg.sender == aiExecutor         ||
+            msg.sender == owner,
+            "Not authorized executor"
         );
+        require(portfolioTokens.length > 0, "Portfolio not configured — call setPortfolio first");
+        require(block.timestamp >= lastDeployTime + MIN_REDEPLOY_GAP, "Cooldown active");
+
+        uint256 ethBal    = address(this).balance;
+        uint256 gasRes    = 0.005 ether; // reserve for gas
+        require(ethBal > gasRes + MIN_DEPLOY, "Insufficient ETH");
+        uint256 deployable= ethBal - gasRes;
+
+        lastDeployTime = block.timestamp;
         cycleCount++;
-        uint256 executed = 0;
-        uint256 ethBal   = address(this).balance;
+        uint256 traded = 0;
 
-        // Execute any pending trades queued by the AI backend
-        for (uint256 i = 0; i < pendingTrades.length && executed < 5; i++) {
-            PendingTrade storage trade = pendingTrades[i];
-            if (trade.executed) continue;
-            if (trade.token == address(0)) continue;
-            if (ethBal < trade.ethAmount) continue;
-            try this._executeSingle(trade.token, trade.ethAmount, true, trade.fee) {
-                trade.executed = true;
-                ethBal -= trade.ethAmount;
-                executed++;
-            } catch {}
+        for (uint256 i = 0; i < portfolioTokens.length; i++) {
+            address token  = portfolioTokens[i];
+            uint256 weight = portfolioWeights[i];
+            if (token == address(0) || weight == 0) continue;
+
+            uint256 amount = deployable * weight / 10000;
+            if (amount < 0.0005 ether) continue;  // skip dust allocations
+
+            // Wrap ETH → WETH → token via Uniswap V3 exactInputSingle
+            ISwapRouter.ExactInputSingleParams memory p = ISwapRouter.ExactInputSingleParams({
+                tokenIn:           WETH,
+                tokenOut:          token,
+                fee:               portfolioFees[i],
+                recipient:         address(this),
+                amountIn:          amount,
+                amountOutMinimum:  0,   // accept any amount — no slippage protection for now
+                sqrtPriceLimitX96: 0
+            });
+
+            try ISwapRouter(SWAP_ROUTER).exactInputSingle{value: amount}(p) returns (uint256 out) {
+                positions[token] += out;
+                traded++;
+            } catch {
+                // Failed swap — ETH stays in vault, next cycle will retry
+            }
         }
-        emit AICycleExecuted(cycleCount, executed);
+
+        emit FundsDeployed(cycleCount, deployable, traded);
+        emit AICycleExecuted(cycleCount, traded);
     }
 
-    /// @notice Queue a trade to be executed by Chainlink Automation — callable by anyone (no auth needed)
-    /// @dev The AI API calls this after generating signals. No private key required.
-    function queueTrade(address token, uint256 ethAmount, uint24 fee) external {
-        require(token != address(0), "Invalid token");
-        require(ethAmount > 0, "Zero amount");
-        pendingTrades.push(PendingTrade({ token: token, ethAmount: ethAmount, fee: fee, executed: false, timestamp: block.timestamp }));
-        emit TradeQueued(token, ethAmount, fee, pendingTrades.length - 1);
-    }
-
-    function _hasPendingTrades() internal view returns (bool) {
-        for (uint256 i = 0; i < pendingTrades.length; i++) {
-            if (!pendingTrades[i].executed && pendingTrades[i].token != address(0)) return true;
-        }
-        return false;
-    }
-
-    function getPendingTradeCount() external view returns (uint256) { return pendingTrades.length; }
-    function clearExecutedTrades() external onlyOwner {
-        delete pendingTrades;
-    }
+    function setRedeployGap(uint256 _seconds) external onlyOwner { MIN_REDEPLOY_GAP = _seconds; }
 
     // ── Portfolio Execution — called by AI agent ──────────────────────────────
 

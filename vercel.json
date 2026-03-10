@@ -17,6 +17,15 @@
   "functions": {
     "pages/api/**": {
       "maxDuration": 30
+    },
+    "pages/api/inquisitiveAI/execute/auto": {
+      "maxDuration": 55
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/inquisitiveAI/execute/auto",
+      "schedule": "* * * * *"
+    }
+  ]
 }
