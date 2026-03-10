@@ -113,16 +113,12 @@ export default function AnalyticsPage() {
     address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'cycleCount',
     chainId: 1, query: { refetchInterval: 15000 },
   });
-  const upkeepNeeded    = (checkUpkeepData as any)?.[0] === true;
-  const vaultEthOnChain = vaultEthBal ? Number(vaultEthBal) / 1e18 : 0;
+    const vaultEthOnChain = vaultEthBal ? Number(vaultEthBal) / 1e18 : 0;
   const portfolioOnChain= vaultPortfolioLen ? Number(vaultPortfolioLen) : 0;
   const automationOn    = automationEnabledData === true;
   const cyclesOnChain   = vaultCycleCount ? Number(vaultCycleCount) : 0;
 
-  // ── performUpkeep write — any connected wallet can trigger execution ──────
-  const { writeContract: triggerExecution, data: triggerData, isPending: triggerPending, error: triggerError } = useWriteContract();
-  const { isLoading: triggerConfirming, isSuccess: triggerSuccess } = useWaitForTransactionReceipt({ hash: triggerData });
-
+  
   // ── Deploy vault from browser — MetaMask signs, no private key in any file ─
   const { deployContract, data: deployHash, isPending: deployPending, error: deployError } = useDeployContract();
   const { data: deployReceipt, isLoading: deployConfirming, isSuccess: deployDone } = useWaitForTransactionReceipt({ hash: deployHash });
@@ -652,69 +648,17 @@ export default function AnalyticsPage() {
               return (
               <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
 
-                {/* ── COMMUNITY TRIGGER EXECUTION PANEL ── */}
-                <div style={{ background: upkeepNeeded ? 'rgba(16,185,129,0.06)' : 'rgba(13,13,32,0.9)', border:`1px solid ${upkeepNeeded?'rgba(16,185,129,0.3)':'rgba(255,255,255,0.07)'}`, borderRadius:20, padding:'24px', backdropFilter:'blur(12px)' }}>
-                  <div style={{ display:'flex', alignItems:'center', gap:14, flexWrap:'wrap' }}>
-                    <div style={{ flex:1, minWidth:240 }}>
-                      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:6 }}>
-                        <Zap size={18} color={upkeepNeeded ? '#10b981' : '#6366f1'} />
-                        <h3 style={{ fontSize:15, fontWeight:800, color:'#fff', margin:0 }}>
-                          Community Execution — Anyone Can Trigger
-                        </h3>
-                        <span style={{ fontSize:9, padding:'1px 6px', borderRadius:100, background:'rgba(16,185,129,0.1)', color:'#34d399', border:'1px solid rgba(16,185,129,0.25)', fontWeight:700 }}>ZERO PRIVATE KEY</span>
-                      </div>
-                      <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)', lineHeight:1.7 }}>
-                        Connect any wallet → click Trigger → pay ~$0.50 gas. The vault deploys ETH across all 65 assets.
-                        This is how YFI, Compound, and Aave bootstrapped. <strong style={{color:'rgba(255,255,255,0.7)'}}>No private key in code. Ever.</strong>
-                      </div>
-                    </div>
-                    <div style={{ display:'flex', flexDirection:'column', gap:8, alignItems:'flex-end', minWidth:180 }}>
-                      {/* Live vault stats */}
-                      <div style={{ display:'flex', gap:10 }}>
-                        {[
-                          { l:'Vault ETH', v: vaultEthOnChain.toFixed(4), c:'#60a5fa' },
-                          { l:'Portfolio', v: portfolioOnChain ? `${portfolioOnChain} assets` : 'Not set', c: portfolioOnChain ? '#10b981' : '#f59e0b' },
-                          { l:'Cycles',    v: cyclesOnChain.toString(), c:'#a78bfa' },
-                          { l:'Upkeep',    v: upkeepNeeded ? 'NEEDED' : 'IDLE', c: upkeepNeeded ? '#10b981' : 'rgba(255,255,255,0.3)' },
-                        ].map(s => (
-                          <div key={s.l} style={{ textAlign:'center' }}>
-                            <div style={{ fontSize:9, color:'rgba(255,255,255,0.3)', marginBottom:1 }}>{s.l}</div>
-                            <div style={{ fontSize:11, fontWeight:800, color:s.c, fontFamily:'monospace' }}>{s.v}</div>
-                          </div>
-                        ))}
-                      </div>
-                      {/* Trigger button */}
-                      {address ? (
-                        <button
-                          disabled={!upkeepNeeded || triggerPending || triggerConfirming}
-                          onClick={() => triggerExecution({ address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'performUpkeep', args: ['0x'] })}
-                          style={{ padding:'11px 22px', borderRadius:12, fontSize:13, fontWeight:800, cursor: (!upkeepNeeded||triggerPending||triggerConfirming) ? 'not-allowed' : 'pointer', border:'none', color:'#fff', background: triggerSuccess ? 'linear-gradient(135deg,#10b981,#059669)' : upkeepNeeded ? 'linear-gradient(135deg,#6366f1,#4f46e5)' : 'rgba(255,255,255,0.07)', opacity: (!upkeepNeeded&&!triggerSuccess) ? 0.5 : 1, transition:'all 0.2s', minWidth:160 }}>
-                          {triggerSuccess ? '✓ Executed!' : triggerConfirming ? 'Confirming…' : triggerPending ? 'Signing…' : upkeepNeeded ? '⚡ Trigger Execution' : 'Vault Idle'}
-                        </button>
-                      ) : (
-                        <div style={{ fontSize:11, color:'rgba(255,255,255,0.35)', textAlign:'center', padding:'8px 16px', borderRadius:10, border:'1px solid rgba(255,255,255,0.1)' }}>
-                          Connect wallet to trigger
-                        </div>
-                      )}
-                      {triggerError && (
-                        <div style={{ fontSize:10, color:'#f87171', maxWidth:180, textAlign:'right' }}>{(triggerError as any).shortMessage || triggerError.message}</div>
-                      )}
-                      {triggerData && (
-                        <a href={`https://etherscan.io/tx/${triggerData}`} target="_blank" rel="noopener noreferrer" style={{ fontSize:10, color:'#60a5fa', textDecoration:'none' }}>View tx ↗</a>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
+                
                 {/* ── DEPLOY + CONFIGURE VAULT — browser-native, MetaMask only ── */}
                 <div style={{ background:'rgba(13,13,32,0.92)', border:'1px solid rgba(124,58,237,0.3)', borderRadius:20, padding:'24px', backdropFilter:'blur(12px)' }}>
                   <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:18 }}>
                     <Zap size={18} color="#a78bfa" />
                     <h3 style={{ fontSize:15, fontWeight:800, color:'#fff', margin:0 }}>Vault Deployment — One Click, MetaMask Only</h3>
-                    <span style={{ marginLeft:'auto', fontSize:9, padding:'2px 8px', borderRadius:100, background:'rgba(16,185,129,0.1)', color:'#34d399', border:'1px solid rgba(16,185,129,0.3)', fontWeight:700 }}>ZERO PRIVATE KEY</span>
+                    <span style={{ marginLeft:'auto', fontSize:9, padding:'2px 8px', borderRadius:100, background:'rgba(251,191,36,0.12)', color:'#fbbf24', border:'1px solid rgba(251,191,36,0.3)', fontWeight:700 }}>DEPLOYER ONLY</span>
+                    <span style={{ fontSize:9, padding:'2px 8px', borderRadius:100, background:'rgba(16,185,129,0.1)', color:'#34d399', border:'1px solid rgba(16,185,129,0.3)', fontWeight:700 }}>ZERO PRIVATE KEY</span>
                   </div>
-                  <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)', lineHeight:1.7, marginBottom:16 }}>
-                    Connect the deployer wallet (0x4e7d…) → click each step. MetaMask signs in-browser. No Remix, no CLI, no key stored anywhere.
+                  <div style={{ background:'rgba(251,191,36,0.06)', border:'1px solid rgba(251,191,36,0.18)', borderRadius:10, padding:'10px 14px', marginBottom:16, fontSize:11, color:'rgba(251,191,36,0.8)', lineHeight:1.7 }}>
+                    ⚠️ <strong>This section is for the deployer wallet only (0x4e7d…) — one-time setup.</strong> Token holders do not need to do anything. Once deployed + Chainlink registered, the AI runs autonomously forever.
                   </div>
 
                   {/* Step 1: Deploy */}
@@ -749,7 +693,7 @@ export default function AnalyticsPage() {
                     </div>
                     <div style={{ flex:1 }}>
                       <div style={{ fontSize:13, fontWeight:700, color: step1Done ? '#34d399':'#fff', marginBottom:2 }}>Configure 65-Asset Portfolio</div>
-                      <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)' }}>Sets 22 ETH-native tokens + deBridge allocations. AI auto-deploys to all 65 assets on every cycle.</div>
+                      <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)' }}>Registers 22 ETH-native token addresses on-chain (Uniswap V3) + enables deBridge DLN allocations for 43 cross-chain assets. All 65 assets covered.</div>
                       {portfolioError && <div style={{ fontSize:10, color:'#f87171', marginTop:2 }}>{(portfolioError as any).shortMessage || String(portfolioError).slice(0,80)}</div>}
                     </div>
                     {!step1Done && (deployDone||portfolioOnChain>0) && (
@@ -794,8 +738,8 @@ export default function AnalyticsPage() {
                       <span style={{ fontSize:12, fontWeight:800, color: step3Done ? '#10b981':'#a78bfa' }}>{step3Done?'✓':'4'}</span>
                     </div>
                     <div style={{ flex:1 }}>
-                      <div style={{ fontSize:13, fontWeight:700, color: step3Done ? '#34d399':'#fff', marginBottom:2 }}>Community Funds the Vault</div>
-                      <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)' }}>{step3Done ? `${vaultEthOnChain.toFixed(4)} ETH in vault — AI is deploying to 65 assets automatically.` : 'Every INQAI token purchase sends ETH directly to vault. AI deploys within 60s of any deposit.'}</div>
+                      <div style={{ fontSize:13, fontWeight:700, color: step3Done ? '#34d399':'#fff', marginBottom:2 }}>Community Funds the Vault — AI Does the Rest</div>
+                      <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)' }}>{step3Done ? `${vaultEthOnChain.toFixed(4)} ETH in vault — Chainlink triggers autonomous allocation to all 65 assets every 60s.` : 'Token holders buy INQAI. ETH flows into vault. Chainlink Automation deploys to all 65 assets within 60s. Zero manual action by anyone.'}</div>
                     </div>
                     {step3Done && <span style={{ fontSize:10, padding:'3px 8px', borderRadius:100, background:'rgba(16,185,129,0.1)', color:'#34d399', border:'1px solid rgba(16,185,129,0.3)', fontWeight:700, whiteSpace:'nowrap' }}>LIVE</span>}
                   </div>
@@ -806,8 +750,8 @@ export default function AnalyticsPage() {
                   <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:18 }}>
                     <Activity size={22} color={rColor} />
                     <div>
-                      <h3 style={{ fontSize:16, fontWeight:800, color:'#fff', margin:0 }}>Autonomous Execution Engine</h3>
-                      <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)', marginTop:2 }}>Zero private keys · Chainlink Automation · Uniswap V3</div>
+                      <h3 style={{ fontSize:16, fontWeight:800, color:'#fff', margin:0 }}>Autonomous Execution Engine — 65 Assets</h3>
+                      <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)', marginTop:2 }}>Zero private keys · Chainlink Automation every 60s · Uniswap V3 + deBridge DLN · No human intervention</div>
                     </div>
                     <div style={{ marginLeft:'auto', textAlign:'right' }}>
                       <div style={{ fontSize:11, padding:'4px 12px', borderRadius:100, background:`${rColor}18`, color:rColor, border:`1px solid ${rColor}40`, fontWeight:800, display:'inline-block' }}>
@@ -823,7 +767,7 @@ export default function AnalyticsPage() {
                   <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12 }}>
                     {[
                       { l:'Vault ETH',      v: vaultEthOnChain.toFixed(4)+' ETH',                                                         c:'#60a5fa' },
-                      { l:'Portfolio',      v: portfolioOnChain ? portfolioOnChain+' / 22 tokens' : (ss?.portfolioLength ? ss.portfolioLength+' assets' : 'Not set'), c: portfolioOnChain ? '#10b981':'#f59e0b' },
+                      { l:'Portfolio',      v: portfolioOnChain ? '22 ETH-direct + 43 bridge' : (ss?.portfolioLength ? ss.portfolioLength+' assets' : 'Not set'), c: portfolioOnChain ? '#10b981':'#f59e0b' },
                       { l:'Automation',     v: automationOn ? 'ACTIVE' : (ss?.automationActive ? 'ACTIVE' : 'DISABLED'),                   c: (automationOn||ss?.automationActive) ? '#10b981':'#ef4444' },
                       { l:'Cycles run',     v: (cyclesOnChain || ss?.cycleCount || 0).toString(),                                         c:'#a78bfa' },
                     ].map(s => (
@@ -879,7 +823,7 @@ export default function AnalyticsPage() {
                       <div style={{ textAlign:'center', padding:'24px 0' }}>
                         <div style={{ fontSize:13, color:'rgba(255,255,255,0.3)', marginBottom:6 }}>No executions yet</div>
                         <div style={{ fontSize:10, color:'rgba(255,255,255,0.18)', lineHeight:1.8 }}>
-                          Once vault is deployed + Chainlink registered,<br/>every ETH deposit triggers automatic<br/>allocation across 21 assets via Uniswap V3.
+                          Once vault is deployed + Chainlink registered,<br/>every ETH deposit is autonomously allocated<br/>across all 65 assets — 22 via Uniswap V3,<br/>43 cross-chain via deBridge DLN.
                         </div>
                       </div>
                     )}
