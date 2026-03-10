@@ -109,6 +109,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const buys  = signals.filter(s => s.action === 'BUY' || s.action === 'ACCUMULATE').length;
     const sells = signals.filter(s => s.action === 'SELL' || s.action === 'REDUCE').length;
 
+    // ── Real weighted portfolio performance ───────────────────────────────────
+    const weightSum      = Object.values(PORTFOLIO_WEIGHTS).reduce((s, w) => s + w, 0) || 1;
+    const assetsWithData = allInputs.filter(inp => inp.priceUsd > 0);
+    const return24h      = assetsWithData.reduce((s, inp) =>
+      s + (PORTFOLIO_WEIGHTS[inp.symbol] || 0) * inp.change24h, 0) / weightSum;
+    const return7d       = assetsWithData.reduce((s, inp) =>
+      s + (PORTFOLIO_WEIGHTS[inp.symbol] || 0) * inp.change7d, 0) / weightSum;
+    const indexValue     = 100 * (1 + return7d);
+    const pnl24h         = return24h * 100;
+    const winRate        = assetsWithData.length > 0
+      ? assetsWithData.filter(inp => inp.change24h > 0).length / assetsWithData.length : 0;
+
     // Real portfolio composition: live prices × portfolio weights + current AI signal per asset
     const composition = ASSET_REGISTRY
       .filter(meta => (PORTFOLIO_WEIGHTS[meta.symbol] ?? 0) > 0)
@@ -143,8 +155,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         drawdown: 0,
         isLive: true,
       },
-      performance: { totalPnL: 0, winRate: 0, totalTrades: 0, equityCurve: [] },
-      portfolio:   { totalValue: 0, assetCount: ASSET_REGISTRY.length, composition },
+      performance: { totalPnL: pnl24h, winRate, totalTrades: buys + sells, return24h, return7d, equityCurve: [] },
+      portfolio:   { totalValue: indexValue, assetCount: ASSET_REGISTRY.length, return24h, return7d, composition },
       macro: {
         fearGreed: fg,
         indicators: {

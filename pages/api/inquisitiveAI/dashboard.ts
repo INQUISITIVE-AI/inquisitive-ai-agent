@@ -110,6 +110,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const buys  = signals.filter(s => s.action === 'BUY' || s.action === 'ACCUMULATE').length;
     const sells = signals.filter(s => s.action === 'SELL' || s.action === 'REDUCE').length;
 
+    // ── Real portfolio performance from live weighted 65-asset basket ─────────
+    const weightSum       = Object.values(PORTFOLIO_WEIGHTS).reduce((s, w) => s + w, 0) || 1;
+    const assetsWithData  = allInputs.filter(inp => inp.priceUsd > 0);
+    const return24h       = assetsWithData.reduce((s, inp) =>
+      s + (PORTFOLIO_WEIGHTS[inp.symbol] || 0) * inp.change24h, 0) / weightSum;
+    const return7d        = assetsWithData.reduce((s, inp) =>
+      s + (PORTFOLIO_WEIGHTS[inp.symbol] || 0) * inp.change7d, 0) / weightSum;
+    // Index value: base $100 invested 7 days ago → current value
+    const indexValue      = 100 * (1 + return7d);
+    // P&L expressed as $ per $100 base over 24 h
+    const pnl24h          = return24h * 100;
+    // Win rate: fraction of portfolio assets up in last 24 h
+    const winRate         = assetsWithData.length > 0
+      ? assetsWithData.filter(inp => inp.change24h > 0).length / assetsWithData.length : 0;
+
     res.setHeader('Cache-Control', 's-maxage=15, stale-while-revalidate=30');
     res.status(200).json({
       aiSignals: {
@@ -125,8 +140,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         drawdown: 0,
         isLive: true,
       },
-      performance: { totalPnL: 0, winRate: 0, totalTrades: 0 },
-      portfolio:   { totalValue: 0, assetCount: ASSET_REGISTRY.length },
+      performance: {
+        totalPnL: pnl24h,
+        winRate,
+        totalTrades: buys + sells,
+        return24h,
+        return7d,
+      },
+      portfolio: {
+        totalValue: indexValue,
+        assetCount: ASSET_REGISTRY.length,
+        return24h,
+        return7d,
+      },
       macro: {
         fearGreed: fg,
         indicators: {

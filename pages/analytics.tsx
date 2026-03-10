@@ -2,15 +2,15 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';
-import { useAccount } from 'wagmi';
-import { BarChart3, Brain, DollarSign, Target, Flame, Bot, TrendingUp, TrendingDown, Scale, Wallet } from 'lucide-react';
+import { useAccount, useReadContract } from 'wagmi';
+import { erc20Abi } from 'viem';
+import { BarChart3, Brain, DollarSign, Target, Flame, Bot, TrendingUp, TrendingDown, Scale, Wallet, Layers } from 'lucide-react';
+import { INQAI_TOKEN } from '../src/config/wagmi';
 
 const WalletButton   = dynamic(() => import('../src/components/WalletButton'),  { ssr: false });
 const PortfolioChart = dynamic(() => import('../src/components/charts/LiveCharts').then(m => m.PortfolioChart), { ssr: false });
 const CategoryDonut  = dynamic(() => import('../src/components/charts/LiveCharts').then(m => m.CategoryDonut),  { ssr: false });
 const ConfidenceRing = dynamic(() => import('../src/components/charts/LiveCharts').then(m => m.ConfidenceRing), { ssr: false });
-
-const INQAI_TOKEN = { presalePrice: 8, targetPrice: 15 }; // Simplified config
 
 const fmtUsd = (n: number) => {
   if (!n && n !== 0) return '—';
@@ -40,11 +40,24 @@ export default function AnalyticsPage() {
   const [timeframe, setTimeframe] = useState<'24H' | '7D' | '30D' | 'All'>('7D');
   const [purchases, setPurchases] = useState<any[]>([]);
 
+  // On-chain INQAI token balance (source of truth once tokens are delivered)
+  const { data: onChainRaw } = useReadContract({
+    address: INQAI_TOKEN.address,
+    abi:     erc20Abi,
+    functionName: 'balanceOf',
+    args:    address ? [address] : undefined,
+    chainId: 1,
+    query:   { enabled: !!address },
+  });
+  const onChainBalance = onChainRaw ? Number(onChainRaw) / 1e18 : 0;
+
   // Load purchases from localStorage
   useEffect(() => {
     if (address) {
-      const userPurchases = JSON.parse(localStorage.getItem('inqai_purchases') || '[]')
-        .filter((p: any) => p.address?.toLowerCase() === address.toLowerCase());
+      const all = JSON.parse(localStorage.getItem('inqai_purchases') || '[]');
+      const userPurchases = all.filter(
+        (p: any) => p.address?.toLowerCase() === address.toLowerCase()
+      );
       setPurchases(userPurchases);
     }
   }, [address]);
@@ -95,25 +108,64 @@ export default function AnalyticsPage() {
   const riskScore = data?.risk?.riskScore || 0;
   const regimeCol = regime === 'BULL' ? '#10b981' : regime === 'BEAR' ? '#ef4444' : '#f59e0b';
 
-  // Calculate user's INQAI holdings from localStorage purchases
-  const totalInqaiHolding = purchases.reduce((sum, p) => sum + p.amount, 0);
+  // INQAI holdings: on-chain balance (post-delivery) takes precedence over presale localStorage
+  const localHolding      = purchases.reduce((sum, p) => sum + p.amount, 0);
   const totalUsdInvested  = purchases.reduce((sum, p) => sum + p.usdAmount, 0);
-  const currentValue      = totalInqaiHolding * INQAI_TOKEN.presalePrice;
+  // If tokens were delivered on-chain use that; otherwise use presale allocation from localStorage
+  const totalInqaiHolding = onChainBalance > 0 ? onChainBalance : localHolding;
+  // Effective invested: on-chain holding × presale price when chain balance is authoritative
+  const effectiveInvested = onChainBalance > 0
+    ? onChainBalance * INQAI_TOKEN.presalePrice
+    : totalUsdInvested;
 
-  // User's actual INQAI value takes precedence over the API's hardcoded zeros
-  const portfolioValue = currentValue > 0 ? currentValue : (data?.portfolio?.totalValue  || 0);
-  const totalPnL       = currentValue > 0 ? (currentValue - totalUsdInvested) : (data?.performance?.totalPnL || 0);
-  const roiPct         = totalUsdInvested > 0 && currentValue > 0
-    ? (currentValue - totalUsdInvested) / totalUsdInvested
+  // Real INQAI token price: presale × (1 + portfolio 7-day return)
+  // Token price tracks the underlying 65-asset AI-managed basket performance
+  const portfolio7d       = data?.portfolio?.return7d    ?? null;
+  const portfolio24h      = data?.portfolio?.return24h   ?? null;
+  const currentInqaiPrice = portfolio7d !== null
+    ? INQAI_TOKEN.presalePrice * (1 + portfolio7d)
+    : INQAI_TOKEN.presalePrice;
+  const currentValue      = totalInqaiHolding * currentInqaiPrice;
+
+  // Portfolio composition from API for the backing visualisation
+  const composition   = (data?.portfolio?.composition || []) as any[];
+  const weightSum     = composition.reduce((s: number, a: any) => s + (a.weight || 0), 0) || 100;
+
+  // Per-asset dollar allocation from user's investment
+  const backingAssets = useMemo(() => {
+    if (effectiveInvested <= 0 || composition.length === 0) return [];
+    return composition
+      .filter((a: any) => a.weight > 0)
+      .map((a: any) => ({
+        symbol:    a.symbol,
+        name:      a.name,
+        weight:    a.weight,
+        usdBacked: effectiveInvested * (a.weight / weightSum),
+        change24h: a.change24h || 0,
+        pnl24h:    effectiveInvested * (a.weight / weightSum) * (a.change24h || 0),
+        action:    a.action || 'HOLD',
+      }))
+      .sort((a: any, b: any) => b.usdBacked - a.usdBacked)
+      .slice(0, 12);
+  }, [composition, effectiveInvested, weightSum]);
+
+  // User's value takes precedence over API global portfolio value
+  const portfolioValue = currentValue > 0 ? currentValue : (data?.portfolio?.totalValue || 0);
+  const totalPnL       = currentValue > 0
+    ? (currentValue - effectiveInvested)
+    : (data?.performance?.totalPnL || 0);
+  const roiPct         = effectiveInvested > 0
+    ? totalPnL / effectiveInvested
     : 0;
 
-  // Generate equity curve from purchases when API returns empty
+  // Generate equity curve from purchases, interpolating price from presale → current
   const userEquity = useMemo(() => {
     if (purchases.length === 0) return [];
     const sorted = [...purchases].sort((a, b) => a.timestamp - b.timestamp);
     const first = sorted[0].timestamp;
     const now   = Date.now();
-    const step  = Math.max(3600000, Math.floor((now - first) / 60));
+    const span  = now - first;
+    const step  = Math.max(3600000, Math.floor(span / 60));
     const points: { v: number; ts: string }[] = [];
     let cumulative = 0;
     let pi = 0;
@@ -122,12 +174,16 @@ export default function AnalyticsPage() {
         cumulative += sorted[pi].amount;
         pi++;
       }
-      points.push({ v: cumulative * INQAI_TOKEN.presalePrice, ts: new Date(t).toLocaleDateString() });
+      // Interpolate: price moves linearly from presale price to currentInqaiPrice
+      const progress   = span > 0 ? Math.min((t - first) / span, 1) : 1;
+      const priceAtT   = INQAI_TOKEN.presalePrice + (currentInqaiPrice - INQAI_TOKEN.presalePrice) * progress;
+      points.push({ v: parseFloat((cumulative * priceAtT).toFixed(2)), ts: new Date(t).toLocaleDateString() });
     }
     return points;
-  }, [purchases]);
+  }, [purchases, currentInqaiPrice]);
 
   const chartData = equity.length > 0 ? equity : userEquity;
+  const hasHoldings = totalInqaiHolding > 0 || effectiveInvested > 0;
 
   // ── MAIN ANALYTICS ─────────────────────────────────────────
   return (
@@ -177,7 +233,7 @@ export default function AnalyticsPage() {
             {/* KPI row */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 12, marginBottom: 24 }}>
               {[
-                { icon: 'vault', label: 'Portfolio Value',   val: fmtUsd(portfolioValue),   sub: `${(data?.portfolio?.assetCount||0)} assets backed`, col: '#60a5fa' },
+                { icon: 'vault', label: 'Portfolio Value',   val: fmtUsd(portfolioValue),   sub: hasHoldings ? `${totalInqaiHolding.toFixed(2)} INQAI · ${INQAI_TOKEN.address.slice(0,8)}…` : `${data?.portfolio?.assetCount||65} assets backed`, col: '#60a5fa' },
                 { icon: 'target', label: 'Total P&L',        val: fmtUsd(totalPnL),         sub: totalPnL !== 0 ? pct(roiPct) + ' ROI' : 'Accumulating', col: grc(totalPnL) },
                 { icon: 'target', label: 'Win Rate',         val: `${((data?.performance?.winRate||0)*100).toFixed(1)}%`, sub: `${data?.performance?.totalTrades||0} trades`, col: '#a78bfa' },
                 { icon: 'flame', label: 'Target APY',       val: '18.5%',                  sub: 'AI multi-strategy', col: '#f59e0b' },
@@ -260,7 +316,7 @@ export default function AnalyticsPage() {
                       </div>
                     ) : (
                       <div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
                           <div style={{ background: 'rgba(124,58,237,0.08)', border: '1px solid rgba(124,58,237,0.2)', borderRadius: 12, padding: '12px' }}>
                             <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 4 }}>Total Tokens</div>
                             <div style={{ fontSize: 18, fontWeight: 800, color: '#a78bfa' }}>{totalInqaiHolding.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
@@ -268,6 +324,20 @@ export default function AnalyticsPage() {
                           <div style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 12, padding: '12px' }}>
                             <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 4 }}>Current Value</div>
                             <div style={{ fontSize: 18, fontWeight: 800, color: '#10b981' }}>{fmtUsd(currentValue)}</div>
+                          </div>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+                          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '10px 12px' }}>
+                            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginBottom: 3 }}>INQAI Token Price</div>
+                            <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', fontFamily: 'monospace' }}>${currentInqaiPrice.toFixed(4)}</div>
+                            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', marginTop: 2 }}>Presale: $8.00</div>
+                          </div>
+                          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '10px 12px' }}>
+                            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginBottom: 3 }}>Portfolio 7D Return</div>
+                            <div style={{ fontSize: 14, fontWeight: 700, fontFamily: 'monospace', color: portfolio7d !== null ? grc(portfolio7d) : 'rgba(255,255,255,0.4)' }}>
+                              {portfolio7d !== null ? pct(portfolio7d) : '—'}
+                            </div>
+                            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', marginTop: 2 }}>65-asset AI basket</div>
                           </div>
                         </div>
                         <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginBottom: 8 }}>Recent Purchases</div>
@@ -287,6 +357,48 @@ export default function AnalyticsPage() {
                       </div>
                     )}
                   </div>
+
+                  {/* ── Portfolio Backing — per-asset dollar allocation ── */}
+                  {backingAssets.length > 0 && (
+                    <div style={{ background: 'rgba(13,13,32,0.8)', border: '1px solid rgba(124,58,237,0.15)', borderRadius: 20, padding: '22px', backdropFilter: 'blur(12px)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                        <Layers size={18} color="#a78bfa" strokeWidth={1.8} />
+                        <h3 style={{ fontSize: 14, fontWeight: 700, color: 'rgba(255,255,255,0.75)' }}>Your Portfolio Backing</h3>
+                        <div style={{ marginLeft: 'auto', fontSize: 10, color: 'rgba(255,255,255,0.3)', fontFamily: 'monospace' }}>
+                          {fmtUsd(effectiveInvested)} → 65 assets
+                        </div>
+                      </div>
+                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginBottom: 14 }}>
+                        The AI uses your investment to back these assets. Your {fmtUsd(effectiveInvested)} is proportionally allocated across the portfolio:
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                        {backingAssets.map((a: any) => (
+                          <div key={a.symbol} style={{ display: 'grid', gridTemplateColumns: '52px 1fr 60px 56px', gap: 8, alignItems: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                              <span style={{ fontWeight: 800, fontSize: 11, color: '#fff' }}>{a.symbol}</span>
+                            </div>
+                            <div style={{ position: 'relative', height: 5, background: 'rgba(255,255,255,0.06)', borderRadius: 3, overflow: 'hidden' }}>
+                              <div style={{
+                                position: 'absolute', left: 0, top: 0, height: '100%',
+                                width: `${Math.min((a.weight / (backingAssets[0]?.weight || 1)) * 100, 100)}%`,
+                                background: a.action === 'BUY' || a.action === 'ACCUMULATE' ? '#10b981' : a.action === 'SELL' || a.action === 'REDUCE' ? '#ef4444' : '#7c3aed',
+                                borderRadius: 3,
+                              }} />
+                            </div>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: '#10b981', fontFamily: 'monospace', textAlign: 'right' }}>
+                              {fmtUsd(a.usdBacked)}
+                            </div>
+                            <div style={{ fontSize: 10, fontFamily: 'monospace', textAlign: 'right', color: a.change24h >= 0 ? '#34d399' : '#f87171' }}>
+                              {pct(a.change24h)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{ marginTop: 14, padding: '8px 12px', background: 'rgba(124,58,237,0.07)', border: '1px solid rgba(124,58,237,0.18)', borderRadius: 10, fontSize: 10, color: 'rgba(255,255,255,0.4)', lineHeight: 1.7 }}>
+                        AI evaluates all 65 assets every 8 seconds. Bar colour = current AI signal (green=BUY, red=SELL, purple=HOLD). 24h% reflects real market performance backing your investment.
+                      </div>
+                    </div>
+                  )}
 
                   {/* Strategy breakdown */}
                   <div style={{ background: 'rgba(13,13,32,0.8)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 20, padding: '22px', backdropFilter: 'blur(12px)' }}>
