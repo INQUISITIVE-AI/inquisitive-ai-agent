@@ -82,19 +82,28 @@ export default function AnalyticsPage() {
   }, []);
   useEffect(() => { load(); const t = setInterval(load, 15000); return () => clearInterval(t); }, [load]);
 
-  const navPerToken = nav?.token?.navPerToken  ?? INQAI_TOKEN.presalePrice;
-  const return7d    = nav?.token?.return7d     ?? 0;
-  const return24h   = nav?.token?.return24h    ?? 0;
-  const regime      = nav?.ai?.regime          || '—';
-  const fg          = nav?.ai?.fearGreed?.value ?? '—';
-  const fgLabel     = nav?.ai?.fearGreed?.valueClassification || '';
-  const cycles      = nav?.ai?.cycleCount      ?? 0;
-  const buys        = nav?.ai?.buys            ?? 0;
-  const sells       = nav?.ai?.sells           ?? 0;
-  const riskScore   = nav?.ai?.riskScore       ?? 0;
-  const winRate     = nav?.portfolio?.winRate  ?? 0;
-  const regimeCol   = regime === 'BULL' ? '#10b981' : regime === 'BEAR' ? '#ef4444' : '#f59e0b';
-  const positions: any[] = nav?.positions ?? [];
+  const navPerToken       = nav?.token?.navPerToken       ?? INQAI_TOKEN.presalePrice;
+  const navSource         = nav?.token?.navSource          ?? 'connecting';
+  const return7d          = nav?.token?.return7d           ?? 0;
+  const return24h         = nav?.token?.return24h          ?? 0;
+  const circulatingSupply = nav?.token?.circulatingSupply  ?? 0;
+  const regime            = nav?.ai?.regime                || '—';
+  const fg                = nav?.ai?.fearGreed?.value      ?? '—';
+  const fgLabel           = nav?.ai?.fearGreed?.valueClassification || '';
+  const cycles            = nav?.ai?.cycleCount            ?? 0;
+  const buys              = nav?.ai?.buys                  ?? 0;
+  const sells             = nav?.ai?.sells                 ?? 0;
+  const riskScore         = nav?.ai?.riskScore             ?? 0;
+  const winRate           = nav?.portfolio?.winRate        ?? 0;
+  const regimeCol         = regime === 'BULL' ? '#10b981' : regime === 'BEAR' ? '#ef4444' : '#f59e0b';
+  const positions: any[]  = nav?.positions ?? [];
+
+  // Real on-chain treasury data
+  const treasury      = nav?.treasury ?? {} as any;
+  const aumUSD        = treasury.aumUSD        ?? 0;
+  const totalEthUSD   = (treasury.totalEth ?? 0) * (treasury.ethPrice ?? 3200);
+  const vaultAddress  = treasury.vaultAddress  || INQAI_TOKEN.teamWallet;
+  const isOnChainNAV  = navSource === 'on-chain-aum';
 
   const localHolding     = purchases.reduce((s, p) => s + (p.amount    || 0), 0);
   const totalUsdInvested = purchases.reduce((s, p) => s + (p.usdAmount || 0), 0);
@@ -104,7 +113,7 @@ export default function AnalyticsPage() {
   const totalPnL         = currentValue - effInvested;
   const roiPct           = effInvested > 0 ? totalPnL / effInvested : 0;
   const hasHoldings      = totalInqai > 0 || effInvested > 0;
-  const navSource        = onChainBalance > 0 ? 'on-chain' : purchases.length > 0 ? 'presale' : 'live NAV';
+  const holdingSource    = onChainBalance > 0 ? 'on-chain' : purchases.length > 0 ? 'presale' : isOnChainNAV ? 'on-chain-nav' : 'live NAV';
 
   const backingAssets = useMemo(() => positions.slice(0, 12).map(p => ({
     ...p,
@@ -184,16 +193,21 @@ export default function AnalyticsPage() {
                 <div style={{ fontSize:20, fontWeight:900, color:'#fff', marginBottom:4 }}>Portfolio Analytics</div>
                 <div style={{ fontSize:12, color:'rgba(255,255,255,0.35)' }}>{address?address.slice(0,8)+'…'+address.slice(-6)+' · ':''}AI managing 65 assets · 8-second cycles · {navSource}</div>
               </div>
-              <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+              <div style={{ display:'flex', gap:10, alignItems:'center' }}>
                 <div style={{ width:8, height:8, borderRadius:9, background:'#10b981', boxShadow:'0 0 8px #10b981' }} />
                 <span style={{ fontSize:12, color:'#10b981', fontWeight:700 }}>LIVE · {cycles ? `Cycle #${cycles.toLocaleString()}` : 'Connecting…'}</span>
+                {isOnChainNAV && (
+                  <span style={{ fontSize:10, padding:'2px 8px', borderRadius:100, background:'rgba(16,185,129,0.12)', color:'#34d399', border:'1px solid rgba(16,185,129,0.25)', fontWeight:700 }}>
+                    ON-CHAIN NAV · {fmtUsd(aumUSD)} AUM
+                  </span>
+                )}
               </div>
             </div>
 
             {/* KPI Row */}
             <div style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:12, marginBottom:24 }}>
               {([
-                { label:hasHoldings?'Your Portfolio':'INQAI NAV', val:fmtUsd(dispValue), sub:hasHoldings?`${totalInqai.toFixed(4)} INQAI · ${navSource}`:`Per token · ${nav?.portfolio?.assetCount??65} assets`, col:'#60a5fa', icon:'dollar' },
+                { label:hasHoldings?'Your Portfolio':'INQAI NAV', val:fmtUsd(dispValue), sub:hasHoldings?`${totalInqai.toFixed(4)} INQAI · ${holdingSource}`:`Per token · ${isOnChainNAV?'real AUM':'basket'}`, col:'#60a5fa', icon:'dollar' },
                 { label:hasHoldings?'Total P&L':'7D Return',       val:hasHoldings?fmtUsd(totalPnL):pct(return7d), sub:hasHoldings?`${pct(roiPct)} ROI vs $${INQAI_TOKEN.presalePrice} presale`:'65-asset weighted basket', col:grc(hasHoldings?totalPnL:return7d), icon:'target' },
                 { label:'24H Return',  val:pct(return24h),   sub:`${(winRate*100).toFixed(0)}% assets up today`,  col:grc(return24h), icon:'trend' },
                 { label:'Target APY',  val:'18.5%',           sub:'Staking · Lending · LP · Yield',               col:'#f59e0b',      icon:'flame' },
@@ -294,6 +308,48 @@ export default function AnalyticsPage() {
                             <span style={{ color:'rgba(255,255,255,0.25)', fontSize:10 }}>{new Date(p.timestamp).toLocaleDateString()}</span>
                           </div>
                         ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* On-chain treasury card */}
+                  <div style={{ background:'rgba(13,13,32,0.85)', border:`1px solid ${isOnChainNAV?'rgba(16,185,129,0.25)':'rgba(255,255,255,0.06)'}`, borderRadius:20, padding:'22px', backdropFilter:'blur(12px)' }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:14 }}>
+                      <Shield size={16} color={isOnChainNAV?'#10b981':'#6b7280'} />
+                      <h3 style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.8)', margin:0 }}>On-Chain Treasury</h3>
+                      <span style={{ marginLeft:'auto', fontSize:9, padding:'2px 7px', borderRadius:100, background:isOnChainNAV?'rgba(16,185,129,0.12)':'rgba(255,255,255,0.05)', color:isOnChainNAV?'#34d399':'rgba(255,255,255,0.35)', border:`1px solid ${isOnChainNAV?'rgba(16,185,129,0.25)':'rgba(255,255,255,0.1)'}`, fontWeight:700 }}>
+                        {isOnChainNAV ? 'NAV FROM REAL AUM' : 'BASKET-WEIGHTED NAV'}
+                      </span>
+                    </div>
+                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10, marginBottom:12 }}>
+                      {[
+                        { l:'Total AUM',         v: fmtUsd(aumUSD),                             c:'#10b981' },
+                        { l:'ETH in Vault',       v: (treasury.totalEth??0).toFixed(4)+' ETH',   c:'#60a5fa' },
+                        { l:'Tokens Sold',        v: circulatingSupply > 0 ? fmtN(circulatingSupply,0)+' INQAI' : 'Pending', c:'#a78bfa' },
+                      ].map(s => (
+                        <div key={s.l} style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:10, padding:'10px 12px' }}>
+                          <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)', marginBottom:2 }}>{s.l}</div>
+                          <div style={{ fontSize:13, fontWeight:800, color:s.c, fontFamily:'monospace' }}>{s.v}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ display:'flex', flexDirection:'column', gap:6, fontSize:11 }}>
+                      {[
+                        { l:'Vault Contract',  v:vaultAddress,                                      href:`https://etherscan.io/address/${vaultAddress}` },
+                        { l:'INQAI Token',     v:INQAI_TOKEN.address,                               href:`https://etherscan.io/token/${INQAI_TOKEN.address}` },
+                        { l:'AI Strategy Mgr', v:'0x8431173FA9594B43E226D907E26EF68cD6B6542D',     href:'https://etherscan.io/address/0x8431173FA9594B43E226D907E26EF68cD6B6542D' },
+                      ].map(s => (
+                        <div key={s.l} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'6px 8px', background:'rgba(255,255,255,0.02)', borderRadius:8 }}>
+                          <span style={{ color:'rgba(255,255,255,0.4)', fontSize:10 }}>{s.l}</span>
+                          <a href={s.href} target="_blank" rel="noopener noreferrer" style={{ color:'#60a5fa', fontFamily:'monospace', fontSize:10, textDecoration:'none', display:'flex', alignItems:'center', gap:4 }}>
+                            {s.v.slice(0,10)}…{s.v.slice(-6)}
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                    {!isOnChainNAV && aumUSD === 0 && (
+                      <div style={{ marginTop:10, padding:'7px 10px', background:'rgba(124,58,237,0.07)', border:'1px solid rgba(124,58,237,0.15)', borderRadius:8, fontSize:10, color:'rgba(255,255,255,0.4)', lineHeight:1.7 }}>
+                        NAV is currently basket-weighted (live CoinGecko data). Once ETH deposits are made to the vault contract, NAV switches to real AUM/supply calculation automatically.
                       </div>
                     )}
                   </div>

@@ -11,6 +11,41 @@ import type { AssetInput, FGIndex } from '../_brain';
 const PRESALE_PRICE = 8;    // USD — presale price paid per INQAI token
 const TOTAL_SUPPLY  = 100_000_000;
 
+// On-chain contract addresses
+const VAULT_ADDR    = process.env.INQUISITIVE_VAULT_ADDRESS || '0x506F72eABc90793ae8aC788E650bC9407ED853Fa';
+const INQAI_ADDR    = process.env.INQAI_TOKEN_ADDRESS       || '0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5';
+const DEPLOYER_ADDR = process.env.DEPLOYER_ADDRESS          || '0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746';
+const USDC_ADDR     = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48';
+const RPC_URLS      = [
+  process.env.MAINNET_RPC_URL || 'https://mainnet.infura.io/v3/d633cdc94aff412b90281fd14cd98868',
+  'https://eth.llamarpc.com', 'https://rpc.ankr.com/eth',
+];
+
+async function rpcCall(method: string, params: any[]): Promise<string | null> {
+  for (const url of RPC_URLS) {
+    try {
+      const r = await fetch(url, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
+        signal: AbortSignal.timeout(6000),
+      });
+      if (!r.ok) continue;
+      const d = await r.json();
+      if (d.result !== undefined && d.result !== null) return d.result;
+    } catch {}
+  }
+  return null;
+}
+
+function parseHex(hex: string | null, dec = 18): number {
+  if (!hex || hex === '0x') return 0;
+  try { return Number(BigInt(hex)) / Math.pow(10, dec); } catch { return 0; }
+}
+
+function balanceOfData(addr: string): string {
+  return '0x70a08231' + addr.toLowerCase().replace('0x','').padStart(64,'0');
+}
+
 const NO_CC   = new Set(['CC', 'JUPSOL', 'NIGHT', 'XCN', 'CNGN']);
 const ALL_CGS = ASSET_REGISTRY.map(a => a.cgId).join(',');
 
@@ -93,7 +128,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { inputs, fg } = await fetchAll();
+    // Fetch market data AND on-chain treasury data in parallel
+    const [{ inputs, fg }, vaultEthHex, deployerEthHex, totalSupplyHex, deployerInqaiHex, deployerUsdcHex, vaultUsdcHex] = await Promise.all([
+      fetchAll(),
+      rpcCall('eth_getBalance', [VAULT_ADDR,    'latest']),
+      rpcCall('eth_getBalance', [DEPLOYER_ADDR, 'latest']),
+      rpcCall('eth_call', [{ to: INQAI_ADDR, data: '0x18160ddd' }, 'latest']),
+      rpcCall('eth_call', [{ to: INQAI_ADDR, data: balanceOfData(DEPLOYER_ADDR) }, 'latest']),
+      rpcCall('eth_call', [{ to: USDC_ADDR,  data: balanceOfData(DEPLOYER_ADDR) }, 'latest']),
+      rpcCall('eth_call', [{ to: USDC_ADDR,  data: balanceOfData(VAULT_ADDR)    }, 'latest']),
+    ]);
 
     // Build full allInputs array (zero-fill assets with no price data)
     const allInputs: AssetInput[] = ASSET_REGISTRY.map(meta =>
@@ -116,10 +160,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const assetsLive    = allInputs.filter(a => a.priceUsd > 0);
     const return24h     = assetsLive.reduce((s, a) => s + (PORTFOLIO_WEIGHTS[a.symbol] || 0) * a.change24h, 0) / weightSum;
     const return7d      = assetsLive.reduce((s, a) => s + (PORTFOLIO_WEIGHTS[a.symbol] || 0) * a.change7d,  0) / weightSum;
-    // NAV per token = presale price × (1 + portfolio 7-day return)
-    const navPerToken   = PRESALE_PRICE * (1 + return7d);
     // Portfolio index: what $100 invested 7 days ago is worth now
     const portfolioIndex = 100 * (1 + return7d);
+
+    // ── Real on-chain AUM ─────────────────────────────────────────────────────
+    const ethPrice       = inputs.get('ETH')?.priceUsd ?? 3200;
+    const vaultEth       = parseHex(vaultEthHex,    18);
+    const deployerEth    = parseHex(deployerEthHex, 18);
+    const totalEth       = vaultEth + deployerEth;
+    const deployerUsdc   = parseHex(deployerUsdcHex, 6);
+    const vaultUsdc      = parseHex(vaultUsdcHex,    6);
+    const onChainAUM     = totalEth * ethPrice + deployerUsdc + vaultUsdc;
+
+    // ── Circulating supply ────────────────────────────────────────────────────
+    const totalSupplyOnChain = parseHex(totalSupplyHex, 18) || TOTAL_SUPPLY;
+    const deployerBalance    = parseHex(deployerInqaiHex, 18);
+    const circulatingSupply  = Math.max(0, totalSupplyOnChain - deployerBalance);
+
+    // ── NAV per token ─────────────────────────────────────────────────────────
+    // Priority 1: real AUM / circulating supply (when tokens have been sold & ETH is in vault)
+    // Priority 2: presale_price × (1 + portfolio7d) — tracks basket performance
+    const navFromAUM    = circulatingSupply > 0 && onChainAUM > 0
+      ? onChainAUM / circulatingSupply
+      : 0;
+    const navFromBasket = PRESALE_PRICE * (1 + return7d);
+    const navPerToken   = navFromAUM > 0 ? navFromAUM : navFromBasket;
 
     const buys  = signals.filter(s => s.action === 'BUY' || s.action === 'ACCUMULATE').length;
     const sells = signals.filter(s => s.action === 'SELL' || s.action === 'REDUCE').length;
@@ -167,14 +232,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.status(200).json({
       // INQAI token economics
       token: {
-        symbol:        'INQAI',
-        presalePrice:  PRESALE_PRICE,
-        navPerToken:   parseFloat(navPerToken.toFixed(6)),
-        portfolioIndex: parseFloat(portfolioIndex.toFixed(4)),
-        return24h:     parseFloat(return24h.toFixed(6)),
-        return7d:      parseFloat(return7d.toFixed(6)),
-        targetPrice:   15,
-        totalSupply:   TOTAL_SUPPLY,
+        symbol:           'INQAI',
+        presalePrice:     PRESALE_PRICE,
+        navPerToken:      parseFloat(navPerToken.toFixed(6)),
+        navSource:        navFromAUM > 0 ? 'on-chain-aum' : 'basket-weighted',
+        portfolioIndex:   parseFloat(portfolioIndex.toFixed(4)),
+        return24h:        parseFloat(return24h.toFixed(6)),
+        return7d:         parseFloat(return7d.toFixed(6)),
+        targetPrice:      15,
+        totalSupply:      totalSupplyOnChain || TOTAL_SUPPLY,
+        circulatingSupply,
+        tokensSold:       circulatingSupply,
+      },
+      // On-chain treasury — real funds from token purchases
+      treasury: {
+        vaultAddress:     VAULT_ADDR,
+        inqaiAddress:     INQAI_ADDR,
+        deployerAddress:  DEPLOYER_ADDR,
+        vaultEth:         parseFloat(vaultEth.toFixed(6)),
+        deployerEth:      parseFloat(deployerEth.toFixed(6)),
+        totalEth:         parseFloat(totalEth.toFixed(6)),
+        ethPrice:         parseFloat(ethPrice.toFixed(2)),
+        deployerUsdc:     parseFloat(deployerUsdc.toFixed(2)),
+        vaultUsdc:        parseFloat(vaultUsdc.toFixed(2)),
+        aumUSD:           parseFloat(onChainAUM.toFixed(2)),
+        navFromAUM:       parseFloat(navFromAUM.toFixed(6)),
+        navFromBasket:    parseFloat(navFromBasket.toFixed(6)),
       },
       // Portfolio summary
       portfolio: {
@@ -184,18 +267,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return24h,
         return7d,
         portfolioIndex,
-        totalPnL24h:   parseFloat((PRESALE_PRICE * return24h).toFixed(6)), // $ P&L per token over 24h
-        totalPnL7d:    parseFloat((PRESALE_PRICE * return7d).toFixed(6)),  // $ P&L per token over 7d
+        totalPnL24h:   parseFloat((navPerToken * return24h).toFixed(6)),
+        totalPnL7d:    parseFloat((navPerToken * return7d).toFixed(6)),
         winRate,
       },
       // AI signals
       ai: {
         regime,
-        fearGreed:     fg,
-        cycleCount:    Math.floor(Date.now() / 8000),
+        fearGreed:  fg,
+        cycleCount: Math.floor(Date.now() / 8000),
         buys,
         sells,
-        riskScore:     regime === 'BULL' ? 0.35 : regime === 'BEAR' ? 0.72 : 0.5,
+        riskScore:  regime === 'BULL' ? 0.35 : regime === 'BEAR' ? 0.72 : 0.5,
       },
       // All 65 positions
       positions,
