@@ -80,60 +80,56 @@ contract AIStrategyManager {
         require(tokens.length == actions.length, "Length mismatch");
         require(vault != address(0), "Vault not set");
 
-        uint256 ethDeployed     = 0;
-        uint256 tradesExecuted  = 0;
         totalExecutedCycles++;
-
         uint256 vaultEth = IInquisitiveVault(vault).getETHBalance();
+        uint256 tradesExecuted = 0;
+        uint256 ethDeployed = 0;
 
         for (uint256 i = 0; i < tokens.length; i++) {
-            if (tokens[i] == address(0)) continue;
+            address token = tokens[i];
+            if (token == address(0)) continue;
             if (confidences[i] < BUY_THRESHOLD && _isBytes32Equal(actions[i], "BUY")) continue;
-
-            // Anti-sandwich: skip if traded in same block
-            if (lastTradeBlock[tokens[i]] == block.number) continue;
+            if (lastTradeBlock[token] == block.number) continue;
 
             bytes32 actionHash = keccak256(bytes(actions[i]));
-            string memory label = string(abi.encodePacked(actions[i], " ", _toStr(confidences[i]), "%"));
-
             if (actionHash == keccak256("BUY") || actionHash == keccak256("ACCUMULATE")) {
                 uint256 amount = ethAmounts[i];
                 if (amount == 0) continue;
-                // Hard limit: max 2% of vault per trade
                 uint256 maxAllowed = vaultEth * MAX_TRADE_PCT / 10000;
                 if (amount > maxAllowed) amount = maxAllowed;
 
-                try IInquisitiveVault(vault).buyAsset{value: amount}(
-                    tokens[i], amount, 0, poolFees[i], label
-                ) {
-                    lastTradeBlock[tokens[i]] = block.number;
-                    ethDeployed += amount;
-                    tradesExecuted++;
-                    emit SignalExecuted(tokens[i], actions[i], amount, confidences[i]);
-                } catch {}
-
+                IInquisitiveVault(vault).buyAsset{value: amount}(
+                    token,
+                    amount,
+                    0,
+                    3000,
+                    actions[i]
+                );
+                lastTradeBlock[token] = block.number;
+                ethDeployed += amount;
+                tradesExecuted++;
+                emit SignalExecuted(token, actions[i], amount, confidences[i]);
             } else if (actionHash == keccak256("SELL") || actionHash == keccak256("REDUCE")) {
-                // Sell via vault — amount represents token amount to sell
-                try IInquisitiveVault(vault).sellAsset(
-                    tokens[i], ethAmounts[i], 0, poolFees[i], label
-                ) {
-                    lastTradeBlock[tokens[i]] = block.number;
-                    tradesExecuted++;
-                    emit SignalExecuted(tokens[i], actions[i], ethAmounts[i], confidences[i]);
-                } catch {}
-
+                IInquisitiveVault(vault).sellAsset(
+                    token,
+                    ethAmounts[i],
+                    0,
+                    3000,
+                    actions[i]
+                );
+                lastTradeBlock[token] = block.number;
+                tradesExecuted++;
+                emit SignalExecuted(token, actions[i], ethAmounts[i], confidences[i]);
             } else if (actionHash == keccak256("LEND")) {
-                try IInquisitiveVault(vault).lendAsset(tokens[i], ethAmounts[i]) {
-                    tradesExecuted++;
-                    emit SignalExecuted(tokens[i], "LEND", ethAmounts[i], confidences[i]);
-                } catch {}
-
+                IInquisitiveVault(vault).lendAsset(token, ethAmounts[i]);
+                tradesExecuted++;
+                emit SignalExecuted(token, "LEND", ethAmounts[i], confidences[i]);
             } else if (actionHash == keccak256("STAKE")) {
                 uint256 stakeAmt = ethAmounts[i];
                 try IInquisitiveVault(vault).stakeETH(stakeAmt) {
                     ethDeployed += stakeAmt;
                     tradesExecuted++;
-                    emit SignalExecuted(tokens[i], "STAKE", stakeAmt, confidences[i]);
+                    emit SignalExecuted(token, "STAKE", stakeAmt, confidences[i]);
                 } catch {}
             }
         }

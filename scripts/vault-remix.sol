@@ -1,4 +1,11 @@
+[dotenv@17.3.1] injecting env (36) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+// Sources flattened with hardhat v2.28.6 https://hardhat.org
+
 // SPDX-License-Identifier: MIT
+
+// File contracts/InquisitiveVaultUpdated.sol
+
+// Original license: SPDX_License_Identifier: MIT
 pragma solidity ^0.8.24;
 
 // ── Interfaces ──────────────────────────────────────────────────────────────
