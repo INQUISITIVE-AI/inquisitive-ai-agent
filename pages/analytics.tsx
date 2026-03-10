@@ -688,30 +688,77 @@ export default function AnalyticsPage() {
                   </div>
                 )}
 
-                {/* Allocation plan */}
+                {/* Full 65-asset allocation plan */}
                 {monitor?.allocation?.plan && monitor.allocation.plan.length > 0 && (
                   <div style={{ background:'rgba(13,13,32,0.85)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:20, padding:'22px', backdropFilter:'blur(12px)' }}>
-                    <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:14 }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
                       <BarChart3 size={16} color="#a78bfa" />
-                      <h3 style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.8)', margin:0 }}>AI Allocation Plan (Live Signals)</h3>
-                      <span style={{ marginLeft:'auto', fontSize:11, color:'rgba(255,255,255,0.4)' }}>
-                        {monitor.allocation.readyTrades} trades ready · {fmtUsd(monitor.allocation.totalDeployUSD)} queued
+                      <h3 style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.8)', margin:0 }}>
+                        Full 65-Asset Allocation — Live AI Signals
+                      </h3>
+                      <span style={{ marginLeft:'auto', fontSize:10, color:'rgba(255,255,255,0.35)' }}>
+                        {monitor.allocation.plan.length} assets · {monitor?.architecture?.directOnChain ?? 22} on-chain · {monitor?.architecture?.proxied ?? 43} proxied
                       </span>
                     </div>
-                    <div style={{ display:'grid', gridTemplateColumns:'60px 1fr 60px 70px 70px 70px 70px', gap:6, padding:'8px 0', borderBottom:'1px solid rgba(255,255,255,0.06)', fontSize:9, color:'rgba(255,255,255,0.35)', fontWeight:700, textTransform:'uppercase' }}>
-                      <span>Asset</span><span>Name</span><span style={{textAlign:'right'}}>Weight</span><span style={{textAlign:'right'}}>USD</span><span style={{textAlign:'right'}}>ETH</span><span style={{textAlign:'right'}}>Signal</span><span style={{textAlign:'right'}}>Status</span>
+                    {/* Architecture summary chips */}
+                    <div style={{ display:'flex', gap:8, marginBottom:14, flexWrap:'wrap' }}>
+                      {[
+                        { label:'ON-CHAIN DIRECT',  n: monitor?.architecture?.directOnChain ?? 22, c:'#10b981', bg:'rgba(16,185,129,0.08)', border:'rgba(16,185,129,0.25)', desc:'Uniswap V3 ERC-20' },
+                        { label:'PROXIED',           n: monitor?.architecture?.proxied ?? 43,       c:'#f59e0b', bg:'rgba(251,191,36,0.08)',  border:'rgba(251,191,36,0.25)',  desc:'Cross-chain → ETH proxy' },
+                      ].map(chip => (
+                        <div key={chip.label} style={{ display:'flex', alignItems:'center', gap:6, padding:'4px 10px', borderRadius:100, background:chip.bg, border:`1px solid ${chip.border}` }}>
+                          <span style={{ fontSize:10, fontWeight:800, color:chip.c }}>{chip.n} {chip.label}</span>
+                          <span style={{ fontSize:9, color:'rgba(255,255,255,0.35)' }}>{chip.desc}</span>
+                        </div>
+                      ))}
                     </div>
-                    {monitor.allocation.plan.slice(0,20).map((t: any) => (
-                      <div key={t.symbol} style={{ display:'grid', gridTemplateColumns:'60px 1fr 60px 70px 70px 70px 70px', gap:6, padding:'8px 0', borderBottom:'1px solid rgba(255,255,255,0.03)', alignItems:'center' }}>
-                        <span style={{ fontWeight:800, fontSize:12 }}>{t.symbol}</span>
-                        <span style={{ fontSize:10, color:'rgba(255,255,255,0.5)' }}>{t.name}</span>
-                        <span style={{ textAlign:'right', fontSize:11, fontFamily:'monospace', color:'rgba(255,255,255,0.5)' }}>{t.weight}%</span>
-                        <span style={{ textAlign:'right', fontSize:11, fontFamily:'monospace', color:'#10b981' }}>{fmtUsd(t.usdValue)}</span>
-                        <span style={{ textAlign:'right', fontSize:10, fontFamily:'monospace', color:'rgba(255,255,255,0.5)' }}>{t.ethToSpend?.toFixed(4)}</span>
-                        <div style={{ display:'flex', justifyContent:'flex-end' }}><span style={{ fontSize:9, padding:'1px 6px', borderRadius:100, background:`${ACTION_COL[t.aiAction]||'#7c3aed'}20`, color:ACTION_COL[t.aiAction]||'#7c3aed', border:`1px solid ${ACTION_COL[t.aiAction]||'#7c3aed'}40`, fontWeight:700 }}>{t.aiAction}</span></div>
-                        <div style={{ display:'flex', justifyContent:'flex-end' }}><span style={{ fontSize:9, padding:'1px 6px', borderRadius:100, fontWeight:700, background:t.canExecute?'rgba(16,185,129,0.1)':'rgba(251,191,36,0.1)', color:t.canExecute?'#34d399':'#fbbf24', border:`1px solid ${t.canExecute?'rgba(16,185,129,0.25)':'rgba(251,191,36,0.25)'}` }}>{t.canExecute?'READY':'WAITING'}</span></div>
-                      </div>
-                    ))}
+                    {/* Column headers */}
+                    <div style={{ display:'grid', gridTemplateColumns:'58px 1fr 70px 60px 64px 64px 70px', gap:4, padding:'6px 0', borderBottom:'1px solid rgba(255,255,255,0.06)', fontSize:9, color:'rgba(255,255,255,0.3)', fontWeight:700, textTransform:'uppercase' }}>
+                      <span>Asset</span>
+                      <span>Name / Execution</span>
+                      <span style={{textAlign:'center'}}>Mode</span>
+                      <span style={{textAlign:'right'}}>Wt%</span>
+                      <span style={{textAlign:'right'}}>Signal</span>
+                      <span style={{textAlign:'right'}}>Score</span>
+                      <span style={{textAlign:'right'}}>Exec via</span>
+                    </div>
+                    {monitor.allocation.plan.map((t: any) => {
+                      const isDirect = t.executionMode === 'DIRECT';
+                      return (
+                        <div key={t.symbol} style={{ display:'grid', gridTemplateColumns:'58px 1fr 70px 60px 64px 64px 70px', gap:4, padding:'6px 0', borderBottom:'1px solid rgba(255,255,255,0.025)', alignItems:'center' }}>
+                          <span style={{ fontWeight:800, fontSize:12, color: isDirect ? '#fff' : 'rgba(255,255,255,0.65)' }}>{t.symbol}</span>
+                          <div>
+                            <div style={{ fontSize:10, color:'rgba(255,255,255,0.5)', lineHeight:1.3 }}>{t.name}</div>
+                            {!isDirect && t.proxyRationale && (
+                              <div style={{ fontSize:8, color:'rgba(251,191,36,0.6)', lineHeight:1.2, marginTop:1 }}>{t.proxyRationale}</div>
+                            )}
+                          </div>
+                          <div style={{ display:'flex', justifyContent:'center' }}>
+                            <span style={{ fontSize:8, padding:'1px 5px', borderRadius:100, fontWeight:800,
+                              background: isDirect ? 'rgba(16,185,129,0.12)' : 'rgba(251,191,36,0.1)',
+                              color:      isDirect ? '#34d399'               : '#fbbf24',
+                              border:     `1px solid ${isDirect ? 'rgba(16,185,129,0.3)' : 'rgba(251,191,36,0.25)'}` }}>
+                              {isDirect ? 'DIRECT' : 'PROXY'}
+                            </span>
+                          </div>
+                          <span style={{ textAlign:'right', fontSize:10, fontFamily:'monospace', color:'rgba(255,255,255,0.45)' }}>{t.allocPct?.toFixed(2)}%</span>
+                          <div style={{ display:'flex', justifyContent:'flex-end' }}>
+                            <span style={{ fontSize:8, padding:'1px 5px', borderRadius:100,
+                              background:`${ACTION_COL[t.aiAction]||'#7c3aed'}18`,
+                              color: ACTION_COL[t.aiAction]||'#a78bfa',
+                              border:`1px solid ${ACTION_COL[t.aiAction]||'#7c3aed'}35`, fontWeight:700 }}>
+                              {t.aiAction}
+                            </span>
+                          </div>
+                          <span style={{ textAlign:'right', fontSize:10, fontFamily:'monospace', color: (t.confidence??0)>=0.7?'#10b981':(t.confidence??0)>=0.5?'#f59e0b':'rgba(255,255,255,0.35)' }}>
+                            {((t.confidence??0)*100).toFixed(0)}%
+                          </span>
+                          <span style={{ textAlign:'right', fontSize:9, color: isDirect ? '#34d399' : '#f59e0b', fontFamily:'monospace' }}>
+                            {isDirect ? t.symbol : (t.proxyTarget ?? '—')}
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
