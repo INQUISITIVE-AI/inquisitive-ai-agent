@@ -37,22 +37,36 @@ interface ILido {
     function submit(address _referral) external payable returns (uint256);
 }
 
+// ── Chainlink Automation Interface ───────────────────────────────────────────
+interface IAutomationCompatible {
+    function checkUpkeep(bytes calldata checkData) external view returns (bool upkeepNeeded, bytes memory performData);
+    function performUpkeep(bytes calldata performData) external;
+}
+
 // ── InquisitiveVault — AI-managed portfolio execution ───────────────────────
-contract InquisitiveVaultUpdated {
-    // ── Constants ───────────────────────────────────────────────────────────
-    address public constant WETH     = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    address public constant USDC     = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+// Execution is KEYLESS: either via Gelato Relay (ERC-2771) or Chainlink Automation.
+// No private key is needed in any application code — institutional grade.
+contract InquisitiveVaultUpdated is IAutomationCompatible {
+    // ── Protocol addresses ───────────────────────────────────────────────────
+    address public constant WETH        = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    address public constant USDC        = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     address public constant SWAP_ROUTER = 0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45; // Uniswap V3 SwapRouter02
     address public constant AAVE_POOL   = 0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2; // Aave V3 Pool
     address public constant LIDO        = 0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84; // Lido stETH
-    uint24  public constant DEFAULT_FEE = 3000; // 0.3% Uniswap pool fee
+    // Gelato Relay trusted forwarder — mainnet 1Balance relay
+    address public constant GELATO_RELAY = 0xaBcC9b596420A9E9172FD5938620E265a0f9Df92;
+    // Chainlink Automation registry — mainnet v2.1
+    address public constant CHAINLINK_REGISTRY = 0x6593c7De001fC8542bB1703532EE1E5aA0D458fD;
+    uint24  public constant DEFAULT_FEE  = 3000; // 0.3% Uniswap pool fee
+    uint256 public constant MIN_DEPLOY   = 0.005 ether; // minimum ETH to trigger rebalance
 
     // ── State ────────────────────────────────────────────────────────────────
     address public owner;
-    address public aiExecutor;       // AI execution wallet — set via setAIExecutor
+    address public aiExecutor;       // AI execution wallet (Gelato dedicatedMsgSender)
     address public inqaiToken;
     address public strategy;
     uint256 public performanceFee = 1500; // 15% = 1500 basis points
+    bool    public automationEnabled = true; // Chainlink Automation kill switch
 
     // Portfolio position tracking
     mapping(address => uint256) public positions;    // token => amount held
@@ -70,8 +84,18 @@ contract InquisitiveVaultUpdated {
     event AICycleExecuted(uint256 cycleNumber, uint256 assetsRebalanced);
 
     // ── Modifiers ────────────────────────────────────────────────────────────
-    modifier onlyOwner()      { require(msg.sender == owner,      "Not owner");      _; }
-    modifier onlyAI()         { require(msg.sender == aiExecutor || msg.sender == owner, "Not AI executor"); _; }
+    modifier onlyOwner() { require(msg.sender == owner, "Not owner"); _; }
+    // Keyless execution: Gelato relay, Chainlink registry, AI executor, or owner
+    modifier onlyAI() {
+        require(
+            msg.sender == aiExecutor          ||
+            msg.sender == owner               ||
+            msg.sender == GELATO_RELAY        ||
+            msg.sender == CHAINLINK_REGISTRY,
+            "Not authorized executor"
+        );
+        _;
+    }
 
     // ── Constructor ───────────────────────────────────────────────────────────
     constructor(address _inqaiToken) {
@@ -90,6 +114,17 @@ contract InquisitiveVaultUpdated {
         emit AIExecutorSet(_executor);
     }
 
+    /// @notice Set the Gelato dedicatedMsgSender as the AI executor (keyless setup)
+    /// @dev Get dedicatedMsgSender from Gelato Ops SDK after registering the task
+    function setGelatoDedicatedSender(address _sender) external onlyOwner {
+        aiExecutor = _sender;
+        emit AIExecutorSet(_sender);
+    }
+
+    function setAutomationEnabled(bool _enabled) external onlyOwner {
+        automationEnabled = _enabled;
+    }
+
     function setStrategy(address _strategy) external onlyOwner {
         strategy = _strategy;
         emit StrategySet(_strategy);
@@ -98,6 +133,77 @@ contract InquisitiveVaultUpdated {
     function setPerformanceFee(uint256 _fee) external onlyOwner {
         require(_fee <= 2000, "Fee too high");
         performanceFee = _fee;
+    }
+
+    // ── Chainlink Automation — keyless scheduled execution ────────────────────
+
+    /// @notice Pending trades queued by the AI backend (no private key needed to queue)
+    /// The AI API generates these and stores them here via queueTrade()
+    struct PendingTrade {
+        address token;
+        uint256 ethAmount;
+        uint24  fee;
+        bool    executed;
+        uint256 timestamp;
+    }
+    PendingTrade[] public pendingTrades;
+
+    event TradeQueued(address indexed token, uint256 ethAmount, uint24 fee, uint256 index);
+
+    /// @notice Chainlink Automation check — returns true when there are undeployed funds
+    function checkUpkeep(bytes calldata) external view override returns (bool upkeepNeeded, bytes memory performData) {
+        upkeepNeeded = automationEnabled && (
+            address(this).balance >= MIN_DEPLOY ||
+            _hasPendingTrades()
+        );
+        performData  = abi.encode(upkeepNeeded);
+    }
+
+    /// @notice Chainlink Automation execute — called by Chainlink registry, no private key needed
+    function performUpkeep(bytes calldata) external override {
+        require(automationEnabled, "Automation disabled");
+        require(
+            msg.sender == CHAINLINK_REGISTRY || msg.sender == aiExecutor || msg.sender == owner,
+            "Not authorized"
+        );
+        cycleCount++;
+        uint256 executed = 0;
+        uint256 ethBal   = address(this).balance;
+
+        // Execute any pending trades queued by the AI backend
+        for (uint256 i = 0; i < pendingTrades.length && executed < 5; i++) {
+            PendingTrade storage trade = pendingTrades[i];
+            if (trade.executed) continue;
+            if (trade.token == address(0)) continue;
+            if (ethBal < trade.ethAmount) continue;
+            try this._executeSingle(trade.token, trade.ethAmount, true, trade.fee) {
+                trade.executed = true;
+                ethBal -= trade.ethAmount;
+                executed++;
+            } catch {}
+        }
+        emit AICycleExecuted(cycleCount, executed);
+    }
+
+    /// @notice Queue a trade to be executed by Chainlink Automation — callable by anyone (no auth needed)
+    /// @dev The AI API calls this after generating signals. No private key required.
+    function queueTrade(address token, uint256 ethAmount, uint24 fee) external {
+        require(token != address(0), "Invalid token");
+        require(ethAmount > 0, "Zero amount");
+        pendingTrades.push(PendingTrade({ token: token, ethAmount: ethAmount, fee: fee, executed: false, timestamp: block.timestamp }));
+        emit TradeQueued(token, ethAmount, fee, pendingTrades.length - 1);
+    }
+
+    function _hasPendingTrades() internal view returns (bool) {
+        for (uint256 i = 0; i < pendingTrades.length; i++) {
+            if (!pendingTrades[i].executed && pendingTrades[i].token != address(0)) return true;
+        }
+        return false;
+    }
+
+    function getPendingTradeCount() external view returns (uint256) { return pendingTrades.length; }
+    function clearExecutedTrades() external onlyOwner {
+        delete pendingTrades;
     }
 
     // ── Portfolio Execution — called by AI agent ──────────────────────────────

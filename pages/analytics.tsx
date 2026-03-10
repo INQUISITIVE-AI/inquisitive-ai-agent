@@ -44,8 +44,10 @@ export default function AnalyticsPage() {
   const [nav,       setNav]      = useState<any>(null);
   const [equity,    setEquity]   = useState<any[]>([]);
   const [cats,      setCats]     = useState<any[]>([]);
+  const [queue,     setQueue]    = useState<any>(null);
+  const [monitor,   setMonitor]  = useState<any>(null);
   const [loading,   setLoading]  = useState(true);
-  const [tab,       setTab]      = useState<'portfolio'|'ai'|'positions'|'fees'>('portfolio');
+  const [tab,       setTab]      = useState<'portfolio'|'ai'|'positions'|'execute'|'fees'>('portfolio');
   const [posFilter, setPosFilter]= useState<string>('all');
   const [purchases, setPurchases]= useState<any[]>([]);
 
@@ -69,14 +71,18 @@ export default function AnalyticsPage() {
 
   const load = useCallback(async () => {
     try {
-      const [navRes, chartRes, catRes] = await Promise.allSettled([
+      const [navRes, chartRes, catRes, queueRes, monitorRes] = await Promise.allSettled([
         fetch('/api/inquisitiveAI/portfolio/nav'),
         fetch('/api/inquisitiveAI/chart/portfolio'),
         fetch('/api/inquisitiveAI/chart/categories'),
+        fetch('/api/inquisitiveAI/execute/queue'),
+        fetch('/api/inquisitiveAI/execute/monitor'),
       ]);
-      if (navRes.status === 'fulfilled' && navRes.value.ok) setNav(await navRes.value.json());
-      if (chartRes.status === 'fulfilled' && chartRes.value.ok) { const d = await chartRes.value.json(); setEquity(d.curve || []); }
-      if (catRes.status  === 'fulfilled' && catRes.value.ok)   { const d = await catRes.value.json();   setCats(d.categories || []); }
+      if (navRes.status    === 'fulfilled' && navRes.value.ok)    setNav(await navRes.value.json());
+      if (chartRes.status  === 'fulfilled' && chartRes.value.ok)  { const d = await chartRes.value.json();   setEquity(d.curve || []); }
+      if (catRes.status    === 'fulfilled' && catRes.value.ok)    { const d = await catRes.value.json();     setCats(d.categories || []); }
+      if (queueRes.status  === 'fulfilled' && queueRes.value.ok)  setQueue(await queueRes.value.json());
+      if (monitorRes.status=== 'fulfilled' && monitorRes.value.ok)setMonitor(await monitorRes.value.json());
     } catch {}
     setLoading(false);
   }, []);
@@ -229,10 +235,11 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Tabs */}
-            <div style={{ display:'flex', gap:2, marginBottom:20, borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
-              {(['portfolio','ai','positions','fees'] as const).map(t => (
+            <div style={{ display:'flex', gap:2, marginBottom:20, borderBottom:'1px solid rgba(255,255,255,0.06)', flexWrap:'wrap' }}>
+              {(['portfolio','ai','positions','execute','fees'] as const).map(t => (
                 <button key={t} onClick={() => setTab(t)} style={{ padding:'10px 18px', fontSize:13, fontWeight:tab===t?700:500, cursor:'pointer', background:'none', border:'none', borderBottom:`2px solid ${tab===t?'#7c3aed':'transparent'}`, color:tab===t?'#a78bfa':'rgba(255,255,255,0.4)', transition:'all 0.15s' }}>
-                  {{portfolio:'Portfolio',ai:'AI Activity',positions:`Positions (${positions.length})`,fees:'Fee Flow'}[t]}
+                  {{portfolio:'Portfolio',ai:'AI Activity',positions:`Positions (${positions.length})`,execute:'Execution Engine',fees:'Fee Flow'}[t]}
+                  {t==='execute' && (monitor?.status==='READY_TO_DEPLOY') && <span style={{ marginLeft:6, width:7, height:7, borderRadius:9, background:'#10b981', display:'inline-block', boxShadow:'0 0 6px #10b981' }} />}
                 </button>
               ))}
             </div>
@@ -534,6 +541,157 @@ export default function AnalyticsPage() {
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── EXECUTION ENGINE TAB ── */}
+            {tab === 'execute' && (
+              <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+
+                {/* Status banner */}
+                <div style={{ background: monitor?.status==='READY_TO_DEPLOY'?'rgba(16,185,129,0.08)':'rgba(13,13,32,0.85)', border:`1px solid ${monitor?.status==='READY_TO_DEPLOY'?'rgba(16,185,129,0.3)':'rgba(255,255,255,0.06)'}`, borderRadius:20, padding:'22px', backdropFilter:'blur(12px)' }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:14 }}>
+                    <Activity size={20} color={monitor?.status==='READY_TO_DEPLOY'?'#10b981':'#6b7280'} />
+                    <h3 style={{ fontSize:16, fontWeight:800, color:'#fff', margin:0 }}>AI Execution Engine</h3>
+                    <span style={{ marginLeft:'auto', fontSize:10, padding:'3px 10px', borderRadius:100, background:monitor?.status==='READY_TO_DEPLOY'?'rgba(16,185,129,0.15)':'rgba(251,191,36,0.1)', color:monitor?.status==='READY_TO_DEPLOY'?'#34d399':'#fbbf24', border:`1px solid ${monitor?.status==='READY_TO_DEPLOY'?'rgba(16,185,129,0.3)':'rgba(251,191,36,0.25)'}`, fontWeight:700 }}>
+                      {monitor?.status || 'MONITORING'}
+                    </span>
+                  </div>
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12 }}>
+                    {[
+                      { l:'Vault ETH',     v:(queue?.summary?.vaultEth??0).toFixed(4)+' ETH',       c:'#60a5fa' },
+                      { l:'Deployer ETH',  v:(queue?.summary?.deployerEth??0).toFixed(4)+' ETH',    c:'#60a5fa' },
+                      { l:'Total AUM',     v:fmtUsd(queue?.summary?.aumUSD??0),                     c:'#10b981' },
+                      { l:'Deployment',    v:(queue?.summary?.deploymentPct??0).toFixed(1)+'%',     c:'#a78bfa' },
+                    ].map(s => (
+                      <div key={s.l} style={{ background:'rgba(255,255,255,0.04)', borderRadius:12, padding:'12px' }}>
+                        <div style={{ fontSize:10, color:'rgba(255,255,255,0.4)', marginBottom:3 }}>{s.l}</div>
+                        <div style={{ fontSize:15, fontWeight:800, color:s.c, fontFamily:'monospace' }}>{s.v}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
+                  {/* Gelato setup */}
+                  <div style={{ background:'rgba(13,13,32,0.85)', border:`1px solid ${queue?.gelatoSetup?.configured?'rgba(16,185,129,0.25)':'rgba(251,191,36,0.2)'}`, borderRadius:20, padding:'22px', backdropFilter:'blur(12px)' }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:14 }}>
+                      <Zap size={16} color={queue?.gelatoSetup?.configured?'#10b981':'#f59e0b'} />
+                      <h3 style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.8)', margin:0 }}>Gelato Relay</h3>
+                      <span style={{ marginLeft:'auto', fontSize:9, padding:'2px 7px', borderRadius:100, background:queue?.gelatoSetup?.configured?'rgba(16,185,129,0.12)':'rgba(251,191,36,0.1)', color:queue?.gelatoSetup?.configured?'#34d399':'#fbbf24', fontWeight:700, border:'1px solid currentColor' }}>
+                        {queue?.gelatoSetup?.configured?'CONFIGURED':'SETUP REQUIRED'}
+                      </span>
+                    </div>
+                    <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)', marginBottom:12, lineHeight:1.7 }}>
+                      Executes trades via Gelato's relay network. <strong style={{color:'#fff'}}>No private key needed</strong> — institutional grade. Just an API key.
+                    </div>
+                    {(queue?.gelatoSetup?.instructions || []).map((s: string, i: number) => (
+                      <div key={i} style={{ display:'flex', gap:8, alignItems:'flex-start', marginBottom:6 }}>
+                        <span style={{ fontSize:10, color:'#7c3aed', fontWeight:800, minWidth:16 }}>{i+1}.</span>
+                        <span style={{ fontSize:11, color:'rgba(255,255,255,0.5)', lineHeight:1.5 }}>{s}</span>
+                      </div>
+                    ))}
+                    <a href="https://app.gelato.network" target="_blank" rel="noopener noreferrer" style={{ display:'block', marginTop:12, padding:'8px 14px', borderRadius:10, background:'rgba(251,191,36,0.1)', border:'1px solid rgba(251,191,36,0.2)', color:'#fbbf24', fontSize:11, fontWeight:700, textAlign:'center', textDecoration:'none' }}>
+                      Get Gelato API Key → app.gelato.network
+                    </a>
+                  </div>
+
+                  {/* Chainlink Automation setup */}
+                  <div style={{ background:'rgba(13,13,32,0.85)', border:'1px solid rgba(99,102,241,0.25)', borderRadius:20, padding:'22px', backdropFilter:'blur(12px)' }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:14 }}>
+                      <Shield size={16} color="#6366f1" />
+                      <h3 style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.8)', margin:0 }}>Chainlink Automation</h3>
+                      <span style={{ marginLeft:'auto', fontSize:9, padding:'2px 7px', borderRadius:100, background:'rgba(99,102,241,0.12)', color:'#818cf8', fontWeight:700, border:'1px solid rgba(99,102,241,0.25)' }}>READY TO REGISTER</span>
+                    </div>
+                    <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)', marginBottom:12, lineHeight:1.7 }}>
+                      <strong style={{color:'#fff'}}>Fully on-chain automation</strong> — vault implements <code style={{color:'#a78bfa'}}>checkUpkeep</code> + <code style={{color:'#a78bfa'}}>performUpkeep</code>. Chainlink executes when funds arrive. Fund with LINK only.
+                    </div>
+                    {(queue?.chainlinkSetup?.instructions || []).map((s: string, i: number) => (
+                      <div key={i} style={{ display:'flex', gap:8, alignItems:'flex-start', marginBottom:6 }}>
+                        <span style={{ fontSize:10, color:'#6366f1', fontWeight:800, minWidth:16 }}>{i+1}.</span>
+                        <span style={{ fontSize:11, color:'rgba(255,255,255,0.5)', lineHeight:1.5 }}>{s.replace(queue?.summary?.vaultAddress||'','').replace('0x506F…853Fa','')}{s.includes(queue?.summary?.vaultAddress||'X')&&<a href={`https://automation.chain.link`} style={{color:'#818cf8'}} target="_blank" rel="noopener noreferrer">{(queue?.summary?.vaultAddress||'').slice(0,8)}…</a>}</span>
+                      </div>
+                    ))}
+                    <a href="https://automation.chain.link" target="_blank" rel="noopener noreferrer" style={{ display:'block', marginTop:12, padding:'8px 14px', borderRadius:10, background:'rgba(99,102,241,0.1)', border:'1px solid rgba(99,102,241,0.2)', color:'#818cf8', fontSize:11, fontWeight:700, textAlign:'center', textDecoration:'none' }}>
+                      Register Upkeep → automation.chain.link
+                    </a>
+                  </div>
+                </div>
+
+                {/* Allocation plan */}
+                {monitor?.allocation?.plan && monitor.allocation.plan.length > 0 && (
+                  <div style={{ background:'rgba(13,13,32,0.85)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:20, padding:'22px', backdropFilter:'blur(12px)' }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:14 }}>
+                      <BarChart3 size={16} color="#a78bfa" />
+                      <h3 style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.8)', margin:0 }}>AI Allocation Plan</h3>
+                      <span style={{ marginLeft:'auto', fontSize:11, color:'rgba(255,255,255,0.4)' }}>
+                        {monitor.allocation.readyTrades} trades · {fmtUsd(monitor.allocation.totalDeployUSD)} to deploy
+                      </span>
+                    </div>
+                    <div style={{ display:'grid', gridTemplateColumns:'60px 1fr 60px 70px 70px 70px 70px', gap:6, padding:'8px 0', borderBottom:'1px solid rgba(255,255,255,0.06)', fontSize:9, color:'rgba(255,255,255,0.35)', fontWeight:700, textTransform:'uppercase' }}>
+                      <span>Asset</span><span>Name</span><span style={{textAlign:'right'}}>Weight</span><span style={{textAlign:'right'}}>USD</span><span style={{textAlign:'right'}}>ETH</span><span style={{textAlign:'right'}}>Signal</span><span style={{textAlign:'right'}}>Status</span>
+                    </div>
+                    {monitor.allocation.plan.slice(0,20).map((t: any) => (
+                      <div key={t.symbol} style={{ display:'grid', gridTemplateColumns:'60px 1fr 60px 70px 70px 70px 70px', gap:6, padding:'8px 0', borderBottom:'1px solid rgba(255,255,255,0.03)', alignItems:'center' }}>
+                        <span style={{ fontWeight:800, fontSize:12 }}>{t.symbol}</span>
+                        <span style={{ fontSize:10, color:'rgba(255,255,255,0.5)' }}>{t.name}</span>
+                        <span style={{ textAlign:'right', fontSize:11, fontFamily:'monospace', color:'rgba(255,255,255,0.5)' }}>{t.weight}%</span>
+                        <span style={{ textAlign:'right', fontSize:11, fontFamily:'monospace', color:'#10b981' }}>{fmtUsd(t.usdValue)}</span>
+                        <span style={{ textAlign:'right', fontSize:10, fontFamily:'monospace', color:'rgba(255,255,255,0.5)' }}>{t.ethToSpend.toFixed(4)}</span>
+                        <div style={{ display:'flex', justifyContent:'flex-end' }}>
+                          <span style={{ fontSize:9, padding:'1px 6px', borderRadius:100, background:`${ACTION_COL[t.aiAction]||'#7c3aed'}20`, color:ACTION_COL[t.aiAction]||'#7c3aed', border:`1px solid ${ACTION_COL[t.aiAction]||'#7c3aed'}40`, fontWeight:700 }}>{t.aiAction}</span>
+                        </div>
+                        <div style={{ display:'flex', justifyContent:'flex-end' }}>
+                          <span style={{ fontSize:9, padding:'1px 6px', borderRadius:100, fontWeight:700, background:t.canExecute?'rgba(16,185,129,0.1)':'rgba(251,191,36,0.1)', color:t.canExecute?'#34d399':'#fbbf24', border:`1px solid ${t.canExecute?'rgba(16,185,129,0.25)':'rgba(251,191,36,0.25)'}` }}>
+                            {t.canExecute?'READY':'WAITING'}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Recent deposits and executions */}
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
+                  <div style={{ background:'rgba(13,13,32,0.85)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:20, padding:'22px', backdropFilter:'blur(12px)' }}>
+                    <h3 style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.8)', marginBottom:14 }}>Recent Deposits</h3>
+                    {queue?.deposits?.length > 0 ? (
+                      queue.deposits.slice(0,5).map((d: any, i: number) => (
+                        <div key={i} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'8px 0', borderBottom:'1px solid rgba(255,255,255,0.04)' }}>
+                          <div>
+                            <div style={{ fontSize:12, fontWeight:700, color:'#10b981' }}>+{d.ethAmount.toFixed(4)} ETH</div>
+                            <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)' }}>{fmtUsd(d.usdValue)} · {new Date(d.timestamp).toLocaleDateString()}</div>
+                          </div>
+                          <a href={d.etherscan} target="_blank" rel="noopener noreferrer" style={{ fontSize:10, color:'#60a5fa', textDecoration:'none' }}>Etherscan ↗</a>
+                        </div>
+                      ))
+                    ) : (
+                      <div style={{ textAlign:'center', padding:'20px', color:'rgba(255,255,255,0.3)', fontSize:12 }}>
+                        <div style={{ marginBottom:8 }}>Monitoring wallet for deposits…</div>
+                        <div style={{ fontSize:10, fontFamily:'monospace', color:'rgba(255,255,255,0.2)' }}>{(queue?.summary?.deployerAddress||'').slice(0,14)}…</div>
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ background:'rgba(13,13,32,0.85)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:20, padding:'22px', backdropFilter:'blur(12px)' }}>
+                    <h3 style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.8)', marginBottom:14 }}>Token Positions (On-Chain)</h3>
+                    {queue?.tokenPositions?.length > 0 ? (
+                      queue.tokenPositions.slice(0,5).map((t: any, i: number) => (
+                        <div key={i} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'8px 0', borderBottom:'1px solid rgba(255,255,255,0.04)' }}>
+                          <div>
+                            <div style={{ fontSize:12, fontWeight:700, color:'#a78bfa' }}>{t.symbol}</div>
+                            <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)' }}>{t.amount.toLocaleString('en-US',{maximumFractionDigits:4})}</div>
+                          </div>
+                          <a href={t.etherscan} target="_blank" rel="noopener noreferrer" style={{ fontSize:10, color:'#60a5fa', textDecoration:'none' }}>Etherscan ↗</a>
+                        </div>
+                      ))
+                    ) : (
+                      <div style={{ textAlign:'center', padding:'20px', color:'rgba(255,255,255,0.3)', fontSize:12 }}>
+                        <div style={{ marginBottom:8 }}>No on-chain positions yet</div>
+                        <div style={{ fontSize:10, color:'rgba(255,255,255,0.2)' }}>Positions appear here once Gelato or Chainlink executes the first trade</div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
