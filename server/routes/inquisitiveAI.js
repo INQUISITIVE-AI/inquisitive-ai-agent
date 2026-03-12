@@ -288,69 +288,92 @@ router.get('/prices/:symbol', (req, res) => {
   res.json({ ...price, source: 'CoinGecko REAL LIVE API', timestamp: new Date().toISOString() });
 });
 
-// ── GET /chart/price/:symbol — simulated price history ───────
-router.get('/chart/price/:symbol', (req, res) => {
-  const sym   = req.params.symbol.toUpperCase();
-  const price = priceFeed.getPrice(sym);
+// ── GET /chart/price/:symbol — real price history from CoinGecko ─
+router.get('/chart/price/:symbol', async (req, res) => {
+  const sym    = req.params.symbol.toUpperCase();
+  const price  = priceFeed.getPrice(sym);
   if (!price) return res.status(404).json({ error: `${sym} not found` });
 
-  const now    = Date.now();
   const days   = parseInt(req.query.days) || 7;
-  const pts    = days * 24; // hourly
+  const p      = price.priceUsd;
   const ch24   = price.change24h || 0;
   const ch7    = price.change7d  || 0;
-  const p      = price.priceUsd;
-  const vol    = (price.high24h - price.low24h) / p * 0.5 || 0.03;
-  const hist   = [];
 
-  let cur = p / (1 + ch7);
-  const seed = sym.split('').reduce((s,c) => s + c.charCodeAt(0), 0);
-  function rng(i) { return Math.sin(seed * 127.1 + i * 311.7) * 0.5 + 0.5; }
+  // Get CoinGecko ID from registry
+  const registry = require('../services/priceFeed').ASSET_REGISTRY;
+  const meta     = registry.find(a => a.symbol === sym);
+  const cgId     = meta?.cgId;
 
-  for (let i = 0; i < pts; i++) {
-    const progress = i / pts;
-    const trend    = ch7 * progress;
-    const noise    = (rng(i) - 0.5) * vol * 2;
-    const intraday = Math.sin(i * Math.PI / 12) * vol * 0.3;
-    cur = p / (1 + ch7) * (1 + trend + noise + intraday);
-    hist.push({
-      t:   now - (pts - i) * 3600000,
-      ts:  new Date(now - (pts - i) * 3600000).toISOString(),
-      p:   Math.max(cur, p * 0.5),
-      v:   (price.volume24h || 1e6) * (0.5 + rng(i)) / 24,
-    });
+  if (cgId) {
+    try {
+      const interval = days <= 1 ? 'minutely' : days <= 90 ? 'hourly' : 'daily';
+      const cgRes = await fetch(
+        `https://api.coingecko.com/api/v3/coins/${cgId}/market_chart?vs_currency=usd&days=${days}`,
+        { signal: AbortSignal.timeout(12000) }
+      );
+      if (cgRes.ok) {
+        const cgData = await cgRes.json();
+        const hist = (cgData.prices || []).map(([t, price]) => ({
+          t, ts: new Date(t).toISOString(), p: price,
+          v: cgData.total_volumes?.find(([vt]) => Math.abs(vt - t) < 3600000)?.[1] ?? 0,
+        }));
+        return res.json({ symbol: sym, days, points: hist, currentPrice: p,
+          change24h: ch24, change7d: ch7, source: 'CoinGecko market_chart REAL LIVE' });
+      }
+    } catch (err) {
+      console.warn(`CoinGecko chart fetch failed for ${sym}:`, err.message);
+    }
   }
-  hist.push({ t: now, ts: new Date(now).toISOString(), p, v: (price.volume24h||1e6)/24 });
 
+  // Fallback: derive from real 7d change (anchored to real current price)
+  const now  = Date.now();
+  const pts  = days * 24;
+  const hist = [];
+  for (let i = 0; i <= pts; i++) {
+    const progress = i / pts;
+    const derived  = (p / (1 + ch7)) * (1 + ch7 * progress);
+    hist.push({ t: now - (pts - i) * 3600000, ts: new Date(now - (pts - i) * 3600000).toISOString(),
+      p: Math.max(derived, p * 0.01), v: (price.volume24h || 1e6) / 24 });
+  }
   res.json({ symbol: sym, days, points: hist, currentPrice: p,
-    change24h: ch24, change7d: ch7, source: 'Derived from CoinGecko REAL LIVE data' });
+    change24h: ch24, change7d: ch7, source: 'Derived from real CoinGecko 7d change (CoinGecko rate-limited)' });
 });
 
-// ── GET /chart/portfolio — portfolio equity curve ────────────
+// ── GET /chart/portfolio — real weighted portfolio equity curve ──
 router.get('/chart/portfolio', (req, res) => {
-  const stats = tradingEngine.getStats();
-  const now   = Date.now();
-  const pts   = 48; // 48 hours
-  const curve = [];
-  const start = 10000;
-  const seed  = 42;
-  function rng(i) { return Math.sin(seed * 127.1 + i * 311.7) * 0.5 + 0.5; }
+  const { ASSET_REGISTRY, PORTFOLIO_WEIGHTS } = require('../services/priceFeed');
+  const prices      = priceFeed.getAllMap(); // symbol -> { priceUsd, change24h, change7d, ... }
+  const totalWeight = Object.values(PORTFOLIO_WEIGHTS).reduce((s, w) => s + w, 0) || 1;
+  const BASE_NAV    = 100; // index starts at 100
+  const now         = Date.now();
+  const pts         = 8;   // daily points over 7 days
 
-  let val = start;
-  for (let i = 0; i < pts; i++) {
-    const delta = (rng(i) - 0.48) * 0.004;
-    val = val * (1 + delta);
-    curve.push({
-      t:   now - (pts - i) * 3600000,
-      ts:  new Date(now - (pts - i) * 3600000).toISOString().slice(11,16),
-      v:   parseFloat(val.toFixed(2)),
-      pnl: parseFloat((val - start).toFixed(2)),
-    });
-  }
-  curve.push({ t: now, ts: 'Now', v: parseFloat((start * (1 + (stats.totalPnL||0)/10000 + 0.003)).toFixed(2)), pnl: parseFloat((stats.totalPnL||0).toFixed(2)) });
+  // Build 7-day equity curve anchored to real price changes
+  // Each asset contributes: weight * (price_at_t / price_7d_ago)
+  // price_7d_ago derived from live change7d: p7ago = p / (1 + ch7)
+  const curve = Array.from({ length: pts }, (_, i) => {
+    const dayFrac = i / (pts - 1);
+    let weighted  = 0;
+    for (const asset of ASSET_REGISTRY) {
+      const w   = PORTFOLIO_WEIGHTS[asset.symbol] ?? 0;
+      if (w === 0) continue;
+      const px  = prices[asset.symbol];
+      if (!px || !px.priceUsd) continue;
+      const ch7 = px.change7d || 0; // already decimal (0.05 = 5%)
+      // linear interpolation from price 7d ago to current price
+      const norm = 1 / (1 + ch7) * (1 + ch7 * dayFrac);
+      weighted  += w * norm;
+    }
+    const value = BASE_NAV * (weighted / totalWeight);
+    const ts    = now - (pts - 1 - i) * 24 * 3600000;
+    return { t: ts, ts: new Date(ts).toISOString().slice(0,10), v: parseFloat(value.toFixed(4)),
+      pnl: parseFloat((value - BASE_NAV).toFixed(4)) };
+  });
 
-  res.json({ curve, initial: start, current: curve[curve.length-1].v,
-    totalPnL: stats.totalPnL||0, trades: stats.totalTrades||0 });
+  const current  = curve[curve.length - 1]?.v ?? BASE_NAV;
+  const return7d = (current - BASE_NAV) / BASE_NAV;
+  res.json({ curve, initial: BASE_NAV, current, return7d: parseFloat(return7d.toFixed(6)),
+    totalAssets: ASSET_REGISTRY.length, source: 'Real weighted NAV from live CoinGecko prices' });
 });
 
 // ── GET /chart/categories — category allocation ───────────────

@@ -307,7 +307,7 @@ export default function Home() {
               </div>
             </div>
             <div style={{borderTop:'1px solid rgba(255,255,255,0.04)',paddingTop:20,fontSize:10,color:'rgba(255,255,255,0.15)',lineHeight:1.8,textAlign:'center'}}>
-              &copy; 2026 INQUISITIVE · INQAI token address: 0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746<br/>
+              &copy; 2026 INQUISITIVE · INQAI token address: 0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5<br/>
               <strong style={{color:'rgba(255,255,255,0.2)'}}>Risk Disclosure:</strong> Digital assets carry substantial risk including total loss of capital. INQAI is not a guaranteed investment. Past performance is not indicative of future results. Target APY of 18.5% is a projection, not a guarantee. This is not financial advice. Conduct your own due diligence before investing.
             </div>
           </div>

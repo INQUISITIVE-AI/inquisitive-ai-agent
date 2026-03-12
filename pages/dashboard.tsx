@@ -78,15 +78,18 @@ export default function Dashboard() {
   const [equityCurve, setEquityCurve] = useState<any[]>([]);
   const [tradeFeed, setTradeFeed]     = useState<any[]>([]);
   const [composition, setComposition] = useState<any[]>([]);
+  const [refreshing, setRefreshing]   = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (bust = false) => {
+    const t = bust ? `?_t=${Date.now()}` : `?_t=${Math.floor(Date.now() / 10000) * 10000}`;
+    if (bust) setRefreshing(true);
     try {
       const [dd, dr, pr, eq] = await Promise.allSettled([
-        fetch('/api/dashboard'),
-        fetch('/api/inquisitiveAI/dashboard'),
-        fetch('/api/inquisitiveAI/portfolio/positions'),
-        fetch('/api/inquisitiveAI/chart/portfolio'),
+        fetch(`/api/dashboard${t}`),
+        fetch(`/api/inquisitiveAI/dashboard${t}`),
+        fetch(`/api/inquisitiveAI/portfolio/positions${t}`),
+        fetch(`/api/inquisitiveAI/chart/portfolio${t}`),
       ]);
 
       // Parse fallback data once and reuse (avoids double-read bug)
@@ -120,9 +123,10 @@ export default function Dashboard() {
         setEquityCurve(d.curve || []);
       }
     } catch {}
+    setRefreshing(false);
   }, []);
 
-  useEffect(() => { load(); const t = setInterval(load, 10000); return () => clearInterval(t); }, [load]);
+  useEffect(() => { load(); const t = setInterval(() => load(), 10000); return () => clearInterval(t); }, [load]);
 
   useEffect(() => {
     const connect = () => {
@@ -201,10 +205,20 @@ export default function Dashboard() {
                   boxShadow: n.accent ? '0 2px 12px rgba(124,58,237,0.35)' : 'none',
                 }}>{n.l}</button>
               ))}
+              <button
+                onClick={() => load(true)}
+                disabled={refreshing}
+                title="Force refresh — bypasses CDN cache"
+                style={{ display:'flex', alignItems:'center', gap:5, padding:'5px 10px', borderRadius:8, fontSize:11, fontWeight:600, cursor: refreshing ? 'wait' : 'pointer', background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', color: refreshing ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.4)', marginLeft:4 }}
+              >
+                <span style={{ display:'inline-block', animation: refreshing ? 'spin 0.8s linear infinite' : 'none' }}>⟳</span>
+                {refreshing ? 'Refreshing…' : 'Refresh'}
+              </button>
               <div style={{ marginLeft: 8 }}><WalletButton label="Connect" /></div>
             </div>
           </div>
         </nav>
+        <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
 
         {/* ── STATS BAR ── */}
         <div style={{ height: 44, background: 'rgba(8,8,22,0.9)', borderBottom: '1px solid rgba(255,255,255,0.04)', display: 'flex', alignItems: 'stretch', flexShrink: 0, zIndex: 9 }}>

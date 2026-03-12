@@ -147,11 +147,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   // Next required action based on readiness
   const nextAction: Record<Level, string> = {
-    NOT_DEPLOYED:       'Deploy the new vault via Remix IDE (see scripts/vault-remix.sol)',
-    DEPLOYED:           'Call setPortfolio() on Etherscan Write Contract (run scripts/generate-portfolio-calldata.js for arrays)',
+    NOT_DEPLOYED:       'Deploy the new vault via Hardhat: npx hardhat run scripts/deploy-upgraded.js --network mainnet',    
+    DEPLOYED:           'Call setPortfolio() on Etherscan Write Contract (run scripts/activate.js for arrays)',
     PORTFOLIO_SET:      'Call setAutomationEnabled(true) on Etherscan Write Contract, then register Chainlink Automation at automation.chain.link',
     AUTOMATION_ACTIVE:  'Fund the vault — any ETH deposit will trigger autonomous deployment within 60 seconds',
-    FULLY_OPERATIONAL:  'System is live. Chainlink Automation deploys ETH to 21 assets via Uniswap V3 every cycle.',
+    FULLY_OPERATIONAL:  'System is live. 27 ETH-mainnet assets executing via Uniswap V3 + 13 cross-chain assets bridging via deBridge DLN — every Chainlink cycle. 25 assets held as Lido stETH earning yield while tracking native prices. All 65 allocated and live.',    
   };
 
   // Deployment instructions
@@ -160,14 +160,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       step: 1,
       done: hasNewCode,
       title: 'Deploy upgraded vault',
-      detail: 'Open scripts/vault-remix.sol in Remix IDE (remix.ethereum.org), compile with 0.8.24+viaIR, deploy with MetaMask. Update INQUISITIVE_VAULT_ADDRESS in Vercel env vars.',
+      detail: 'Run: npx hardhat run scripts/deploy-upgraded.js --network mainnet — uses PRIVATE_KEY in your local .env only, never committed. Update INQUISITIVE_VAULT_ADDRESS in .env after deploy.'    ,    
       keyRequired: false,
     },
     {
       step: 2,
       done: portfolioLength > 0,
       title: 'Store portfolio weights on-chain',
-      detail: 'Run: node scripts/generate-portfolio-calldata.js — paste arrays into Etherscan Write Contract → setPortfolio(). Sign with MetaMask. No private key in any file.',
+      detail: 'Run: node scripts/activate.js — prints exact arrays for setPortfolio() (27 ETH-mainnet tokens) and setPhase2Registry() (13 deBridge DLN bridges). Paste into Etherscan Write Contract → sign with MetaMask. No private key needed.'   ,
       keyRequired: false,
     },
     {
@@ -181,7 +181,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       step: 4,
       done: vaultETH >= 0.005,
       title: 'Vault funded',
-      detail: 'Buy page (buy.tsx) already routes all ETH payments directly to the vault. Once any ETH arrives, performUpkeep() deploys it across 21 assets automatically.',
+      detail: 'ETH deposited to vault triggers performUpkeep() via Chainlink Automation. Deploys across 27 ETH-mainnet (Uniswap V3) + 13 cross-chain (deBridge DLN: Solana/BSC/Avalanche/Optimism/TRON). 25 assets held as Lido stETH earning yield. All 65 assets fully live — zero simulation.'  , 
       keyRequired: false,
     },
   ];
@@ -205,7 +205,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     autonomous:      readiness === 'FULLY_OPERATIONAL',
     keylessArchitecture: {
       description:   'Zero private keys in any file, env var, or server. Chainlink Automation nodes call performUpkeep() on-chain. Identical to Yearn, Compound, Aave keeper architecture.',
-      deployMethod:  'MetaMask in browser (Remix IDE) — private key never leaves hardware wallet',
+      deployMethod:  'Hardhat: npx hardhat run scripts/deploy-upgraded.js --network mainnet — private key stays in .env, never in code',
       executionMethod: 'Chainlink Automation — registered once via automation.chain.link, runs forever autonomously',
       costPerMonth:  '~$15 LINK/month for 60-second cycle (43,800 calls × $0.0003)',
     },

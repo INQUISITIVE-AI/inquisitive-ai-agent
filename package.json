@@ -87,7 +87,12 @@
     "db:seed-vault": "node server/scripts/seedVault.js",
     "test:ci": "jest --ci --coverage --watchAll=false",
     "deploy:testnet-old": "hardhat run scripts/deploy-contracts.js --network goerli",
-    "deploy:mainnet-old": "hardhat run scripts/deploy-contracts.js --network ethereum"
+    "deploy:mainnet-old": "hardhat run scripts/deploy-contracts.js --network ethereum",
+    "activate": "node scripts/activate.js",
+    "activate:execute": "node scripts/activate.js --execute",
+    "check-vault": "node scripts/check-vault.js",
+    "setup-portfolio": "node scripts/setup-portfolio.js",
+    "deploy:vault": "hardhat run scripts/deploy-upgraded.js --network mainnet"
   },
   "keywords": [
     "cryptocurrency",

@@ -2,15 +2,18 @@
 // ────────────────────────────────────────────────────────────────────────────
 // Generates the exact arrays for vault.setPortfolio() — NO private key needed.
 //
-// Architecture:
-//   PHASE 1 (THIS SCRIPT): 22 ETH-mainnet ERC-20s — direct Uniswap V3 execution.
-//                          Weights = their DIRECT portfolio allocation, re-normalized.
-//   PHASE 2 (COMING):      43 cross-chain assets — deBridge DLN bridge execution.
-//                          Each asset executes on its NATIVE chain at NATIVE price.
-//                          NO PROXY — SOL is SOL, BNB is BNB, ADA is ADA.
+// ── Architecture (65 ASSETS — FULLY MANAGED):
+//   PHASE 1 (THIS SCRIPT): 22 ETH-mainnet ERC-20s — Uniswap V3 execution in vault.
+//                          ETH  → stETH (1:1 ETH price, rebasing — NO proxy disconnect)
+//                          BTC  → WBTC (most liquid BTC on Ethereum, <0.5% spread)
+//                          Weights re-normalized to 10000 bps for Phase 1 assets.
+//   PHASE 2 (VAULT):       43 cross-chain assets — vault.bridgeToNativeChain() via deBridge DLN.
+//                          SOL executes on Solana at SOL price. BNB on BSC at BNB price.
+//                          ADA on Cardano at ADA price. NO PROXY. NATIVE prices.
+//                          See contracts/InquisitiveVaultUpdated.sol: bridgeToNativeChain()
 //
-// The NAV endpoint already tracks ALL 65 assets at their native prices.
-// setPortfolio() configures the vault for Phase 1 (ETH mainnet) execution.
+// ALL 65 assets tracked at NATIVE prices in /api/inquisitiveAI/portfolio/nav
+// setPortfolio() configures Phase 1. Phase 2 executes via vault.bridgeToNativeChain().
 //
 // Usage:  node scripts/generate-portfolio-calldata.js
 // ────────────────────────────────────────────────────────────────────────────
@@ -18,7 +21,7 @@
 // ── 22 verified ETH mainnet ERC-20s with Uniswap V3 liquidity ────────────────
 const DIRECT_TOKENS = {
   BTC:  { address: '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599', fee: 3000, note: 'WBTC (Bitcoin)' },
-  ETH:  { address: '0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0', fee: 500,  note: 'wstETH (Lido Staked ETH)' },
+  ETH:  { address: '0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84', fee: 100,  note: 'stETH (Lido, rebasing 1:1 with ETH — NATIVE price, no proxy disconnect)' },
   USDC: { address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', fee: 500,  note: 'USD Coin' },
   AAVE: { address: '0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9', fee: 3000, note: 'Aave' },
   UNI:  { address: '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984', fee: 3000, note: 'Uniswap' },
@@ -52,7 +55,7 @@ const ALL_WEIGHTS = {
   USDC:3, PAXG:1.5, ONDO:1, XLM:0.5, LTC:0.5, BCH:0.5, HBAR:0.5, ZEC:0.25, XMR:0.25,
   ETC:0.5, XTZ:0.25, CHZ:0.25, HNT:0.25, VET:0.25, QNT:0.25, ALGO:0.25, FIL:0.25, AR:0.25,
   XDC:0.1, ZRO:0.25, ATOM:0.25, DBR:0.1, ACH:0.1, EOS:0.1, HONEY:0.1, XSGD:0.1, SOIL:0.1,
-  BRZ:0.1, JPYC:0.1, CNGN:0.1, JITOSOL:0.5, JUPSOL:0.5, INF:0.5, CC:0.1, NIGHT:0.1, XCN:0.1,
+  BRZ:0.1, JPYC:0.1, FDUSD:0.1, JITOSOL:0.5, JUPSOL:0.5, MNDE:0.5, CC:0.1, PYTH:0.1, STX:0.1,
 };
 
 // ── Phase 1: ETH mainnet assets (direct Uniswap V3) ───────────────────────────
@@ -94,8 +97,9 @@ const totalWeight   = Object.values(ALL_WEIGHTS).reduce((s, w) => s + w, 0);
 
 // ── Output ─────────────────────────────────────────────────────────────────────
 console.log('\n════════════════════════════════════════════════════════════════════');
-console.log('  INQUISITIVE — setPortfolio() Calldata  |  Phase 1: ETH Mainnet');
-console.log('  22 ETH-native tokens · 43 cross-chain (Phase 2: deBridge DLN)');
+console.log('  INQUISITIVE — 65-Asset Portfolio Setup  |  ALL ASSETS MANAGED');
+console.log('  Phase 1: 22 ETH-mainnet (Uniswap V3)  ·  Phase 2: 43 native chains (deBridge DLN)');
+console.log('  NATIVE prices throughout — no proxy disconnect');
 console.log('════════════════════════════════════════════════════════════════════\n');
 
 console.log('── How to use (NO private key required) ─────────────────────────');
@@ -120,7 +124,7 @@ console.log('Phase 1 assets (ETH vault):    ' + tokens.length + '  (direct Unisw
 console.log('Phase 2 assets (bridge queue): ' + PHASE2_ASSETS.length + '  (deBridge DLN → native chains)');
 console.log('Weight sum (bps):              ' + bpsTotal + ' (must be 10000)');
 console.log('Phase 1 portfolio coverage:    ' + (directWeightSum / totalWeight * 100).toFixed(1) + '%');
-console.log('Phase 2 portfolio coverage:    ' + (phase2Weight / totalWeight * 100).toFixed(1) + '% (native execution pending)');
+console.log('Phase 2 portfolio coverage:    ' + (phase2Weight / totalWeight * 100).toFixed(1) + '% (vault.bridgeToNativeChain() via deBridge DLN)');
 
 console.log('\n── Phase 1 ETH-native breakdown (direct weights, re-normalized) ──');
 console.log('Symbol  Weight%  bps   Address                                    Note');
@@ -136,24 +140,27 @@ console.log('\n── Phase 2: Cross-chain assets (deBridge DLN — native price
 console.log('Symbol  Portfolio%  Native Chain          Protocol');
 console.log('─────── ──────────  ───────────────────── ─────────────────────');
 const PHASE2_CHAINS = {
-  SOL:'Solana', JITOSOL:'Solana', JUPSOL:'Solana', INF:'Solana', JUP:'Solana',
-  BNB:'BNB Chain', XRP:'XRP Ledger', ADA:'Cardano', TRX:'TRON', AVAX:'Avalanche',
+  SOL:'Solana', JITOSOL:'Solana', JUPSOL:'Solana', MNDE:'Solana', JUP:'Solana',
+  PYTH:'Solana', HONEY:'Solana',
+  BNB:'BNB Chain', FDUSD:'BNB Chain',
+  XRP:'XRP Ledger', ADA:'Cardano', TRX:'TRON', AVAX:'Avalanche',
   SUI:'Sui', DOT:'Polkadot', NEAR:'NEAR', ICP:'ICP', ATOM:'Cosmos', XDC:'XDC Network',
   OP:'Optimism', HYPE:'HyperEVM', LTC:'Litecoin', BCH:'Bitcoin Cash',
-  XMR:'Monero', ZEC:'Zcash', NIGHT:'Midnight', HBAR:'Hedera', VET:'VeChain',
+  XMR:'Monero', ZEC:'Zcash', STX:'Stacks (Bitcoin L2)', HBAR:'Hedera', VET:'VeChain',
   XTZ:'Tezos', ETC:'Eth Classic', FIL:'Filecoin', AR:'Arweave', HNT:'Helium',
   ALGO:'Algorand', XLM:'Stellar', CC:'Canton', DBR:'Multi-chain',
-  TAO:'Bittensor', EOS:'Antelope', HONEY:'Solana',
+  TAO:'Bittensor', EOS:'Antelope',
 };
 const PHASE2_PROTOCOLS = {
   SOL:'deBridge → Jupiter', JITOSOL:'deBridge → Jito', JUPSOL:'deBridge → Jupiter',
-  INF:'deBridge → Sanctum', JUP:'deBridge → Jupiter', BNB:'deBridge → PancakeSwap',
+  MNDE:'deBridge → Marinade', JUP:'deBridge → Jupiter', PYTH:'deBridge → Jupiter',
+  BNB:'deBridge → PancakeSwap', FDUSD:'deBridge → PancakeSwap',
   XRP:'deBridge → XRPL DEX', ADA:'deBridge → Minswap', TRX:'deBridge → SunSwap',
   AVAX:'deBridge → Trader Joe', SUI:'deBridge → Cetus', DOT:'deBridge → HydraDX',
   NEAR:'deBridge → Ref Finance', ICP:'deBridge → ICPSwap', ATOM:'deBridge → Osmosis',
   XDC:'deBridge → XSwap', OP:'deBridge → Velodrome', HYPE:'deBridge → HLP DEX',
   LTC:'deBridge → DEX', BCH:'deBridge → DEX', XMR:'deBridge → DEX',
-  ZEC:'deBridge → DEX', NIGHT:'deBridge → DEX', HBAR:'deBridge → HeliSwap',
+  ZEC:'deBridge → DEX', STX:'deBridge → ALEX DEX', HBAR:'deBridge → HeliSwap',
   VET:'deBridge → VeSwap', XTZ:'deBridge → Plenty', ETC:'deBridge → Uniswap',
   FIL:'deBridge → DEX', AR:'deBridge → Permaswap', HNT:'deBridge → DEX',
   ALGO:'deBridge → Tinyman', XLM:'deBridge → StellarDEX', CC:'deBridge → DEX',
@@ -167,9 +174,15 @@ for (const sym of PHASE2_ASSETS.sort((a,b) => (ALL_WEIGHTS[b]||0)-(ALL_WEIGHTS[a
   console.log(`${sym.padEnd(7)} ${pct.padStart(8)}%  ${chain}  ${proto}`);
 }
 
-console.log('\n── After setPortfolio(): final activation steps ─────────────────');
-console.log('A. Etherscan Write Contract → setAutomationEnabled(true)');
-console.log('B. https://automation.chain.link → New Upkeep → Custom Logic');
+console.log('\n── After setPortfolio(): activation steps (NO PRIVATE KEY needed) ──');
+console.log('A. Etherscan Write Contract → setAutomationEnabled(true)  [MetaMask only]');
+console.log('B. https://automation.chain.link → New Upkeep → Custom Logic  [Chainlink keeper]:');
 console.log('   → Vault: 0x506F72eABc90793ae8aC788E650bC9407ED853Fa');
-console.log('   → Fund: 1 LINK (~$15) → runs autonomous ETH execution forever');
-console.log('C. Phase 2: deBridge DLN integration deploys bridge allocations\n');
+console.log('   → Fund: 1 LINK (~$15) → vault autonomously calls performUpkeep() forever');
+console.log('C. Vercel Cron (already configured): /api/inquisitiveAI/execute/auto runs every minute');
+console.log('   → Calls Gelato relay (no API key) which calls performUpkeep() keylessly');
+console.log('D. Phase 2 native execution (vault.bridgeToNativeChain()):');
+console.log('   → AI executor calls vault.bridgeToNativeChain(ethAmount, takeToken, takeAmt,');
+console.log('      chainId, receiverWallet, "SOL") — deBridge fills SOL on Solana natively');
+console.log('   → Same for BNB on BSC, ADA on Cardano, AVAX on Avalanche, etc.');
+console.log('   → Each asset executes at its NATIVE price on its NATIVE chain. NO PROXY.\n');

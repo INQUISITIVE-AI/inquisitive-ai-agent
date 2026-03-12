@@ -51,9 +51,20 @@ async function main() {
   console.log('AI executor set.');
 
   // ── 5. Summary ────────────────────────────────────────────────────────────
-  console.log('\n✅ Deployment complete. Update .env with:');
+  console.log('\n✅ Deployment complete.\n');
+  console.log('── Step 1: Update .env ───────────────────────────────────────────');
   console.log(`INQUISITIVE_VAULT_ADDRESS=${vaultAddr}`);
   console.log(`AI_STRATEGY_MANAGER_ADDRESS=${stratAddr}`);
+  console.log('\n── Step 2: Configure vault on-chain (MetaMask, no key in code) ──');
+  console.log('   node scripts/activate.js');
+  console.log('   → Prints exact arrays for setPortfolio() + setPhase2Registry()');
+  console.log(`   → Paste into: https://etherscan.io/address/${vaultAddr}#writeContract`);
+  console.log('   → Connect MetaMask and sign both transactions');
+  console.log('\n── Step 3: Enable autonomous execution ───────────────────────────');
+  console.log(`   Etherscan Write: setAutomationEnabled(true) on ${vaultAddr}`);
+  console.log('   Then: https://automation.chain.link → New Upkeep → Custom Logic');
+  console.log(`   Paste vault address: ${vaultAddr}`);
+  console.log('   Fund with 1 LINK — Chainlink runs performUpkeep() every 60s autonomously');
 
   // ── 6. Verify on Etherscan ────────────────────────────────────────────────
   if (process.env.ETHERSCAN_API_KEY) {

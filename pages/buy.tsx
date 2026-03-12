@@ -42,6 +42,7 @@ export default function BuyPage() {
   const [chargeAmount, setChargeAmount] = useState<string | null>(null);
   const [chargeExpiry, setChargeExpiry] = useState<string | null>(null);
   const [chargeStatus, setChargeStatus] = useState<'pending'|'confirmed'|'expired'|'failed' | null>(null);
+  const [chargeCheckParams, setChargeCheckParams] = useState<{ since: number; expectedAmount: string; currency: string } | null>(null);
   const [copied, setCopied]             = useState(false);
 
   const { sendTransactionAsync }    = useSendTransaction();
@@ -85,16 +86,31 @@ export default function BuyPage() {
 
   useEffect(() => {
     if (!chargeId || chargeStatus === 'confirmed' || chargeStatus === 'expired' || chargeStatus === 'failed') return;
+    // Check expiry
+    const expiryMs = chargeExpiry ? new Date(chargeExpiry).getTime() : 0;
     const poll = setInterval(async () => {
+      if (expiryMs && Date.now() > expiryMs) {
+        setChargeStatus('expired');
+        clearInterval(poll);
+        return;
+      }
       try {
-        const r = await fetch(`/api/payment/check-charge?id=${chargeId}`);
+        const params = chargeCheckParams
+          ? `&currency=${chargeCheckParams.currency}&amount=${chargeCheckParams.expectedAmount}&since=${chargeCheckParams.since}`
+          : '';
+        const r = await fetch(`/api/payment/check-charge?id=${chargeId}${params}`);
         const d = await r.json();
         if (d.status === 'confirmed') { setChargeStatus('confirmed'); setStep(3); clearInterval(poll); }
         if (d.status === 'expired' || d.status === 'failed') { setChargeStatus(d.status); clearInterval(poll); }
       } catch {}
     }, 15000);
     return () => clearInterval(poll);
-  }, [chargeId, chargeStatus]);
+  }, [chargeId, chargeStatus, chargeCheckParams, chargeExpiry]);
+
+  const withTimeout = <T,>(p: Promise<T>, ms = 120_000): Promise<T> =>
+    Promise.race([p, new Promise<never>((_, rej) =>
+      setTimeout(() => rej(new Error('Wallet request timed out. Open your wallet app and try again.')), ms)
+    )]);
 
   const handleBuy = async () => {
     setError(null);
@@ -102,11 +118,6 @@ export default function BuyPage() {
     setIsBuying(true);
 
     if (usd < 10) { setError('Minimum purchase is $10'); setIsBuying(false); return; }
-    if (chain?.id !== mainnet.id) {
-      setError('Switch to Ethereum Mainnet in your wallet to continue.');
-      setIsBuying(false);
-      return;
-    }
 
     if (payToken === 'BTC' || payToken === 'SOL') {
       try {
@@ -121,6 +132,7 @@ export default function BuyPage() {
         setChargeAddress(data.address);
         setChargeAmount(data.amount);
         setChargeExpiry(data.expiresAt);
+        setChargeCheckParams(data.checkParams || null);
         setChargeStatus('pending');
         setShowManual(true);
       } catch (e: any) {
@@ -131,25 +143,33 @@ export default function BuyPage() {
       return;
     }
 
+    // ETH/USDC require WalletConnect on Ethereum Mainnet
+    if (chain?.id !== mainnet.id) {
+      setError('Switch to Ethereum Mainnet in your wallet to continue.');
+      setIsBuying(false);
+      return;
+    }
+
     try {
       let hash: `0x${string}`;
-      // ETH and USDC go directly to the vault contract — triggers autonomous
-      // portfolio deployment via vault.performUpkeep() (Vercel Cron, no private key needed)
+      // ETH and USDC go directly to the vault contract (receive() payable).
+      // When vault.balance >= MIN_DEPLOY, checkUpkeep() returns true and
+      // Chainlink/keeper calls performUpkeep() to deploy across all 65 assets.
       const recipient = INQAI_TOKEN.vaultAddress;
       if (payToken === 'ETH') {
-        hash = await sendTransactionAsync({
+        hash = await withTimeout(sendTransactionAsync({
           to:    recipient,
           value: parseEther((usd / ethPrice).toFixed(18)),
-        });
+        }));
       } else {
         // USDC
-        hash = await writeContractAsync({
+        hash = await withTimeout(writeContractAsync({
           address:      '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48' as `0x${string}`,
           abi:          erc20Abi,
           functionName: 'transfer',
           args:         [recipient, parseUnits(usd.toFixed(6), 6)],
           gas:          65000n,
-        });
+        }));
       }
       setTxHash(hash);
       const existing = JSON.parse(localStorage.getItem('inqai_purchases') || '[]');
@@ -386,7 +406,7 @@ export default function BuyPage() {
                         ) : chargeStatus === 'expired' ? (
                           <div style={{ textAlign: 'center' }}>
                             <div style={{ fontSize: 12, color: '#f87171', marginBottom: 8 }}>Address expired. Generate a new one.</div>
-                            <button onClick={() => { setShowManual(false); setChargeId(null); setChargeAddress(null); setChargeStatus(null); }} style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, color: '#f87171', fontSize: 11, padding: '5px 14px', cursor: 'pointer' }}>Generate New Address</button>
+                            <button onClick={() => { setShowManual(false); setChargeId(null); setChargeAddress(null); setChargeStatus(null); setChargeCheckParams(null); }} style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, color: '#f87171', fontSize: 11, padding: '5px 14px', cursor: 'pointer' }}>Generate New Address</button>
                           </div>
                         ) : (
                           <>
@@ -409,7 +429,7 @@ export default function BuyPage() {
                             <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', lineHeight: 1.7, padding: '8px 10px', background: 'rgba(0,0,0,0.2)', borderRadius: 8 }}>
                               This address is <strong style={{ color: 'rgba(255,255,255,0.5)' }}>unique to your purchase</strong>. Send the exact amount above. Payment is detected automatically. INQAI tokens delivered within 24 hours.
                             </div>
-                            <button onClick={() => { setShowManual(false); setChargeId(null); setChargeAddress(null); setChargeStatus(null); }} style={{ marginTop: 10, background: 'none', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: 'rgba(255,255,255,0.4)', fontSize: 11, padding: '5px 12px', cursor: 'pointer' }}>← Back</button>
+                            <button onClick={() => { setShowManual(false); setChargeId(null); setChargeAddress(null); setChargeStatus(null); setChargeCheckParams(null); }} style={{ marginTop: 10, background: 'none', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: 'rgba(255,255,255,0.4)', fontSize: 11, padding: '5px 12px', cursor: 'pointer' }}>← Back</button>
                           </>
                         )}
                       </div>
@@ -430,10 +450,18 @@ export default function BuyPage() {
                       {isBuying ? (
                         <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
                           <Loader size={14} color="#fff" strokeWidth={2} />
-                          Processing...
+                          Confirm in wallet app… (cancel anytime)
                         </span>
                       ) : `Confirm Purchase — ${inqaiAmt} INQAI`}
                     </button>
+                    {isBuying && (
+                      <div style={{ textAlign: 'center', marginTop: 10 }}>
+                        <button
+                          onClick={() => setIsBuying(false)}
+                          style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', fontSize: 11, cursor: 'pointer', textDecoration: 'underline' }}
+                        >Cancel</button>
+                      </div>
+                    )}
 
                     <div style={{ marginTop: 16, padding: '12px 16px', background: 'rgba(251,191,36,0.05)', border: '1px solid rgba(251,191,36,0.15)', borderRadius: 10 }}>
                       <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
@@ -450,17 +478,35 @@ export default function BuyPage() {
                 {step === 3 && (
                   <div style={{ textAlign: 'center', padding: '32px 16px' }}>
                     <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'center' }}><CheckCircle2 size={52} color="#10b981" strokeWidth={1.5} /></div>
-                    <h3 style={{ fontSize: 22, fontWeight: 800, marginBottom: 8 }}>Transaction Confirmed</h3>
+                    <h3 style={{ fontSize: 22, fontWeight: 800, marginBottom: 8 }}>
+                      {txHash ? 'Transaction Confirmed' : 'Payment Confirmed'}
+                    </h3>
                     <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', marginBottom: 20 }}>
-                      <strong style={{ color: '#a78bfa' }}>{inqaiAmt} INQAI</strong> tokens are being delivered to your wallet
+                      {txHash ? (
+                        <><strong style={{ color: '#a78bfa' }}>{inqaiAmt} INQAI</strong> will be airdropped to your wallet within 24 hours.</>
+                      ) : (
+                        <><strong style={{ color: '#a78bfa' }}>{payToken}</strong> payment detected on-chain. <strong style={{ color: '#a78bfa' }}>{inqaiAmt} INQAI</strong> will be delivered within 24 hours.</>
+                      )}
                     </p>
-                    <div style={{ background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.18)', borderRadius: 12, padding: '12px 16px', marginBottom: 24, textAlign: 'left' }}>
-                      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Transaction Hash</div>
-                      <div style={{ fontSize: 11, color: '#6ee7b7', fontFamily: 'monospace', wordBreak: 'break-all' }}>{txHash}</div>
-                    </div>
-                    <a href={`https://etherscan.io/tx/${txHash}`} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#6ee7b7', textDecoration: 'none', marginBottom: 16 }}>
-                      <ExternalLink size={12} /> View on Etherscan
-                    </a>
+                    {txHash ? (
+                      <>
+                        <div style={{ background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.18)', borderRadius: 12, padding: '12px 16px', marginBottom: 16, textAlign: 'left' }}>
+                          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Transaction Hash</div>
+                          <div style={{ fontSize: 11, color: '#6ee7b7', fontFamily: 'monospace', wordBreak: 'break-all' }}>{txHash}</div>
+                        </div>
+                        <a href={`https://etherscan.io/tx/${txHash}`} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#6ee7b7', textDecoration: 'none', marginBottom: 16 }}>
+                          <ExternalLink size={12} /> View on Etherscan
+                        </a>
+                      </>
+                    ) : (
+                      <div style={{ background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.18)', borderRadius: 12, padding: '14px 16px', marginBottom: 16, textAlign: 'left' }}>
+                        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.7 }}>
+                          Your {payToken} payment of <strong style={{ color: '#6ee7b7' }}>{chargeAmount} {payToken}</strong> has been confirmed.
+                          <br />INQAI tokens will be airdropped to your registered wallet within 24 hours.
+                          <br /><span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)' }}>Payment ID: {chargeId}</span>
+                        </div>
+                      </div>
+                    )}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                       <button
                         onClick={() => router.push('/analytics')}
@@ -546,8 +592,8 @@ export default function BuyPage() {
                 <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 18, color: 'rgba(255,255,255,0.7)' }}>How INQAI Works</h3>
                 {[
                   { n: '01', t: 'Acquire INQAI',              d: 'Purchase at the $8 presale price. Tokens are delivered directly to your self-custody wallet. No intermediary.' },
-                  { n: '02', t: 'Proprietary AI Management',   d: 'Five intelligence engines manage a 65-asset portfolio continuously, executing 11 trading strategies every 8 seconds.' },
-                  { n: '03', t: 'Asset-Backed Ownership',      d: 'Each INQAI token represents proportional ownership in the underlying 65-asset portfolio. Real assets underpin every token.' },
+                  { n: '02', t: 'ETH Deployed Across 65 Assets', d: 'Your ETH payment is received by the vault. Chainlink Automation triggers performUpkeep() — the AI immediately diversifies across 27 Uniswap V3 swaps, 13 deBridge cross-chain bridges, and 25 Lido stETH positions.' },
+                  { n: '03', t: 'Proportional Asset-Backed Ownership', d: 'Each INQAI token represents proportional ownership in the underlying 65-asset portfolio. Live NAV is calculated from native CoinGecko prices — zero proxy disconnect.' },
                   { n: '04', t: 'Compounding Value Accrual',   d: '60% of all protocol fees are deployed for open-market buybacks. 20% is permanently burned. Circulating supply contracts over time.' },
                 ].map(item => (
                   <div key={item.n} style={{ display: 'flex', gap: 12, marginBottom: 14 }}>

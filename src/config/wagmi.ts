@@ -54,7 +54,10 @@ export const INQAI_TOKEN = {
   standard:     'ERC-20',
   address:      '0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5' as `0x${string}`,
   teamWallet:   '0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746' as `0x${string}`,
-  vaultAddress: '0x506F72eABc90793ae8aC788E650bC9407ED853Fa' as `0x${string}`,
+  // vaultAddress is set via NEXT_PUBLIC_VAULT_ADDRESS after deployment.
+  // ETH/USDC purchases send directly to the vault so performUpkeep() executes real trades.
+  // Update this env var in Vercel after deploying a new vault contract.
+  vaultAddress: (process.env.NEXT_PUBLIC_VAULT_ADDRESS || '0x506F72eABc90793ae8aC788E650bC9407ED853Fa') as `0x${string}`,
   btcAddress:   'bc1q54tccqs2z3gp74pdatfnfucrzxuv2755fq6cfg',
   solAddress:   '7a2WzumijyGTqALmqoDZd3mvyP2aS7R4GjBdBxMUjRPk',
   paymentTokens: [

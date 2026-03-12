@@ -39,8 +39,8 @@ const TOKEN_ADDRESSES = {
   // ── BTC proxy ─────────────────────────────────────────────────────────────
   BTC:     { address: '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599', fee: 3000,  note: 'WBTC'                         },
 
-  // ── ETH proxy (Lido Wrapped Staked ETH — earns staking yield) ────────────
-  ETH:     { address: '0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0', fee: 500,   note: 'wstETH (Lido staking yield)'  },
+  // ── ETH — Lido stETH (rebasing 1:1 with ETH in USD, earns staking yield) ──
+  ETH:     { address: '0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84', fee: 100,   note: 'stETH (Lido, 1:1 ETH price, rebasing)'  },
 
   // ── Stablecoins ───────────────────────────────────────────────────────────
   USDC:    { address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', fee: 500,   note: 'USDC'                          },
@@ -100,7 +100,7 @@ const TOKEN_ADDRESSES = {
   BCH:     null,  // Bitcoin Cash (no liquid wrapped version)
   XLM:     null,  // Stellar-native
   HNT:     null,  // Helium-native
-  STRK:    null,  // Starknet-native (no mainnet ERC-20)
+  STRK:    { address: '0xCa14007Eff0dB1f8135f4C25B34De49AB0d42766', fee: 3000, note: 'STRK (Starknet bridged ERC-20)' },
   OP:      null,  // Optimism-native L2 token
   TAO:     null,  // Bittensor-native
   JUP:     null,  // Solana-native (Jupiter)
@@ -114,13 +114,13 @@ const TOKEN_ADDRESSES = {
   SOIL:    null,  // Soil (very low liquidity)
   BRZ:     null,  // BRZ (very low liquidity)
   JPYC:    null,  // JPYC (very low liquidity)
-  CNGN:    null,  // CNGN (very low liquidity)
+  FDUSD:   null,  // First Digital USD (BNB-chain primary)
   CC:      null,  // Canton Network (no ERC-20)
-  NIGHT:   null,  // Midnight (no ERC-20)
+  PYTH:    null,  // Pyth Network (Solana-native)
   JITOSOL: null,  // Solana-native (Jito staked SOL)
   JUPSOL:  null,  // Solana-native (Jupiter staked SOL)
-  INF:     null,  // Solana-native (Sanctum Infinity)
-  XCN:     null,  // Onyxcoin (very low liquidity)
+  MNDE:    null,  // Marinade (Solana-native)
+  STX:     null,  // Stacks (Bitcoin L2, low ETH liquidity)
 };
 
 // ── Portfolio weights from _brain.ts (percentage, will be scaled to bps) ────
@@ -131,7 +131,7 @@ const PORTFOLIO_WEIGHTS = {
   USDC:3, PAXG:1.5, ONDO:1, XLM:0.5, LTC:0.5, BCH:0.5, HBAR:0.5, ZEC:0.25, XMR:0.25,
   ETC:0.5, XTZ:0.25, CHZ:0.25, HNT:0.25, VET:0.25, QNT:0.25, ALGO:0.25, FIL:0.25, AR:0.25,
   XDC:0.1, ZRO:0.25, ATOM:0.25, DBR:0.1, ACH:0.1, EOS:0.1, HONEY:0.1, XSGD:0.1, SOIL:0.1,
-  BRZ:0.1, JPYC:0.1, CNGN:0.1, JITOSOL:0.5, JUPSOL:0.5, INF:0.5, CC:0.1, NIGHT:0.1, XCN:0.1,
+  BRZ:0.1, JPYC:0.1, FDUSD:0.1, JITOSOL:0.5, JUPSOL:0.5, MNDE:0.5, CC:0.1, PYTH:0.1, STX:0.1,
 };
 
 function buildPortfolioArrays() {

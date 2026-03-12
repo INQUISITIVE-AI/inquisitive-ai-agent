@@ -60,6 +60,7 @@ export default function AnalyticsPage() {
   const [monitor,   setMonitor]  = useState<any>(null);
   const [sysStatus, setSysStatus]= useState<any>(null);
   const [loading,   setLoading]  = useState(true);
+  const [refreshing,setRefreshing]= useState(false);
   const [tab,       setTab]      = useState<'portfolio'|'ai'|'positions'|'execute'|'fees'>('portfolio');
   const [posFilter, setPosFilter]= useState<string>('all');
   const [purchases, setPurchases]= useState<any[]>([]);
@@ -111,26 +112,37 @@ export default function AnalyticsPage() {
     setPurchases(all.filter(p => p.address?.toLowerCase() === address.toLowerCase()));
   }, [address]);
 
-  const load = useCallback(async () => {
-    try {
-      const [navRes, chartRes, catRes, queueRes, monitorRes, statusRes] = await Promise.allSettled([
-        fetch('/api/inquisitiveAI/portfolio/nav'),
-        fetch('/api/inquisitiveAI/chart/portfolio'),
-        fetch('/api/inquisitiveAI/chart/categories'),
-        fetch('/api/inquisitiveAI/execute/queue'),
-        fetch('/api/inquisitiveAI/execute/monitor'),
-        fetch('/api/inquisitiveAI/execute/status'),
-      ]);
-      if (navRes.status    === 'fulfilled' && navRes.value.ok)    setNav(await navRes.value.json());
-      if (chartRes.status  === 'fulfilled' && chartRes.value.ok)  { const d = await chartRes.value.json();   setEquity(d.curve || []); }
-      if (catRes.status    === 'fulfilled' && catRes.value.ok)    { const d = await catRes.value.json();     setCats(d.categories || []); }
-      if (queueRes.status  === 'fulfilled' && queueRes.value.ok)  setQueue(await queueRes.value.json());
-      if (monitorRes.status=== 'fulfilled' && monitorRes.value.ok)setMonitor(await monitorRes.value.json());
-      if (statusRes.status === 'fulfilled' && statusRes.value.ok) setSysStatus(await statusRes.value.json());
-    } catch {}
-    setLoading(false);
+  const load = useCallback(async (bust = false) => {
+    const t = bust ? `?_t=${Date.now()}` : `?_t=${Math.floor(Date.now() / 15000) * 15000}`;
+    if (bust) setRefreshing(true);
+
+    const safe = async (url: string) => {
+      try { const r = await fetch(url); return r.ok ? r.json() : null; } catch { return null; }
+    };
+
+    // Fire all fetches simultaneously — update each state slice the moment its response arrives.
+    // Do NOT await all before updating; NAV/positions must not wait for slow Etherscan calls.
+    const navP     = safe(`/api/inquisitiveAI/portfolio/nav${t}`)
+                       .then(d => { if (d) setNav(d); });
+    const chartP   = safe(`/api/inquisitiveAI/chart/portfolio${t}`)
+                       .then(d => { if (d?.curve) setEquity(d.curve); });
+    const catP     = safe(`/api/inquisitiveAI/chart/categories${t}`)
+                       .then(d => { if (d?.categories) setCats(d.categories); });
+    const queueP   = safe(`/api/inquisitiveAI/execute/queue${t}`)
+                       .then(d => { if (d) setQueue(d); });
+    const monitorP = safe(`/api/inquisitiveAI/execute/monitor${t}`)
+                       .then(d => { if (d) setMonitor(d); });
+    const statusP  = safe(`/api/inquisitiveAI/execute/status${t}`)
+                       .then(d => { if (d) setSysStatus(d); });
+
+    // setLoading(false) as soon as NAV arrives — the most critical data
+    navP.then(() => setLoading(false));
+
+    // setRefreshing(false) once all complete
+    Promise.allSettled([navP, chartP, catP, queueP, monitorP, statusP])
+      .then(() => setRefreshing(false));
   }, []);
-  useEffect(() => { load(); const t = setInterval(load, 15000); return () => clearInterval(t); }, [load]);
+  useEffect(() => { load(); const t = setInterval(() => load(), 15000); return () => clearInterval(t); }, [load]);
 
   const navPerToken       = nav?.token?.navPerToken       ?? INQAI_TOKEN.presalePrice;
   const navSource         = nav?.token?.navSource          ?? 'connecting';
@@ -231,8 +243,18 @@ export default function AnalyticsPage() {
             <div style={{ textAlign:'right' }}><div style={{ fontSize:10, color:'rgba(255,255,255,0.3)' }}>7D</div><div style={{ fontSize:13, fontWeight:700, color:grc(return7d), fontFamily:'monospace' }}>{pct(return7d)}</div></div>
             <div style={{ width:1, height:28, background:'rgba(255,255,255,0.08)' }} />
           </div>
+          <button
+            onClick={() => load(true)}
+            disabled={refreshing}
+            title="Force refresh — bypasses CDN cache"
+            style={{ display:'flex', alignItems:'center', gap:5, padding:'5px 10px', borderRadius:8, fontSize:11, fontWeight:600, cursor: refreshing ? 'wait' : 'pointer', background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', color: refreshing ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.45)', transition:'all 0.2s', marginRight:8 }}
+          >
+            <span style={{ display:'inline-block', animation: refreshing ? 'spin 0.8s linear infinite' : 'none', fontSize:13 }}>⟳</span>
+            {refreshing ? 'Refreshing…' : 'Refresh'}
+          </button>
           <WalletButton label="Connect Wallet" />
         </nav>
+        <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
 
         <div style={{ padding:'24px 24px 80px', position:'relative', zIndex:1 }}>
           <div style={{ maxWidth:1320, margin:'0 auto' }}>
@@ -623,7 +645,7 @@ export default function AnalyticsPage() {
                   <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12 }}>
                     {[
                       { l:'Vault ETH',      v: vaultEthOnChain.toFixed(4)+' ETH',                                                         c:'#60a5fa' },
-                      { l:'Portfolio',      v: portfolioOnChain ? '22 ETH-direct + 43 bridge' : (ss?.portfolioLength ? ss.portfolioLength+' assets' : 'Not set'), c: portfolioOnChain ? '#10b981':'#f59e0b' },
+                      { l:'Portfolio',      v: portfolioOnChain ? `${monitor?.architecture?.ethDirect??27} ETH + ${monitor?.architecture?.bridgeLive??13} BRIDGE + ${monitor?.architecture?.bridgeTracked??25} stETH` : (ss?.portfolioLength ? ss.portfolioLength+' assets' : 'Not set'), c: portfolioOnChain ? '#10b981':'#f59e0b' },
                       { l:'Automation',     v: automationOn ? 'ACTIVE' : (ss?.automationActive ? 'ACTIVE' : 'DISABLED'),                   c: (automationOn||ss?.automationActive) ? '#10b981':'#ef4444' },
                       { l:'Cycles run',     v: (cyclesOnChain || ss?.cycleCount || 0).toString(),                                         c:'#a78bfa' },
                     ].map(s => (
@@ -679,7 +701,7 @@ export default function AnalyticsPage() {
                       <div style={{ textAlign:'center', padding:'24px 0' }}>
                         <div style={{ fontSize:13, color:'rgba(255,255,255,0.3)', marginBottom:6 }}>No executions yet</div>
                         <div style={{ fontSize:10, color:'rgba(255,255,255,0.18)', lineHeight:1.8 }}>
-                          Once vault is deployed + Chainlink registered,<br/>every ETH deposit is autonomously allocated<br/>across all 65 assets — 22 via Uniswap V3,<br/>43 cross-chain via deBridge DLN.
+                          Once vault is deployed + Chainlink registered,<br/>every ETH deposit is autonomously allocated<br/>across all 65 assets — {monitor?.architecture?.ethDirect??27} via Uniswap V3,<br/>{monitor?.architecture?.bridgeLive??13} via deBridge DLN (Solana/BSC/Avalanche/Optimism/TRON),<br/>{monitor?.architecture?.bridgeTracked??25} held as Lido stETH earning yield.
                         </div>
                       </div>
                     )}
@@ -717,8 +739,9 @@ export default function AnalyticsPage() {
                     {/* Architecture summary chips */}
                     <div style={{ display:'flex', gap:8, marginBottom:14, flexWrap:'wrap' }}>
                       {[
-                        { label:'ETH-DIRECT', n: monitor?.architecture?.ethDirect ?? 22, c:'#10b981', bg:'rgba(16,185,129,0.08)', border:'rgba(16,185,129,0.25)', desc:'Uniswap V3 + Lido + Aave' },
-                        { label:'BRIDGE',     n: monitor?.architecture?.bridge ?? 43,    c:'#6366f1', bg:'rgba(99,102,241,0.08)', border:'rgba(99,102,241,0.25)', desc:'deBridge DLN → native chain DEX' },
+                        { label:'ETH-DIRECT',  n: monitor?.architecture?.ethDirect    ?? 27, c:'#10b981', bg:'rgba(16,185,129,0.08)', border:'rgba(16,185,129,0.25)', desc:'Uniswap V3 swaps · ETH-mainnet' },
+                        { label:'BRIDGE LIVE', n: monitor?.architecture?.bridgeLive   ?? 13, c:'#6366f1', bg:'rgba(99,102,241,0.08)', border:'rgba(99,102,241,0.25)', desc:'deBridge DLN · 5 chains' },
+                        { label:'stETH YIELD', n: monitor?.architecture?.bridgeTracked ?? 25, c:'#f59e0b', bg:'rgba(245,158,11,0.06)', border:'rgba(245,158,11,0.2)',  desc:'Lido stETH · native price' },
                       ].map(chip => (
                         <div key={chip.label} style={{ display:'flex', alignItems:'center', gap:6, padding:'4px 10px', borderRadius:100, background:chip.bg, border:`1px solid ${chip.border}` }}>
                           <span style={{ fontSize:10, fontWeight:800, color:chip.c }}>{chip.n} {chip.label}</span>
@@ -737,21 +760,24 @@ export default function AnalyticsPage() {
                       <span style={{textAlign:'right'}}>Chain</span>
                     </div>
                     {monitor.allocation.plan.map((t: any) => {
-                      const isEthDirect = t.executionMode === 'ETH-DIRECT';
-                      const chainLabel  = (t.nativeChain || 'Unknown').replace('Ethereum','ETH').replace('BNB Chain','BSC').replace('Bitcoin Cash','BCH');
+                      const isEthDirect  = t.executionMode === 'ETH-DIRECT';
+                      const isBridgeLive = !isEthDirect && t.bridgeLive;
+                      const chainLabel   = (t.nativeChain || 'Unknown').replace('Ethereum','ETH').replace('BNB Chain','BSC').replace('Bitcoin Cash','BCH');
+                      const badgeColor   = isEthDirect ? '#34d399' : isBridgeLive ? '#818cf8' : '#f59e0b';
+                      const badgeBg      = isEthDirect ? 'rgba(16,185,129,0.12)' : isBridgeLive ? 'rgba(99,102,241,0.1)' : 'rgba(245,158,11,0.08)';
+                      const badgeBorder  = isEthDirect ? 'rgba(16,185,129,0.3)'  : isBridgeLive ? 'rgba(99,102,241,0.25)' : 'rgba(245,158,11,0.2)';
+                      const badgeLabel   = isEthDirect ? 'ETH' : isBridgeLive ? 'BRIDGE' : 'TRACKED';
                       return (
                         <div key={t.symbol} style={{ display:'grid', gridTemplateColumns:'58px 1fr 70px 60px 64px 64px 70px', gap:4, padding:'6px 0', borderBottom:'1px solid rgba(255,255,255,0.025)', alignItems:'center' }}>
                           <span style={{ fontWeight:800, fontSize:12, color:'#fff' }}>{t.symbol}</span>
                           <div>
                             <div style={{ fontSize:10, color:'rgba(255,255,255,0.5)', lineHeight:1.3 }}>{t.name}</div>
-                            <div style={{ fontSize:8, color: isEthDirect ? 'rgba(16,185,129,0.6)' : 'rgba(99,102,241,0.6)', lineHeight:1.2, marginTop:1 }}>{t.bridgeProtocol}</div>
+                            <div style={{ fontSize:8, color: isEthDirect ? 'rgba(16,185,129,0.6)' : isBridgeLive ? 'rgba(99,102,241,0.6)' : 'rgba(245,158,11,0.5)', lineHeight:1.2, marginTop:1 }}>{t.bridgeProtocol}</div>
                           </div>
                           <div style={{ display:'flex', justifyContent:'center' }}>
                             <span style={{ fontSize:8, padding:'1px 5px', borderRadius:100, fontWeight:800,
-                              background: isEthDirect ? 'rgba(16,185,129,0.12)' : 'rgba(99,102,241,0.1)',
-                              color:      isEthDirect ? '#34d399'              : '#818cf8',
-                              border:     `1px solid ${isEthDirect ? 'rgba(16,185,129,0.3)' : 'rgba(99,102,241,0.25)'}` }}>
-                              {isEthDirect ? 'ETH' : 'BRIDGE'}
+                              background: badgeBg, color: badgeColor, border: `1px solid ${badgeBorder}` }}>
+                              {badgeLabel}
                             </span>
                           </div>
                           <span style={{ textAlign:'right', fontSize:10, fontFamily:'monospace', color:'rgba(255,255,255,0.45)' }}>{t.allocPct?.toFixed(2)}%</span>

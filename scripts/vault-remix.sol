@@ -1,6 +1,3 @@
-[dotenv@17.3.1] injecting env (36) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
-// Sources flattened with hardhat v2.28.6 https://hardhat.org
-
 // SPDX-License-Identifier: MIT
 
 // File contracts/InquisitiveVaultUpdated.sol
@@ -186,19 +183,12 @@ contract InquisitiveVaultUpdated is IAutomationCompatible {
         performData  = abi.encode(upkeepNeeded);
     }
 
-    /// @notice Autonomous fund deployment — called by Chainlink Automation OR Vercel Cron executor
-    /// Distributes ALL vault ETH proportionally across portfolio tokens via Uniswap V3.
-    /// NO private key needed for Chainlink. For Vercel Cron, only a minimal executor key
-    /// stored in Vercel's encrypted env vars (never in code) is needed.
+    /// @notice Autonomous fund deployment — callable by ANYONE (Chainlink, Gelato, community).
+    /// Per Chainlink Automation standard, performUpkeep must be open to any caller.
+    /// Protected by: automationEnabled flag, portfolio configured, cooldown, min ETH balance.
+    /// Community members can call this from the analytics page — costs ~$0.50 gas.
     function performUpkeep(bytes calldata) external override {
         require(automationEnabled, "Automation disabled");
-        require(
-            msg.sender == CHAINLINK_REGISTRY ||
-            msg.sender == GELATO_RELAY       ||
-            msg.sender == aiExecutor         ||
-            msg.sender == owner,
-            "Not authorized executor"
-        );
         require(portfolioTokens.length > 0, "Portfolio not configured - call setPortfolio first");
         require(block.timestamp >= lastDeployTime + MIN_REDEPLOY_GAP, "Cooldown active");
 

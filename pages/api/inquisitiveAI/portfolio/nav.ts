@@ -46,7 +46,7 @@ function balanceOfData(addr: string): string {
   return '0x70a08231' + addr.toLowerCase().replace('0x','').padStart(64,'0');
 }
 
-const NO_CC   = new Set(['CC', 'JUPSOL', 'NIGHT', 'XCN', 'CNGN']);
+const NO_CC   = new Set(['CC', 'JUPSOL']);
 const ALL_CGS = ASSET_REGISTRY.map(a => a.cgId).join(',');
 
 export const config = { maxDuration: 30 };
@@ -156,11 +156,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const signals = allInputs.map(inp => scoreAsset(inp, regime, fg, allInputs));
 
     // ── Portfolio NAV Computation ────────────────────────────────────────────
+    // Use NATIVE prices only — normalize by the live-weight sum (not total) to
+    // avoid proxy dilution when some assets lack current price data.
     const weightSum     = Object.values(PORTFOLIO_WEIGHTS).reduce((s, w) => s + w, 0) || 1;
     const assetsLive    = allInputs.filter(a => a.priceUsd > 0);
-    const return24h     = assetsLive.reduce((s, a) => s + (PORTFOLIO_WEIGHTS[a.symbol] || 0) * a.change24h, 0) / weightSum;
-    const return7d      = assetsLive.reduce((s, a) => s + (PORTFOLIO_WEIGHTS[a.symbol] || 0) * a.change7d,  0) / weightSum;
-    // Portfolio index: what $100 invested 7 days ago is worth now
+    const liveWeightSum = assetsLive.reduce((s, a) => s + (PORTFOLIO_WEIGHTS[a.symbol] || 0), 0) || 1;
+    const return24h     = assetsLive.reduce((s, a) => s + (PORTFOLIO_WEIGHTS[a.symbol] || 0) * a.change24h, 0) / liveWeightSum;
+    const return7d      = assetsLive.reduce((s, a) => s + (PORTFOLIO_WEIGHTS[a.symbol] || 0) * a.change7d,  0) / liveWeightSum;
+    // Portfolio index: what $100 invested 7 days ago is worth now (native-price weighted)
     const portfolioIndex = 100 * (1 + return7d);
 
     // ── Real on-chain AUM ─────────────────────────────────────────────────────
@@ -192,38 +195,46 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ? assetsLive.filter(a => a.change24h > 0).length / assetsLive.length : 0;
 
     // ── Per-position data ─────────────────────────────────────────────────────
-    // Each position shows how much of a $presalePrice token is backing each asset
+    // nativePrice    = actual live market price from CoinGecko (NEVER proxy)
+    // baseAllocUsd   = $ backing per INQAI token at presale price (presalePrice × allocPct)
+    // currentAllocUsd= current value of that allocation using NATIVE price change
+    // pnl fields reflect actual native price movement, not a weighted index
     const positions = ASSET_REGISTRY
       .filter(meta => (PORTFOLIO_WEIGHTS[meta.symbol] ?? 0) > 0)
       .map(meta => {
         const inp = inputs.get(meta.symbol);
         const sig = signals.find(s => s.symbol === meta.symbol);
-        const weight    = PORTFOLIO_WEIGHTS[meta.symbol] ?? 0;
-        const allocPct  = weight / weightSum;                         // e.g. 0.18 for BTC
-        const usdPerToken = PRESALE_PRICE * allocPct;                 // $ per INQAI token this asset backs
-        const currentUsd  = usdPerToken * (1 + (inp?.change7d ?? 0)); // current value of that allocation
-        const pnl7d       = currentUsd - usdPerToken;
-        const pnl24h      = usdPerToken * (inp?.change24h ?? 0);
+        const weight        = PORTFOLIO_WEIGHTS[meta.symbol] ?? 0;
+        const allocPct      = weight / weightSum;
+        const nativePrice   = inp?.priceUsd  ?? 0;
+        const baseAllocUsd  = PRESALE_PRICE * allocPct;
+        const nativeChange7d = inp?.change7d  ?? 0;
+        const nativeChange24h= inp?.change24h ?? 0;
+        const currentAllocUsd= baseAllocUsd * (1 + nativeChange7d);
+        const pnl7d          = currentAllocUsd - baseAllocUsd;
+        const pnl24h         = baseAllocUsd * nativeChange24h;
         return {
-          symbol:       meta.symbol,
-          name:         meta.name,
-          category:     meta.category,
+          symbol:          meta.symbol,
+          name:            meta.name,
+          category:        meta.category,
           weight,
-          allocPct:     parseFloat((allocPct * 100).toFixed(4)),
-          usdPerToken:  parseFloat(usdPerToken.toFixed(6)),
-          currentUsd:   parseFloat(currentUsd.toFixed(6)),
-          pnl7d:        parseFloat(pnl7d.toFixed(6)),
-          pnl24h:       parseFloat(pnl24h.toFixed(6)),
-          priceUsd:     inp?.priceUsd  ?? 0,
-          change24h:    inp?.change24h ?? 0,
-          change7d:     inp?.change7d  ?? 0,
-          action:       sig?.action     ?? 'HOLD',
-          confidence:   sig?.finalScore ?? 0,
-          components:   sig?.components ?? {},
-          reasons:      sig?.reasons    ?? [],
-          stakeable:    meta.stakeable,
-          lendable:     meta.lendable,
-          yieldable:    meta.yieldable,
+          allocPct:        parseFloat((allocPct * 100).toFixed(4)),
+          nativePrice:     parseFloat(nativePrice.toFixed(nativePrice >= 1 ? 2 : 8)),
+          baseAllocUsd:    parseFloat(baseAllocUsd.toFixed(6)),
+          currentAllocUsd: parseFloat(currentAllocUsd.toFixed(6)),
+          pnl7d:           parseFloat(pnl7d.toFixed(6)),
+          pnl24h:          parseFloat(pnl24h.toFixed(6)),
+          priceUsd:        nativePrice,
+          change24h:       nativeChange24h,
+          change7d:        nativeChange7d,
+          hasLivePrice:    nativePrice > 0,
+          action:          sig?.action     ?? 'HOLD',
+          confidence:      sig?.finalScore ?? 0,
+          components:      sig?.components ?? {},
+          reasons:         sig?.reasons    ?? [],
+          stakeable:       meta.stakeable,
+          lendable:        meta.lendable,
+          yieldable:       meta.yieldable,
         };
       })
       .sort((a, b) => b.weight - a.weight);
@@ -264,12 +275,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         assetCount:    assetsLive.length,
         totalAssets:   ASSET_REGISTRY.length,
         weightSum,
+        liveWeightSum,
+        coveragePct:   parseFloat(((liveWeightSum / weightSum) * 100).toFixed(1)),
         return24h,
         return7d,
         portfolioIndex,
         totalPnL24h:   parseFloat((navPerToken * return24h).toFixed(6)),
         totalPnL7d:    parseFloat((navPerToken * return7d).toFixed(6)),
         winRate,
+        priceSource:   'CoinGecko NATIVE — no proxy, no weighted dilution',
       },
       // AI signals
       ai: {

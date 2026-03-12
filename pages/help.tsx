@@ -52,7 +52,7 @@ const ASSETS_65 = [
   {n:28,s:'ETC',     name:'Ethereum Classic',               cat:'major'},
   {n:29,s:'ONDO',    name:'Ondo',                           cat:'rwa'},
   {n:30,s:'POL',     name:'Polygon',                        cat:'l2'},
-  {n:31,s:'NIGHT',   name:'Midnight',                       cat:'privacy'},
+  {n:31,s:'PYTH',    name:'Pyth Network',                   cat:'oracle'},
   {n:32,s:'ENA',     name:'Ethena',                         cat:'defi'},
   {n:33,s:'ATOM',    name:'Cosmos',                         cat:'interop'},
   {n:34,s:'ALGO',    name:'Algorand',                       cat:'major'},
@@ -73,7 +73,7 @@ const ASSETS_65 = [
   {n:49,s:'LDO',     name:'Lido DAO',                       cat:'defi'},
   {n:50,s:'HNT',     name:'Helium',                         cat:'iot'},
   {n:51,s:'STRK',    name:'Starknet',                       cat:'l2'},
-  {n:52,s:'XCN',     name:'Onyxcoin',                       cat:'defi'},
+  {n:52,s:'STX',     name:'Stacks',                         cat:'l2'},
   {n:53,s:'EOS',     name:'Vaulta',                         cat:'major'},
   {n:54,s:'AR',      name:'Arweave',                        cat:'storage'},
   {n:55,s:'ACH',     name:'Alchemy Pay',                    cat:'payment'},
@@ -83,10 +83,10 @@ const ASSETS_65 = [
   {n:59,s:'SOIL',    name:'Soil',                           cat:'defi'},
   {n:60,s:'BRZ',     name:'Brazilian Digital Token',        cat:'stablecoin'},
   {n:61,s:'JPYC',    name:'JPYC Prepaid',                   cat:'stablecoin'},
-  {n:62,s:'CNGN',    name:'Compliant Naira',                cat:'stablecoin'},
+  {n:62,s:'FDUSD',   name:'First Digital USD',              cat:'stablecoin'},
   {n:63,s:'JITOSOL', name:'Jito Staked SOL',                cat:'liquid-stake'},
   {n:64,s:'JUPSOL',  name:'Jupiter Staked SOL',             cat:'liquid-stake'},
-  {n:65,s:'INF',     name:'Sanctum Infinity',               cat:'liquid-stake'},
+  {n:65,s:'MNDE',    name:'Marinade',                       cat:'liquid-stake'},
 ];
 
 const catColor = (c: string) => {
@@ -237,7 +237,7 @@ export default function HelpPage() {
           ]},
           {icon:Eye,name:'The Oracle',col:'#7c3aed',sub:'Price Intelligence',detail:[
             'Primary: CoinGecko REAL LIVE API — 65 assets with 30-second polling',
-            'Fallback: CoinMarketCap with API key',
+            'Fallback: CryptoCompare (free, no API key required)',
             'Macro: Yahoo Finance — VIX, Treasury yields, DXY, S&P 500, Gold, Oil',
             'Fear & Greed: Alternative.me REAL API',
             'On-chain: Chainlink oracle integration planned',
@@ -559,7 +559,7 @@ export default function HelpPage() {
             detail:'DEPLOYED — Asset-backed vault deployed to mainnet. INQAI token live, backed by 65-asset portfolio with 15% flat fee structure.',
             items:[
               'Smart vault contract deployed — AI trading generates protocol yield distributed via buybacks and rewards',
-              'INQAI ERC-20 token deployed — 100M fixed supply at 0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746',
+              'INQAI ERC-20 token deployed — 100M fixed supply at 0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5',
               'Buyback + burn contract — 60% of protocol fees auto-buy INQAI; 20% burned, 20% treasury',
               'Presale contract complete — accepts ETH, BTC, SOL, USDC at $8/INQAI',
               'Chainlink price oracle integrated — on-chain TWAP for all vault valuations',

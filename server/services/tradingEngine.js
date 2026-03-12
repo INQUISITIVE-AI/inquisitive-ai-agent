@@ -400,7 +400,7 @@ async function stake({ symbol, amount, protocol = 'auto' }) {
     SOL:     { apy: 0.0680, protocol: 'Jito (JitoSOL)',     derivative: 'JitoSOL' },
     JITOSOL: { apy: 0.0720, protocol: 'Jito Liquid Staking',derivative: 'JITOSOL' },
     JUPSOL:  { apy: 0.0700, protocol: 'Jupiter Staking',    derivative: 'JUPSOL'  },
-    INF:     { apy: 0.0750, protocol: 'Sanctum Infinity',   derivative: 'INF'     },
+    MNDE:    { apy: 0.0750, protocol: 'Marinade Finance',   derivative: 'MNDE'    },
     BNB:     { apy: 0.0350, protocol: 'BNB Beacon Chain',   derivative: 'BNB'     },
     ADA:     { apy: 0.0350, protocol: 'Cardano Staking',    derivative: 'ADA'     },
     DOT:     { apy: 0.1200, protocol: 'Polkadot Nomination',derivative: 'DOT'     },
@@ -624,7 +624,7 @@ function startAutoTrading() {
   tradingActive = true;
 
   // Start brain cycles if not already running
-  if (!brain.isRunning()) {
+  if (!brain.running) {
     brain._startCycles();
   }
 

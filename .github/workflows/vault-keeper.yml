@@ -1,0 +1,30 @@
+name: INQUISITIVE Vault Keeper
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'   # Every 15 minutes — free on GitHub Actions
+  workflow_dispatch:           # Manual trigger from GitHub Actions tab
+
+jobs:
+  keep:
+    name: performUpkeep
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install ethers
+        run: npm install --no-save ethers@6
+
+      - name: Run keeper
+        env:
+          KEEPER_PRIVATE_KEY:          ${{ secrets.KEEPER_PRIVATE_KEY }}
+          INQUISITIVE_VAULT_ADDRESS:   ${{ secrets.INQUISITIVE_VAULT_ADDRESS }}
+          MAINNET_RPC_URL:             ${{ secrets.MAINNET_RPC_URL }}
+        run: node scripts/keeper.js
