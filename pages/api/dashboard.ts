@@ -106,7 +106,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .map(inp => scoreAsset(inp, regime, fg, allInputs))
       .sort((a, b) => b.finalScore - a.finalScore);
 
-    const buys  = signals.filter(s => s.action === 'BUY' || s.action === 'ACCUMULATE').length;
+    const buys  = signals.filter(s => s.action === 'BUY').length;
     const sells = signals.filter(s => s.action === 'SELL' || s.action === 'REDUCE').length;
 
     // ── Real weighted portfolio performance ───────────────────────────────────

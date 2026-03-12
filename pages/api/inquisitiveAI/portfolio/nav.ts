@@ -189,7 +189,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const navFromBasket = PRESALE_PRICE * (1 + return7d);
     const navPerToken   = navFromAUM > 0 ? navFromAUM : navFromBasket;
 
-    const buys  = signals.filter(s => s.action === 'BUY' || s.action === 'ACCUMULATE').length;
+    const buys  = signals.filter(s => s.action === 'BUY').length;
     const sells = signals.filter(s => s.action === 'SELL' || s.action === 'REDUCE').length;
     const winRate = assetsLive.length > 0
       ? assetsLive.filter(a => a.change24h > 0).length / assetsLive.length : 0;

@@ -20,7 +20,6 @@ const grc = (n: number) => n >= 0 ? '#10b981' : '#ef4444';
 const sigStyle = (s: string) => {
   const m: Record<string,{bg:string;col:string;br:string}> = {
     BUY:       {bg:'rgba(16,185,129,0.12)',col:'#34d399',br:'rgba(16,185,129,0.3)'},
-    ACCUMULATE:{bg:'rgba(52,211,153,0.08)',col:'#6ee7b7',br:'rgba(52,211,153,0.2)'},
     SELL:      {bg:'rgba(239,68,68,0.12)', col:'#f87171',br:'rgba(239,68,68,0.3)'},
     REDUCE:    {bg:'rgba(252,165,165,0.08)',col:'#fca5a5',br:'rgba(252,165,165,0.2)'},
     HOLD:      {bg:'rgba(251,191,36,0.08)',col:'#fbbf24',br:'rgba(251,191,36,0.2)'},

@@ -19,7 +19,6 @@ const grc = (n: number) => n >= 0 ? '#10b981' : '#ef4444';
 
 const ACTION_STYLE: Record<string, { bg: string; col: string; border: string }> = {
   BUY:       { bg: 'rgba(16,185,129,0.12)',  col: '#34d399',  border: 'rgba(16,185,129,0.3)'  },
-  ACCUMULATE:{ bg: 'rgba(52,211,153,0.1)',   col: '#6ee7b7',  border: 'rgba(52,211,153,0.25)' },
   SELL:      { bg: 'rgba(239,68,68,0.12)',   col: '#f87171',  border: 'rgba(239,68,68,0.3)'   },
   REDUCE:    { bg: 'rgba(252,165,165,0.1)',  col: '#fca5a5',  border: 'rgba(252,165,165,0.25)'},
   STAKE:     { bg: 'rgba(14,165,233,0.12)',  col: '#38bdf8',  border: 'rgba(14,165,233,0.3)'  },
@@ -37,7 +36,6 @@ function buildFeed(signals: any[], cycle: number) {
   const entries: any[] = [];
   const rationaleMap: Record<string, string> = {
     BUY:       'Pattern + Reasoning engines in consensus. Entry conditions met. 2% capital risk limit applied.',
-    ACCUMULATE:'Incremental accumulation signal. Position building within risk parameters.',
     SELL:      'Profit target or stop-loss triggered. Position closed per risk management protocol.',
     REDUCE:    'Partial exit. Risk reduction initiated by Portfolio Engine.',
     STAKE:     'Yield deployment. Capital allocated to staking protocol at live APY.',

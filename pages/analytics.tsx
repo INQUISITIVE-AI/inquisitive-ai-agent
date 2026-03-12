@@ -46,7 +46,7 @@ const NAV_LINKS = [
 ];
 
 const ACTION_COL: Record<string, string> = {
-  BUY: '#10b981', ACCUMULATE: '#34d399', SELL: '#ef4444',
+  BUY: '#10b981', SELL: '#ef4444',
   REDUCE: '#f87171', HOLD: '#a78bfa', SKIP: '#6b7280',
 };
 
@@ -61,7 +61,7 @@ export default function AnalyticsPage() {
   const [sysStatus, setSysStatus]= useState<any>(null);
   const [loading,   setLoading]  = useState(true);
   const [refreshing,setRefreshing]= useState(false);
-  const [tab,       setTab]      = useState<'portfolio'|'ai'|'positions'|'execute'|'fees'>('portfolio');
+  const [tab,       setTab]      = useState<'portfolio'|'ai'|'positions'|'fees'>('portfolio');
   const [posFilter, setPosFilter]= useState<string>('all');
   const [purchases, setPurchases]= useState<any[]>([]);
 
@@ -210,11 +210,11 @@ export default function AnalyticsPage() {
   }, [purchases, navPerToken]);
 
   const chartData   = equity.length ? equity : userEquity.length ? userEquity : globalEquity;
-  const topSignals  = positions.filter(p => p.action === 'BUY' || p.action === 'ACCUMULATE').slice(0, 8);
+  const topSignals  = positions.filter(p => p.action === 'BUY').slice(0, 8);
   const dispValue   = hasHoldings ? currentValue : navPerToken;
   const filteredPos = useMemo(() => {
     if (posFilter === 'all')  return positions;
-    if (posFilter === 'buy')  return positions.filter(p => p.action === 'BUY' || p.action === 'ACCUMULATE');
+    if (posFilter === 'buy')  return positions.filter(p => p.action === 'BUY');
     if (posFilter === 'sell') return positions.filter(p => p.action === 'SELL' || p.action === 'REDUCE');
     return positions.filter(p => p.category === posFilter);
   }, [positions, posFilter]);
@@ -302,10 +302,9 @@ export default function AnalyticsPage() {
 
             {/* Tabs */}
             <div style={{ display:'flex', gap:2, marginBottom:20, borderBottom:'1px solid rgba(255,255,255,0.06)', flexWrap:'wrap' }}>
-              {(['portfolio','ai','positions','execute','fees'] as const).map(t => (
+              {(['portfolio','ai','positions','fees'] as const).map(t => (
                 <button key={t} onClick={() => setTab(t)} style={{ padding:'10px 18px', fontSize:13, fontWeight:tab===t?700:500, cursor:'pointer', background:'none', border:'none', borderBottom:`2px solid ${tab===t?'#7c3aed':'transparent'}`, color:tab===t?'#a78bfa':'rgba(255,255,255,0.4)', transition:'all 0.15s' }}>
-                  {{portfolio:'Portfolio',ai:'AI Activity',positions:`Positions (${positions.length})`,execute:'Execution Engine',fees:'Fee Flow'}[t]}
-                  {t==='execute' && (monitor?.status==='READY_TO_DEPLOY') && <span style={{ marginLeft:6, width:7, height:7, borderRadius:9, background:'#10b981', display:'inline-block', boxShadow:'0 0 6px #10b981' }} />}
+                  {{portfolio:'Portfolio',ai:'AI Activity',positions:`Positions (${positions.length})`,fees:'Fee Flow'}[t as string]}
                 </button>
               ))}
             </div>
@@ -420,11 +419,6 @@ export default function AnalyticsPage() {
                         </div>
                       ))}
                     </div>
-                    {!isOnChainNAV && aumUSD === 0 && (
-                      <div style={{ marginTop:10, padding:'7px 10px', background:'rgba(124,58,237,0.07)', border:'1px solid rgba(124,58,237,0.15)', borderRadius:8, fontSize:10, color:'rgba(255,255,255,0.4)', lineHeight:1.7 }}>
-                        NAV is currently basket-weighted (live CoinGecko data). Once ETH deposits are made to the vault contract, NAV switches to real AUM/supply calculation automatically.
-                      </div>
-                    )}
                   </div>
 
                   {/* Portfolio backing */}
@@ -611,8 +605,8 @@ export default function AnalyticsPage() {
               </div>
             )}
 
-            {/* ── EXECUTION ENGINE TAB ── */}
-            {tab === 'execute' && (() => {
+            {/* EXECUTION ENGINE TAB REMOVED */}
+            {false && (() => {
               const ss = sysStatus;
               const rPct   = ss?.readinessPct ?? 0;
               const rState = ss?.readiness    ?? 'NOT_DEPLOYED';

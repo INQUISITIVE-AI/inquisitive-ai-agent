@@ -271,7 +271,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const bridgeAssets     = allocationPlan.filter(t => t.executionMode === 'BRIDGE');
     const readyTrades     = allocationPlan.filter(t => t.canExecute);
     const totalDeployETH  = readyTrades.reduce((s, t) => s + t.ethToSpend, 0);
-    const buySignals      = signals.filter(s => s.action === 'BUY' || s.action === 'ACCUMULATE').length;
+    const buySignals      = signals.filter(s => s.action === 'BUY').length;
     const sellSignals     = signals.filter(s => s.action === 'SELL' || s.action === 'REDUCE').length;
 
     // ETH-native on-chain weights for vault.setPortfolio() — re-normalized to 10000 bps

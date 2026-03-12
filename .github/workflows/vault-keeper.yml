@@ -2,7 +2,7 @@ name: INQUISITIVE Vault Keeper
 
 on:
   schedule:
-    - cron: '*/15 * * * *'   # Every 15 minutes — free on GitHub Actions
+    - cron: '*/5 * * * *'    # Every 5 minutes — GitHub Actions minimum interval
   workflow_dispatch:           # Manual trigger from GitHub Actions tab
 
 jobs:

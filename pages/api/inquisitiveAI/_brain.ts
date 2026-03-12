@@ -237,11 +237,11 @@ export function scoreAsset(
   const regimeThreshold = regime === 'BEAR' ? 0.75 : 0.70;
   let action = 'HOLD';
   if (gate.pass) {
-    if      (finalScore >= 0.72 && regime !== 'BEAR') action = 'BUY';
-    else if (finalScore >= 0.65)                      action = 'ACCUMULATE';
+    if      (finalScore >= 0.65 && regime !== 'BEAR') action = 'BUY';
+    else if (finalScore >= 0.60 && regime === 'BEAR')  action = 'BUY';
     else if (finalScore <= 0.35)                      action = 'SELL';
     else if (finalScore <= 0.42)                      action = 'REDUCE';
-    if (finalScore >= regimeThreshold && regime === 'BEAR') action = 'ACCUMULATE';
+    if (finalScore >= regimeThreshold && regime === 'BEAR') action = 'BUY';
   } else {
     action = 'SKIP';
   }
@@ -259,7 +259,7 @@ export function scoreAsset(
     action,
     finalScore,
     confidence: finalScore,
-    executed:   action === 'BUY' || action === 'ACCUMULATE',
+    executed:   action === 'BUY',
     components: {
       patternEngine:   parseFloat(pScore.toFixed(4)),
       reasoningEngine: parseFloat(rResult.score.toFixed(4)),

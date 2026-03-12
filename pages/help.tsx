@@ -207,7 +207,7 @@ export default function HelpPage() {
             'Processes all 65 assets every 8 seconds',
             'Combines 5 intelligence engines: Pattern Engine, Reasoning Engine, Portfolio Engine, Learning Engine, Risk Engine',
             'Applies risk-first methodology as final gate before any execution',
-            'Outputs signals: BUY / SELL / HOLD / ACCUMULATE / REDUCE / SKIP',
+            'Outputs signals: BUY / SELL / HOLD / REDUCE / SKIP',
             'Confidence scores determine position sizing via Kelly Criterion',
             'Paper trades first 5 cycles before going live',
             'BEAR regime raises confidence threshold from 70% to 75%',
