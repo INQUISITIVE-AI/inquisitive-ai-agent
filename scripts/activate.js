@@ -55,32 +55,32 @@ const VAULT_ABI = [
 // Weights are relative integers (×100 from PORTFOLIO_WEIGHTS in _brain.ts).
 // The contract normalises them at runtime vs. (ethDirectSum + bridgeSum).
 const PHASE1_TOKENS = [
-  { sym:'BTC',  addr:'0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599', fee:3000, w:1800 },
-  { sym:'ETH',  addr:'0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84', fee:100,  w:1200 }, // stETH, rebasing 1:1
-  { sym:'USDC', addr:'0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', fee:500,  w:300  },
-  { sym:'AAVE', addr:'0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9', fee:3000, w:200  },
-  { sym:'UNI',  addr:'0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984', fee:3000, w:200  },
-  { sym:'LDO',  addr:'0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32', fee:3000, w:150  },
-  { sym:'ARB',  addr:'0xB50721BCf8d664c30412Cfbc6cf7a15145234ad1', fee:3000, w:150  },
-  { sym:'PAXG', addr:'0x45804880De22913dAFE09f4980848ECE6EcbAf78', fee:3000, w:150  },
-  { sym:'INJ',  addr:'0xe28b3B32B6c345A34Ff64674606124Dd5Aceca30', fee:3000, w:100  },
-  { sym:'ENA',  addr:'0x57e114B691Db790C35207b2e685D4A43181e6061', fee:3000, w:100  },
-  { sym:'POL',  addr:'0x455e53CBB86018Ac2B8092FdCd39d8444aFFC3F6', fee:3000, w:100  },
-  { sym:'FET',  addr:'0xaea46A60368A7bD060eec7DF8CBa43b7EF41Ad85', fee:3000, w:100  },
-  { sym:'RNDR', addr:'0x6De037ef9aD2725EB40118Bb1702EBb27e4Aeb24', fee:3000, w:100  },
-  { sym:'LINK', addr:'0x514910771AF9Ca656af840dff83E8264EcF986CA', fee:3000, w:100  },
-  { sym:'ONDO', addr:'0xfAbA6f8e4a5E8Ab82F62fe7C39859FA577269BE3', fee:3000, w:100  },
-  { sym:'GRT',  addr:'0xc944E90C64B2c07662A292be6244BDf05Cda44a7', fee:3000, w:50   },
-  { sym:'SKY',  addr:'0x56072C95FAA701256059aa122697B133aDEd9279', fee:3000, w:50   },
-  { sym:'STRK', addr:'0xCa14007Eff0dB1f8135f4C25B34De49AB0d42766', fee:3000, w:50   },
-  { sym:'QNT',  addr:'0x4a220E6096B25EADb88358cb44068A3248254675', fee:3000, w:25   },
-  { sym:'ZRO',  addr:'0x6985884C4392D348587B19cb9eAAf157F13271cd', fee:3000, w:25   },
-  { sym:'CHZ',  addr:'0x3506424F91fD33084466F402d5D97f05F8e3b4AF', fee:3000, w:25   },
-  { sym:'ACH',  addr:'0x4E15361FD6b4BB609Fa63C81A2be19d873717870', fee:3000, w:10   },
-  { sym:'DBR',  addr:'0xdBe2C93A4e82a177617F4a43Ee1A69c69Ee8e7E6', fee:3000, w:10   },
-  { sym:'XSGD', addr:'0x70e8dE73cE538DA2bEEd35d14187F6959a8ecA96', fee:3000, w:10   }, // Singapore Dollar ERC-20
-  { sym:'BRZ',  addr:'0x420412E765BFa6d85aaaC94b4f7b708C89be2e2B', fee:3000, w:10   }, // Brazilian Real ERC-20
-  { sym:'JPYC', addr:'0x431D5dfF03120AFA4bDf332c61A6e1766eF37BDB', fee:3000, w:10   }, // JPY Coin v1 ERC-20
+  { sym:'BTC',  addr:'0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599', fee:3000, w:3523 },
+  { sym:'ETH',  addr:'0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84', fee:100,  w:2341 }, // stETH, rebasing 1:1
+  { sym:'USDC', addr:'0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', fee:500,  w:585  },
+  { sym:'AAVE', addr:'0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9', fee:3000, w:390  },
+  { sym:'UNI',  addr:'0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984', fee:3000, w:390  },
+  { sym:'LDO',  addr:'0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32', fee:3000, w:292  },
+  { sym:'ARB',  addr:'0xB50721BCf8d664c30412Cfbc6cf7a15145234ad1', fee:3000, w:292  },
+  { sym:'PAXG', addr:'0x45804880De22913dAFE09f4980848ECE6EcbAf78', fee:3000, w:292  },
+  { sym:'INJ',  addr:'0xe28b3B32B6c345A34Ff64674606124Dd5Aceca30', fee:3000, w:195  },
+  { sym:'ENA',  addr:'0x57e114B691Db790C35207b2e685D4A43181e6061', fee:3000, w:195  },
+  { sym:'POL',  addr:'0x455e53CBB86018Ac2B8092FdCd39d8444aFFC3F6', fee:3000, w:195  },
+  { sym:'FET',  addr:'0xaea46A60368A7bD060eec7DF8CBa43b7EF41Ad85', fee:3000, w:195  },
+  { sym:'RNDR', addr:'0x6De037ef9aD2725EB40118Bb1702EBb27e4Aeb24', fee:3000, w:195  },
+  { sym:'LINK', addr:'0x514910771AF9Ca656af840dff83E8264EcF986CA', fee:3000, w:195  },
+  { sym:'ONDO', addr:'0xfAbA6f8e4a5E8Ab82F62fe7C39859FA577269BE3', fee:3000, w:195  },
+  { sym:'GRT',  addr:'0xc944E90C64B2c07662A292be6244BDf05Cda44a7', fee:3000, w:97   },
+  { sym:'SKY',  addr:'0x56072C95FAA701256059aa122697B133aDEd9279', fee:3000, w:97   },
+  { sym:'STRK', addr:'0xCa14007Eff0dB1f8135f4C25B34De49AB0d42766', fee:3000, w:97   },
+  { sym:'QNT',  addr:'0x4a220E6096B25EADb88358cb44068A3248254675', fee:3000, w:48   },
+  { sym:'ZRO',  addr:'0x6985884C4392D348587B19cb9eAAf157F13271cd', fee:3000, w:48   },
+  { sym:'CHZ',  addr:'0x3506424F91fD33084466F402d5D97f05F8e3b4AF', fee:3000, w:48   },
+  { sym:'ACH',  addr:'0x4E15361FD6b4BB609Fa63C81A2be19d873717870', fee:3000, w:19   },
+  { sym:'DBR',  addr:'0xdBe2C93A4e82a177617F4a43Ee1A69c69Ee8e7E6', fee:3000, w:19   },
+  { sym:'XSGD', addr:'0x70e8dE73cE538DA2bEEd35d14187F6959a8ecA96', fee:3000, w:19   }, // Singapore Dollar ERC-20
+  { sym:'BRZ',  addr:'0x420412E765BFa6d85aaaC94b4f7b708C89be2e2B', fee:3000, w:19   }, // Brazilian Real ERC-20
+  { sym:'JPYC', addr:'0x431D5dfF03120AFA4bDf332c61A6e1766eF37BDB', fee:3000, w:19   }, // JPY Coin v1 ERC-20
 ];
 // ETH-mainnet weight sum = 5125 (~52% of total deployed allocation)
 
