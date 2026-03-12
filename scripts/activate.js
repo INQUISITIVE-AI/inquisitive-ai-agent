@@ -31,7 +31,7 @@ const crypto = require('crypto');
 const EXECUTE = process.argv.includes('--execute');
 
 // ── Addresses ──────────────────────────────────────────────────────────────
-const VAULT_ADDR   = process.env.INQUISITIVE_VAULT_ADDRESS || '0x506F72eABc90793ae8aC788E650bC9407ED853Fa';
+const VAULT_ADDR   = process.env.INQUISITIVE_VAULT_ADDRESS || '0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52';
 const LINK_TOKEN   = '0x514910771AF9Ca656af840dff83E8264EcF986CA';
 const CL_REGISTRAR = '0x6B0B234fB2f380309D47A7E9391E29E9a179395C'; // Chainlink Automation v2.1
 
