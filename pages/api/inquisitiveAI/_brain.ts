@@ -234,7 +234,7 @@ export function scoreAsset(
   const finalScore = parseFloat(((riskAdj * 0.70) + (rawScore * 0.30)).toFixed(4));
 
   // Action thresholds — select best of 11 execution functions per asset properties + regime
-  const threshold = regime === 'BEAR' ? 0.60 : 0.65;
+  const threshold = regime === 'BEAR' ? 0.65 : 0.70;
   let action = 'HOLD';
   if (gate.pass) {
     if (finalScore <= 0.35) {

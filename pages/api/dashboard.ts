@@ -2,6 +2,30 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { ASSET_REGISTRY, PORTFOLIO_WEIGHTS, scoreAsset, getRegime } from './inquisitiveAI/_brain';
 import type { AssetInput, FGIndex } from './inquisitiveAI/_brain';
 
+const VAULT_ADDR = process.env.INQUISITIVE_VAULT_ADDRESS || '0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52';
+const VAULT_RPC  = [
+  process.env.MAINNET_RPC_URL || 'https://mainnet.infura.io/v3/d633cdc94aff412b90281fd14cd98868',
+  'https://eth.llamarpc.com',
+  'https://rpc.ankr.com/eth',
+];
+
+async function getVaultEth(): Promise<number> {
+  for (const url of VAULT_RPC) {
+    try {
+      const r = await fetch(url, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ jsonrpc:'2.0', id:1, method:'eth_getBalance', params:[VAULT_ADDR,'latest'] }),
+        signal:  AbortSignal.timeout(5000),
+      });
+      if (!r.ok) continue;
+      const d = await r.json();
+      if (d.result && d.result !== '0x0') return Number(BigInt(d.result)) / 1e18;
+    } catch {}
+  }
+  return 0;
+}
+
 const NO_CC   = new Set(['CC', 'JUPSOL']);
 const ALL_CGS = ASSET_REGISTRY.map(a => a.cgId).join(',');
 
@@ -76,12 +100,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const [mapResult, fgResult] = await Promise.allSettled([
+    const [mapResult, fgResult, vaultEthResult] = await Promise.allSettled([
       buildInputMap(),
       fetch('https://api.alternative.me/fng/', { signal: AbortSignal.timeout(5000) }),
+      getVaultEth(),
     ]);
 
     const inputMap = mapResult.status === 'fulfilled' ? mapResult.value : new Map<string, AssetInput>();
+    const vaultEth = vaultEthResult.status === 'fulfilled' ? vaultEthResult.value : 0;
 
     let fg: FGIndex | null = null;
     if (fgResult.status === 'fulfilled' && fgResult.value.ok) {
@@ -121,6 +147,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const winRate        = assetsWithData.length > 0
       ? assetsWithData.filter(inp => inp.change24h > 0).length / assetsWithData.length : 0;
 
+    // Real vault P&L: use actual vault ETH × live ETH price as the base AUM
+    const ethPrice      = inputMap.get('ETH')?.priceUsd ?? 2000;
+    const vaultValueUSD = vaultEth > 0 ? vaultEth * ethPrice : 0;
+    const realPnL       = vaultValueUSD * return24h;
+
     // Real portfolio composition: live prices × portfolio weights + current AI signal per asset
     const composition = ASSET_REGISTRY
       .filter(meta => (PORTFOLIO_WEIGHTS[meta.symbol] ?? 0) > 0)
@@ -155,7 +186,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         drawdown: 0,
         isLive: true,
       },
-      performance: { totalPnL: pnl24h, winRate, totalTrades: buys + sells, return24h, return7d, equityCurve: [] },
+      performance: { totalPnL: realPnL, winRate, totalTrades: buys + sells, return24h, return7d, equityCurve: [] },
+      vault: { eth: parseFloat(vaultEth.toFixed(6)), usd: parseFloat(vaultValueUSD.toFixed(2)), ethPrice },
       portfolio:   { totalValue: indexValue, assetCount: ASSET_REGISTRY.length, return24h, return7d, composition },
       macro: {
         fearGreed: fg,

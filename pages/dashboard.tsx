@@ -58,7 +58,7 @@ function buildFeed(signals: any[], cycle: number) {
     const timeStr = ts.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
     const action = s.action || 'HOLD';
     const conf = s.finalScore || 0;
-    const executed = conf >= 0.65 && !['HOLD','SKIP','REDUCE'].includes(action);
+    const executed = conf >= 0.70 && !['HOLD','SKIP','REDUCE'].includes(action);
     entries.push({
       id: `${cycle}-${s.symbol}-${i}`,
       time: timeStr,
@@ -150,7 +150,9 @@ export default function Dashboard() {
   const fg     = d?.risk?.fearGreed || d?.macro?.fearGreed;
   const regime = d?.risk?.regime || '—';
   const regCol = regime === 'BULL' ? '#10b981' : regime === 'BEAR' ? '#ef4444' : '#f59e0b';
-  const pnl    = d?.performance?.totalPnL || 0;
+  const pnl       = d?.performance?.totalPnL || 0;
+  const vaultUSD  = d?.vault?.usd  || 0;
+  const vaultEth  = d?.vault?.eth  || 0;
   const cycles = d?.aiSignals?.cycleCount || 0;
 
   const topBuy    = (d?.aiSignals?.topBuys || [])[0];
@@ -227,9 +229,9 @@ export default function Dashboard() {
         {/* ── STATS BAR ── */}
         <div style={{ height: 44, background: 'rgba(8,8,22,0.9)', borderBottom: '1px solid rgba(255,255,255,0.04)', display: 'flex', alignItems: 'stretch', flexShrink: 0, zIndex: 9 }}>
           {[
-            { label: 'Total P&L',      val: (pnl >= 0 ? '+' : '') + fmtUsd(pnl),                                  col: grc(pnl)        },
-            { label: 'Win Rate',       val: ((d?.performance?.winRate || 0) * 100).toFixed(1) + '%',                col: '#a78bfa'       },
-            { label: 'Total Trades',   val: String(d?.performance?.totalTrades || 0),                               col: '#e5e7eb'       },
+            { label: 'Vault P&L 24h', val: vaultUSD > 0 ? (pnl >= 0 ? '+' : '') + fmtUsd(pnl) : '—',            col: vaultUSD > 0 ? grc(pnl) : 'rgba(255,255,255,0.3)' },
+            { label: 'Vault AUM',      val: vaultUSD > 0 ? fmtUsd(vaultUSD) : (vaultEth > 0 ? vaultEth.toFixed(4)+' ETH' : '—'), col: '#60a5fa' },
+            { label: 'Active Signals', val: String(d?.performance?.totalTrades || 0),                               col: '#e5e7eb'       },
             { label: 'Open Positions', val: String(positions.length),                                               col: '#60a5fa'       },
             { label: 'Portfolio Heat', val: ((d?.risk?.portfolioHeat || 0) * 100).toFixed(1) + '%',                col: (d?.risk?.portfolioHeat || 0) > 0.04 ? '#f59e0b' : '#10b981' },
             { label: 'Max Drawdown',   val: ((d?.risk?.drawdown || 0) * 100).toFixed(1) + '%',                     col: (d?.risk?.drawdown || 0) > 0.08 ? '#ef4444' : '#10b981'     },
@@ -250,7 +252,7 @@ export default function Dashboard() {
           {/* LEFT: AI EXECUTION LOG */}
           <div style={{ borderRight: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'rgba(8,8,22,0.7)' }}>
             <div style={{ padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.05)', flexShrink: 0 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 2 }}>AI Execution Log</div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 2 }}>AI Signal Log</div>
               <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)' }}>Cycle #{cycles.toLocaleString()} · Updated every 8 seconds</div>
             </div>
             <div style={{ flex: 1, overflowY: 'auto' }}>
@@ -270,7 +272,7 @@ export default function Dashboard() {
                       </div>
                       <div style={{ textAlign: 'right' }}>
                         <div style={{ fontSize: 11, fontWeight: 700, color: '#a78bfa', fontFamily: 'monospace' }}>{(entry.confidence * 100).toFixed(0)}%</div>
-                        <div style={{ fontSize: 9, color: entry.executed ? '#10b981' : 'rgba(255,255,255,0.2)' }}>{entry.executed ? '✓ signal' : '— below threshold'}</div>
+                        <div style={{ fontSize: 9, color: entry.executed ? '#a78bfa' : 'rgba(255,255,255,0.2)' }}>{entry.executed ? '▶ queued' : '— below threshold'}</div>
                       </div>
                     </div>
                     <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', lineHeight: 1.5, marginBottom: 3 }}>{entry.rationale}</div>
