@@ -103,7 +103,7 @@ console.log('  NATIVE prices throughout — no proxy disconnect');
 console.log('════════════════════════════════════════════════════════════════════\n');
 
 console.log('── How to use (NO private key required) ─────────────────────────');
-console.log('1. Go to: https://etherscan.io/address/0x506F72eABc90793ae8aC788E650bC9407ED853Fa#writeContract');
+console.log('1. Go to: https://etherscan.io/address/0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52#writeContract');
 console.log('2. Click "Connect to Web3" → connect MetaMask (deployer wallet)');
 console.log('3. Expand "setPortfolio" function');
 console.log('4. Paste the arrays below into the 3 fields');
@@ -176,11 +176,11 @@ for (const sym of PHASE2_ASSETS.sort((a,b) => (ALL_WEIGHTS[b]||0)-(ALL_WEIGHTS[a
 
 console.log('\n── After setPortfolio(): activation steps (NO PRIVATE KEY needed) ──');
 console.log('A. Etherscan Write Contract → setAutomationEnabled(true)  [MetaMask only]');
-console.log('B. https://automation.chain.link → New Upkeep → Custom Logic  [Chainlink keeper]:');
-console.log('   → Vault: 0x506F72eABc90793ae8aC788E650bC9407ED853Fa');
-console.log('   → Fund: 1 LINK (~$15) → vault autonomously calls performUpkeep() forever');
+console.log('B. cron-job.org → New Job → POST https://<your-vercel>.vercel.app/api/inquisitiveAI/execute/auto (every 1 min, free)');
+console.log('   → Vault: 0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52');
+console.log('   → GitHub Actions vault-keeper.yml also runs every 5 min as backup (free)');
 console.log('C. Vercel Cron (already configured): /api/inquisitiveAI/execute/auto runs every minute');
-console.log('   → Calls Gelato relay (no API key) which calls performUpkeep() keylessly');
+console.log('   → Optional: add Chainlink Automation at scale (automation.chain.link)');
 console.log('D. Phase 2 native execution (vault.bridgeToNativeChain()):');
 console.log('   → AI executor calls vault.bridgeToNativeChain(ethAmount, takeToken, takeAmt,');
 console.log('      chainId, receiverWallet, "SOL") — deBridge fills SOL on Solana natively');

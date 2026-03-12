@@ -163,11 +163,11 @@ BTC and SOL payments use a dust nonce in the amount for unique identification. P
 ### Vault Contract Capabilities (`contracts/InquisitiveVaultUpdated.sol`)
 
 - `receive() payable` — accepts ETH
-- `performUpkeep(bytes calldata)` — Chainlink Automation entry point; executes all 27 Uniswap swaps + 13 deBridge bridges in one tx
+- `performUpkeep(bytes calldata)` — keeper entry point; executes all 27 Uniswap swaps + 13 deBridge bridges in one tx
 - `checkUpkeep(bytes calldata)` → `(bool upkeepNeeded, bytes memory performData)`
 - `setPortfolio(address[], uint256[], uint24[])` — configures 27 ETH-mainnet tokens (owner only)
 - `setPhase2Registry(Phase2Asset[])` — configures 13 cross-chain bridge targets (owner only)
-- `setAutomationEnabled(bool)` — enable/disable Chainlink Automation (owner only)
+- `setAutomationEnabled(bool)` — enable/disable keeper automation (owner only)
 - `setAIExecutor(address)` — set optional executor address (owner only)
 
 ---
@@ -281,7 +281,7 @@ PORTFOLIO_WALLET_SOLANA=7a2WzumijyGTqALmqoDZd3mvyP2aS7R4GjBdBxMUjRPk
 PORTFOLIO_WALLET_BSC=0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746
 PORTFOLIO_WALLET_AVALANCHE=0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746
 PORTFOLIO_WALLET_OPTIMISM=0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746
-PORTFOLIO_WALLET_TRON=<your-TRON-T-address>   # base58, starts with T, 34 chars
+PORTFOLIO_WALLET_TRON=TDSkgbhuMAHChDw6kGCLJmM9v7PPMJgHJA
 ```
 
 **Never add PRIVATE_KEY to .env.** For one-time vault deployment, use Remix IDE (MetaMask signs) or add/remove key only during the single deployment command.
@@ -317,8 +317,8 @@ All endpoints are Next.js API routes (`pages/api/`). No authentication required 
 | GET | `/api/inquisitiveAI/portfolio/positions` | Current positions with P&L |
 | GET | `/api/inquisitiveAI/portfolio/history` | Trade history |
 | GET | `/api/inquisitiveAI/execute/monitor` | Full 65-asset execution plan, allocation map, calldata |
-| GET | `/api/inquisitiveAI/execute/auto` | Trigger performUpkeep() (Chainlink or cron fallback) |
-| GET | `/api/inquisitiveAI/execute/relay` | Gelato Relay status |
+| GET | `/api/inquisitiveAI/execute/auto` | Trigger performUpkeep() — hybrid keeper (cron-job.org + GitHub Actions) |
+| GET | `/api/inquisitiveAI/execute/relay` | Optional Gelato relay status (GELATO_API_KEY required) |
 
 ### Payment Endpoints
 
@@ -333,7 +333,7 @@ All endpoints are Next.js API routes (`pages/api/`). No authentication required 
 
 - **Zero private keys** in any file, environment variable, or codebase
 - **Vault owner** = team wallet `0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746` — configures portfolio on-chain via Etherscan
-- **Chainlink Automation** executes `performUpkeep()` — no executor key required
+- **Hybrid keeper** (cron-job.org + GitHub Actions) executes `performUpkeep()` — zero cost, no subscription required. Chainlink Automation can be added at scale.
 - **deBridge DLN** is a fully on-chain bridge — no custodian, no API key, no off-chain intermediary
 - **Payment verification** uses public blockchain APIs (Blockstream, Solana public RPC) — no third-party processor
 - **WalletConnect only** — no MetaMask injection, no Coinbase popup, no custodial risk

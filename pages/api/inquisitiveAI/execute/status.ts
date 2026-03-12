@@ -9,7 +9,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 //   5. Last execution time + cycle count
 // Returns a complete status object the analytics UI can render in real-time.
 
-const VAULT_ADDR  = process.env.INQUISITIVE_VAULT_ADDRESS || '0x506F72eABc90793ae8aC788E650bC9407ED853Fa';
+const VAULT_ADDR  = process.env.INQUISITIVE_VAULT_ADDRESS || '0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52';
 const RPC_URLS    = [
   process.env.MAINNET_RPC_URL || 'https://mainnet.infura.io/v3/d633cdc94aff412b90281fd14cd98868',
   'https://eth.llamarpc.com',

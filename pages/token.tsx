@@ -19,11 +19,20 @@ const pct = (n: number) => `${n>=0?'+':''}${(n*100).toFixed(2)}%`;
 const grc = (n: number) => n >= 0 ? '#10b981' : '#ef4444';
 const sigStyle = (s: string) => {
   const m: Record<string,{bg:string;col:string;br:string}> = {
-    BUY:       {bg:'rgba(16,185,129,0.12)',col:'#34d399',br:'rgba(16,185,129,0.3)'},
-    SELL:      {bg:'rgba(239,68,68,0.12)', col:'#f87171',br:'rgba(239,68,68,0.3)'},
-    REDUCE:    {bg:'rgba(252,165,165,0.08)',col:'#fca5a5',br:'rgba(252,165,165,0.2)'},
-    HOLD:      {bg:'rgba(251,191,36,0.08)',col:'#fbbf24',br:'rgba(251,191,36,0.2)'},
-    SKIP:      {bg:'rgba(107,114,128,0.08)',col:'#9ca3af',br:'rgba(107,114,128,0.2)'},
+    BUY:      {bg:'rgba(16,185,129,0.12)', col:'#34d399',br:'rgba(16,185,129,0.3)'},
+    SELL:     {bg:'rgba(239,68,68,0.12)',  col:'#f87171',br:'rgba(239,68,68,0.3)'},
+    REDUCE:   {bg:'rgba(252,165,165,0.08)',col:'#fca5a5',br:'rgba(252,165,165,0.2)'},
+    STAKE:    {bg:'rgba(14,165,233,0.12)', col:'#38bdf8',br:'rgba(14,165,233,0.3)'},
+    LEND:     {bg:'rgba(245,158,11,0.12)', col:'#fbbf24',br:'rgba(245,158,11,0.3)'},
+    YIELD:    {bg:'rgba(132,204,22,0.12)', col:'#a3e635',br:'rgba(132,204,22,0.3)'},
+    BORROW:   {bg:'rgba(6,182,212,0.12)',  col:'#22d3ee',br:'rgba(6,182,212,0.3)'},
+    SWAP:     {bg:'rgba(59,130,246,0.12)', col:'#60a5fa',br:'rgba(59,130,246,0.3)'},
+    EARN:     {bg:'rgba(167,139,250,0.12)',col:'#a78bfa',br:'rgba(167,139,250,0.3)'},
+    LOOP:     {bg:'rgba(251,146,60,0.12)', col:'#fb923c',br:'rgba(251,146,60,0.3)'},
+    MULTIPLY: {bg:'rgba(236,72,153,0.12)', col:'#f472b6',br:'rgba(236,72,153,0.3)'},
+    REWARDS:  {bg:'rgba(234,179,8,0.12)',  col:'#facc15',br:'rgba(234,179,8,0.3)'},
+    HOLD:     {bg:'rgba(107,114,128,0.08)',col:'#9ca3af',br:'rgba(107,114,128,0.2)'},
+    SKIP:     {bg:'rgba(75,85,99,0.08)',   col:'#6b7280',br:'rgba(75,85,99,0.15)'},
   };
   return m[s] || m.HOLD;
 };

@@ -4,7 +4,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 // Combines monitor output with Gelato task tracking.
 // Read-only. No private key needed.
 
-const VAULT_ADDR   = process.env.INQUISITIVE_VAULT_ADDRESS || '0x506F72eABc90793ae8aC788E650bC9407ED853Fa';
+const VAULT_ADDR   = process.env.INQUISITIVE_VAULT_ADDRESS || '0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52';
 const DEPLOYER     = process.env.DEPLOYER_ADDRESS          || '0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746';
 const ETHERSCAN_KEY= process.env.ETHERSCAN_API_KEY         || 'M7JK1GRX6FI3XCNFP7X82RHF39SX66NVGX';
 const RPC          = [
@@ -145,32 +145,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         totalDeployedETH:  parseFloat(totalDeployedEth.toFixed(6)),
         deploymentPct:     parseFloat(deploymentPct.toFixed(1)),
         tokenPositions:    tokenAcquisitions.length,
-        gelatoConfigured:  !!process.env.GELATO_API_KEY,
-        chainlinkReady:    true,
+        keeperActive:    true,
+        keeperModel:     'cron-job.org (1 min) + GitHub Actions vault-keeper.yml (5 min)',
+        chainlinkOptional: 'Add Chainlink Automation at scale: https://automation.chain.link',
       },
       deposits,
       executions,
       tokenPositions: tokenAcquisitions,
-      gelatoSetup: {
-        configured:  !!process.env.GELATO_API_KEY,
-        instructions: [
-          '1. Go to https://app.gelato.network',
-          '2. Create a free account and get your API key',
-          '3. Add GELATO_API_KEY to Vercel environment variables',
-          '4. Fund your Gelato balance with ETH for gas (or use sponsored calls)',
-          '5. Register vault address for automation: ' + VAULT_ADDR,
-        ],
-      },
-      chainlinkSetup: {
-        configured: true,
-        instructions: [
-          '1. Go to https://automation.chain.link',
-          '2. Register upkeep with vault address: ' + VAULT_ADDR,
-          '3. Fund with 1+ LINK for gas',
-          '4. Set checkUpkeep check interval: 60 seconds',
-          '5. Chainlink will auto-execute when funds arrive in vault',
-        ],
-        vaultImplements: 'IAutomationCompatible (checkUpkeep + performUpkeep)',
+      keeperSetup: {
+        primary:   'cron-job.org — pings /api/inquisitiveAI/execute/auto every 1 minute (free)',
+        backup:    'GitHub Actions vault-keeper.yml — runs every 5 minutes (free)',
+        optional:  'Chainlink Automation — register at automation.chain.link when scaling',
+        vaultAddr: VAULT_ADDR,
       },
       timestamp: new Date().toISOString(),
     });

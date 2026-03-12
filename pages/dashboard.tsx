@@ -27,6 +27,9 @@ const ACTION_STYLE: Record<string, { bg: string; col: string; border: string }> 
   BORROW:    { bg: 'rgba(6,182,212,0.12)',   col: '#22d3ee',  border: 'rgba(6,182,212,0.3)'   },
   SWAP:      { bg: 'rgba(59,130,246,0.12)',  col: '#60a5fa',  border: 'rgba(59,130,246,0.3)'  },
   EARN:      { bg: 'rgba(167,139,250,0.12)', col: '#a78bfa',  border: 'rgba(167,139,250,0.3)' },
+  LOOP:      { bg: 'rgba(251,146,60,0.12)',  col: '#fb923c',  border: 'rgba(251,146,60,0.3)'  },
+  MULTIPLY:  { bg: 'rgba(236,72,153,0.12)',  col: '#f472b6',  border: 'rgba(236,72,153,0.3)'  },
+  REWARDS:   { bg: 'rgba(234,179,8,0.12)',   col: '#facc15',  border: 'rgba(234,179,8,0.3)'   },
   HOLD:      { bg: 'rgba(107,114,128,0.08)', col: '#9ca3af',  border: 'rgba(107,114,128,0.2)' },
   SKIP:      { bg: 'rgba(75,85,99,0.08)',    col: '#6b7280',  border: 'rgba(75,85,99,0.15)'   },
 };
@@ -44,15 +47,18 @@ function buildFeed(signals: any[], cycle: number) {
     BORROW:    'Collateral-backed borrow. Health factor maintained above 1.5 floor.',
     SWAP:      'Route-optimized swap executed via best-available aggregator.',
     EARN:      'Best-APY strategy selected. Auto-deployment to highest risk-adjusted yield.',
-    HOLD:      'No action. Confidence below 70% threshold. Monitoring continued.',
-    SKIP:      'Signal filtered. Insufficient confidence for execution.',
+    LOOP:      'Recursive yield loop initiated. Borrow against collateral, re-deploy to same pool.',
+    MULTIPLY:  'Leveraged long position opened. Bull regime + major asset + high conviction.',
+    REWARDS:   'Staking rewards claimed and auto-compounded into position.',
+    HOLD:      'No action. Confidence below threshold. Monitoring continued.',
+    SKIP:      'Signal filtered by Risk Gate. Insufficient confidence for execution.',
   };
   signals.forEach((s, i) => {
     const ts = new Date(cycleMs - i * 120);
     const timeStr = ts.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
     const action = s.action || 'HOLD';
     const conf = s.finalScore || 0;
-    const executed = conf >= 0.70 && action !== 'HOLD' && action !== 'SKIP';
+    const executed = conf >= 0.65 && !['HOLD','SKIP','REDUCE'].includes(action);
     entries.push({
       id: `${cycle}-${s.symbol}-${i}`,
       time: timeStr,

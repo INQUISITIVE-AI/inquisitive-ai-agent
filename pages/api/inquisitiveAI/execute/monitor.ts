@@ -11,10 +11,10 @@ import type { AssetInput, FGIndex } from '../_brain';
 //   stETH-YIELD: 25 assets — ETH held as Lido stETH earning yield, native price tracked
 // All 65 allocations are LIVE — no simulation, no placeholders.
 // deBridge DLN: 0xeF4fB24aD0916217251F553c0596F8Edc630EB66
-// Chainlink Automation triggers performUpkeep() — zero private keys required.
+// Hybrid keeper triggers performUpkeep(): cron-job.org (1 min) + GitHub Actions (5 min).
 
 const TEAM_WALLET   = process.env.DEPLOYER_ADDRESS         || '0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746';
-const VAULT_ADDR    = process.env.INQUISITIVE_VAULT_ADDRESS || '0x506F72eABc90793ae8aC788E650bC9407ED853Fa';
+const VAULT_ADDR    = process.env.INQUISITIVE_VAULT_ADDRESS || '0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52';
 const MIN_DEPLOY    = 0.005;
 const MAX_TRADE_PCT = 0.02;
 
@@ -271,7 +271,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const bridgeAssets     = allocationPlan.filter(t => t.executionMode === 'BRIDGE');
     const readyTrades     = allocationPlan.filter(t => t.canExecute);
     const totalDeployETH  = readyTrades.reduce((s, t) => s + t.ethToSpend, 0);
-    const buySignals      = signals.filter(s => s.action === 'BUY').length;
+    const ACTIVE_SIGNALS  = ['BUY','STAKE','LEND','YIELD','BORROW','LOOP','MULTIPLY','EARN','REWARDS','SWAP'];
+    const buySignals      = signals.filter(s => ACTIVE_SIGNALS.includes(s.action)).length;
     const sellSignals     = signals.filter(s => s.action === 'SELL' || s.action === 'REDUCE').length;
 
     // ETH-native on-chain weights for vault.setPortfolio() — re-normalized to 10000 bps

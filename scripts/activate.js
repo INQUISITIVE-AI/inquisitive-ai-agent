@@ -111,7 +111,7 @@ function buildPhase2Assets(wallets) {
   const BSC_WALLET = wallets.bsc    ? evmBytes(wallets.bsc)        : Buffer.alloc(20);
   const AVA_WALLET = wallets.avax   ? evmBytes(wallets.avax)       : Buffer.alloc(20);
   const OPT_WALLET = wallets.op     ? evmBytes(wallets.op)         : Buffer.alloc(20);
-  const TRX_WALLET = wallets.tron   ? evmBytes(wallets.tron)       : Buffer.alloc(20);
+  const TRX_WALLET = wallets.tron ? (wallets.tron.startsWith("T") ? (() => { const b = base58Decode(wallets.tron); return b.slice(1,21); })() : evmBytes(wallets.tron)) : Buffer.alloc(20);
 
   return [
     // ── Solana (chainId 7565164) ─────────────────────────────────────────

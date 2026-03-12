@@ -13,10 +13,11 @@ import { ethers } from 'ethers';
 //     node scripts/activate.js          ← generates calldata
 //     → Etherscan Write Contract        ← MetaMask signs (no code key needed)
 //
-// Keyless execution:
-//   Primary:   Chainlink Automation  — calls performUpkeep() every 60s (1 LINK/month)
-//   Secondary: Community trigger     — anyone calls performUpkeep() from analytics page
-//   Fallback:  This Vercel Cron      — if EXECUTOR_PRIVATE_KEY is set, calls performUpkeep()
+// Keyless execution (hybrid keeper — zero cost):
+//   Primary:   cron-job.org        — pings this endpoint every 60s (free)
+//   Backup:    GitHub Actions      — vault-keeper.yml every 5 min (free)
+//   Optional:  Chainlink Automation — add when project scales (register at automation.chain.link)
+//   Fallback:  EXECUTOR_PRIVATE_KEY — if set, calls performUpkeep() directly
 //
 // EXECUTOR_PRIVATE_KEY (optional):
 //   A minimal hot wallet for the Vercel Cron fallback.
@@ -24,7 +25,7 @@ import { ethers } from 'ethers';
 //   Even if leaked: attacker can trigger trades, cannot steal vault assets.
 //   Standard institutional keeper pattern (Yearn, Compound, Aave all use this).
 
-const VAULT_ADDR = process.env.INQUISITIVE_VAULT_ADDRESS || '0x506F72eABc90793ae8aC788E650bC9407ED853Fa';
+const VAULT_ADDR = process.env.INQUISITIVE_VAULT_ADDRESS || '0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52';
 const RPC_URLS   = [
   process.env.MAINNET_RPC_URL || 'https://mainnet.infura.io/v3/d633cdc94aff412b90281fd14cd98868',
   'https://eth.llamarpc.com',
@@ -103,7 +104,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       autonomous:  true,
       reason:      'Vault ETH below minimum — accepting deposits',
       vaultETH,    p1Assets, cycleCount,
-      chainlink:   'https://automation.chain.link — register upkeep for zero-key automation',
+      keeper:      'cron-job.org primary + GitHub Actions backup — both active',
       timestamp:   new Date().toISOString(),
     });
   }
@@ -140,7 +141,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           taskId,
           trackUrl:    `https://relay.gelato.network/tasks/status/${taskId}`,
           vault:       { vaultETH, p1Assets, cycleCount, autoEnabled },
-          message:     `performUpkeep() submitted to Gelato relay. Chainlink Automation also active as backup.`,
+          message:     `performUpkeep() submitted via Gelato relay. Hybrid keeper (cron-job.org + GitHub Actions) also active.`,
           timestamp:   new Date().toISOString(),
         });
       }
@@ -156,9 +157,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       status:       'UPKEEP_READY',
       autonomous:   autoEnabled,
       upkeepNeeded: true,
-      message:      'Upkeep ready. Gelato relay attempted but unavailable — Chainlink Automation will trigger.',
+      message:      'Upkeep ready. Gelato relay attempted but unavailable — cron-job.org / GitHub Actions will trigger.',
       execution: {
-        primary:   'Chainlink Automation — register at https://automation.chain.link',
+        primary:   'cron-job.org (every 1 min) + GitHub Actions (every 5 min)',
         gelato:    'Gelato relay key set but relay unreachable this cycle',
         community: `https://etherscan.io/address/${VAULT_ADDR}#writeContract`,
       },
@@ -173,11 +174,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       autonomous:   autoEnabled,
       upkeepNeeded,
       message:      upkeepNeeded
-        ? 'Upkeep ready. Add GELATO_API_KEY (free at app.gelato.network) for keyless execution, or register Chainlink Automation.'
-        : 'Vault is idle.',
+        ? 'Upkeep ready. Hybrid keeper (cron-job.org + GitHub Actions) will trigger next cycle.'
+        : 'Vault is idle. Awaiting ETH deposit above 0.005 threshold.',
       execution: {
-        gelato:    'Get free API key at https://app.gelato.network → set GELATO_API_KEY in Vercel env vars',
-        chainlink: 'Register at https://automation.chain.link — fund 1 LINK, connect MetaMask only',
+        primary:   'cron-job.org (1 min) + GitHub Actions vault-keeper.yml (5 min)',
+        optional:  'Chainlink Automation — add at scale: https://automation.chain.link',
         community: `Anyone can call performUpkeep() on Etherscan: https://etherscan.io/address/${VAULT_ADDR}#writeContract`,
       },
       vault:     { vaultETH, p1Assets, cycleCount, autoEnabled },

@@ -12,7 +12,7 @@ import {
 import { INQAI_TOKEN } from '../src/config/wagmi';
 
 
-const VAULT_ADDR = '0x506F72eABc90793ae8aC788E650bC9407ED853Fa' as `0x${string}`;
+const VAULT_ADDR = '0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52' as `0x${string}`;
 const VAULT_ABI = [
   { name:'checkUpkeep',        type:'function', stateMutability:'view',      inputs:[{name:'',type:'bytes'}],        outputs:[{name:'upkeepNeeded',type:'bool'},{name:'performData',type:'bytes'}] },
   { name:'performUpkeep',      type:'function', stateMutability:'nonpayable', inputs:[{name:'performData',type:'bytes'}], outputs:[] },
@@ -46,8 +46,11 @@ const NAV_LINKS = [
 ];
 
 const ACTION_COL: Record<string, string> = {
-  BUY: '#10b981', SELL: '#ef4444',
-  REDUCE: '#f87171', HOLD: '#a78bfa', SKIP: '#6b7280',
+  BUY: '#10b981', SELL: '#ef4444', REDUCE: '#f87171',
+  STAKE: '#38bdf8', LEND: '#fbbf24', YIELD: '#a3e635',
+  BORROW: '#22d3ee', SWAP: '#60a5fa', EARN: '#a78bfa',
+  LOOP: '#fb923c', MULTIPLY: '#f472b6', REWARDS: '#facc15',
+  HOLD: '#6b7280', SKIP: '#4b5563',
 };
 
 export default function AnalyticsPage() {
@@ -210,11 +213,12 @@ export default function AnalyticsPage() {
   }, [purchases, navPerToken]);
 
   const chartData   = equity.length ? equity : userEquity.length ? userEquity : globalEquity;
-  const topSignals  = positions.filter(p => p.action === 'BUY').slice(0, 8);
+  const ACTIVE_SIGS = ['BUY','STAKE','LEND','YIELD','BORROW','LOOP','MULTIPLY','EARN','REWARDS','SWAP'];
+  const topSignals  = positions.filter(p => ACTIVE_SIGS.includes(p.action)).slice(0, 8);
   const dispValue   = hasHoldings ? currentValue : navPerToken;
   const filteredPos = useMemo(() => {
     if (posFilter === 'all')  return positions;
-    if (posFilter === 'buy')  return positions.filter(p => p.action === 'BUY');
+    if (posFilter === 'buy')  return positions.filter(p => ACTIVE_SIGS.includes(p.action));
     if (posFilter === 'sell') return positions.filter(p => p.action === 'SELL' || p.action === 'REDUCE');
     return positions.filter(p => p.category === posFilter);
   }, [positions, posFilter]);

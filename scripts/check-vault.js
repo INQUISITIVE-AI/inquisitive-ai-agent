@@ -1,7 +1,7 @@
 // scripts/check-vault.js — verify what contract is deployed at the vault address
 const https = require('https');
 
-const VAULT = '0x506F72eABc90793ae8aC788E650bC9407ED853Fa';
+const VAULT = '0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52';
 const RPC   = 'https://eth.llamarpc.com';
 
 function call(data) {

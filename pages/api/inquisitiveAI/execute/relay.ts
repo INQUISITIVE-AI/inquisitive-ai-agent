@@ -16,7 +16,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 const GELATO_RELAY_V2   = 'https://relay.gelato.network/relays/v2/sponsored-call';
 const GELATO_TASK_URL   = 'https://relay.gelato.network/tasks/status/';
 const CHAIN_ID          = 1; // Ethereum mainnet
-const VAULT_ADDR        = process.env.INQUISITIVE_VAULT_ADDRESS || '0x506F72eABc90793ae8aC788E650bC9407ED853Fa';
+const VAULT_ADDR        = process.env.INQUISITIVE_VAULT_ADDRESS || '0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52';
 const STRATEGY_ADDR     = process.env.AI_STRATEGY_MANAGER_ADDRESS || '0x8431173FA9594B43E226D907E26EF68cD6B6542D';
 
 export const config = { maxDuration: 30 };

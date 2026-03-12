@@ -233,15 +233,27 @@ export function scoreAsset(
   const riskAdj    = gate.pass ? rawScore : rawScore * 0.3;
   const finalScore = parseFloat(((riskAdj * 0.70) + (rawScore * 0.30)).toFixed(4));
 
-  // Action thresholds from inquisitiveBrain.js CT constants
-  const regimeThreshold = regime === 'BEAR' ? 0.75 : 0.70;
+  // Action thresholds — select best of 11 execution functions per asset properties + regime
+  const threshold = regime === 'BEAR' ? 0.60 : 0.65;
   let action = 'HOLD';
   if (gate.pass) {
-    if      (finalScore >= 0.65 && regime !== 'BEAR') action = 'BUY';
-    else if (finalScore >= 0.60 && regime === 'BEAR')  action = 'BUY';
-    else if (finalScore <= 0.35)                      action = 'SELL';
-    else if (finalScore <= 0.42)                      action = 'REDUCE';
-    if (finalScore >= regimeThreshold && regime === 'BEAR') action = 'BUY';
+    if (finalScore <= 0.35) {
+      action = 'SELL';
+    } else if (finalScore <= 0.42) {
+      action = 'REDUCE';
+    } else if (finalScore >= threshold) {
+      if      (a.category === 'stablecoin')                                         action = 'LEND';
+      else if (a.category === 'liquid-stake')                                       action = finalScore >= 0.78 ? 'EARN' : 'REWARDS';
+      else if (finalScore >= 0.87 && a.yieldable && a.lendable)                    action = 'LOOP';
+      else if (finalScore >= 0.85 && a.category === 'major' && regime === 'BULL')  action = 'MULTIPLY';
+      else if (finalScore >= 0.82 && a.lendable && regime !== 'BULL')              action = 'BORROW';
+      else if (finalScore >= 0.80 && a.yieldable)                                  action = 'YIELD';
+      else if (finalScore >= 0.76 && a.stakeable && a.lendable)                    action = 'EARN';
+      else if (finalScore >= 0.72 && a.stakeable)                                  action = 'STAKE';
+      else if (finalScore >= 0.68 && a.lendable && regime !== 'BULL')              action = 'LEND';
+      else if (finalScore >= 0.65 && Math.abs(a.change7d ?? 0) > 0.08)            action = 'SWAP';
+      else                                                                           action = 'BUY';
+    }
   } else {
     action = 'SKIP';
   }
@@ -259,7 +271,7 @@ export function scoreAsset(
     action,
     finalScore,
     confidence: finalScore,
-    executed:   action === 'BUY',
+    executed:   !['HOLD','SKIP','REDUCE'].includes(action),
     components: {
       patternEngine:   parseFloat(pScore.toFixed(4)),
       reasoningEngine: parseFloat(rResult.score.toFixed(4)),

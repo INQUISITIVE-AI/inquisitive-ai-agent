@@ -57,7 +57,7 @@ export const INQAI_TOKEN = {
   // vaultAddress is set via NEXT_PUBLIC_VAULT_ADDRESS after deployment.
   // ETH/USDC purchases send directly to the vault so performUpkeep() executes real trades.
   // Update this env var in Vercel after deploying a new vault contract.
-  vaultAddress: (process.env.NEXT_PUBLIC_VAULT_ADDRESS || '0x506F72eABc90793ae8aC788E650bC9407ED853Fa') as `0x${string}`,
+  vaultAddress: (process.env.NEXT_PUBLIC_VAULT_ADDRESS || '0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52') as `0x${string}`,
   btcAddress:   'bc1q54tccqs2z3gp74pdatfnfucrzxuv2755fq6cfg',
   solAddress:   '7a2WzumijyGTqALmqoDZd3mvyP2aS7R4GjBdBxMUjRPk',
   paymentTokens: [
