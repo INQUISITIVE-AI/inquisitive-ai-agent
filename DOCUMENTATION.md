@@ -10,7 +10,7 @@
 |------|-------|
 | **INQAI Token Contract** | `0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5` |
 | **Team / Treasury Wallet** | `0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746` |
-| **Vault Contract** | `0x506F72eABc90793ae8aC788E650bC9407ED853Fa` *(redeploy with full vault — see below)* |
+| **Vault Contract** | `0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52` |
 | **BTC Payment Address** | `bc1q54tccqs2z3gp74pdatfnfucrzxuv2755fq6cfg` |
 | **SOL Payment Address** | `7a2WzumijyGTqALmqoDZd3mvyP2aS7R4GjBdBxMUjRPk` |
 | **ETH / USDC payments** | Sent directly to team wallet (EOA) |
@@ -120,8 +120,10 @@ The Oracle      → CoinGecko primary, CryptoCompare fallback — 65 native pric
 
 ### Execution Flow
 
-1. Chainlink Automation calls `checkUpkeep()` every cycle
-2. If `vaultBalance > minDeploy`, `performUpkeep()` is triggered
+1. **Hybrid keeper** calls `performUpkeep()` every 1–5 minutes:
+   - cron-job.org pings `/api/inquisitiveAI/execute/auto` every 1 minute
+   - GitHub Actions vault-keeper runs every 5 minutes as redundant backup
+2. If `vaultBalance > minDeploy`, `performUpkeep()` executes
 3. **ETH → 27 ERC-20s** via Uniswap V3 (one batch)
 4. **ETH → 13 native assets** via deBridge DLN `createOrder()` (one batch)
 5. **Remaining ETH → stETH** via Lido for the 25 stETH yield positions
@@ -153,7 +155,7 @@ BTC and SOL payments use a dust nonce in the amount for unique identification. P
 | Contract | Address | Purpose |
 |----------|---------|---------|
 | **INQAI ERC-20** | `0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5` | Token — 100M fixed supply |
-| **InquisitiveVault** | `0x506F72eABc90793ae8aC788E650bC9407ED853Fa` | Asset vault — needs full vault redeployment |
+| **InquisitiveVault** | `0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52` | Asset vault — live, fully configured |
 | **InquisitiveStrategy** | `0xa2589adA4D647a9977e8e46Db5849883F2e66B3e` | Strategy manager |
 | **AIStrategyManager** | `0x8431173FA9594B43E226D907E26EF68cD6B6542D` | AI execution router |
 | **deBridge DLN** | `0xeF4fB24aD0916217251F553c0596F8Edc630EB66` | Cross-chain bridge (external) |
@@ -172,11 +174,20 @@ BTC and SOL payments use a dust nonce in the amount for unique identification. P
 
 ## Vault Deployment
 
-The current vault at `0x506F...` is the original stub (no `performUpkeep`, no `receive()`). The full vault is in `contracts/InquisitiveVaultUpdated.sol` and is ready to deploy.
+The full vault `InquisitiveVaultUpdated` is **live on mainnet** at `0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52`. Deployment is complete — no redeployment needed.
 
-### Deploy via Remix IDE (No Private Key in Code)
+### Deployed & Configured
 
-This is the recommended method — sign the deployment tx with MetaMask directly.
+```
+✅ Vault deployed:           0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52
+✅ setPortfolio():           26 ETH-mainnet ERC-20s configured on-chain
+✅ setPhase2Registry():      13 cross-chain deBridge DLN assets configured
+✅ setAutomationEnabled():   true — vault will execute on every keeper call
+✅ ETH funded:               vault has deployable ETH balance
+✅ Hybrid keeper running:    cron-job.org (1 min) + GitHub Actions (5 min)
+```
+
+### Re-deploy (if ever needed)
 
 ```
 1. Go to https://remix.ethereum.org
@@ -186,23 +197,8 @@ This is the recommended method — sign the deployment tx with MetaMask directly
 5. Deploy InquisitiveVaultUpdated with constructor arg:
       _token = 0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5
 6. Copy the new vault address
-7. Update INQUISITIVE_VAULT_ADDRESS in .env and in src/config/wagmi.ts
-```
-
-### Deploy via Hardhat (requires temporary PRIVATE_KEY in .env)
-
-```bash
-# Add to .env temporarily (remove immediately after):
-PRIVATE_KEY=0x<deployer-key>
-
-npx hardhat run scripts/deploy-upgraded.js --network mainnet
-
-# Remove PRIVATE_KEY from .env immediately after deployment
-```
-
-After deployment, verify on Etherscan:
-```bash
-npx hardhat verify --network mainnet <NEW_VAULT_ADDRESS> "0xB312B6E0842b6D51b15fdDB19e62730815C1C7Ce5"
+7. Update INQUISITIVE_VAULT_ADDRESS in .env and Vercel env vars
+8. Re-run: node scripts/activate.js (generates setPortfolio + setPhase2Registry calldata)
 ```
 
 ---
@@ -228,20 +224,38 @@ Connect MetaMask (vault owner), call each function with the printed arrays.
 
 ---
 
-## Chainlink Automation
+## Keeper Execution (Hybrid Approach)
 
-Chainlink Automation calls `performUpkeep()` autonomously — zero private keys, zero cron jobs.
+The vault uses a **free hybrid keeper model** — no Chainlink subscription required.
 
+### Primary: cron-job.org (Every 1 Minute — Free)
+
+```
+1. Go to https://cron-job.org → sign up free
+2. Create new cron job:
+   URL:      https://your-domain.com/api/inquisitiveAI/execute/auto
+   Schedule: Every 1 minute
+   Method:   GET
+3. Add header:  Authorization: Bearer <CRON_SECRET>
+4. Save — vault keeper now runs every 60 seconds
+```
+
+### Backup: GitHub Actions (Every 5 Minutes — Free)
+
+Already configured in `.github/workflows/vault-keeper.yml`. Runs automatically every 5 minutes as a redundant fallback. No setup required.
+
+### Optional: Chainlink Automation
+
+For fully decentralized execution (no external dependencies):
 ```
 1. Go to https://automation.chain.link
-2. Connect any wallet
-3. Click "Register New Upkeep" → Custom Logic
-4. Contract address: <new vault address>
-5. Gas limit: 5,000,000
-6. Fund with 1 LINK (~$15/month keeps it running)
+2. Register New Upkeep → Custom Logic
+3. Contract address: 0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52
+4. Gas limit: 5,000,000
+5. Fund with LINK (check current pricing at automation.chain.link)
 ```
 
-Once registered, `performUpkeep()` triggers automatically whenever `checkUpkeep()` returns true (vault has deployable ETH). Both the Uniswap swaps and deBridge bridges execute in one transaction.
+The hybrid approach (cron-job.org + GitHub Actions) provides equivalent reliability at zero cost.
 
 ---
 
@@ -255,7 +269,7 @@ ETHERSCAN_API_KEY=<for contract verification>
 
 # Contract addresses
 INQAI_TOKEN_ADDRESS=0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5
-INQUISITIVE_VAULT_ADDRESS=<new vault address after redeployment>
+INQUISITIVE_VAULT_ADDRESS=0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52
 DEPLOYER_ADDRESS=0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746
 
 # Payment addresses (used by create-charge.ts and check-charge.ts)
@@ -267,7 +281,7 @@ PORTFOLIO_WALLET_SOLANA=7a2WzumijyGTqALmqoDZd3mvyP2aS7R4GjBdBxMUjRPk
 PORTFOLIO_WALLET_BSC=0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746
 PORTFOLIO_WALLET_AVALANCHE=0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746
 PORTFOLIO_WALLET_OPTIMISM=0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746
-PORTFOLIO_WALLET_TRON=<T-address for TRON wallet>
+PORTFOLIO_WALLET_TRON=<your-TRON-T-address>   # base58, starts with T, 34 chars
 ```
 
 **Never add PRIVATE_KEY to .env.** For one-time vault deployment, use Remix IDE (MetaMask signs) or add/remove key only during the single deployment command.
@@ -337,7 +351,8 @@ All endpoints are Next.js API routes (`pages/api/`). No authentication required 
 - ✅ **INQAI ERC-20** — `0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5` — mainnet live
 - ✅ **BTC/SOL payment verification** — Blockstream + Solana RPC, no signups
 - ✅ **Token sale active** — presale $8, ETH/USDC/BTC/SOL accepted, INQAI airdropped within 24h
-- ⚠️ **Vault redeployment needed** — deploy `contracts/InquisitiveVaultUpdated.sol` via Remix
+- ✅ **Vault live** — `0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52` — 26 assets + 13 bridges configured
+- ✅ **Hybrid keeper running** — cron-job.org (1 min) + GitHub Actions (5 min) — zero cost
 
 ---
 

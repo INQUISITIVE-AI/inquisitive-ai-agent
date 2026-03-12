@@ -214,6 +214,7 @@ export default function HelpPage() {
           ]},
           {icon:Zap,name:'The Executioner',col:'#2563eb',sub:'AI Smart Vault',detail:[
             'Executes all 11 trading functions: Buy, Sell, Swap, Lend, Yield, Borrow, Loop, Stake, Multiply, Earn, Rewards',
+            'Hybrid keeper model: cron-job.org (every 1 min) + GitHub Actions (every 5 min) — zero cost, fully redundant',
             'Integrates with Aave V3, Compound V3, Morpho Blue, Maple Finance for lending',
             'Uniswap V3, Jupiter Aggregator, 1inch for swapping with best route selection',
             'Lido, Jito, Sanctum, and 27 other protocols for staking',
