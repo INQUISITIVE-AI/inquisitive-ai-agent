@@ -22,10 +22,5 @@
       "maxDuration": 55
     }
   },
-  "crons": [
-    {
-      "path": "/api/inquisitiveAI/execute/auto",
-      "schedule": "*/5 * * * *"
-    }
-  ]
+  "crons": []
 }
