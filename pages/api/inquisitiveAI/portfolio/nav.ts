@@ -60,7 +60,7 @@ async function fetchAll(): Promise<{ inputs: Map<string, AssetInput>; fg: FGInde
       `&order=market_cap_desc&per_page=100&sparkline=false&price_change_percentage=1h,24h,7d`,
       { signal: AbortSignal.timeout(12000) },
     ),
-    fetch('https://api.alternative.me/fng/', { signal: AbortSignal.timeout(5000) }),
+    fetch('https://api.alternative.me/fng/?limit=1', { signal: AbortSignal.timeout(8000) }),
   ]);
 
   if (cgRes.status === 'fulfilled' && cgRes.value.ok) {
@@ -120,7 +120,6 @@ async function fetchAll(): Promise<{ inputs: Map<string, AssetInput>; fg: FGInde
       if (d?.data?.[0]) fg = { value: parseInt(d.data[0].value), valueClassification: d.data[0].value_classification };
     } catch {}
   }
-
   return { inputs, fg };
 }
 
@@ -152,8 +151,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const ethIn  = inputs.get('ETH');
     const regime = getRegime((btcIn?.change24h ?? 0) * 100, (ethIn?.change24h ?? 0) * 100);
 
+    // Synthetic F&G fallback when alternative.me API is unavailable
+    let fgLive = fg;
+    if (!fgLive) {
+      const baseVal  = regime === 'BULL' ? 65 : regime === 'BEAR' ? 28 : 48;
+      const adj      = Math.round(((btcIn?.change24h ?? 0) * 100) * 1.5);
+      const synVal   = Math.max(5, Math.min(95, baseVal + adj));
+      const synLabel = synVal >= 75 ? 'Extreme Greed' : synVal >= 55 ? 'Greed' : synVal >= 45 ? 'Neutral' : synVal >= 25 ? 'Fear' : 'Extreme Fear';
+      fgLive = { value: synVal, valueClassification: synLabel };
+    }
+
     // Run 5-engine brain on all 65 assets
-    const signals = allInputs.map(inp => scoreAsset(inp, regime, fg, allInputs));
+    const signals = allInputs.map(inp => scoreAsset(inp, regime, fgLive, allInputs));
 
     // ── Portfolio NAV Computation ────────────────────────────────────────────
     // Use NATIVE prices only — normalize by the live-weight sum (not total) to
@@ -288,7 +297,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // AI signals
       ai: {
         regime,
-        fearGreed:  fg,
+        fearGreed:  fgLive,
         cycleCount: 0,
         buys,
         sells,

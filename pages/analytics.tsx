@@ -171,12 +171,12 @@ export default function AnalyticsPage() {
 
   const localHolding     = purchases.reduce((s, p) => s + (p.amount    || 0), 0);
   const totalUsdInvested = purchases.reduce((s, p) => s + (p.usdAmount || 0), 0);
-  const totalInqai       = onChainBalance > 0 ? onChainBalance : localHolding;
+  const totalInqai       = localHolding > 0 ? (onChainBalance > 0 ? onChainBalance : localHolding) : 0;
   const effInvested      = totalUsdInvested; // real purchases only — never use on-chain balance × price (inflates for deployer)
   const currentValue     = totalInqai * navPerToken;
   const totalPnL         = currentValue - effInvested;
   const roiPct           = effInvested > 0 ? totalPnL / effInvested : 0;
-  const hasHoldings      = totalInqai > 0 || effInvested > 0;
+  const hasHoldings      = effInvested > 0;
   const holdingSource    = onChainBalance > 0 ? 'on-chain' : purchases.length > 0 ? 'presale' : isOnChainNAV ? 'on-chain-nav' : 'live NAV';
 
   const backingAssets = useMemo(() => positions.slice(0, 12).map(p => ({
