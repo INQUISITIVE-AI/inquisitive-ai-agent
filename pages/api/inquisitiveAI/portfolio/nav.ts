@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { getAddress } from 'viem';
 import { ASSET_REGISTRY, PORTFOLIO_WEIGHTS, scoreAsset, getRegime } from '../_brain';
 import type { AssetInput, FGIndex } from '../_brain';
 
@@ -151,15 +152,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const ethIn  = inputs.get('ETH');
     const regime = getRegime((btcIn?.change24h ?? 0) * 100, (ethIn?.change24h ?? 0) * 100);
 
-    // Synthetic F&G fallback when alternative.me API is unavailable
-    let fgLive = fg;
-    if (!fgLive) {
-      const baseVal  = regime === 'BULL' ? 65 : regime === 'BEAR' ? 28 : 48;
-      const adj      = Math.round(((btcIn?.change24h ?? 0) * 100) * 1.5);
-      const synVal   = Math.max(5, Math.min(95, baseVal + adj));
-      const synLabel = synVal >= 75 ? 'Extreme Greed' : synVal >= 55 ? 'Greed' : synVal >= 45 ? 'Neutral' : synVal >= 25 ? 'Fear' : 'Extreme Fear';
-      fgLive = { value: synVal, valueClassification: synLabel };
-    }
+    const fgLive = fg; // real data only — null when alternative.me API unavailable
 
     // Run 5-engine brain on all 65 assets
     const signals = allInputs.map(inp => scoreAsset(inp, regime, fgLive, allInputs));
@@ -266,7 +259,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
       // On-chain treasury — real funds from token purchases
       treasury: {
-        vaultAddress:     VAULT_ADDR,
+        vaultAddress:     (() => { try { return getAddress(VAULT_ADDR.toLowerCase()); } catch { return VAULT_ADDR; } })(),
         inqaiAddress:     INQAI_ADDR,
         deployerAddress:  DEPLOYER_ADDR,
         vaultEth:         parseFloat(vaultEth.toFixed(6)),

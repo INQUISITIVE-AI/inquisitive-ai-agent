@@ -171,7 +171,7 @@ export default function AnalyticsPage() {
 
   const localHolding     = purchases.reduce((s, p) => s + (p.amount    || 0), 0);
   const totalUsdInvested = purchases.reduce((s, p) => s + (p.usdAmount || 0), 0);
-  const totalInqai       = localHolding > 0 ? (onChainBalance > 0 ? onChainBalance : localHolding) : 0;
+  const totalInqai       = localHolding; // always use localStorage purchases — on-chain balance inflates for deployer
   const effInvested      = totalUsdInvested; // real purchases only — never use on-chain balance × price (inflates for deployer)
   const currentValue     = totalInqai * navPerToken;
   const totalPnL         = currentValue - effInvested;
@@ -342,7 +342,7 @@ export default function AnalyticsPage() {
                     <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:14 }}>
                       <Wallet size={16} color="#a78bfa" />
                       <h3 style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.8)', margin:0 }}>Your INQAI Holdings</h3>
-                      {onChainBalance > 0 && <span style={{ fontSize:9, padding:'2px 7px', borderRadius:100, background:'rgba(16,185,129,0.15)', color:'#34d399', border:'1px solid rgba(16,185,129,0.25)' }}>ON-CHAIN</span>}
+                      {onChainBalance > 0 && localHolding > 0 && onChainBalance <= localHolding * 2 + 5 && <span style={{ fontSize:9, padding:'2px 7px', borderRadius:100, background:'rgba(16,185,129,0.15)', color:'#34d399', border:'1px solid rgba(16,185,129,0.25)' }}>ON-CHAIN</span>}
                       {purchases.length > 0 && onChainBalance === 0 && <span style={{ fontSize:9, padding:'2px 7px', borderRadius:100, background:'rgba(124,58,237,0.15)', color:'#a78bfa', border:'1px solid rgba(124,58,237,0.25)' }}>PRESALE</span>}
                     </div>
                     {!hasHoldings ? (
