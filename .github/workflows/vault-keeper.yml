@@ -9,22 +9,16 @@ jobs:
   keep:
     name: performUpkeep
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 2
 
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install ethers
-        run: npm install --no-save ethers@6
-
-      - name: Run keeper
-        env:
-          KEEPER_PRIVATE_KEY:          ${{ secrets.KEEPER_PRIVATE_KEY }}
-          INQUISITIVE_VAULT_ADDRESS:   ${{ secrets.INQUISITIVE_VAULT_ADDRESS }}
-          MAINNET_RPC_URL:             ${{ secrets.MAINNET_RPC_URL }}
-        run: node scripts/keeper.js
+      - name: Ping keeper endpoint
+        run: |
+          HTTP=$(curl -s -o /tmp/resp.json -w "%{http_code}" \
+            "https://getinqai.com/api/inquisitiveAI/execute/auto" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
+          echo "=== Keeper response ==="
+          cat /tmp/resp.json || true
+          echo ""
+          echo "HTTP status: $HTTP"
+          [ "$HTTP" = "200" ] || exit 1

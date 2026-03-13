@@ -270,7 +270,7 @@ export default function AnalyticsPage() {
               </div>
               <div style={{ display:'flex', gap:10, alignItems:'center' }}>
                 <div style={{ width:8, height:8, borderRadius:9, background:'#10b981', boxShadow:'0 0 8px #10b981' }} />
-                <span style={{ fontSize:12, color:'#10b981', fontWeight:700 }}>LIVE · {cycles ? `Cycle #${cycles.toLocaleString()}` : 'Connecting…'}</span>
+                <span style={{ fontSize:12, color:'#10b981', fontWeight:700 }}>LIVE · {!nav ? 'Connecting…' : cycles > 0 ? `Cycle #${cycles.toLocaleString()}` : '65 assets · live'}</span>
                 {isOnChainNAV && (
                   <span style={{ fontSize:10, padding:'2px 8px', borderRadius:100, background:'rgba(16,185,129,0.12)', color:'#34d399', border:'1px solid rgba(16,185,129,0.25)', fontWeight:700 }}>
                     ON-CHAIN NAV · {fmtUsd(aumUSD)} AUM
