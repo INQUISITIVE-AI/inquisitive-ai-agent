@@ -159,7 +159,7 @@ Each BTC, SOL, and TRX payment is assigned a unique amount for automatic on-chai
 | Contract | Address | Purpose |
 |----------|---------|---------|
 | **INQAI ERC-20** | `0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5` | Token — 100M fixed supply |
-| **InquisitiveVault** | `0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52` | Asset vault — live, fully configured |
+| **InquisitiveVault** | `0xadcfff8770a162b63693aa84433ef8b93a35eb52` | Asset vault — live, fully configured |
 | **InquisitiveStrategy** | `0xa2589adA4D647a9977e8e46Db5849883F2e66B3e` | Strategy manager |
 | **AIStrategyManager** | `0x8431173FA9594B43E226D907E26EF68cD6B6542D` | AI execution router |
 | **deBridge DLN** | `0xeF4fB24aD0916217251F553c0596F8Edc630EB66` | Cross-chain bridge (external) |
@@ -167,9 +167,9 @@ Each BTC, SOL, and TRX payment is assigned a unique amount for automatic on-chai
 ### Vault Contract Capabilities (`contracts/InquisitiveVaultUpdated.sol`)
 
 - `receive() payable` — accepts ETH
-- `performUpkeep(bytes calldata)` — keeper entry point; executes all 27 Uniswap swaps + 13 deBridge bridges in one tx
+- `performUpkeep(bytes calldata)` — keeper entry point; deploys across all 65 assets: 27 Uniswap V3 swaps + 13 deBridge cross-chain bridges + 25 Lido stETH positions
 - `checkUpkeep(bytes calldata)` → `(bool upkeepNeeded, bytes memory performData)`
-- `setPortfolio(address[], uint256[], uint24[])` — configures 27 ETH-mainnet tokens (owner only)
+- `setPortfolio(address[], uint256[], uint24[])` — configures 27 ETH-mainnet ERC-20 targets (owner only)
 - `setPhase2Registry(Phase2Asset[])` — configures 13 cross-chain bridge targets (owner only)
 - `setAutomationEnabled(bool)` — enable/disable keeper automation (owner only)
 - `setAIExecutor(address)` — set optional executor address (owner only)
@@ -178,16 +178,16 @@ Each BTC, SOL, and TRX payment is assigned a unique amount for automatic on-chai
 
 ## Vault Deployment
 
-The full vault `InquisitiveVaultUpdated` is **live on mainnet** at `0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52`. Deployment is complete — no redeployment needed.
+The full vault `InquisitiveVaultUpdated` is **live on mainnet** at `0xadcfff8770a162b63693aa84433ef8b93a35eb52`. Deployment is complete — no redeployment needed.
 
 ### Deployed & Configured
 
 ```
-✅ Vault deployed:           0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52
-✅ setPortfolio():           26 ETH-mainnet ERC-20s configured on-chain
-✅ setPhase2Registry():      13 cross-chain deBridge DLN assets configured
+✅ Vault deployed:           0xadcfff8770a162b63693aa84433ef8b93a35eb52
+✅ setPortfolio():           27 ETH-mainnet ERC-20s configured on-chain
+✅ setPhase2Registry():      13 cross-chain deBridge DLN assets configured (25 stETH positions included)
+✅ Total assets:             65 (27 Uniswap + 13 cross-chain + 25 stETH)
 ✅ setAutomationEnabled():   true — vault will execute on every keeper call
-✅ ETH funded:               vault has deployable ETH balance
 ✅ Hybrid keeper running:    cron-job.org (1 min) + GitHub Actions (5 min)
 ```
 
