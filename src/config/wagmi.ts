@@ -52,12 +52,9 @@ export const INQAI_TOKEN = {
   targetAPY:    0.185,
   targetMCap:   1_500_000_000,
   standard:     'ERC-20',
-  address:      '0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5' as `0x${string}`,
-  teamWallet:   '0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746' as `0x${string}`,
-  // vaultAddress is set via NEXT_PUBLIC_VAULT_ADDRESS after deployment.
-  // ETH/USDC purchases send directly to the vault so performUpkeep() executes real trades.
-  // Update this env var in Vercel after deploying a new vault contract.
-  vaultAddress: (process.env.NEXT_PUBLIC_VAULT_ADDRESS || '0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52') as `0x${string}`,
+  address:      '0xb312b6e0842b6d51b15fdb19e62730815c1c7ce5' as `0x${string}`,
+  teamWallet:   '0x4e7d700f7e1c6eeb5c9426a0297ae0765899e746' as `0x${string}`,
+  vaultAddress: ((process.env.NEXT_PUBLIC_VAULT_ADDRESS || '0xadcfff8770a162b63693aa84433ef8b93a35eb52').toLowerCase()) as `0x${string}`,
   btcAddress:   'bc1q54tccqs2z3gp74pdatfnfucrzxuv2755fq6cfg',
   solAddress:   '7a2WzumijyGTqALmqoDZd3mvyP2aS7R4GjBdBxMUjRPk',
   trxAddress:   'TDSkgbhuMAHChDw6kGCLJmM9v7PPMJgHJA',

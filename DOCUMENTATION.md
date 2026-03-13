@@ -228,47 +228,43 @@ Connect MetaMask (vault owner), call each function with the printed arrays.
 
 ---
 
-## Keeper Execution (Hybrid Approach)
+## Keeper Execution
 
-The vault uses a **free hybrid keeper model** — no Chainlink subscription required. Three layers of redundancy.
+The vault keeper runs on a redundant hybrid schedule to ensure `performUpkeep()` is called automatically.
 
-### Primary: cron-job.org (Every 1 Minute — Free)
+### Primary: cron-job.org (1-Minute Interval)
 
 ```
-1. Go to https://cron-job.org → sign up free
+1. Go to https://cron-job.org
 2. Create new cron job:
    URL:      https://getinqai.com/api/inquisitiveAI/execute/auto
    Schedule: Every 1 minute
    Method:   GET
 3. Add header:  Authorization: Bearer <CRON_SECRET>
-4. Save — vault keeper now runs every 60 seconds
+4. Save
 ```
 
-### Backup 1: GitHub Actions (Every 5 Minutes — Free)
+### Backup: GitHub Actions (5-Minute Interval)
 
-Already configured in `.github/workflows/vault-keeper.yml`. Runs automatically every 5 minutes as a redundant fallback. No setup required.
+Configured in `.github/workflows/vault-keeper.yml`. Runs every 5 minutes as a redundant fallback.
 
-### Future: Chainlink Automation (At Scale)
+### Chainlink Automation
 
-When the project grows and decentralized execution is required:
 ```
 1. Go to https://automation.chain.link
 2. Register New Upkeep → Custom Logic
-3. Contract address: 0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52
+3. Contract address: 0xadcfff8770a162b63693aa84433ef8b93a35eb52
 4. Gas limit: 5,000,000
 5. Fund with LINK
 ```
-
-The hybrid approach (cron-job.org + GitHub Actions) provides institutional-grade reliability at zero cost.
 
 ---
 
 ## Environment Setup
 
 ```bash
-# Required — no private keys
 MAINNET_RPC_URL=https://mainnet.infura.io/v3/<your-key>
-COINGECKO_API_KEY=<optional, for higher rate limits>
+COINGECKO_API_KEY=<optional>
 ETHERSCAN_API_KEY=<for contract verification>
 
 # Contract addresses

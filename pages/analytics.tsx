@@ -12,7 +12,7 @@ import {
 import { INQAI_TOKEN } from '../src/config/wagmi';
 
 
-const VAULT_ADDR = '0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52' as `0x${string}`;
+const VAULT_ADDR = '0xadcfff8770a162b63693aa84433ef8b93a35eb52' as `0x${string}`;
 const VAULT_ABI = [
   { name:'checkUpkeep',        type:'function', stateMutability:'view',      inputs:[{name:'',type:'bytes'}],        outputs:[{name:'upkeepNeeded',type:'bool'},{name:'performData',type:'bytes'}] },
   { name:'performUpkeep',      type:'function', stateMutability:'nonpayable', inputs:[{name:'performData',type:'bytes'}], outputs:[] },
@@ -173,7 +173,7 @@ export default function AnalyticsPage() {
   const localHolding     = purchases.reduce((s, p) => s + (p.amount    || 0), 0);
   const totalUsdInvested = purchases.reduce((s, p) => s + (p.usdAmount || 0), 0);
   const totalInqai       = onChainBalance > 0 ? onChainBalance : localHolding;
-  const effInvested      = onChainBalance > 0 ? onChainBalance * INQAI_TOKEN.presalePrice : totalUsdInvested;
+  const effInvested      = totalUsdInvested; // real purchases only — never use on-chain balance × price (inflates for deployer)
   const currentValue     = totalInqai * navPerToken;
   const totalPnL         = currentValue - effInvested;
   const roiPct           = effInvested > 0 ? totalPnL / effInvested : 0;
@@ -470,7 +470,7 @@ export default function AnalyticsPage() {
                       { l:'Active Signals', v:String(buys),               c:'#10b981' },
                       { l:'Reduce/Exit',    v:String(sells),              c:'#ef4444' },
                       { l:'Active Assets',  v:String(nav?.portfolio?.assetCount??'—') },
-                      { l:'Brain Cycles',   v:cycles.toLocaleString() },
+                      { l:'Vault Cycles',   v:(cyclesOnChain||0).toLocaleString() },
                     ].map((r:any) => (
                       <div key={r.l} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'7px 0', borderBottom:'1px solid rgba(255,255,255,0.04)' }}>
                         <span style={{ fontSize:12, color:'rgba(255,255,255,0.4)' }}>{r.l}</span>
