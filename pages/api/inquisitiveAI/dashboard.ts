@@ -145,7 +145,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.setHeader('Cache-Control', 's-maxage=15, stale-while-revalidate=30');
     res.status(200).json({
       aiSignals: {
-        cycleCount: Math.floor(Date.now() / 8000),
+        cycleCount: 0,
         buys, sells,
         topBuys: signals,
       },

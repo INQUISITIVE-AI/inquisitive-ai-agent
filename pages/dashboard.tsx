@@ -177,7 +177,7 @@ export default function Dashboard() {
   const pnl       = d?.performance?.totalPnL || 0;
   const vaultUSD  = d?.vault?.usd  || 0;
   const vaultEth  = d?.vault?.eth  || 0;
-  const cycles = d?.aiSignals?.cycleCount || 0;
+  const cycles = vaultStatus?.cycleCount || 0;
 
   const topBuy    = (d?.aiSignals?.topBuys || [])[0];
   const engScores = [
@@ -348,7 +348,7 @@ export default function Dashboard() {
                 { label: 'AI Buy Signals',  val: String(d?.aiSignals?.buys  || 0), col: '#34d399' },
                 { label: 'AI Sell Signals', val: String(d?.aiSignals?.sells || 0), col: '#f87171' },
                 { label: 'Assets Tracked',  val: String(d?.portfolio?.assetCount || 65), col: '#60a5fa' },
-                { label: 'Brain Cycles',    val: (d?.aiSignals?.cycleCount || 0).toLocaleString(), col: '#a78bfa' },
+                { label: 'Vault Cycles',    val: (vaultStatus?.cycleCount || 0).toLocaleString(), col: '#a78bfa' },
               ].map(m => (
                 <div key={m.label} style={{ padding: '10px 16px', borderRight: '1px solid rgba(255,255,255,0.04)' }}>
                   <div style={{ fontSize: 14, fontWeight: 800, color: m.col, fontFamily: 'monospace' }}>{m.val}</div>

@@ -289,7 +289,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ai: {
         regime,
         fearGreed:  fg,
-        cycleCount: Math.floor(Date.now() / 8000),
+        cycleCount: 0,
         buys,
         sells,
         riskScore:  regime === 'BULL' ? 0.35 : regime === 'BEAR' ? 0.72 : 0.5,

@@ -78,7 +78,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json({
         status:  'operational', live: true,
         prices:  { assetCount: 65, source: 'CoinGecko + CryptoCompare', lastUpdate: new Date().toISOString() },
-        brain:   { cycleCount: Math.floor(Date.now() / 8000), signalCount: 65, enginesActive: 5 },
+        brain:   { cycleCount: 0, signalCount: 65, enginesActive: 5 },
         macro:   { indicators: 4, source: 'alternative.me + CoinGecko' },
         trading: { functionsActive: 11, isLive: true },
       });
@@ -87,7 +87,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (subPath === 'signals') {
       const { signals, fg } = await buildAllSignals();
       res.setHeader('Cache-Control', 's-maxage=15, stale-while-revalidate=30');
-      return res.status(200).json({ signals, fearGreed: fg, cycleCount: Math.floor(Date.now() / 8000) });
+      return res.status(200).json({ signals, fearGreed: fg, cycleCount: 0 });
     }
 
     if (subPath === 'macro') {
