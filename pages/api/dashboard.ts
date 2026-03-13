@@ -143,7 +143,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const return7d       = assetsWithData.reduce((s, inp) =>
       s + (PORTFOLIO_WEIGHTS[inp.symbol] || 0) * inp.change7d, 0) / weightSum;
     const indexValue     = 100 * (1 + return7d);
-    const pnl24h         = return24h * 100;
     const winRate        = assetsWithData.length > 0
       ? assetsWithData.filter(inp => inp.change24h > 0).length / assetsWithData.length : 0;
 

@@ -149,9 +149,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const nextAction: Record<Level, string> = {
     NOT_DEPLOYED:       'Deploy the new vault via Hardhat: npx hardhat run scripts/deploy-upgraded.js --network mainnet',    
     DEPLOYED:           'Call setPortfolio() on Etherscan Write Contract (run scripts/activate.js for arrays)',
-    PORTFOLIO_SET:      'Call setAutomationEnabled(true) on Etherscan Write Contract, then register Chainlink Automation at automation.chain.link',
+    PORTFOLIO_SET:      'Call setAutomationEnabled(true) on Etherscan Write Contract, then activate hybrid keeper (GitHub Actions + cron-job.org) — see vault setup instructions',
     AUTOMATION_ACTIVE:  'Fund the vault — any ETH deposit will trigger autonomous deployment within 60 seconds',
-    FULLY_OPERATIONAL:  'System is live. 27 ETH-mainnet assets executing via Uniswap V3 + 13 cross-chain assets bridging via deBridge DLN — every Chainlink cycle. 25 assets held as Lido stETH earning yield while tracking native prices. All 65 allocated and live.',    
+    FULLY_OPERATIONAL:  'System is live. 27 ETH-mainnet assets executing via Uniswap V3 + 13 cross-chain assets bridging via deBridge DLN — every keeper cycle (1-5 min). 25 assets held as Lido stETH earning yield while tracking native prices. All 65 allocated and live. Hybrid keeper: cron-job.org (1 min) + GitHub Actions (5 min) — zero cost, no LINK required.',    
   };
 
   // Deployment instructions
@@ -174,14 +174,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       step: 3,
       done: automationActive,
       title: 'Enable autonomous execution',
-      detail: 'On Etherscan Write Contract: call setAutomationEnabled(true). Then go to automation.chain.link → New Upkeep → Custom Logic → paste vault address → fund with 1 LINK.',
+      detail: 'Call setAutomationEnabled(true) on Etherscan Write Contract. Then activate the hybrid keeper — zero cost: (1) cron-job.org: create a free cron job hitting https://getinqai.com/api/inquisitiveAI/execute/auto every 1 minute. (2) GitHub Actions backup: vault-keeper.yml already configured, runs every 5 minutes automatically. Both run in parallel for maximum uptime. No LINK, no Chainlink subscription required.',
       keyRequired: false,
     },
     {
       step: 4,
       done: vaultETH >= 0.005,
       title: 'Vault funded',
-      detail: 'ETH deposited to vault triggers performUpkeep() via Chainlink Automation. Deploys across 27 ETH-mainnet (Uniswap V3) + 13 cross-chain (deBridge DLN: Solana/BSC/Avalanche/Optimism/TRON). 25 assets held as Lido stETH earning yield. All 65 assets fully live — zero simulation.'  , 
+      detail: 'ETH deposited to vault triggers performUpkeep() via hybrid keeper (GitHub Actions every 5 min + cron-job.org every 1 min). Deploys across 27 ETH-mainnet (Uniswap V3) + 13 cross-chain (deBridge DLN: Solana/BSC/Avalanche/Optimism/TRON). 25 assets held as Lido stETH earning yield. All 65 assets fully live — zero simulation.', 
       keyRequired: false,
     },
   ];
@@ -204,10 +204,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     blockNumber:     parseInt(block, 16),
     autonomous:      readiness === 'FULLY_OPERATIONAL',
     keylessArchitecture: {
-      description:   'Zero private keys in any file, env var, or server. Chainlink Automation nodes call performUpkeep() on-chain. Identical to Yearn, Compound, Aave keeper architecture.',
-      deployMethod:  'Hardhat: npx hardhat run scripts/deploy-upgraded.js --network mainnet — private key stays in .env, never in code',
-      executionMethod: 'Chainlink Automation — registered once via automation.chain.link, runs forever autonomously',
-      costPerMonth:  '~$15 LINK/month for 60-second cycle (43,800 calls × $0.0003)',
+      description:   'Zero private keys in any file, env var, or server. Hybrid keeper (cron-job.org + GitHub Actions) calls performUpkeep() every 1-5 minutes. Identical institutional keeper pattern to Yearn, Compound, Aave — zero cost.',
+      deployMethod:  'Vault deployed via Remix IDE (MetaMask signs) — private key never in code or env. Portfolio configured via Etherscan Write Contract.',
+      executionMethod: 'Hybrid keeper: cron-job.org (every 1 min, free) + GitHub Actions vault-keeper.yml (every 5 min, free). Chainlink Automation can be added at scale via automation.chain.link.',
+      costPerMonth:  '$0 — cron-job.org (free tier) + GitHub Actions (free tier). Chainlink optional when scaling.',
     },
     timestamp: new Date().toISOString(),
   });

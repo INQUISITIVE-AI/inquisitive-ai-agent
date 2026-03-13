@@ -242,6 +242,7 @@ export function scoreAsset(
     } else if (finalScore <= 0.42) {
       action = 'REDUCE';
     } else if (finalScore >= threshold) {
+      // High-confidence active execution — full 11-function selection
       if      (a.category === 'stablecoin')                                         action = 'LEND';
       else if (a.category === 'liquid-stake')                                       action = finalScore >= 0.78 ? 'EARN' : 'REWARDS';
       else if (finalScore >= 0.87 && a.yieldable && a.lendable)                    action = 'LOOP';
@@ -253,6 +254,17 @@ export function scoreAsset(
       else if (finalScore >= 0.68 && a.lendable && regime !== 'BULL')              action = 'LEND';
       else if (finalScore >= 0.65 && Math.abs(a.change7d ?? 0) > 0.08)            action = 'SWAP';
       else                                                                           action = 'BUY';
+    } else {
+      // Steady-state operations (0.43–threshold): reflect what each asset IS doing in the portfolio.
+      // Every asset is deployed — stablecoins lent, staked assets staking, etc.
+      if      (a.category === 'stablecoin')                                         action = 'LEND';
+      else if (a.category === 'liquid-stake')                                       action = 'REWARDS';
+      else if (a.yieldable && a.stakeable && finalScore > 0.58)                    action = 'EARN';
+      else if (a.yieldable && finalScore > 0.54)                                   action = 'YIELD';
+      else if (a.stakeable && finalScore > 0.52)                                   action = 'STAKE';
+      else if (a.lendable  && finalScore > 0.50)                                   action = 'LEND';
+      else if (Math.abs(a.change7d ?? 0) > 0.12 && finalScore > 0.55)             action = 'SWAP';
+      else                                                                           action = 'HOLD';
     }
   } else {
     action = 'SKIP';

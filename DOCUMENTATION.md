@@ -38,7 +38,7 @@ INQUISITIVE is an ERC-20 token representing proportional ownership in a live, AI
 5. [Smart Contract](#smart-contract)
 6. [Vault Deployment](#vault-deployment)
 7. [Vault Activation](#vault-activation)
-8. [Chainlink Automation](#chainlink-automation)
+8. [Keeper Execution](#keeper-execution)
 9. [Environment Setup](#environment-setup)
 10. [API Reference](#api-reference)
 11. [Running Locally](#running-locally)
@@ -121,13 +121,15 @@ The Oracle      → CoinGecko primary, CryptoCompare fallback — 65 native pric
 ### Execution Flow
 
 1. **Hybrid keeper** calls `performUpkeep()` every 1–5 minutes:
-   - cron-job.org pings `/api/inquisitiveAI/execute/auto` every 1 minute
+   - cron-job.org pings `/api/inquisitiveAI/execute/auto` every 1 minute (primary)
    - GitHub Actions vault-keeper runs every 5 minutes as redundant backup
-2. If `vaultBalance > minDeploy`, `performUpkeep()` executes
+   - Vercel cron (`vercel.json`) fires every 5 minutes as tertiary backup
+2. If `vaultBalance > minDeploy`, `performUpkeep()` executes on-chain
 3. **ETH → 27 ERC-20s** via Uniswap V3 (one batch)
-4. **ETH → 13 native assets** via deBridge DLN `createOrder()` (one batch)
+4. **ETH → 13 native assets** via deBridge DLN `createOrder()` (one batch, including TRX on TRON)
 5. **Remaining ETH → stETH** via Lido for the 25 stETH yield positions
 6. All prices, NAV, signals updated in real-time via CoinGecko
+7. Chainlink Automation will be added as the project scales (register at automation.chain.link)
 
 ---
 
@@ -143,6 +145,7 @@ Token holders buy INQAI during the presale. INQAI is airdropped to the buyer's w
 | **USDC** | WalletConnect → ERC-20 transfer to team wallet | `0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746` |
 | **BTC** | Send exact amount to static address | `bc1q54tccqs2z3gp74pdatfnfucrzxuv2755fq6cfg` |
 | **SOL** | Send exact amount to static address | `7a2WzumijyGTqALmqoDZd3mvyP2aS7R4GjBdBxMUjRPk` |
+| **TRX** | Send exact amount to TRON address | `TDSkgbhuMAHChDw6kGCLJmM9v7PPMJgHJA` |
 
 BTC and SOL payments use a dust nonce in the amount for unique identification. Payment verification is done via public blockchain APIs (Blockstream for BTC, Solana RPC for SOL) — no third-party payment processor, no API signup required.
 
@@ -226,36 +229,40 @@ Connect MetaMask (vault owner), call each function with the printed arrays.
 
 ## Keeper Execution (Hybrid Approach)
 
-The vault uses a **free hybrid keeper model** — no Chainlink subscription required.
+The vault uses a **free hybrid keeper model** — no Chainlink subscription required. Three layers of redundancy.
 
 ### Primary: cron-job.org (Every 1 Minute — Free)
 
 ```
 1. Go to https://cron-job.org → sign up free
 2. Create new cron job:
-   URL:      https://your-domain.com/api/inquisitiveAI/execute/auto
+   URL:      https://getinqai.com/api/inquisitiveAI/execute/auto
    Schedule: Every 1 minute
    Method:   GET
 3. Add header:  Authorization: Bearer <CRON_SECRET>
 4. Save — vault keeper now runs every 60 seconds
 ```
 
-### Backup: GitHub Actions (Every 5 Minutes — Free)
+### Backup 1: GitHub Actions (Every 5 Minutes — Free)
 
 Already configured in `.github/workflows/vault-keeper.yml`. Runs automatically every 5 minutes as a redundant fallback. No setup required.
 
-### Optional: Chainlink Automation
+### Backup 2: Vercel Cron (Every 5 Minutes — Free)
 
-For fully decentralized execution (no external dependencies):
+Configured in `vercel.json` — Vercel’s built-in cron fires every 5 minutes as a tertiary backup. No setup required.
+
+### Future: Chainlink Automation (At Scale)
+
+When the project grows and decentralized execution is required:
 ```
 1. Go to https://automation.chain.link
 2. Register New Upkeep → Custom Logic
 3. Contract address: 0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52
 4. Gas limit: 5,000,000
-5. Fund with LINK (check current pricing at automation.chain.link)
+5. Fund with LINK
 ```
 
-The hybrid approach (cron-job.org + GitHub Actions) provides equivalent reliability at zero cost.
+The hybrid approach (cron-job.org + GitHub Actions + Vercel cron) provides institutional-grade reliability at zero cost.
 
 ---
 
@@ -349,10 +356,10 @@ All endpoints are Next.js API routes (`pages/api/`). No authentication required 
 - ✅ **5 intelligence engines** — Pattern, Reasoning, Portfolio, Learning, Risk — live
 - ✅ **11 trading functions** — fully implemented in `server/services/tradingEngine.js`
 - ✅ **INQAI ERC-20** — `0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5` — mainnet live
-- ✅ **BTC/SOL payment verification** — Blockstream + Solana RPC, no signups
-- ✅ **Token sale active** — presale $8, ETH/USDC/BTC/SOL accepted, INQAI airdropped within 24h
+- ✅ **BTC/SOL/TRX payment verification** — Blockstream + Solana RPC + TRON, no signups
+- ✅ **Token sale active** — presale $8, ETH/USDC/BTC/SOL/TRX accepted, INQAI airdropped within 24h
 - ✅ **Vault live** — `0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52` — 26 assets + 13 bridges configured
-- ✅ **Hybrid keeper running** — cron-job.org (1 min) + GitHub Actions (5 min) — zero cost
+- ✅ **Hybrid keeper running** — cron-job.org (1 min) + GitHub Actions (5 min) + Vercel cron (5 min) — zero cost, no LINK required
 
 ---
 

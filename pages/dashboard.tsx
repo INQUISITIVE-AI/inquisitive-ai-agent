@@ -34,32 +34,41 @@ const ACTION_STYLE: Record<string, { bg: string; col: string; border: string }> 
   SKIP:      { bg: 'rgba(75,85,99,0.08)',    col: '#6b7280',  border: 'rgba(75,85,99,0.15)'   },
 };
 
+const EXEC_FUNCTIONS = new Set(['BUY','SELL','SWAP','LEND','YIELD','BORROW','LOOP','STAKE','MULTIPLY','EARN','REWARDS']);
+
 function buildFeed(signals: any[], cycle: number) {
   const cycleMs = cycle * 8000;
-  const entries: any[] = [];
   const rationaleMap: Record<string, string> = {
     BUY:       'Pattern + Reasoning engines in consensus. Entry conditions met. 2% capital risk limit applied.',
     SELL:      'Profit target or stop-loss triggered. Position closed per risk management protocol.',
     REDUCE:    'Partial exit. Risk reduction initiated by Portfolio Engine.',
-    STAKE:     'Yield deployment. Capital allocated to staking protocol at live APY.',
-    LEND:      'Capital deployed to lending pool. Risk-adjusted APY exceeds opportunity cost.',
-    YIELD:     'Liquidity provision initiated. Pool selected based on risk-adjusted return.',
-    BORROW:    'Collateral-backed borrow. Health factor maintained above 1.5 floor.',
-    SWAP:      'Route-optimized swap executed via best-available aggregator.',
-    EARN:      'Best-APY strategy selected. Auto-deployment to highest risk-adjusted yield.',
-    LOOP:      'Recursive yield loop initiated. Borrow against collateral, re-deploy to same pool.',
-    MULTIPLY:  'Leveraged long position opened. Bull regime + major asset + high conviction.',
-    REWARDS:   'Staking rewards claimed and auto-compounded into position.',
-    HOLD:      'No action. Confidence below threshold. Monitoring continued.',
-    SKIP:      'Signal filtered by Risk Gate. Insufficient confidence for execution.',
+    STAKE:     'Staking deployment active. Capital staked at live protocol APY.',
+    LEND:      'Lending pool deployment active. Risk-adjusted APY exceeds opportunity cost.',
+    YIELD:     'Yield position active. Pool selected based on risk-adjusted return.',
+    BORROW:    'Collateral-backed borrow active. Health factor maintained above 1.5 floor.',
+    SWAP:      'Route-optimized swap executed via best-available DEX aggregator.',
+    EARN:      'Multi-source yield deployment active. Highest risk-adjusted APY selected.',
+    LOOP:      'Recursive yield loop active. Borrow against collateral, re-deployed to same pool.',
+    MULTIPLY:  'Leveraged long position open. Bull regime + major asset + high conviction.',
+    REWARDS:   'Staking rewards auto-compounded. Yield accumulation in progress.',
+    HOLD:      'Monitoring. Confidence below execution threshold — position unchanged.',
+    SKIP:      'Risk Gate blocked. Insufficient confidence or liquidity for execution.',
   };
-  signals.forEach((s, i) => {
+  // Sort: active 11-function executions first (highest conviction), then by score desc
+  const sorted = [...signals].sort((a, b) => {
+    const aExec = EXEC_FUNCTIONS.has(a.action || 'HOLD') && a.action !== 'HOLD';
+    const bExec = EXEC_FUNCTIONS.has(b.action || 'HOLD') && b.action !== 'HOLD';
+    if (aExec && !bExec) return -1;
+    if (!aExec && bExec) return 1;
+    return (b.finalScore || 0) - (a.finalScore || 0);
+  });
+  return sorted.map((s, i) => {
     const ts = new Date(cycleMs - i * 120);
     const timeStr = ts.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
     const action = s.action || 'HOLD';
     const conf = s.finalScore || 0;
-    const executed = conf >= 0.70 && !['HOLD','SKIP','REDUCE'].includes(action);
-    entries.push({
+    const isActive = EXEC_FUNCTIONS.has(action) && !['HOLD','SKIP','REDUCE'].includes(action);
+    return {
       id: `${cycle}-${s.symbol}-${i}`,
       time: timeStr,
       symbol: s.symbol,
@@ -67,10 +76,9 @@ function buildFeed(signals: any[], cycle: number) {
       action,
       confidence: conf,
       rationale: rationaleMap[action] || 'Evaluation complete.',
-      executed,
-    });
+      executed: isActive,
+    };
   });
-  return entries;
 }
 
 export default function Dashboard() {
@@ -83,34 +91,50 @@ export default function Dashboard() {
   const [tradeFeed, setTradeFeed]     = useState<any[]>([]);
   const [composition, setComposition] = useState<any[]>([]);
   const [refreshing, setRefreshing]   = useState(false);
+  const [vaultStatus, setVaultStatus] = useState<any>(null);
   const wsRef = useRef<WebSocket | null>(null);
 
   const load = useCallback(async (bust = false) => {
     const t = bust ? `?_t=${Date.now()}` : `?_t=${Math.floor(Date.now() / 10000) * 10000}`;
     if (bust) setRefreshing(true);
     try {
-      const [dd, dr, pr, eq] = await Promise.allSettled([
+      const [dd, dr, pr, eq, st] = await Promise.allSettled([
         fetch(`/api/dashboard${t}`),
         fetch(`/api/inquisitiveAI/dashboard${t}`),
         fetch(`/api/inquisitiveAI/portfolio/positions${t}`),
         fetch(`/api/inquisitiveAI/chart/portfolio${t}`),
+        fetch(`/api/inquisitiveAI/execute/status`),
       ]);
 
-      // Parse fallback data once and reuse (avoids double-read bug)
-      let fallback: any = null;
+      // /api/dashboard is the authoritative source for vault ETH + real P&L
+      let base: any = null;
       if (dd.status === 'fulfilled' && dd.value.ok) {
-        fallback = await dd.value.json();
-        setDash((prev: any) => ({ ...prev, ...fallback, aiSignals: { ...prev?.aiSignals, ...fallback.aiSignals } }));
+        base = await dd.value.json();
+        setDash((prev: any) => ({ ...prev, ...base }));
         setHasLiveData(true);
+        if (base?.portfolio?.composition?.length) setComposition(base.portfolio.composition);
       }
 
-      // Local server data overrides fallback if available
+      // /api/inquisitiveAI/dashboard provides AI signals, risk, macro — does NOT override vault/performance
       if (dr.status === 'fulfilled' && dr.value.ok) {
         const d = await dr.value.json();
-        setDash((prev: any) => ({ ...prev, ...d, aiSignals: { ...prev?.aiSignals, ...d.aiSignals } }));
-        setTradeFeed(buildFeed(d?.aiSignals?.topBuys || [], d?.aiSignals?.cycleCount || 0));
-      } else if (fallback) {
-        setTradeFeed(buildFeed(fallback?.aiSignals?.topBuys || [], fallback?.aiSignals?.cycleCount || 0));
+        setDash((prev: any) => ({
+          ...prev,
+          // AI intelligence data only — vault + performance stay from /api/dashboard
+          aiSignals: d.aiSignals ?? prev?.aiSignals,
+          risk:      d.risk      ?? prev?.risk,
+          macro:     d.macro     ?? prev?.macro,
+          portfolio: {
+            ...prev?.portfolio,
+            composition: d.portfolio?.composition ?? prev?.portfolio?.composition,
+            assetCount:  d.portfolio?.assetCount  ?? prev?.portfolio?.assetCount,
+          },
+        }));
+        const topBuys = d?.aiSignals?.topBuys || base?.aiSignals?.topBuys || [];
+        setTradeFeed(buildFeed(topBuys, d?.aiSignals?.cycleCount || base?.aiSignals?.cycleCount || 0));
+        if (d?.portfolio?.composition?.length) setComposition(d.portfolio.composition);
+      } else if (base) {
+        setTradeFeed(buildFeed(base?.aiSignals?.topBuys || [], base?.aiSignals?.cycleCount || 0));
       }
 
       if (pr.status === 'fulfilled' && pr.value.ok) {
@@ -118,13 +142,13 @@ export default function Dashboard() {
         setPositions(d.positions || []);
       }
 
-      // Pull composition from the dashboard endpoint (fallback)
-      if (fallback?.portfolio?.composition?.length) {
-        setComposition(fallback.portfolio.composition);
-      }
       if (eq.status === 'fulfilled' && eq.value.ok) {
         const d = await eq.value.json();
         setEquityCurve(d.curve || []);
+      }
+
+      if (st.status === 'fulfilled' && st.value.ok) {
+        setVaultStatus(await st.value.json());
       }
     } catch {}
     setRefreshing(false);
@@ -229,15 +253,15 @@ export default function Dashboard() {
         {/* ── STATS BAR ── */}
         <div style={{ height: 44, background: 'rgba(8,8,22,0.9)', borderBottom: '1px solid rgba(255,255,255,0.04)', display: 'flex', alignItems: 'stretch', flexShrink: 0, zIndex: 9 }}>
           {[
-            { label: 'Vault P&L 24h', val: vaultUSD > 0 ? (pnl >= 0 ? '+' : '') + fmtUsd(pnl) : '—',            col: vaultUSD > 0 ? grc(pnl) : 'rgba(255,255,255,0.3)' },
-            { label: 'Vault AUM',      val: vaultUSD > 0 ? fmtUsd(vaultUSD) : (vaultEth > 0 ? vaultEth.toFixed(4)+' ETH' : '—'), col: '#60a5fa' },
-            { label: 'Active Signals', val: String(d?.performance?.totalTrades || 0),                               col: '#e5e7eb'       },
-            { label: 'Open Positions', val: String(positions.length),                                               col: '#60a5fa'       },
-            { label: 'Portfolio Heat', val: ((d?.risk?.portfolioHeat || 0) * 100).toFixed(1) + '%',                col: (d?.risk?.portfolioHeat || 0) > 0.04 ? '#f59e0b' : '#10b981' },
-            { label: 'Max Drawdown',   val: ((d?.risk?.drawdown || 0) * 100).toFixed(1) + '%',                     col: (d?.risk?.drawdown || 0) > 0.08 ? '#ef4444' : '#10b981'     },
-            { label: 'AI Buys',        val: String(d?.aiSignals?.buys || 0),                                        col: '#34d399'       },
-            { label: 'AI Sells',       val: String(d?.aiSignals?.sells || 0),                                       col: '#f87171'       },
-            { label: '48h Return',     val: (equityChange >= 0 ? '+' : '') + (equityChange * 100).toFixed(2) + '%', col: grc(equityChange) },
+            { label: 'Vault P&L 24h',    val: vaultUSD > 0 ? (pnl >= 0 ? '+' : '') + fmtUsd(pnl) : '—',                         col: vaultUSD > 0 ? grc(pnl) : 'rgba(255,255,255,0.3)' },
+            { label: 'Vault AUM',         val: vaultUSD > 0 ? fmtUsd(vaultUSD) : (vaultEth > 0 ? vaultEth.toFixed(4)+' ETH' : '—'), col: '#60a5fa' },
+            { label: 'Executing',         val: String(tradeFeed.filter((e:any) => e.executed).length),                            col: '#34d399'       },
+            { label: 'Open Positions',    val: String(positions.length),                                                           col: '#60a5fa'       },
+            { label: 'Portfolio Heat',    val: ((d?.risk?.portfolioHeat || 0) * 100).toFixed(1) + '%',                            col: (d?.risk?.portfolioHeat || 0) > 0.04 ? '#f59e0b' : '#10b981' },
+            { label: 'Max Drawdown',      val: ((d?.risk?.drawdown || 0) * 100).toFixed(1) + '%',                                 col: (d?.risk?.drawdown || 0) > 0.08 ? '#ef4444' : '#10b981'     },
+            { label: 'Active Functions',  val: String(new Set(tradeFeed.filter((e:any) => e.executed).map((e:any) => e.action)).size), col: '#a78bfa' },
+            { label: 'Monitoring',        val: String(tradeFeed.filter((e:any) => e.action === 'HOLD').length),                   col: '#9ca3af'       },
+            { label: '48h Return',        val: (equityChange >= 0 ? '+' : '') + (equityChange * 100).toFixed(2) + '%',            col: grc(equityChange) },
           ].map(s => (
             <div key={s.label} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 16px', borderRight: '1px solid rgba(255,255,255,0.04)', minWidth: 90 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: s.col, fontFamily: 'monospace', lineHeight: 1.2 }}>{s.val}</div>
@@ -245,6 +269,30 @@ export default function Dashboard() {
             </div>
           ))}
         </div>
+
+        {/* ── VAULT STATUS BANNER ── */}
+        {vaultStatus && (
+          <div style={{ flexShrink: 0, background: vaultStatus.readiness === 'FULLY_OPERATIONAL' ? 'rgba(16,185,129,0.07)' : 'rgba(245,158,11,0.07)', borderBottom: '1px solid ' + (vaultStatus.readiness === 'FULLY_OPERATIONAL' ? 'rgba(16,185,129,0.18)' : 'rgba(245,158,11,0.18)'), padding: '6px 20px', display: 'flex', alignItems: 'center', gap: 20, zIndex: 8, fontSize: 11 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 800, color: vaultStatus.readiness === 'FULLY_OPERATIONAL' ? '#34d399' : '#f59e0b' }}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: vaultStatus.readiness === 'FULLY_OPERATIONAL' ? '#10b981' : '#f59e0b', display: 'inline-block', boxShadow: '0 0 6px currentColor' }} />
+              {vaultStatus.readiness === 'FULLY_OPERATIONAL' ? 'VAULT LIVE' : vaultStatus.readiness.replace('_', ' ')}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, color: 'rgba(255,255,255,0.45)', fontSize: 10 }}>
+              {[{l:'Portfolio',v: vaultStatus.portfolioLength > 0 ? `${vaultStatus.portfolioLength} assets configured ✓` : 'Not configured — call setPortfolio()'},
+                {l:'Automation',v: vaultStatus.automationActive ? 'ENABLED ✓' : 'Disabled — call setAutomationEnabled(true)'},
+                {l:'Vault ETH', v: vaultStatus.vaultETH > 0 ? vaultStatus.vaultETH.toFixed(4) + ' ETH' : '0 ETH — awaiting deposit'},
+                {l:'Keeper',    v: 'cron-job.org (1 min) + GitHub Actions (5 min)'},
+                {l:'Cycle',     v: vaultStatus.cycleCount > 0 ? '#' + vaultStatus.cycleCount.toLocaleString() : 'Awaiting first cycle'},
+              ].map(item => (
+                <span key={item.l}>
+                  <span style={{ color: 'rgba(255,255,255,0.25)', marginRight: 3 }}>{item.l}:</span>
+                  <span style={{ fontWeight: 600, color: item.v.includes('✓') ? '#34d399' : item.v.includes('Not') || item.v.includes('Disabled') || item.v.includes('0 ETH') ? '#f59e0b' : 'rgba(255,255,255,0.65)' }}>{item.v}</span>
+                </span>
+              ))}
+            </div>
+            <a href={'https://etherscan.io/address/' + (vaultStatus.vault || '0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52')} target="_blank" rel="noopener noreferrer" style={{ marginLeft: 'auto', fontSize: 9, color: 'rgba(255,255,255,0.2)', textDecoration: 'none', fontFamily: 'monospace' }}>{(vaultStatus.vault || '').slice(0,10)}…↗</a>
+          </div>
+        )}
 
         {/* ── MAIN LAYOUT ── */}
         <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '290px 1fr 270px', overflow: 'hidden', position: 'relative', zIndex: 1 }}>

@@ -56,9 +56,11 @@ async function getProvider(): Promise<ethers.JsonRpcProvider> {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Auth: Vercel Cron injects Authorization header with CRON_SECRET
-  const auth = req.headers['authorization'] || req.headers['x-cron-secret'];
-  if (process.env.CRON_SECRET && auth !== `Bearer ${process.env.CRON_SECRET}`) {
+  // Auth: Vercel built-in cron (x-vercel-cron header), cron-job.org (Authorization: Bearer <CRON_SECRET>),
+  // or any unauthenticated ping when no EXECUTOR_PRIVATE_KEY is set (read-only vault state check).
+  const auth         = req.headers['authorization'] || req.headers['x-cron-secret'];
+  const isVercelCron = !!req.headers['x-vercel-cron'];
+  if (!isVercelCron && process.env.EXECUTOR_PRIVATE_KEY && process.env.CRON_SECRET && auth !== `Bearer ${process.env.CRON_SECRET}`) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 

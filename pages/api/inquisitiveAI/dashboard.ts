@@ -71,18 +71,35 @@ async function buildInputMap(): Promise<Map<string, AssetInput>> {
   return map;
 }
 
+
+const VAULT_ADDR_IQ = process.env.INQUISITIVE_VAULT_ADDRESS || '0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52';
+const VAULT_RPC_IQ  = [process.env.MAINNET_RPC_URL||'https://mainnet.infura.io/v3/d633cdc94aff412b90281fd14cd98868','https://eth.llamarpc.com','https://rpc.ankr.com/eth'];
+async function getVaultEthIQ(): Promise<number> {
+  for (const url of VAULT_RPC_IQ) {
+    try {
+      const r = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'eth_getBalance',params:[VAULT_ADDR_IQ,'latest']}),signal:AbortSignal.timeout(5000)});
+      if(!r.ok) continue;
+      const d = await r.json();
+      if(d.result && d.result!=='0x0') return Number(BigInt(d.result))/1e18;
+    } catch {}
+  }
+  return 0;
+}
+
 export const config = { maxDuration: 30 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const [mapResult, fgResult] = await Promise.allSettled([
+    const [mapResult, fgResult, vaultEthResultIQ] = await Promise.allSettled([
       buildInputMap(),
       fetch('https://api.alternative.me/fng/', { signal: AbortSignal.timeout(5000) }),
+      getVaultEthIQ(),
     ]);
 
     const inputMap = mapResult.status === 'fulfilled' ? mapResult.value : new Map<string, AssetInput>();
+    const vaultEthIQ = vaultEthResultIQ.status === 'fulfilled' ? vaultEthResultIQ.value : 0;
 
     let fg: FGIndex | null = null;
     if (fgResult.status === 'fulfilled' && fgResult.value.ok) {
@@ -117,10 +134,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       s + (PORTFOLIO_WEIGHTS[inp.symbol] || 0) * inp.change24h, 0) / weightSum;
     const return7d        = assetsWithData.reduce((s, inp) =>
       s + (PORTFOLIO_WEIGHTS[inp.symbol] || 0) * inp.change7d, 0) / weightSum;
-    // Index value: base $100 invested 7 days ago → current value
     const indexValue      = 100 * (1 + return7d);
-    // P&L expressed as $ per $100 base over 24 h
-    const pnl24h          = return24h * 100;
+    const ethPriceIQ      = inputMap.get('ETH')?.priceUsd ?? 2000;
+    const vaultValueIQ    = vaultEthIQ > 0 ? vaultEthIQ * ethPriceIQ : 0;
+    const pnl24h          = vaultValueIQ > 0 ? vaultValueIQ * return24h : 0;
     // Win rate: fraction of portfolio assets up in last 24 h
     const winRate         = assetsWithData.length > 0
       ? assetsWithData.filter(inp => inp.change24h > 0).length / assetsWithData.length : 0;
@@ -140,6 +157,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         drawdown: 0,
         isLive: true,
       },
+      vault: { eth: parseFloat(vaultEthIQ.toFixed(6)), usd: parseFloat(vaultValueIQ.toFixed(2)), ethPrice: ethPriceIQ },
       performance: {
         totalPnL: pnl24h,
         winRate,
