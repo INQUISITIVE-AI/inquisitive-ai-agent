@@ -12,7 +12,7 @@ import {
 import { INQAI_TOKEN } from '../src/config/wagmi';
 
 
-const VAULT_ADDR = '0xadcfff8770a162b63693aa84433ef8b93a35eb52' as `0x${string}`;
+const VAULT_ADDR = '0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52' as `0x${string}`;
 const VAULT_ABI = [
   { name:'checkUpkeep',        type:'function', stateMutability:'view',      inputs:[{name:'',type:'bytes'}],        outputs:[{name:'upkeepNeeded',type:'bool'},{name:'performData',type:'bytes'}] },
   { name:'performUpkeep',      type:'function', stateMutability:'nonpayable', inputs:[{name:'performData',type:'bytes'}], outputs:[] },
@@ -181,7 +181,7 @@ export default function AnalyticsPage() {
 
   const backingAssets = useMemo(() => positions.slice(0, 12).map(p => ({
     ...p,
-    myUsd:    effInvested > 0 ? effInvested * (p.allocPct / 100) : p.usdPerToken,
+    myUsd:    effInvested > 0 ? effInvested * (p.allocPct / 100) : p.baseAllocUsd,
     myPnl24h: effInvested > 0 ? effInvested * (p.allocPct / 100) * p.change24h : p.pnl24h,
   })), [positions, effInvested]);
 
@@ -479,14 +479,21 @@ export default function AnalyticsPage() {
                   </div>
                   <div style={{ background:'rgba(13,13,32,0.85)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:20, padding:'22px', backdropFilter:'blur(12px)' }}>
                     <h3 style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.8)', marginBottom:14 }}>AI Strategy</h3>
-                    {[
-                      { l:'Core BTC·ETH·SOL', p:38, c:'#3b82f6' },
-                      { l:'DeFi & AI',         p:20, c:'#7c3aed' },
-                      { l:'Stablecoins & RWA', p:12, c:'#10b981' },
-                      { l:'L2 & Interop',      p:12, c:'#0ea5e9' },
-                      { l:'Liquid Staking',    p:10, c:'#f59e0b' },
-                      { l:'Other',             p: 8, c:'#6b7280' },
-                    ].map(s => (
+                    {(cats.length > 0
+                      ? cats.slice(0,6).map((cat:any,i:number) => ({
+                          l: ({major:'Core BTC·ETH·SOL',defi:'DeFi & Protocols',stablecoin:'Stablecoins & RWA',l2:'L2 & Interop','liquid-stake':'Liquid Staking',ai:'AI Tokens',rwa:'Real World Assets'} as any)[cat.category] || cat.category,
+                          p: Math.round(cat.pct),
+                          c: (['#3b82f6','#7c3aed','#10b981','#0ea5e9','#f59e0b','#a78bfa'] as string[])[i] || '#6b7280',
+                        }))
+                      : [
+                          { l:'Core BTC·ETH·SOL', p:38, c:'#3b82f6' },
+                          { l:'DeFi & Protocols',  p:20, c:'#7c3aed' },
+                          { l:'Stablecoins & RWA', p:12, c:'#10b981' },
+                          { l:'L2 & Interop',      p:12, c:'#0ea5e9' },
+                          { l:'Liquid Staking',    p:10, c:'#f59e0b' },
+                          { l:'Other',             p: 8, c:'#6b7280' },
+                        ]
+                    ).map(s => (
                       <div key={s.l} style={{ marginBottom:10 }}>
                         <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}><span style={{ fontSize:11, fontWeight:600 }}>{s.l}</span><span style={{ fontSize:11, fontWeight:800, color:s.c, fontFamily:'monospace' }}>{s.p}%</span></div>
                         <div style={{ height:4, background:'rgba(255,255,255,0.05)', borderRadius:2, overflow:'hidden' }}><div style={{ height:'100%', width:`${s.p*2.5}%`, background:s.c, borderRadius:2 }} /></div>
@@ -532,10 +539,10 @@ export default function AnalyticsPage() {
                     {(() => {
                       const c = topSignals[0]?.components || {};
                       return [
-                        { l:'Pattern',   v:c.patternEngine  ||0.72, c:'#3b82f6' },
-                        { l:'Reasoning', v:c.reasoningEngine||0.68, c:'#10b981' },
-                        { l:'Portfolio', v:c.portfolioEngine||0.65, c:'#ef4444' },
-                        { l:'Learning',  v:c.learningEngine ||0.70, c:'#f97316' },
+                        { l:'Pattern',   v:c.patternEngine  ||0, c:'#3b82f6' },
+                        { l:'Reasoning', v:c.reasoningEngine||0, c:'#10b981' },
+                        { l:'Portfolio', v:c.portfolioEngine||0, c:'#ef4444' },
+                        { l:'Learning',  v:c.learningEngine ||0, c:'#f97316' },
                       ];
                     })().map(m => (
                       <div key={m.l} style={{ textAlign:'center' }}>
@@ -593,7 +600,7 @@ export default function AnalyticsPage() {
                       <span style={{ textAlign:'right', fontSize:11, fontFamily:'monospace', color:grc(p.change24h) }}>{pct(p.change24h)}</span>
                       <span style={{ textAlign:'right', fontSize:11, fontFamily:'monospace', color:grc(p.change7d) }}>{pct(p.change7d)}</span>
                       <span style={{ textAlign:'right', fontSize:11, fontFamily:'monospace', color:'rgba(255,255,255,0.6)' }}>{p.weight}%</span>
-                      <span style={{ textAlign:'right', fontSize:11, fontFamily:'monospace', color:'#10b981' }}>{fmtUsd(p.usdPerToken)}</span>
+                      <span style={{ textAlign:'right', fontSize:11, fontFamily:'monospace', color:'#10b981' }}>{fmtUsd(p.baseAllocUsd)}</span>
                       <div style={{ display:'flex', justifyContent:'flex-end' }}>
                         <div style={{ height:4, width:60, background:'rgba(255,255,255,0.06)', borderRadius:2, overflow:'hidden' }}>
                           <div style={{ height:'100%', width:`${(p.confidence||0)*100}%`, background:`${ACTION_COL[p.action]||'#7c3aed'}`, borderRadius:2 }} />
