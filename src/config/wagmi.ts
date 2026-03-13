@@ -60,10 +60,12 @@ export const INQAI_TOKEN = {
   vaultAddress: (process.env.NEXT_PUBLIC_VAULT_ADDRESS || '0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52') as `0x${string}`,
   btcAddress:   'bc1q54tccqs2z3gp74pdatfnfucrzxuv2755fq6cfg',
   solAddress:   '7a2WzumijyGTqALmqoDZd3mvyP2aS7R4GjBdBxMUjRPk',
+  trxAddress:   'TDSkgbhuMAHChDw6kGCLJmM9v7PPMJgHJA',
   paymentTokens: [
     { symbol: 'ETH',  name: 'Ethereum', decimals: 18 },
     { symbol: 'BTC',  name: 'Bitcoin',  decimals: 8 },
     { symbol: 'SOL',  name: 'Solana',   decimals: 9 },
+    { symbol: 'TRX',  name: 'TRON',     decimals: 6 },
     { symbol: 'USDC', name: 'USD Coin', decimals: 6, address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48' as `0x${string}` },
   ],
 };

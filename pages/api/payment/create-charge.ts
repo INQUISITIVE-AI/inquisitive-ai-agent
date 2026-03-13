@@ -1,11 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-// ── Static institutional payment addresses ────────────────────────────────────
-// No third-party payment processor required. Payments monitored via free public
-// blockchain APIs: Blockstream.info (BTC) and Solana mainnet RPC (SOL).
-// These addresses are the team wallets defined in wagmi.ts.
 const BTC_ADDRESS = process.env.PAYMENT_BTC_ADDRESS || 'bc1q54tccqs2z3gp74pdatfnfucrzxuv2755fq6cfg';
 const SOL_ADDRESS = process.env.PAYMENT_SOL_ADDRESS || '7a2WzumijyGTqALmqoDZd3mvyP2aS7R4GjBdBxMUjRPk';
+const TRX_ADDRESS = process.env.PAYMENT_TRX_ADDRESS || 'TDSkgbhuMAHChDw6kGCLJmM9v7PPMJgHJA';
 
 // TTL: 30 minutes
 const TTL_MS = 30 * 60 * 1000;
@@ -68,7 +65,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    return res.status(400).json({ error: `Unsupported payment token for manual flow: ${payToken}` });
+    if (payToken === 'TRX') {
+      const price  = await getLivePrice('tron', 0.25);
+      const dust   = dustIndex * 0.000001; // 1 SUN = 0.000001 TRX
+      const amount = (usd / price + dust).toFixed(6);
+      return res.status(200).json({
+        chargeId:    orderId,
+        address:     TRX_ADDRESS,
+        amount,
+        currency:    'TRX',
+        expiresAt,
+        orderId,
+        checkParams: { since: now, expectedAmount: amount, currency: 'TRX' },
+      });
+    }
+
+    return res.status(400).json({ error: `Unsupported payment token: ${payToken}` });
   } catch (err: any) {
     return res.status(500).json({ error: err.message || 'Failed to create payment order' });
   }

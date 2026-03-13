@@ -13,7 +13,8 @@
 | **Vault Contract** | `0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52` |
 | **BTC Payment Address** | `bc1q54tccqs2z3gp74pdatfnfucrzxuv2755fq6cfg` |
 | **SOL Payment Address** | `7a2WzumijyGTqALmqoDZd3mvyP2aS7R4GjBdBxMUjRPk` |
-| **ETH / USDC payments** | Sent directly to team wallet (EOA) |
+| **TRX Payment Address** | `TDSkgbhuMAHChDw6kGCLJmM9v7PPMJgHJA` |
+| **ETH / USDC payments** | Sent directly to vault via WalletConnect |
 | **Presale Price** | $8 per INQAI |
 | **Target Price** | $15 per INQAI |
 | **Total Supply** | 100,000,000 INQAI (fixed) |
@@ -135,19 +136,19 @@ The Oracle      → CoinGecko primary, CryptoCompare fallback — 65 native pric
 
 ## Token Purchase
 
-Token holders buy INQAI during the presale. INQAI is airdropped to the buyer's wallet within 24 hours.
+INQAI is available at the presale price of **$8 per token**. Tokens are delivered to your self-custody wallet within 24 hours of confirmed payment.
 
 ### Accepted Payment Methods
 
-| Method | How | Address |
-|--------|-----|---------|
-| **ETH** | WalletConnect → send to team wallet | `0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746` |
-| **USDC** | WalletConnect → ERC-20 transfer to team wallet | `0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746` |
-| **BTC** | Send exact amount to static address | `bc1q54tccqs2z3gp74pdatfnfucrzxuv2755fq6cfg` |
-| **SOL** | Send exact amount to static address | `7a2WzumijyGTqALmqoDZd3mvyP2aS7R4GjBdBxMUjRPk` |
-| **TRX** | Send exact amount to TRON address | `TDSkgbhuMAHChDw6kGCLJmM9v7PPMJgHJA` |
+| Method | Address |
+|--------|---------|
+| **ETH** | Via WalletConnect — sent directly to vault |
+| **USDC** | Via WalletConnect — ERC-20 transfer to vault |
+| **BTC** | `bc1q54tccqs2z3gp74pdatfnfucrzxuv2755fq6cfg` |
+| **SOL** | `7a2WzumijyGTqALmqoDZd3mvyP2aS7R4GjBdBxMUjRPk` |
+| **TRX** | `TDSkgbhuMAHChDw6kGCLJmM9v7PPMJgHJA` |
 
-BTC and SOL payments use a dust nonce in the amount for unique identification. Payment verification is done via public blockchain APIs (Blockstream for BTC, Solana RPC for SOL) — no third-party payment processor, no API signup required.
+Each BTC, SOL, and TRX payment is assigned a unique amount for automatic on-chain identification. Payment confirmation is detected automatically.
 
 ---
 
@@ -247,10 +248,6 @@ The vault uses a **free hybrid keeper model** — no Chainlink subscription requ
 
 Already configured in `.github/workflows/vault-keeper.yml`. Runs automatically every 5 minutes as a redundant fallback. No setup required.
 
-### Backup 2: Vercel Cron (Every 5 Minutes — Free)
-
-Configured in `vercel.json` — Vercel’s built-in cron fires every 5 minutes as a tertiary backup. No setup required.
-
 ### Future: Chainlink Automation (At Scale)
 
 When the project grows and decentralized execution is required:
@@ -262,7 +259,7 @@ When the project grows and decentralized execution is required:
 5. Fund with LINK
 ```
 
-The hybrid approach (cron-job.org + GitHub Actions + Vercel cron) provides institutional-grade reliability at zero cost.
+The hybrid approach (cron-job.org + GitHub Actions) provides institutional-grade reliability at zero cost.
 
 ---
 
@@ -356,10 +353,10 @@ All endpoints are Next.js API routes (`pages/api/`). No authentication required 
 - ✅ **5 intelligence engines** — Pattern, Reasoning, Portfolio, Learning, Risk — live
 - ✅ **11 trading functions** — fully implemented in `server/services/tradingEngine.js`
 - ✅ **INQAI ERC-20** — `0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5` — mainnet live
-- ✅ **BTC/SOL/TRX payment verification** — Blockstream + Solana RPC + TRON, no signups
-- ✅ **Token sale active** — presale $8, ETH/USDC/BTC/SOL/TRX accepted, INQAI airdropped within 24h
+- ✅ **BTC/SOL/TRX payment verification** — on-chain, automatic confirmation
+- ✅ **Token sale active** — presale $8, ETH/USDC/BTC/SOL/TRX accepted, INQAI delivered within 24h
 - ✅ **Vault live** — `0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52` — 26 assets + 13 bridges configured
-- ✅ **Hybrid keeper running** — cron-job.org (1 min) + GitHub Actions (5 min) + Vercel cron (5 min) — zero cost, no LINK required
+- ✅ **Hybrid keeper running** — cron-job.org (1 min) + GitHub Actions (5 min) — zero cost, no LINK required
 
 ---
 

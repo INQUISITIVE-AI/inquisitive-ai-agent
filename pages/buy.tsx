@@ -26,7 +26,7 @@ const NAV_LINKS = [
 export default function BuyPage() {
   const router = useRouter();
   const { address, isConnected, chain } = useAccount();
-  const [payToken, setPayToken]     = useState<'ETH' | 'BTC' | 'SOL' | 'USDC'>('ETH');
+  const [payToken, setPayToken]     = useState<'ETH' | 'BTC' | 'SOL' | 'TRX' | 'USDC'>('ETH');
   const [usdAmount, setUsdAmount]   = useState('1000');
   const [isBuying, setIsBuying]     = useState(false);
   const [txHash, setTxHash]         = useState<string | null>(null);
@@ -36,6 +36,7 @@ export default function BuyPage() {
   const [ethPrice, setEthPrice]         = useState<number>(3200);
   const [btcPrice, setBtcPrice]         = useState<number>(85000);
   const [solPrice, setSolPrice]         = useState<number>(140);
+  const [trxPrice, setTrxPrice]         = useState<number>(0.25);
   const [showManual, setShowManual]     = useState(false);
   const [chargeId, setChargeId]         = useState<string | null>(null);
   const [chargeAddress, setChargeAddress] = useState<string | null>(null);
@@ -50,12 +51,13 @@ export default function BuyPage() {
   const { disconnect }              = useDisconnect();
 
   useEffect(() => {
-    fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum,bitcoin,solana&vs_currencies=usd')
+    fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum,bitcoin,solana,tron&vs_currencies=usd')
       .then(r => r.json())
       .then(d => {
         if (d?.ethereum?.usd) setEthPrice(d.ethereum.usd);
         if (d?.bitcoin?.usd)  setBtcPrice(d.bitcoin.usd);
         if (d?.solana?.usd)   setSolPrice(d.solana.usd);
+        if (d?.tron?.usd)     setTrxPrice(d.tron.usd);
       })
       .catch(() => {});
   }, []);
@@ -68,6 +70,7 @@ export default function BuyPage() {
     ETH:  ethBal  ? parseFloat(ethBal.formatted).toFixed(4)  : '—',
     BTC:  wbtcBal ? parseFloat(wbtcBal.formatted).toFixed(6) : '—',
     SOL:  '—',
+    TRX:  '—',
     USDC: usdcBal ? parseFloat(usdcBal.formatted).toFixed(2) : '—',
   };
 
@@ -82,7 +85,8 @@ export default function BuyPage() {
 
   const payAmount  = payToken === 'BTC'
     ? (usd / btcPrice).toFixed(8)
-    : payToken === 'SOL' ? (usd / solPrice).toFixed(4) : '0';
+    : payToken === 'SOL' ? (usd / solPrice).toFixed(4)
+    : payToken === 'TRX' ? (usd / trxPrice).toFixed(2) : '0';
 
   useEffect(() => {
     if (!chargeId || chargeStatus === 'confirmed' || chargeStatus === 'expired' || chargeStatus === 'failed') return;
@@ -119,7 +123,7 @@ export default function BuyPage() {
 
     if (usd < 10) { setError('Minimum purchase is $10'); setIsBuying(false); return; }
 
-    if (payToken === 'BTC' || payToken === 'SOL') {
+    if (payToken === 'BTC' || payToken === 'SOL' || payToken === 'TRX') {
       try {
         const r = await fetch('/api/payment/create-charge', {
           method:  'POST',
@@ -300,8 +304,8 @@ export default function BuyPage() {
                     {/* Payment token selector */}
                     <div style={{ marginBottom: 22 }}>
                       <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10, display: 'block' }}>Pay with</label>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8 }}>
-                        {(['ETH','BTC','SOL','USDC'] as const).map(tok => (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 8 }}>
+                        {(['ETH','BTC','SOL','TRX','USDC'] as const).map(tok => (
                           <button
                             key={tok}
                             onClick={() => setPayToken(tok)}
@@ -395,7 +399,7 @@ export default function BuyPage() {
                     )}
 
                     {/* BTC / SOL — NOWPayments unique address panel */}
-                    {showManual && (payToken === 'BTC' || payToken === 'SOL') && (
+                    {showManual && (payToken === 'BTC' || payToken === 'SOL' || payToken === 'TRX') && (
                       <div style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 14, padding: '18px', marginBottom: 18 }}>
                         {chargeStatus === 'confirmed' ? (
                           <div style={{ textAlign: 'center', padding: '8px 0' }}>
@@ -592,7 +596,7 @@ export default function BuyPage() {
                 <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 18, color: 'rgba(255,255,255,0.7)' }}>How INQAI Works</h3>
                 {[
                   { n: '01', t: 'Acquire INQAI',              d: 'Purchase at the $8 presale price. Tokens are delivered directly to your self-custody wallet. No intermediary.' },
-                  { n: '02', t: 'ETH Deployed Across 65 Assets', d: 'Your ETH payment is received by the vault. Chainlink Automation triggers performUpkeep() — the AI immediately diversifies across 27 Uniswap V3 swaps, 13 deBridge cross-chain bridges, and 25 Lido stETH positions.' },
+                  { n: '02', t: 'ETH Deployed Across 65 Assets', d: 'Your ETH payment is received by the vault. The AI keeper automatically triggers performUpkeep() — diversifying across 27 Uniswap V3 swaps, 13 deBridge cross-chain bridges (including TRON for TRX), and 25 Lido stETH positions.' },
                   { n: '03', t: 'Proportional Asset-Backed Ownership', d: 'Each INQAI token represents proportional ownership in the underlying 65-asset portfolio. Live NAV is calculated from native CoinGecko prices — zero proxy disconnect.' },
                   { n: '04', t: 'Compounding Value Accrual',   d: '60% of all protocol fees are deployed for open-market buybacks. 20% is permanently burned. Circulating supply contracts over time.' },
                 ].map(item => (

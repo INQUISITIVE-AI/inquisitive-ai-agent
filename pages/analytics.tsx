@@ -280,14 +280,14 @@ export default function AnalyticsPage() {
               </div>
             </div>
 
-            {/* KPI Row */}
+            {/* KPI Row — always shows real vault metrics, not deployer token holdings */}
             <div style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:12, marginBottom:24 }}>
               {([
-                { label:hasHoldings?'Your Portfolio':'INQAI NAV', val:fmtUsd(dispValue), sub:hasHoldings?`${totalInqai.toFixed(4)} INQAI · ${holdingSource}`:`Per token · ${isOnChainNAV?'real AUM':'basket'}`, col:'#60a5fa', icon:'dollar' },
-                { label:hasHoldings?'Total P&L':'7D Return',       val:hasHoldings?fmtUsd(totalPnL):pct(return7d), sub:hasHoldings?`${pct(roiPct)} ROI vs $${INQAI_TOKEN.presalePrice} presale`:'65-asset weighted basket', col:grc(hasHoldings?totalPnL:return7d), icon:'target' },
-                { label:'24H Return',  val:pct(return24h),   sub:`${(winRate*100).toFixed(0)}% assets up today`,  col:grc(return24h), icon:'trend' },
-                { label:'Target APY',  val:'18.5%',           sub:'Staking · Lending · LP · Yield',               col:'#f59e0b',      icon:'flame' },
-                { label:'AI Regime',   val:regime,            sub:`Risk ${(riskScore*100).toFixed(0)}% · F&G ${fg}`,col:regimeCol,    icon:'bot'   },
+                { label:'Vault AUM',   val: aumUSD > 0 ? fmtUsd(aumUSD) : (treasury.totalEth??0) > 0 ? (treasury.totalEth??0).toFixed(4)+' ETH' : '—', sub: aumUSD > 0 ? `${(treasury.totalEth??0).toFixed(4)} ETH · ${isOnChainNAV?'on-chain':'basket-weighted'}` : 'Awaiting deposit', col:'#60a5fa', icon:'dollar' },
+                { label:'7D Return',   val:pct(return7d),    sub:'65-asset weighted basket',                     col:grc(return7d),  icon:'target' },
+                { label:'24H Return',  val:pct(return24h),   sub:`${(winRate*100).toFixed(0)}% assets up today`, col:grc(return24h), icon:'trend'  },
+                { label:'Target APY',  val:'18.5%',           sub:'Staking · Lending · LP · Yield',              col:'#f59e0b',      icon:'flame'  },
+                { label:'AI Regime',   val:regime,            sub:`Risk ${(riskScore*100).toFixed(0)}% · F&G ${fg}`,col:regimeCol,   icon:'bot'    },
               ] as any[]).map(m => (
                 <div key={m.label} style={{ background:'rgba(13,13,32,0.85)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:16, padding:'16px 14px', backdropFilter:'blur(12px)', textAlign:'center' }}>
                   <div style={{ marginBottom:6, display:'flex', justifyContent:'center' }}>
@@ -467,8 +467,8 @@ export default function AnalyticsPage() {
                       { l:'7D Return',      v:pct(return7d),              c:grc(return7d) },
                       { l:'24H Return',     v:pct(return24h),             c:grc(return24h) },
                       { l:'Win Rate',       v:(winRate*100).toFixed(1)+'%' },
-                      { l:'Buy Signals',    v:String(buys),               c:'#10b981' },
-                      { l:'Sell Signals',   v:String(sells),              c:'#ef4444' },
+                      { l:'Active Signals', v:String(buys),               c:'#10b981' },
+                      { l:'Reduce/Exit',    v:String(sells),              c:'#ef4444' },
                       { l:'Active Assets',  v:String(nav?.portfolio?.assetCount??'—') },
                       { l:'Brain Cycles',   v:cycles.toLocaleString() },
                     ].map((r:any) => (

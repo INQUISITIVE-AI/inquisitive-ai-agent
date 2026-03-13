@@ -1,11 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-// ── Payment verification via free public blockchain APIs ──────────────────────
-// BTC: Blockstream.info REST API  — no API key, no signup
-// SOL: Solana mainnet public RPC  — no API key, no signup (3 fallback endpoints)
-
 const BTC_ADDRESS = process.env.PAYMENT_BTC_ADDRESS || 'bc1q54tccqs2z3gp74pdatfnfucrzxuv2755fq6cfg';
 const SOL_ADDRESS = process.env.PAYMENT_SOL_ADDRESS || '7a2WzumijyGTqALmqoDZd3mvyP2aS7R4GjBdBxMUjRPk';
+const TRX_ADDRESS = process.env.PAYMENT_TRX_ADDRESS || 'TDSkgbhuMAHChDw6kGCLJmM9v7PPMJgHJA';
 
 // Multiple Solana RPC endpoints — tried in order until one responds
 const SOL_RPCS = [
@@ -123,6 +120,52 @@ async function checkSol(
   } catch { return 'not_found'; }
 }
 
+// ── TRX: TRONGrid + Tronscan fallback ─────────────────────────────────────────
+async function checkTrx(
+  expectedAmount: string,
+  since: number
+): Promise<'confirmed' | 'pending' | 'not_found'> {
+  const expectedSun = Math.round(parseFloat(expectedAmount) * 1_000_000);
+  const tolerance   = 10; // 10 SUN tolerance
+  try {
+    const url = `https://api.trongrid.io/v1/accounts/${TRX_ADDRESS}/transactions` +
+      `?limit=40&only_confirmed=false&order_by=block_timestamp,desc`;
+    const r = await fetch(url, { signal: AbortSignal.timeout(10000) });
+    if (!r.ok) throw new Error('TRONGrid unavailable');
+    const data = await r.json();
+    const txs: any[] = data?.data ?? [];
+    for (const tx of txs) {
+      const blockTime = tx.block_timestamp || 0;
+      if (blockTime > 0 && blockTime < since) continue;
+      for (const c of (tx?.raw_data?.contract ?? [])) {
+        if (c.type !== 'TransferContract') continue;
+        const amountSun = c?.parameter?.value?.amount ?? 0;
+        if (Math.abs(amountSun - expectedSun) <= tolerance) {
+          const ret = tx?.ret?.[0]?.contractRet;
+          return ret === 'SUCCESS' ? 'confirmed' : 'pending';
+        }
+      }
+    }
+    return 'not_found';
+  } catch {
+    try {
+      const url2 = `https://apilist.tronscan.org/api/transaction?address=${TRX_ADDRESS}&start=0&limit=40&sort=-timestamp`;
+      const r2 = await fetch(url2, { signal: AbortSignal.timeout(10000) });
+      if (!r2.ok) return 'not_found';
+      const d2 = await r2.json();
+      for (const tx2 of (d2?.data ?? [])) {
+        const blockTime = tx2.timestamp || 0;
+        if (blockTime > 0 && blockTime < since) continue;
+        const amountSun = tx2.contractData?.amount ?? 0;
+        if (Math.abs(amountSun - expectedSun) <= tolerance) {
+          return tx2.confirmed ? 'confirmed' : 'pending';
+        }
+      }
+      return 'not_found';
+    } catch { return 'not_found'; }
+  }
+}
+
 // ── Handler ───────────────────────────────────────────────────────────────────
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
@@ -144,6 +187,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     raw = await checkBtc(amount as string, sinceMs);
   } else if (cur === 'SOL') {
     raw = await checkSol(amount as string, sinceMs);
+  } else if (cur === 'TRX') {
+    raw = await checkTrx(amount as string, sinceMs);
   } else {
     return res.status(400).json({ error: `Unsupported currency: ${cur}` });
   }
