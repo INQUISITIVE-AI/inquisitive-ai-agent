@@ -442,7 +442,6 @@ export default function HelpPage() {
             {m:'GET', p:'/status',                    d:'Full system status — brain cycles, price feed health, macro indicators, trading stats'},
             {m:'GET', p:'/assets',                    d:'All 65 assets: live price, 24h/7d change, volume, market cap, AI signal + confidence score'},
             {m:'GET', p:'/assets/:symbol',             d:'Single asset — live price + full AI analysis from all 5 engines'},
-            {m:'GET', p:'/dashboard',                 d:'Complete snapshot — portfolio metrics, AI signals, macro regime, top movers, trade history'},
             {m:'GET', p:'/signals',                   d:'All AI brain signals, top buy opportunities, borrow opportunities, risk assessment, cycle count'},
             {m:'GET', p:'/analyze/:symbol',            d:'Deep analysis: Pattern/Reasoning/Portfolio/Learning engine scores + risk gate result + explanation'},
             {m:'GET', p:'/prices',                    d:'Raw price map for all 65 assets (symbol → price object) from CoinGecko'},
@@ -657,7 +656,7 @@ export default function HelpPage() {
             <div className="anim-name-pulse" style={{fontWeight:900,fontSize:16,letterSpacing:'-0.4px',color:'#fff',lineHeight:1}}>INQUISITIVE</div>
           </button>
           <div style={{display:'flex',gap:4,flex:1}}>
-            {[{l:'AI Analytics',p:'/dashboard',accent:true},{l:'Portfolio',p:'/analytics',accent:false},{l:'Docs',p:'/help',accent:false}].map(n=>(
+            {[{l:'Portfolio',p:'/analytics',accent:false},{l:'Docs',p:'/help',accent:true}].map(n=>(
               <button key={n.l} onClick={()=>router.push(n.p)} style={{padding:'5px 12px',borderRadius:7,background:n.accent?'linear-gradient(135deg,#7c3aed,#4f46e5)':'transparent',border:n.accent?'1px solid rgba(255,255,255,0.1)':'none',color:n.accent?'#fff':'rgba(255,255,255,0.45)',fontSize:12,fontWeight:n.accent?700:500,cursor:'pointer',boxShadow:n.accent?'0 2px 10px rgba(124,58,237,0.3)':'none'}}>{n.l}</button>
             ))}
           </div>

@@ -152,7 +152,7 @@ export default function TokenPage() {
             <div style={{fontSize:8,color:'rgba(255,255,255,0.35)',letterSpacing:'2px',textTransform:'uppercase',marginTop:2}}>INQAI</div>
           </button>
           <div style={{display:'flex',gap:4,flex:1}}>
-            {[{l:'AI Analytics',p:'/dashboard',accent:true},{l:'Portfolio',p:'/analytics',accent:false},{l:'Token',p:'/token',accent:false},{l:'Docs',p:'/help',accent:false}].map(n=>(
+            {[{l:'Portfolio',p:'/analytics',accent:false},{l:'Token',p:'/token',accent:true},{l:'Docs',p:'/help',accent:false}].map(n=>(
               <button key={n.l} onClick={()=>router.push(n.p)} style={{padding:'5px 12px',borderRadius:7,background:n.accent?'linear-gradient(135deg,#7c3aed,#4f46e5)':'transparent',border:n.accent?'1px solid rgba(255,255,255,0.1)':'none',color:n.accent?'#fff':'rgba(255,255,255,0.45)',fontSize:12,fontWeight:n.accent?700:500,cursor:'pointer',boxShadow:n.accent?'0 2px 10px rgba(124,58,237,0.3)':'none'}}>{n.l}</button>
             ))}
           </div>

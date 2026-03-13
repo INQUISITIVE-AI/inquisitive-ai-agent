@@ -14,6 +14,11 @@ const nextConfig = {
     '@reown/appkit-wallet',
     '@walletconnect/universal-provider',
   ],
+  async redirects() {
+    return [
+      { source: '/dashboard', destination: '/analytics', permanent: true },
+    ];
+  },
   async headers() {
     return [
       {

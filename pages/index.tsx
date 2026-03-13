@@ -87,7 +87,7 @@ export default function Home() {
               <div className="anim-name-pulse" style={{fontWeight:900,fontSize:20,letterSpacing:'-0.6px',color:'#fff',lineHeight:1,marginLeft:0}}>INQUISITIVE</div>
             </button>
             <div style={{display:'flex',alignItems:'center',gap:6}}>
-              {[{l:'AI Analytics',p:'/dashboard',accent:true},{l:'Portfolio',p:'/analytics',accent:false},{l:'Docs',p:'/help',accent:false}].map(n=>(
+              {[{l:'Portfolio',p:'/analytics',accent:true},{l:'Docs',p:'/help',accent:false}].map(n=>(
                 <button key={n.l} onClick={()=>router.push(n.p)} style={{
                   padding:'7px 14px',borderRadius:9,border:n.accent?'1px solid rgba(255,255,255,0.1)':'none',
                   background:n.accent?'linear-gradient(135deg,#7c3aed,#4f46e5)':'transparent',
@@ -292,7 +292,7 @@ export default function Home() {
               </div>
               <div>
                 <div style={{fontSize:11,fontWeight:700,color:'rgba(255,255,255,0.4)',textTransform:'uppercase',letterSpacing:'1px',marginBottom:12}}>Platform</div>
-                {[['Acquire INQAI','/buy'],['AI Analytics','/dashboard'],['Analytics','/analytics'],['Documentation','/help']].map(([l,p])=>(
+                {[['Acquire INQAI','/buy'],['Portfolio','/analytics'],['Documentation','/help']].map(([l,p])=>(
                   <div key={l} onClick={()=>router.push(p)} style={{fontSize:12,color:'rgba(255,255,255,0.35)',padding:'4px 0',cursor:'pointer',transition:'color 0.15s'}}
                     onMouseOver={e=>(e.currentTarget.style.color='rgba(255,255,255,0.7)')}
                     onMouseOut={e=>(e.currentTarget.style.color='rgba(255,255,255,0.35)')}

@@ -40,9 +40,8 @@ const pct  = (n: number) => `${n >= 0 ? '+' : ''}${(n * 100).toFixed(2)}%`;
 const grc  = (n: number) => n >= 0 ? '#10b981' : '#ef4444';
 
 const NAV_LINKS = [
-  { l: 'AI Analytics', p: '/dashboard', accent: false },
-  { l: 'Portfolio',    p: '/analytics', accent: true  },
-  { l: 'Docs',         p: '/help',      accent: false },
+  { l: 'Portfolio', p: '/analytics', accent: true  },
+  { l: 'Docs',      p: '/help',      accent: false },
 ];
 
 const ACTION_COL: Record<string, string> = {

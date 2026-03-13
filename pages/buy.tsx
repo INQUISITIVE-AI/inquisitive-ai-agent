@@ -18,9 +18,8 @@ const fmtUsd = (n: number) => {
 };
 
 const NAV_LINKS = [
-  { l: 'AI Analytics', p: '/dashboard', accent: true  },
-  { l: 'Portfolio',    p: '/analytics', accent: false },
-  { l: 'Docs',         p: '/help',      accent: false },
+  { l: 'Portfolio', p: '/analytics', accent: false },
+  { l: 'Docs',      p: '/help',      accent: false },
 ];
 
 export default function BuyPage() {
