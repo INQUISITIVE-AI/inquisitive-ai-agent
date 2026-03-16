@@ -14,13 +14,21 @@ import { INQAI_TOKEN } from '../src/config/wagmi';
 
 const VAULT_ADDR = '0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52' as `0x${string}`;
 const VAULT_ABI = [
-  { name:'checkUpkeep',        type:'function', stateMutability:'view',      inputs:[{name:'',type:'bytes'}],        outputs:[{name:'upkeepNeeded',type:'bool'},{name:'performData',type:'bytes'}] },
-  { name:'performUpkeep',      type:'function', stateMutability:'nonpayable', inputs:[{name:'performData',type:'bytes'}], outputs:[] },
-  { name:'getPortfolioLength', type:'function', stateMutability:'view',      inputs:[],                             outputs:[{name:'',type:'uint256'}] },
-  { name:'getETHBalance',      type:'function', stateMutability:'view',      inputs:[],                             outputs:[{name:'',type:'uint256'}] },
-  { name:'automationEnabled',  type:'function', stateMutability:'view',      inputs:[],                             outputs:[{name:'',type:'bool'}] },
-  { name:'cycleCount',         type:'function', stateMutability:'view',      inputs:[],                             outputs:[{name:'',type:'uint256'}] },
+  { name:'checkUpkeep',          type:'function', stateMutability:'view',      inputs:[{name:'',type:'bytes'}],        outputs:[{name:'upkeepNeeded',type:'bool'},{name:'performData',type:'bytes'}] },
+  { name:'performUpkeep',        type:'function', stateMutability:'nonpayable', inputs:[{name:'performData',type:'bytes'}], outputs:[] },
+  { name:'getPortfolioLength',   type:'function', stateMutability:'view',      inputs:[],                             outputs:[{name:'',type:'uint256'}] },
+  { name:'getETHBalance',        type:'function', stateMutability:'view',      inputs:[],                             outputs:[{name:'',type:'uint256'}] },
+  { name:'automationEnabled',    type:'function', stateMutability:'view',      inputs:[],                             outputs:[{name:'',type:'bool'}] },
+  { name:'cycleCount',           type:'function', stateMutability:'view',      inputs:[],                             outputs:[{name:'',type:'uint256'}] },
+  { name:'owner',                type:'function', stateMutability:'view',      inputs:[],                             outputs:[{name:'',type:'address'}] },
+  { name:'setPortfolio',         type:'function', stateMutability:'nonpayable', inputs:[{name:'_tokens',type:'address[]'},{name:'_weights',type:'uint256[]'},{name:'_fees',type:'uint24[]'}], outputs:[] },
+  { name:'setAutomationEnabled', type:'function', stateMutability:'nonpayable', inputs:[{name:'_enabled',type:'bool'}], outputs:[] },
 ] as const;
+
+// PHASE1: 26 ETH-mainnet ERC-20s for setPortfolio() — same as setup.ts
+const PHASE1_TOKENS:  `0x${string}`[] = ['0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599','0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84','0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48','0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9','0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984','0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32','0xB50721BCf8d664c30412Cfbc6cf7a15145234ad1','0x45804880De22913dAFE09f4980848ECE6EcbAf78','0xe28b3B32B6c345A34Ff64674606124Dd5Aceca30','0x57e114B691Db790C35207b2e685D4A43181e6061','0x455e53CBB86018Ac2B8092FdCd39d8444aFFC3F6','0xaea46A60368A7bD060eec7DF8CBa43b7EF41Ad85','0x6De037ef9aD2725EB40118Bb1702EBb27e4Aeb24','0x514910771AF9Ca656af840dff83E8264EcF986CA','0xfAbA6f8e4a5E8Ab82F62fe7C39859FA577269BE3','0xc944E90C64B2c07662A292be6244BDf05Cda44a7','0x56072C95FAA701256059aa122697B133aDEd9279','0xCa14007Eff0dB1f8135f4C25B34De49AB0d42766','0x4a220E6096B25EADb88358cb44068A3248254675','0x6985884C4392D348587B19cb9eAAf157F13271cd','0x3506424F91fD33084466F402d5D97f05F8e3b4AF','0x4E15361FD6b4BB609Fa63C81A2be19d873717870','0xdBe2C93A4e82a177617F4a43Ee1A69c69Ee8e7E6','0x70e8dE73cE538DA2bEEd35d14187F6959a8ecA96','0x420412E765BFa6d85aaaC94b4f7b708C89be2e2B','0x431D5dfF03120AFA4bDf332c61A6e1766eF37BDB'];
+const PHASE1_WEIGHTS: bigint[] = [3523n,2341n,585n,390n,390n,292n,292n,292n,195n,195n,195n,195n,195n,195n,195n,97n,97n,97n,48n,48n,48n,19n,19n,19n,19n,19n];
+const PHASE1_FEES:    number[]  = [3000,100,500,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000];
 
 const WalletButton   = dynamic(() => import('../src/components/WalletButton'),  { ssr: false });
 const PortfolioChart = dynamic(() => import('../src/components/charts/LiveCharts').then(m => m.PortfolioChart), { ssr: false });
@@ -72,6 +80,7 @@ export default function AnalyticsPage() {
   const [sendError, setSendError]= useState<string | null>(null);
   const [setupStatus, setSetupStatus] = useState<any>(null);
   const [runningSetup, setRunningSetup] = useState(false);
+  const [setupStep,   setSetupStep]   = useState<string>('');
   const [autoStatus,  setAutoStatus]  = useState<any>(null);
   const [triggerHash, setTriggerHash] = useState<`0x${string}` | undefined>();
   const [triggerErr,  setTriggerErr]  = useState<string | null>(null);
@@ -79,6 +88,7 @@ export default function AnalyticsPage() {
 
   const runSetup = async () => {
     setRunningSetup(true);
+    setSetupStep('');
     try {
       const r = await fetch('/api/inquisitiveAI/execute/setup', { method: 'GET' });
       const d = await r.json();
@@ -86,6 +96,35 @@ export default function AnalyticsPage() {
       if (d.status === 'SETUP_COMPLETE') load(true);
     } catch (e: any) {
       setSetupStatus({ status: 'ERROR', error: e.message });
+    } finally {
+      setRunningSetup(false);
+    }
+  };
+
+  const setupFromWallet = async () => {
+    setRunningSetup(true);
+    setSetupStep('Confirm setPortfolio() in MetaMask…');
+    try {
+      const h1 = await writeContractAsync({
+        address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'setPortfolio',
+        args: [PHASE1_TOKENS, PHASE1_WEIGHTS, PHASE1_FEES], chainId: 1,
+      });
+      setSetupStep('setPortfolio sent — waiting for confirmation…');
+      await new Promise(res => setTimeout(res, 8000));
+      setSetupStep('Confirm setAutomationEnabled(true) in MetaMask…');
+      const h2 = await writeContractAsync({
+        address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'setAutomationEnabled',
+        args: [true], chainId: 1,
+      });
+      setSetupStep('Done! Portfolio configured on-chain. Reloading…');
+      setSetupStatus({ status: 'SETUP_COMPLETE', message: `setPortfolio tx: ${h1} · setAutomationEnabled tx: ${h2}` });
+      await new Promise(res => setTimeout(res, 3000));
+      load(true);
+    } catch (e: any) {
+      const msg: string = e.shortMessage || e.message || '';
+      const isRejected = msg.toLowerCase().includes('rejected') || e.code === 4001;
+      setSetupStep('');
+      setSetupStatus({ status: 'ERROR', message: isRejected ? 'Transaction rejected.' : msg });
     } finally {
       setRunningSetup(false);
     }
@@ -134,7 +173,13 @@ export default function AnalyticsPage() {
     address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'cycleCount',
     chainId: 1, query: { refetchInterval: 30000 },
   });
-    const vaultEthOnChain = vaultEthBal ? Number(vaultEthBal) / 1e18 : 0;
+  const { data: vaultOwnerAddr } = useReadContract({
+    address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'owner',
+    chainId: 1, query: { refetchInterval: 60000 },
+  });
+  const isVaultOwner = !!(address && vaultOwnerAddr && address.toLowerCase() === (vaultOwnerAddr as string).toLowerCase());
+
+  const vaultEthOnChain = vaultEthBal ? Number(vaultEthBal) / 1e18 : 0;
   const portfolioOnChain= vaultPortfolioLen ? Number(vaultPortfolioLen) : 0;
   const automationOn    = automationEnabledData === true;
   const cyclesOnChain   = vaultCycleCount ? Number(vaultCycleCount) : 0;
@@ -427,13 +472,21 @@ export default function AnalyticsPage() {
                 body  = <>Go to Vercel → your project → Settings → Environment Variables → add <code>EXECUTOR_PRIVATE_KEY</code> = the private key of the wallet that deployed the vault. Redeploy after saving.</>;
                 action = address && <button onClick={triggerUpkeep} disabled={triggering||isSending} style={{padding:'6px 14px',borderRadius:8,background:'rgba(16,185,129,0.15)',border:'1px solid rgba(16,185,129,0.35)',color:'#34d399',fontSize:11,fontWeight:700,cursor:'pointer',whiteSpace:'nowrap'}}>{triggering?'Confirm…':'Trigger once via your wallet →'}</button>;
               } else if (portfolioOnChain === 0 || s === 'PORTFOLIO_NOT_SET') {
-                title = 'Portfolio not configured on-chain — Run Auto-Setup';
-                body  = <>The vault is deployed but <code>setPortfolio()</code> + <code>setPhase2Registry()</code> + <code>setAutomationEnabled(true)</code> have not been called yet. The Vercel Cron tries every 5 min via the setup endpoint. Click <strong>Run Auto-Setup</strong> to trigger it now — requires <code>EXECUTOR_PRIVATE_KEY</code> = vault owner in Vercel.</>;
-                action = <button onClick={runSetup} disabled={runningSetup} style={{padding:'6px 14px',borderRadius:8,background:'rgba(245,158,11,0.18)',border:'1px solid rgba(245,158,11,0.4)',color:'#fbbf24',fontSize:11,fontWeight:700,cursor:runningSetup?'wait':'pointer',whiteSpace:'nowrap'}}>{runningSetup?'Running…':'Run Auto-Setup'}</button>;
+                title = isVaultOwner ? 'Portfolio not configured — click to set up now via MetaMask' : 'Portfolio not configured on-chain';
+                body  = isVaultOwner
+                  ? <>{setupStep ? <span style={{color:'#fbbf24'}}>{setupStep}</span> : <>Your wallet is the vault owner. Click <strong>Setup via MetaMask</strong> — it will ask you to confirm 2 transactions (<code>setPortfolio</code> + <code>setAutomationEnabled</code>). No server keys needed.</>}</>
+                  : <>The vault owner must call <code>setPortfolio()</code> + <code>setAutomationEnabled(true)</code>. Connect the vault owner wallet to set up via MetaMask.</>;
+                action = isVaultOwner
+                  ? <button onClick={setupFromWallet} disabled={runningSetup} style={{padding:'6px 14px',borderRadius:8,background:'rgba(245,158,11,0.22)',border:'1px solid rgba(245,158,11,0.5)',color:'#fbbf24',fontSize:11,fontWeight:700,cursor:runningSetup?'wait':'pointer',whiteSpace:'nowrap'}}>{runningSetup?'In progress…':'Setup via MetaMask →'}</button>
+                  : <button onClick={runSetup} disabled={runningSetup} style={{padding:'6px 14px',borderRadius:8,background:'rgba(245,158,11,0.18)',border:'1px solid rgba(245,158,11,0.4)',color:'#fbbf24',fontSize:11,fontWeight:700,cursor:runningSetup?'wait':'pointer',whiteSpace:'nowrap'}}>{runningSetup?'Running…':'Run Auto-Setup'}</button>;
               } else if (!automationOn) {
-                title = 'Automation is disabled on-chain';
-                body  = <><code>setAutomationEnabled(true)</code> has not been called. Click Run Auto-Setup to call it now.</>;
-                action = <button onClick={runSetup} disabled={runningSetup} style={{padding:'6px 14px',borderRadius:8,background:'rgba(245,158,11,0.18)',border:'1px solid rgba(245,158,11,0.4)',color:'#fbbf24',fontSize:11,fontWeight:700,cursor:runningSetup?'wait':'pointer',whiteSpace:'nowrap'}}>{runningSetup?'Running…':'Run Auto-Setup'}</button>;
+                title = isVaultOwner ? 'Automation disabled — click to enable via MetaMask' : 'Automation is disabled on-chain';
+                body  = isVaultOwner
+                  ? <>{setupStep ? <span style={{color:'#fbbf24'}}>{setupStep}</span> : <>Your wallet is the vault owner. Click <strong>Enable via MetaMask</strong> to call <code>setAutomationEnabled(true)</code> on-chain.</>}</>
+                  : <><code>setAutomationEnabled(true)</code> has not been called. Connect the vault owner wallet to enable via MetaMask.</>;
+                action = isVaultOwner
+                  ? <button onClick={async () => { setRunningSetup(true); setSetupStep('Confirm setAutomationEnabled(true) in MetaMask…'); try { const h = await writeContractAsync({ address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'setAutomationEnabled', args: [true], chainId: 1 }); setSetupStatus({ status:'SETUP_COMPLETE', message:`setAutomationEnabled tx: ${h}` }); setSetupStep(''); load(true); } catch(e:any){ setSetupStep(''); setSetupStatus({ status:'ERROR', message: e.shortMessage||e.message }); } finally { setRunningSetup(false); } }} disabled={runningSetup} style={{padding:'6px 14px',borderRadius:8,background:'rgba(245,158,11,0.22)',border:'1px solid rgba(245,158,11,0.5)',color:'#fbbf24',fontSize:11,fontWeight:700,cursor:runningSetup?'wait':'pointer',whiteSpace:'nowrap'}}>{runningSetup?'In progress…':'Enable via MetaMask →'}</button>
+                  : <button onClick={runSetup} disabled={runningSetup} style={{padding:'6px 14px',borderRadius:8,background:'rgba(245,158,11,0.18)',border:'1px solid rgba(245,158,11,0.4)',color:'#fbbf24',fontSize:11,fontWeight:700,cursor:runningSetup?'wait':'pointer',whiteSpace:'nowrap'}}>{runningSetup?'Running…':'Run Auto-Setup'}</button>;
               } else if (vaultEthOnChain < 0.010) {
                 title = 'Vault needs more ETH for trading';
                 body  = <>Current vault balance: <strong>{vaultEthOnChain.toFixed(4)} ETH</strong>. Minimum for execution: 0.010 ETH (0.005 reserve + 0.005 minimum deploy). Send ETH to <code style={{fontSize:10}}>{VAULT_ADDR}</code>.</>;
@@ -463,6 +516,9 @@ export default function AnalyticsPage() {
                 {setupStatus.steps && <div style={{marginTop:4, opacity:0.7}}>{setupStatus.steps.map((s:any)=>`${s.action}: ${s.status}`).join(' · ')}</div>}
                 {setupStatus.blockingReason && <div style={{marginTop:4}}>{setupStatus.blockingReason}</div>}
               </div>
+            )}
+            {setupStep && !setupStatus && (
+              <div style={{ padding:'10px 16px', borderRadius:10, background:'rgba(245,158,11,0.07)', border:'1px solid rgba(245,158,11,0.25)', fontSize:11, color:'#fbbf24', marginBottom:16 }}>{setupStep}</div>
             )}
 
             {/* Tabs */}
@@ -629,11 +685,11 @@ export default function AnalyticsPage() {
                     ))}
                     {(portfolioOnChain === 0 || !automationOn) && (
                       <button
-                        onClick={runSetup}
+                        onClick={isVaultOwner ? setupFromWallet : runSetup}
                         disabled={runningSetup}
-                        style={{ marginTop:10, width:'100%', padding:'8px', borderRadius:10, background: runningSetup ? 'rgba(124,58,237,0.1)' : 'linear-gradient(135deg,rgba(124,58,237,0.3),rgba(79,70,229,0.3))', border:'1px solid rgba(124,58,237,0.4)', color:'#a78bfa', fontSize:12, fontWeight:700, cursor:runningSetup?'wait':'pointer' }}
+                        style={{ marginTop:10, width:'100%', padding:'8px', borderRadius:10, background: runningSetup ? 'rgba(124,58,237,0.1)' : isVaultOwner ? 'linear-gradient(135deg,rgba(245,158,11,0.3),rgba(234,88,12,0.25))' : 'linear-gradient(135deg,rgba(124,58,237,0.3),rgba(79,70,229,0.3))', border:`1px solid ${isVaultOwner ? 'rgba(245,158,11,0.5)' : 'rgba(124,58,237,0.4)'}`, color: isVaultOwner ? '#fbbf24' : '#a78bfa', fontSize:12, fontWeight:700, cursor:runningSetup?'wait':'pointer' }}
                       >
-                        {runningSetup ? 'Running Setup…' : 'Run Auto-Setup (Owner Key Required)'}
+                        {runningSetup ? (setupStep || 'In progress…') : isVaultOwner ? '⚡ Setup via MetaMask (no server key needed)' : 'Run Auto-Setup (Owner Key Required)'}
                       </button>
                     )}
                     {/* Trigger Execution button — performUpkeep is callable by anyone */}

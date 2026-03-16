@@ -144,7 +144,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       })
       .sort((a, b) => b.weight - a.weight);
 
-    res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
     res.status(200).json({
       // INQAI token economics
       token: {
