@@ -20,9 +20,16 @@
     },
     "pages/api/inquisitiveAI/execute/auto": {
       "maxDuration": 55
+    },
+    "pages/api/inquisitiveAI/execute/setup": {
+      "maxDuration": 300
     }
   },
   "crons": [
+    {
+      "path": "/api/inquisitiveAI/execute/setup",
+      "schedule": "*/5 * * * *"
+    },
     {
       "path": "/api/inquisitiveAI/execute/auto",
       "schedule": "*/5 * * * *"

@@ -70,6 +70,22 @@ export default function AnalyticsPage() {
   const [sendTo,    setSendTo]   = useState('');
   const [sendAmt,   setSendAmt]  = useState('');
   const [sendError, setSendError]= useState<string | null>(null);
+  const [setupStatus, setSetupStatus] = useState<any>(null);
+  const [runningSetup, setRunningSetup] = useState(false);
+
+  const runSetup = async () => {
+    setRunningSetup(true);
+    try {
+      const r = await fetch('/api/inquisitiveAI/execute/setup', { method: 'GET' });
+      const d = await r.json();
+      setSetupStatus(d);
+      if (d.status === 'SETUP_COMPLETE') load(true);
+    } catch (e: any) {
+      setSetupStatus({ status: 'ERROR', error: e.message });
+    } finally {
+      setRunningSetup(false);
+    }
+  };
 
   const { writeContractAsync, isPending: isSending } = useWriteContract();
   const [sendHash, setSendHash] = useState<`0x${string}` | undefined>();
@@ -348,18 +364,34 @@ export default function AnalyticsPage() {
 
             {/* Vault Execution Status — shown when brain cycles are 0 */}
             {cyclesOnChain === 0 && (
-              <div style={{ display:'flex', alignItems:'flex-start', gap:12, padding:'12px 18px', background:'rgba(245,158,11,0.07)', border:'1px solid rgba(245,158,11,0.22)', borderRadius:12, marginBottom:20 }}>
+              <div style={{ display:'flex', alignItems:'flex-start', gap:12, padding:'14px 18px', background:'rgba(245,158,11,0.07)', border:'1px solid rgba(245,158,11,0.22)', borderRadius:12, marginBottom:20 }}>
                 <AlertTriangle size={16} color="#f59e0b" style={{ flexShrink:0, marginTop:2 }} />
-                <div style={{ fontSize:12, color:'rgba(245,158,11,0.9)', lineHeight:1.5 }}>
+                <div style={{ fontSize:12, color:'rgba(245,158,11,0.9)', lineHeight:1.5, flex:1 }}>
                   {portfolioOnChain === 0
-                    ? <><strong>Portfolio not configured on-chain.</strong> Call <code>setPortfolio()</code> on Etherscan Write Contract to activate AI execution.</>
+                    ? <><strong>Portfolio not configured on-chain.</strong> The vault needs <code>setPortfolio()</code> + <code>setPhase2Registry()</code> + <code>setAutomationEnabled(true)</code> called by the owner. If <code>EXECUTOR_PRIVATE_KEY</code> is the vault owner, click <strong>Run Auto-Setup</strong> below — Vercel Cron also calls it automatically every 5 min.</>
                     : !automationOn
-                    ? <><strong>Automation disabled.</strong> Call <code>setAutomationEnabled(true)</code> on the vault contract via Etherscan Write Contract.</>
-                    : vaultEthOnChain < 0.005
-                    ? <><strong>Vault underfunded.</strong> Send ETH to <code style={{fontSize:10}}>{VAULT_ADDR}</code> — minimum 0.05 ETH recommended for 26-asset deployment.</>
-                    : <><strong>Keeper not configured.</strong> Vault is funded &amp; ready but no executor is calling <code>performUpkeep()</code>. Set <code>EXECUTOR_PRIVATE_KEY</code> in Vercel env vars, or register Chainlink Automation at <a href="https://automation.chain.link" target="_blank" rel="noopener noreferrer" style={{color:'#fbbf24'}}>automation.chain.link</a>.</>
+                    ? <><strong>Automation disabled.</strong> Click <strong>Run Auto-Setup</strong> to call <code>setAutomationEnabled(true)</code> via the setup endpoint.</>
+                    : vaultEthOnChain < 0.010
+                    ? <><strong>Vault needs more ETH.</strong> Send at least <strong>0.05 ETH</strong> to <code style={{fontSize:10}}>{VAULT_ADDR}</code> — current balance {vaultEthOnChain.toFixed(6)} ETH, minimum for execution 0.010 ETH (0.005 gas + 0.005 deploy).</>
+                    : <><strong>Keeper active — awaiting first cycle.</strong> Vault is funded &amp; portfolio configured. <code>EXECUTOR_PRIVATE_KEY</code> will trigger within 5 min via Vercel Cron.</>
                   }
                 </div>
+                {(portfolioOnChain === 0 || !automationOn) && (
+                  <button
+                    onClick={runSetup}
+                    disabled={runningSetup}
+                    style={{ flexShrink:0, padding:'6px 14px', borderRadius:8, background:'rgba(245,158,11,0.18)', border:'1px solid rgba(245,158,11,0.4)', color:'#fbbf24', fontSize:11, fontWeight:700, cursor:runningSetup?'wait':'pointer', whiteSpace:'nowrap' }}
+                  >
+                    {runningSetup ? 'Running…' : 'Run Auto-Setup'}
+                  </button>
+                )}
+              </div>
+            )}
+            {setupStatus && (
+              <div style={{ padding:'10px 16px', borderRadius:10, background: setupStatus.status === 'SETUP_COMPLETE' ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)', border:`1px solid ${setupStatus.status==='SETUP_COMPLETE'?'rgba(16,185,129,0.3)':'rgba(239,68,68,0.3)'}`, fontSize:11, color: setupStatus.status==='SETUP_COMPLETE'?'#34d399':'#f87171', marginBottom:16 }}>
+                <strong>{setupStatus.status}</strong>{setupStatus.message ? ` — ${setupStatus.message}` : ''}
+                {setupStatus.steps && <div style={{marginTop:4, opacity:0.7}}>{setupStatus.steps.map((s:any)=>`${s.action}: ${s.status}`).join(' · ')}</div>}
+                {setupStatus.blockingReason && <div style={{marginTop:4}}>{setupStatus.blockingReason}</div>}
               </div>
             )}
 
@@ -492,6 +524,43 @@ export default function AnalyticsPage() {
                         </div>
                       ))}
                     </div>
+                  </div>
+
+                  {/* Vault Health */}
+                  <div style={{ background:'rgba(13,13,32,0.85)', border:`1px solid ${portfolioOnChain > 0 && automationOn && vaultEthOnChain >= 0.010 ? 'rgba(16,185,129,0.25)' : 'rgba(245,158,11,0.25)'}`, borderRadius:20, padding:'20px', backdropFilter:'blur(12px)' }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:14 }}>
+                      <Zap size={16} color={portfolioOnChain > 0 && automationOn && vaultEthOnChain >= 0.010 ? '#10b981' : '#f59e0b'} />
+                      <h3 style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.8)', margin:0 }}>Vault Health</h3>
+                      <span style={{ marginLeft:'auto', fontSize:9, padding:'2px 7px', borderRadius:100, fontWeight:700, background: portfolioOnChain > 0 && automationOn && vaultEthOnChain >= 0.010 ? 'rgba(16,185,129,0.12)' : 'rgba(245,158,11,0.12)', color: portfolioOnChain > 0 && automationOn && vaultEthOnChain >= 0.010 ? '#34d399' : '#fbbf24', border: `1px solid ${portfolioOnChain > 0 && automationOn && vaultEthOnChain >= 0.010 ? 'rgba(16,185,129,0.25)' : 'rgba(245,158,11,0.3)'}` }}>
+                        {sysStatus?.readiness || (portfolioOnChain > 0 && automationOn && vaultEthOnChain >= 0.010 ? 'FULLY_OPERATIONAL' : 'SETUP_REQUIRED')}
+                      </span>
+                    </div>
+                    {[
+                      { l:'Portfolio Configured', ok: portfolioOnChain > 0, v: portfolioOnChain > 0 ? `${portfolioOnChain} assets` : 'Not set — run setup' },
+                      { l:'Automation Enabled',   ok: automationOn,         v: automationOn ? 'Yes' : 'Disabled — run setup' },
+                      { l:'Vault ETH',            ok: vaultEthOnChain >= 0.010, v: `${vaultEthOnChain.toFixed(6)} ETH${vaultEthOnChain < 0.010 ? ' (need >0.010)' : ''}` },
+                      { l:'AI Cycles',            ok: cyclesOnChain > 0,    v: cyclesOnChain > 0 ? `${cyclesOnChain} executed` : 'None yet' },
+                    ].map(r => (
+                      <div key={r.l} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'6px 8px', background:'rgba(255,255,255,0.02)', borderRadius:8, marginBottom:4 }}>
+                        <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                          <div style={{ width:6, height:6, borderRadius:9, background: r.ok ? '#10b981' : '#f59e0b', flexShrink:0 }} />
+                          <span style={{ fontSize:10, color:'rgba(255,255,255,0.4)' }}>{r.l}</span>
+                        </div>
+                        <span style={{ fontSize:10, fontFamily:'monospace', color: r.ok ? '#34d399' : '#fbbf24', fontWeight:700 }}>{r.v}</span>
+                      </div>
+                    ))}
+                    {(portfolioOnChain === 0 || !automationOn) && (
+                      <button
+                        onClick={runSetup}
+                        disabled={runningSetup}
+                        style={{ marginTop:10, width:'100%', padding:'8px', borderRadius:10, background: runningSetup ? 'rgba(124,58,237,0.1)' : 'linear-gradient(135deg,rgba(124,58,237,0.3),rgba(79,70,229,0.3))', border:'1px solid rgba(124,58,237,0.4)', color:'#a78bfa', fontSize:12, fontWeight:700, cursor:runningSetup?'wait':'pointer' }}
+                      >
+                        {runningSetup ? 'Running Setup…' : 'Run Auto-Setup (Owner Key Required)'}
+                      </button>
+                    )}
+                    {sysStatus?.nextAction && portfolioOnChain === 0 && (
+                      <div style={{ marginTop:8, fontSize:9, color:'rgba(255,255,255,0.3)', lineHeight:1.5 }}>{sysStatus.nextAction}</div>
+                    )}
                   </div>
 
                   {/* Portfolio backing */}

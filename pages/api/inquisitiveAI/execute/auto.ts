@@ -94,10 +94,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       status:        'PORTFOLIO_NOT_SET',
       autonomous:    false,
       executorReady,
-      blockingReason:'Portfolio not configured on-chain. Call setPortfolio() first.',
-      message:       'Vault portfolio not yet configured. Call setPortfolio() on Etherscan Write Contract using MetaMask — no private key in code.',
-      action:        'Visit: https://etherscan.io/address/' + VAULT_ADDR + '#writeContract → Connect MetaMask → call setPortfolio()',
-      setup:         'Generate calldata: node scripts/activate.js --dry-run',
+      blockingReason:'Portfolio not configured on-chain. Setup endpoint will fix this automatically.',
+      message:       'setPortfolio() + setPhase2Registry() + setAutomationEnabled() have not been called yet.',
+      action:        'POST /api/inquisitiveAI/execute/setup  — or visit https://etherscan.io/address/' + VAULT_ADDR + '#writeContract',
+      setup:         'Vercel Cron calls /api/inquisitiveAI/execute/setup every 5 min until vault is configured.',
+      setupEndpoint: '/api/inquisitiveAI/execute/setup',
       vaultETH, cycleCount,
       timestamp: new Date().toISOString(),
     });
@@ -214,7 +215,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const executorBalRaw = await provider.getBalance(executor.address).catch(() => 0n);
     const execETH        = parseFloat(ethers.formatEther(executorBalRaw));
     if (execETH < 0.003) {
-      console.warn(`Executor gas low: ${execETH} ETH at ${executor.address}`);
+      return res.status(200).json({
+        status:        'EXECUTOR_NO_GAS',
+        autonomous:    false,
+        executorReady: false,
+        blockingReason:`Executor wallet ${executor.address} has only ${execETH.toFixed(6)} ETH — needs ≥0.003 ETH for gas. Send ETH to this address.`,
+        executorAddress: executor.address,
+        executorETH:   execETH,
+        vault:         { vaultETH, p1Assets, cycleCount },
+        timestamp:     new Date().toISOString(),
+      });
     }
 
     if (!upkeepNeeded) {
