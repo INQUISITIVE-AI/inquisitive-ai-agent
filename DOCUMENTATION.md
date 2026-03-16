@@ -83,7 +83,7 @@ All 65 assets are live, priced from native CoinGecko feeds, and allocated autono
 | Mechanism | Count | Assets | How |
 |-----------|-------|--------|-----|
 | **Ethereum mainnet** | 27 | BTC(WBTC), ETH(stETH), USDC, AAVE, UNI, LDO, ARB, PAXG, INJ, ENA, POL, FET(ASI), RNDR, LINK, ONDO, GRT, SKY, DBR, STRK, QNT, ZRO, CHZ, ACH, SOIL, BRZ, JPYC, XSGD | Uniswap V3 ERC-20 swap |
-| **Cross-chain bridges** | 13 | SOL, JUP, JITOSOL, JUPSOL, MNDE, HONEY, HNT, PYTH (Solana) · BNB (BSC) · AVAX (Avalanche) · OP (Optimism) · TRX (TRON) · FDUSD (BSC) | deBridge DLN on-chain contract |
+| **Cross-chain bridges** | 13 | SOL, JUP, JITOSOL, JUPSOL, mSOL, HONEY, HNT, PYTH (Solana) · BNB (BSC) · AVAX (Avalanche) · OP (Optimism) · TRX (TRON) · CNGN (BSC) | deBridge DLN on-chain contract |
 | **stETH yield positions** | 25 | XRP, ADA, SUI, DOT, NEAR, ICP, HYPE, TAO, ATOM, ALGO, XLM, LTC, BCH, HBAR, ZEC, XMR, ETC, XTZ, VET, FIL, AR, XDC, CC, STX, EOS | Lido stETH yield + native price tracked |
 
 **All 65 allocations are live and deployed. No simulation. All 65 assets priced at native CoinGecko rates — zero proxy.**

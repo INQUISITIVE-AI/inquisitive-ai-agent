@@ -69,16 +69,16 @@ export const ASSET_REGISTRY: RegistryEntry[] = [
   { symbol:'SOIL',    cgId:'soil',                    name:'Soil',                             category:'defi',         yieldable:true,  stakeable:true,  lendable:false },
   { symbol:'BRZ',     cgId:'brz',                     name:'Brazilian Digital Token',          category:'stablecoin',   yieldable:true,  stakeable:false, lendable:true  },
   { symbol:'JPYC',    cgId:'jpyc',                    name:'JPYC',                             category:'stablecoin',   yieldable:false, stakeable:false, lendable:false },
-  { symbol:'FDUSD',   cgId:'first-digital-usd',       name:'First Digital USD',                category:'stablecoin',   yieldable:true,  stakeable:false, lendable:true  },
+  { symbol:'CNGN',    cgId:'cngn',                    name:'Compliant Naira',                  category:'stablecoin',   yieldable:false, stakeable:false, lendable:false },
   { symbol:'JITOSOL', cgId:'jito-staked-sol',         name:'Jito Staked SOL',                  category:'liquid-stake', yieldable:true,  stakeable:true,  lendable:false },
   { symbol:'JUPSOL',  cgId:'jupiter-staked-sol',      name:'Jupiter Staked SOL',               category:'liquid-stake', yieldable:true,  stakeable:true,  lendable:false },
-  { symbol:'MNDE',    cgId:'marinade',                name:'Marinade',                         category:'liquid-stake', yieldable:true,  stakeable:true,  lendable:false },
+  { symbol:'mSOL',    cgId:'marinade-staked-sol',     name:'Marinade Staked SOL',              category:'liquid-stake', yieldable:true,  stakeable:true,  lendable:false },
 ];
 
 export const PORTFOLIO_WEIGHTS: Record<string, number> = {
   BTC:18, ETH:12, SOL:8, BNB:5, XRP:4, ADA:3, AVAX:3, SUI:2, DOT:2, NEAR:1, ICP:1, TRX:1,
   AAVE:2, UNI:2, LDO:1.5, ARB:1.5, OP:1, INJ:1, JUP:1, ENA:1, HYPE:1, SKY:0.5, GRT:0.5, FET:1, RNDR:1, TAO:1, POL:1, LINK:1, STRK:0.5,
-  USDC:3, PAXG:1.5, ONDO:1, XLM:0.5, LTC:0.5, BCH:0.5, HBAR:0.5, ZEC:0.25, XMR:0.25, ETC:0.5, XTZ:0.25, CHZ:0.25, HNT:0.25, VET:0.25, QNT:0.25, ALGO:0.25, FIL:0.25, AR:0.25, XDC:0.1, STX:0.1, ZRO:0.25, ATOM:0.25, DBR:0.1, ACH:0.1, EOS:0.1, HONEY:0.1, XSGD:0.1, SOIL:0.1, BRZ:0.1, JPYC:0.1, FDUSD:0.1, JITOSOL:0.5, JUPSOL:0.5, MNDE:0.5, CC:0.1, PYTH:0.1,
+  USDC:3, PAXG:1.5, ONDO:1, XLM:0.5, LTC:0.5, BCH:0.5, HBAR:0.5, ZEC:0.25, XMR:0.25, ETC:0.5, XTZ:0.25, CHZ:0.25, HNT:0.25, VET:0.25, QNT:0.25, ALGO:0.25, FIL:0.25, AR:0.25, XDC:0.1, STX:0.1, ZRO:0.25, ATOM:0.25, DBR:0.1, ACH:0.1, EOS:0.1, HONEY:0.1, XSGD:0.1, SOIL:0.1, BRZ:0.1, JPYC:0.1, CNGN:0.1, JITOSOL:0.5, JUPSOL:0.5, mSOL:0.5, CC:0.1, PYTH:0.1,
 };
 
 export interface AssetInput {

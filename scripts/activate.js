@@ -121,13 +121,13 @@ function buildPhase2Assets(wallets) {
     { tokenAddr: base58Decode('JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN'), chainId: 7565164n, receiver: SOL_WALLET, weightBps: 100n,  symbol: 'JUP'     },
     { tokenAddr: base58Decode('J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn'),chainId: 7565164n, receiver: SOL_WALLET, weightBps: 50n,   symbol: 'JITOSOL' },
     { tokenAddr: base58Decode('jupSoLaHXQiZZTSfEWMTRRgpnyFm8f6sZdosWBjx93v'), chainId: 7565164n, receiver: SOL_WALLET, weightBps: 50n,   symbol: 'JUPSOL'  },
-    { tokenAddr: base58Decode('MNDEFzGvMt87ueuHvVU9VcTqsAP5b3fTGPsHuuPA5ey'), chainId: 7565164n, receiver: SOL_WALLET, weightBps: 50n,   symbol: 'MNDE'    },
+    { tokenAddr: base58Decode('mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So'), chainId: 7565164n, receiver: SOL_WALLET, weightBps: 50n,   symbol: 'mSOL'    }, // Marinade Staked SOL
     { tokenAddr: base58Decode('4vMsoUT2BWatFweudnQM1xedRLfJgJ7hswhcpz4xgBTy'), chainId: 7565164n, receiver: SOL_WALLET, weightBps: 10n,   symbol: 'HONEY'   },
     { tokenAddr: base58Decode('hntyVP6YFm1Hg25TN9WGLqM12b8TQmcknKrdu1oxWux'), chainId: 7565164n, receiver: SOL_WALLET, weightBps: 25n,   symbol: 'HNT'     },
     { tokenAddr: base58Decode('HZ1JovNiVvGrGNiiYvEozEVgZ58xaU3RKwX8eACQBCt3'), chainId: 7565164n, receiver: SOL_WALLET, weightBps: 10n,   symbol: 'PYTH'    },
     // ── BSC (chainId 56) ─────────────────────────────────────────────────
     { tokenAddr: evmBytes('0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c'),        chainId: 56n,      receiver: BSC_WALLET, weightBps: 500n,  symbol: 'BNB'     }, // WBNB
-    { tokenAddr: evmBytes('0xc5f0f7b66764F6ec8C8Dff7BA683102295E16409'),         chainId: 56n,      receiver: BSC_WALLET, weightBps: 10n,   symbol: 'FDUSD'   }, // First Digital USD on BSC
+    { tokenAddr: evmBytes('0xa8AEA66B361a8d53e8865c62D142167Af28Af058'),         chainId: 56n,      receiver: BSC_WALLET, weightBps: 10n,   symbol: 'CNGN'    }, // Compliant Naira (cNGN) on BSC
     // ── Avalanche (chainId 43114) ────────────────────────────────────────
     { tokenAddr: evmBytes('0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7'),         chainId: 43114n,   receiver: AVA_WALLET, weightBps: 300n,  symbol: 'AVAX'    }, // WAVAX
     // ── Optimism (chainId 10) ────────────────────────────────────────────
