@@ -72,6 +72,10 @@ export default function AnalyticsPage() {
   const [sendError, setSendError]= useState<string | null>(null);
   const [setupStatus, setSetupStatus] = useState<any>(null);
   const [runningSetup, setRunningSetup] = useState(false);
+  const [autoStatus,  setAutoStatus]  = useState<any>(null);
+  const [triggerHash, setTriggerHash] = useState<`0x${string}` | undefined>();
+  const [triggerErr,  setTriggerErr]  = useState<string | null>(null);
+  const [triggering,  setTriggering]  = useState(false);
 
   const runSetup = async () => {
     setRunningSetup(true);
@@ -90,6 +94,24 @@ export default function AnalyticsPage() {
   const { writeContractAsync, isPending: isSending } = useWriteContract();
   const [sendHash, setSendHash] = useState<`0x${string}` | undefined>();
   const { isSuccess: sendConfirmed } = useWaitForTransactionReceipt({ hash: sendHash });
+  const { isSuccess: triggerConfirmed } = useWaitForTransactionReceipt({ hash: triggerHash });
+
+  const triggerUpkeep = async () => {
+    setTriggerErr(null);
+    setTriggering(true);
+    try {
+      const h = await writeContractAsync({
+        address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'performUpkeep',
+        args: ['0x'], chainId: 1,
+      });
+      setTriggerHash(h);
+    } catch (e: any) {
+      const msg: string = e.shortMessage || e.message || '';
+      setTriggerErr(msg.toLowerCase().includes('rejected') || e.code === 4001 ? 'Rejected.' : (msg || 'Trigger failed.'));
+    } finally {
+      setTriggering(false);
+    }
+  };
 
   // ── Vault on-chain state (live reads, no private key) ─────────────────────
   const { data: checkUpkeepData } = useReadContract({
@@ -158,6 +180,8 @@ export default function AnalyticsPage() {
                        .then(d => { if (d) setQueue(d); });
     const monitorP = safe(`/api/inquisitiveAI/execute/monitor${t}`)
                        .then(d => { if (d) setMonitor(d); });
+    const autoP    = safe(`/api/inquisitiveAI/execute/auto${t}`)
+                       .then(d => { if (d) setAutoStatus(d); });
     const statusP  = safe(`/api/inquisitiveAI/execute/status${t}`)
                        .then(d => { if (d) setSysStatus(d); });
 
@@ -165,7 +189,7 @@ export default function AnalyticsPage() {
     navP.then(() => setLoading(false));
 
     // setRefreshing(false) once all complete
-    Promise.allSettled([navP, chartP, catP, queueP, monitorP, statusP])
+    Promise.allSettled([navP, chartP, catP, queueP, monitorP, statusP, autoP])
       .then(() => setRefreshing(false));
   }, []);
   useEffect(() => { load(); const t = setInterval(() => load(), 60000); return () => clearInterval(t); }, [load]);
@@ -565,6 +589,37 @@ export default function AnalyticsPage() {
                       >
                         {runningSetup ? 'Running Setup…' : 'Run Auto-Setup (Owner Key Required)'}
                       </button>
+                    )}
+                    {/* Trigger Execution button — performUpkeep is callable by anyone */}
+                    {portfolioOnChain > 0 && automationOn && checkUpkeepData?.[0] && address && (
+                      <div style={{ marginTop:10 }}>
+                        {triggerConfirmed ? (
+                          <div style={{ padding:'7px 12px', background:'rgba(16,185,129,0.08)', border:'1px solid rgba(16,185,129,0.25)', borderRadius:8, fontSize:11, color:'#34d399', textAlign:'center' }}>
+                            ✓ Execution triggered!{' '}
+                            {triggerHash && <a href={`https://etherscan.io/tx/${triggerHash}`} target="_blank" rel="noopener noreferrer" style={{ color:'#6ee7b7', textDecoration:'none' }}>View on Etherscan ↗</a>}
+                          </div>
+                        ) : (
+                          <button
+                            onClick={triggerUpkeep}
+                            disabled={triggering || isSending}
+                            style={{ width:'100%', padding:'8px', borderRadius:10, background: triggering ? 'rgba(16,185,129,0.1)' : 'linear-gradient(135deg,rgba(16,185,129,0.25),rgba(5,150,105,0.25))', border:'1px solid rgba(16,185,129,0.4)', color:'#34d399', fontSize:12, fontWeight:700, cursor:triggering?'wait':'pointer' }}
+                          >
+                            {triggering ? 'Confirm in wallet…' : '⚡ Trigger Execution Now (via your wallet)'}
+                          </button>
+                        )}
+                        {triggerErr && <div style={{ marginTop:6, fontSize:10, color:'#f87171' }}>{triggerErr}</div>}
+                      </div>
+                    )}
+                    {/* Executor / keeper status from auto endpoint */}
+                    {autoStatus && (
+                      <div style={{ marginTop:10, padding:'8px 10px', background:'rgba(255,255,255,0.02)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:8, fontSize:9, color:'rgba(255,255,255,0.35)', lineHeight:1.7 }}>
+                        <span style={{ fontWeight:700, color: autoStatus.status === 'EXECUTED' ? '#34d399' : autoStatus.status === 'IDLE' ? '#6b7280' : '#fbbf24' }}>
+                          Keeper: {autoStatus.status}
+                        </span>
+                        {autoStatus.blockingReason && <span> — {autoStatus.blockingReason}</span>}
+                        {autoStatus.executorReady === false && <span style={{ color:'#f87171' }}> · Executor key missing or no gas</span>}
+                        {autoStatus.txHash && <span> · <a href={`https://etherscan.io/tx/${autoStatus.txHash}`} target="_blank" rel="noopener noreferrer" style={{ color:'#60a5fa', textDecoration:'none' }}>Last tx ↗</a></span>}
+                      </div>
                     )}
                     {sysStatus?.nextAction && portfolioOnChain === 0 && (
                       <div style={{ marginTop:8, fontSize:9, color:'rgba(255,255,255,0.3)', lineHeight:1.5 }}>{sysStatus.nextAction}</div>
