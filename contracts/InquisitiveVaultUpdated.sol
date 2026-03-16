@@ -7,7 +7,7 @@ pragma solidity ^0.8.24;
 // Execution is ZERO private key:
 //   27 ETH-mainnet tokens : performUpkeep() → Uniswap V3 swaps
 //   13 cross-chain native : performUpkeep() → deBridge DLN bridges
-//                           (Solana ×8, BSC, Avalanche, Optimism, TRON, BSC-FDUSD)
+//                           (Solana ×8, BSC, Avalanche, Optimism, TRON, BSC-CNGN)
 //   25 stETH yield        : ETH held as Lido stETH, native price tracked
 //
 //   performUpkeep() has NO access control → Chainlink Automation, community wallet,

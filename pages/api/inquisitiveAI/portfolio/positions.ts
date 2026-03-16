@@ -12,16 +12,22 @@ export const config = { maxDuration: 20 };
 
 // ETH-DIRECT assets: ERC-20 swaps via Uniswap V3 on Ethereum mainnet
 const ETH_DIRECT_SYMBOLS = new Set([
-  'AAVE','UNI','LINK','LDO','ARB','GRT','ENA','POL','SKY','FET','RNDR',
-  'INJ','PAXG','ONDO','QNT','ZRO','CHZ','ACH','STRK','HYPE','OP',
+  'BTC','ETH','USDC','AAVE','UNI','LINK','LDO','ARB','GRT','ENA','POL',
+  'SKY','FET','RNDR','INJ','PAXG','ONDO','QNT','ZRO','CHZ','ACH','STRK',
+  'HYPE','OP','DBR','XSGD','BRZ','JPYC','SOIL',
+]);
+
+// deBridge BRIDGE targets: Solana liquid-stake tokens go via deBridge DLN, not stETH
+const BRIDGE_SYMBOLS = new Set([
+  'SOL','JUP','JITOSOL','JUPSOL','mSOL','HONEY','HNT','PYTH',
+  'BNB','CNGN','AVAX','TRX',
 ]);
 
 // Execution mode per asset
 function execMode(symbol: string, category: string): string {
-  if (category === 'liquid-stake') return 'stETH-YIELD';
-  if (symbol === 'ETH' || symbol === 'BTC' || symbol === 'USDC') return 'ETH-DIRECT';
+  if (BRIDGE_SYMBOLS.has(symbol)) return 'BRIDGE';
   if (ETH_DIRECT_SYMBOLS.has(symbol)) return 'ETH-DIRECT';
-  return 'BRIDGE';
+  return 'stETH-YIELD';
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -35,8 +41,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const ethPrice          = priceResult.map.get('ETH')?.priceUsd ?? 2000;
     const vaultValueUSD = ethBalance * ethPrice;
 
-    // Only show positions when vault is funded and portfolio is configured
-    const showPositions = ethBalance >= 0.005 && portfolioConfigured;
+    // Show positions whenever portfolio is configured (ETH funding affects execution, not display)
+    const showPositions = portfolioConfigured;
 
     const weightSum  = Object.values(PORTFOLIO_WEIGHTS).reduce((s, w) => s + w, 0) || 100;
 
@@ -73,8 +79,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       positions,
       status: !portfolioConfigured
         ? 'PENDING_SETUP — run scripts/activate.js to call setPortfolio() on the vault'
-        : ethBalance < 0.005
-          ? 'PENDING_FUNDING — deposit ETH to vault to activate deployment'
+        : ethBalance <= 0.010
+          ? `LOW_FUNDING — vault has ${ethBalance.toFixed(4)} ETH, needs > 0.010 ETH for performUpkeep() to execute`
           : 'ACTIVE — vault funded and portfolio configured',
       timestamp: new Date().toISOString(),
     });

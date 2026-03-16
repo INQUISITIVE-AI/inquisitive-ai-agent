@@ -83,10 +83,10 @@ const ASSETS_65 = [
   {n:59,s:'SOIL',    name:'Soil',                           cat:'defi'},
   {n:60,s:'BRZ',     name:'Brazilian Digital Token',        cat:'stablecoin'},
   {n:61,s:'JPYC',    name:'JPYC Prepaid',                   cat:'stablecoin'},
-  {n:62,s:'FDUSD',   name:'First Digital USD',              cat:'stablecoin'},
+  {n:62,s:'CNGN',    name:'Compliant Naira',                cat:'stablecoin'},
   {n:63,s:'JITOSOL', name:'Jito Staked SOL',                cat:'liquid-stake'},
   {n:64,s:'JUPSOL',  name:'Jupiter Staked SOL',             cat:'liquid-stake'},
-  {n:65,s:'MNDE',    name:'Marinade',                       cat:'liquid-stake'},
+  {n:65,s:'mSOL',    name:'Marinade Staked SOL',             cat:'liquid-stake'},
 ];
 
 const catColor = (c: string) => {
