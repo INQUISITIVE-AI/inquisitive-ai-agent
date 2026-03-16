@@ -282,7 +282,7 @@ export default function AnalyticsPage() {
   const treasury      = nav?.treasury ?? {} as any;
   const aumUSD        = treasury.aumUSD        ?? 0;
   const totalEthUSD   = (treasury.vaultEth ?? 0) * (treasury.ethPrice ?? 3200);
-  const vaultAddress  = treasury.vaultAddress  || INQAI_TOKEN.teamWallet;
+  const vaultAddress  = treasury.vaultAddress  || VAULT_ADDR;
   const isOnChainNAV  = navSource === 'on-chain-aum';
   // Tokens committed estimate: circulating supply from on-chain (post-airdrop) OR vault AUM ÷ presale price (pre-airdrop)
   const tokensCommitted = circulatingSupply > 0
