@@ -103,7 +103,14 @@ export default function BuyPage() {
           : '';
         const r = await fetch(`/api/payment/check-charge?id=${chargeId}${params}`);
         const d = await r.json();
-        if (d.status === 'confirmed') { setChargeStatus('confirmed'); setStep(3); clearInterval(poll); }
+        if (d.status === 'confirmed') {
+          try {
+            const existing = JSON.parse(localStorage.getItem('inqai_purchases') || '[]');
+            existing.push({ chargeId, timestamp: Date.now(), amount: parseFloat(inqaiAmt), usdAmount: usd, payToken, address, price: INQAI_TOKEN.presalePrice });
+            localStorage.setItem('inqai_purchases', JSON.stringify(existing));
+          } catch {}
+          setChargeStatus('confirmed'); setStep(3); clearInterval(poll);
+        }
         if (d.status === 'expired' || d.status === 'failed') { setChargeStatus(d.status); clearInterval(poll); }
       } catch {}
     }, 15000);

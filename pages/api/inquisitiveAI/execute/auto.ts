@@ -81,14 +81,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const cycleCount = Number(cycleCountRaw);
   const p1Assets   = Number(portfolioLen);
 
+  // ── Executor key detection (moved up so every response carries executor status) ──────
+  const rawKey     = process.env.EXECUTOR_PRIVATE_KEY || process.env.KEEPER_PRIVATE_KEY || '';
+  // Normalise: ethers.Wallet requires '0x'-prefixed 32-byte hex
+  const executorKey = rawKey ? (rawKey.startsWith('0x') ? rawKey : '0x' + rawKey) : '';
+  const gelatoKey   = process.env.GELATO_API_KEY || '';
+  const executorReady = !!executorKey && executorKey.length >= 66; // '0x' + 64 hex chars
+
   // Portfolio not configured yet
   if (p1Assets === 0) {
     return res.status(200).json({
-      status:     'PORTFOLIO_NOT_SET',
-      autonomous: false,
-      message:    'Vault portfolio not yet configured. Call setPortfolio() on Etherscan Write Contract using MetaMask — no private key in code.',
-      action:     'Visit: https://etherscan.io/address/' + VAULT_ADDR + '#writeContract → Connect MetaMask → call setPortfolio()',
-      setup:      'Generate calldata: node scripts/activate.js --dry-run',
+      status:        'PORTFOLIO_NOT_SET',
+      autonomous:    false,
+      executorReady,
+      blockingReason:'Portfolio not configured on-chain. Call setPortfolio() first.',
+      message:       'Vault portfolio not yet configured. Call setPortfolio() on Etherscan Write Contract using MetaMask — no private key in code.',
+      action:        'Visit: https://etherscan.io/address/' + VAULT_ADDR + '#writeContract → Connect MetaMask → call setPortfolio()',
+      setup:         'Generate calldata: node scripts/activate.js --dry-run',
       vaultETH, cycleCount,
       timestamp: new Date().toISOString(),
     });
@@ -97,31 +106,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // Vault idle — below checkUpkeep threshold
   if (!upkeepNeeded && vaultETH < 0.005) {
     return res.status(200).json({
-      status:      'IDLE',
-      autonomous:  true,
-      reason:      'Vault ETH below minimum — accepting deposits',
-      vaultETH,    p1Assets, cycleCount,
-      keeper:      'cron-job.org primary + GitHub Actions backup + Vercel Cron tertiary',
-      timestamp:   new Date().toISOString(),
+      status:        'IDLE',
+      autonomous:    true,
+      executorReady,
+      blockingReason: vaultETH === 0 ? 'Vault has 0 ETH — send ETH to the vault address to trigger execution.' : 'Vault ETH below 0.005 minimum — accepting deposits.',
+      reason:         'Vault ETH below minimum — accepting deposits',
+      vaultETH, p1Assets, cycleCount,
+      keeper:         'cron-job.org primary + GitHub Actions backup + Vercel Cron tertiary',
+      vaultAddress:   VAULT_ADDR,
+      timestamp:      new Date().toISOString(),
     });
   }
 
   // checkUpkeep passes at >=0.005 ETH, but performUpkeep requires >0.010 ETH
-  // (contract reserves 0.005 ETH for gas before deploying the rest)
   if (upkeepNeeded && vaultETH <= 0.010) {
     return res.status(200).json({
-      status:      'UNDERFUNDED',
-      autonomous:  false,
-      reason:      `Vault has ${vaultETH.toFixed(6)} ETH — performUpkeep needs >0.010 ETH (0.005 gas reserve + 0.005 minimum deploy).`,
-      action:      `Send ETH to vault: ${VAULT_ADDR}  (recommend 0.1+ ETH for meaningful swaps across 26 assets)`,
-      vaultETH,    p1Assets, cycleCount,
-      timestamp:   new Date().toISOString(),
+      status:        'UNDERFUNDED',
+      autonomous:    false,
+      executorReady,
+      blockingReason:`Vault has ${vaultETH.toFixed(6)} ETH. Minimum required for execution: 0.010 ETH.`,
+      reason:        `Vault has ${vaultETH.toFixed(6)} ETH — performUpkeep needs >0.010 ETH (0.005 gas reserve + 0.005 minimum deploy).`,
+      action:        `Send ETH to vault: ${VAULT_ADDR}  (recommend 0.1+ ETH for meaningful swaps across 26 assets)`,
+      vaultETH, p1Assets, cycleCount,
+      timestamp: new Date().toISOString(),
     });
   }
 
-  // ── Gelato relay path ────────────────────────────────────────────────────────
-  const executorKey = process.env.EXECUTOR_PRIVATE_KEY || process.env.KEEPER_PRIVATE_KEY;
-  const gelatoKey   = process.env.GELATO_API_KEY;
+  // ── Gelato relay path ───────────────────────────────────────────────────────────────────────────────
 
   if (!executorKey && gelatoKey && upkeepNeeded) {
     // ABI-encode performUpkeep(bytes) with empty bytes argument

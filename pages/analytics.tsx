@@ -176,15 +176,20 @@ export default function AnalyticsPage() {
   const totalEthUSD   = (treasury.vaultEth ?? 0) * (treasury.ethPrice ?? 3200);
   const vaultAddress  = treasury.vaultAddress  || INQAI_TOKEN.teamWallet;
   const isOnChainNAV  = navSource === 'on-chain-aum';
+  // Tokens committed estimate: circulating supply from on-chain (post-airdrop) OR vault AUM ÷ presale price (pre-airdrop)
+  const tokensCommitted = circulatingSupply > 0
+    ? circulatingSupply
+    : aumUSD > 0 ? Math.floor(aumUSD / INQAI_TOKEN.presalePrice) : 0;
 
   const localHolding     = purchases.reduce((s, p) => s + (p.amount    || 0), 0);
   const totalUsdInvested = purchases.reduce((s, p) => s + (p.usdAmount || 0), 0);
-  const totalInqai       = localHolding; // always use localStorage purchases — on-chain balance inflates for deployer
-  const effInvested      = totalUsdInvested; // real purchases only — never use on-chain balance × price (inflates for deployer)
+  // Presale: use localStorage. Delivered on-chain: fall back to onChainBalance (but never for deployer — deployer balance is 100M)
+  const totalInqai       = localHolding > 0 ? localHolding : onChainBalance;
+  const effInvested      = totalUsdInvested > 0 ? totalUsdInvested : 0; // only real purchases — no synthetic cost basis
   const currentValue     = totalInqai * navPerToken;
   const totalPnL         = currentValue - effInvested;
   const roiPct           = effInvested > 0 ? totalPnL / effInvested : 0;
-  const hasHoldings      = effInvested > 0;
+  const hasHoldings      = effInvested > 0 || onChainBalance > 0;
   const holdingSource    = onChainBalance > 0 ? 'on-chain' : purchases.length > 0 ? 'presale' : isOnChainNAV ? 'on-chain-nav' : 'live NAV';
 
   const backingAssets = useMemo(() => positions.slice(0, 12).map(p => ({
@@ -465,7 +470,7 @@ export default function AnalyticsPage() {
                       {[
                         { l:'Total AUM',         v: fmtUsd(aumUSD),                             c:'#10b981' },
                         { l:'ETH in Vault',       v: (treasury.vaultEth??0).toFixed(4)+' ETH',   c:'#60a5fa' },
-                        { l:'Tokens Sold',        v: circulatingSupply > 0 ? fmtN(circulatingSupply,0)+' INQAI' : 'Pending', c:'#a78bfa' },
+                        { l:'Tokens Sold',        v: tokensCommitted > 0 ? fmtN(tokensCommitted,0)+' INQAI' : 'Pending', c:'#a78bfa' },
                       ].map(s => (
                         <div key={s.l} style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:10, padding:'10px 12px' }}>
                           <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)', marginBottom:2 }}>{s.l}</div>
