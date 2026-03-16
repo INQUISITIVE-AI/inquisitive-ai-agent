@@ -386,56 +386,77 @@ export default function AnalyticsPage() {
               ))}
             </div>
 
-            {/* ── EXECUTOR NO GAS — highest priority banner ── */}
-            {autoStatus?.status === 'EXECUTOR_NO_GAS' && autoStatus?.executorAddress && (
-              <div style={{ display:'flex', alignItems:'flex-start', gap:12, padding:'16px 20px', background:'rgba(239,68,68,0.08)', border:'2px solid rgba(239,68,68,0.35)', borderRadius:14, marginBottom:20 }}>
-                <AlertTriangle size={18} color="#ef4444" style={{ flexShrink:0, marginTop:1 }} />
-                <div style={{ flex:1 }}>
-                  <div style={{ fontSize:13, fontWeight:800, color:'#ef4444', marginBottom:6 }}>
-                    ⚠ Automatic execution is BLOCKED — executor wallet has no gas ETH
-                  </div>
-                  <div style={{ fontSize:12, color:'rgba(255,255,255,0.65)', lineHeight:1.7, marginBottom:10 }}>
-                    Your <code style={{ color:'#f87171', fontSize:11 }}>EXECUTOR_PRIVATE_KEY</code> is set in Vercel, but the wallet it controls has <strong style={{color:'#f87171'}}>{autoStatus.executorETH?.toFixed(6) ?? '0.000000'} ETH</strong> — not enough to pay Ethereum gas fees. The vault has {vaultEthOnChain.toFixed(4)} ETH for swaps, but the executor needs <strong style={{color:'#fbbf24'}}>separate ETH for gas</strong>.
-                  </div>
-                  <div style={{ background:'rgba(0,0,0,0.3)', border:'1px solid rgba(239,68,68,0.25)', borderRadius:10, padding:'10px 14px', marginBottom:10 }}>
-                    <div style={{ fontSize:10, color:'rgba(255,255,255,0.4)', marginBottom:4 }}>SEND 0.05 ETH TO THIS EXECUTOR WALLET ADDRESS:</div>
-                    <div style={{ fontSize:13, fontFamily:'monospace', color:'#fbbf24', letterSpacing:'0.03em', wordBreak:'break-all' }}>
-                      {autoStatus.executorAddress}
-                    </div>
-                    <a href={`https://etherscan.io/address/${autoStatus.executorAddress}`} target="_blank" rel="noopener noreferrer" style={{ fontSize:10, color:'#60a5fa', textDecoration:'none', marginTop:4, display:'inline-block' }}>View on Etherscan ↗</a>
-                  </div>
-                  <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)', lineHeight:1.6 }}>
-                    0.05 ETH covers ~50 automatic execution cycles. Once funded, the Vercel Cron will call <code style={{fontSize:10}}>performUpkeep()</code> automatically every 5 minutes — no further action needed.
-                  </div>
-                </div>
-              </div>
-            )}
+            {/* ── Unified Execution Status Banner ── */}
+            {(() => {
+              const s = autoStatus?.status;
+              const execAddr = autoStatus?.executorAddress || setupStatus?.signerAddress;
+              const execETH  = autoStatus?.executorETH ?? autoStatus?.executor?.ethBalance;
 
-            {/* Vault Execution Status — shown when brain cycles are 0 */}
-            {cyclesOnChain === 0 && (
-              <div style={{ display:'flex', alignItems:'flex-start', gap:12, padding:'14px 18px', background:'rgba(245,158,11,0.07)', border:'1px solid rgba(245,158,11,0.22)', borderRadius:12, marginBottom:20 }}>
-                <AlertTriangle size={16} color="#f59e0b" style={{ flexShrink:0, marginTop:2 }} />
-                <div style={{ fontSize:12, color:'rgba(245,158,11,0.9)', lineHeight:1.5, flex:1 }}>
-                  {portfolioOnChain === 0
-                    ? <><strong>Portfolio not configured on-chain.</strong> The vault needs <code>setPortfolio()</code> + <code>setPhase2Registry()</code> + <code>setAutomationEnabled(true)</code> called by the owner. If <code>EXECUTOR_PRIVATE_KEY</code> is the vault owner, click <strong>Run Auto-Setup</strong> below — Vercel Cron also calls it automatically every 5 min.</>
-                    : !automationOn
-                    ? <><strong>Automation disabled.</strong> Click <strong>Run Auto-Setup</strong> to call <code>setAutomationEnabled(true)</code> via the setup endpoint.</>
-                    : vaultEthOnChain < 0.010
-                    ? <><strong>Vault needs more ETH.</strong> Send at least <strong>0.05 ETH</strong> to <code style={{fontSize:10}}>{VAULT_ADDR}</code> — current balance {vaultEthOnChain.toFixed(6)} ETH, minimum for execution 0.010 ETH (0.005 gas + 0.005 deploy).</>
-                    : <><strong>Keeper active — awaiting first cycle.</strong> Vault is funded &amp; portfolio configured. <code>EXECUTOR_PRIVATE_KEY</code> will trigger within 5 min via Vercel Cron.</>
-                  }
+              // Fully working — show nothing
+              if (s === 'EXECUTED' || s === 'EXECUTED_VIA_GELATO' || (s === 'IDLE' && cyclesOnChain > 0)) return null;
+
+              // Derive blocking message + action
+              let color = '#f59e0b', bg = 'rgba(245,158,11,0.07)', border = 'rgba(245,158,11,0.28)';
+              let title = '', body: React.ReactNode = null, action: React.ReactNode = null;
+
+              if (!autoStatus && cyclesOnChain === 0) {
+                title = 'Checking vault status…';
+                body  = <span>Loading keeper status — refreshes every 60 seconds.</span>;
+              } else if (s === 'EXECUTOR_NO_GAS' || s === 'SIGNER_NO_GAS') {
+                color = '#ef4444'; bg = 'rgba(239,68,68,0.07)'; border = 'rgba(239,68,68,0.35)';
+                title = 'Execution blocked — executor wallet needs gas ETH';
+                body  = <>
+                  The wallet that signs automatic transactions (<code style={{fontSize:10,color:'#f87171'}}>{execAddr || 'unknown'}</code>) has <strong style={{color:'#fbbf24'}}>{execETH != null ? execETH.toFixed(6) : '0.000000'} ETH</strong>.
+                  {' '}The vault ETH ({vaultEthOnChain.toFixed(4)} ETH) is used <em>only</em> for trades — a separate small amount of ETH is needed to pay Ethereum gas fees on the transaction that triggers execution.
+                  {execAddr && (
+                    <div style={{ marginTop:10, background:'rgba(0,0,0,0.35)', border:'1px solid rgba(239,68,68,0.2)', borderRadius:8, padding:'9px 14px' }}>
+                      <div style={{ fontSize:10, color:'rgba(255,255,255,0.4)', marginBottom:3 }}>SEND 0.02 ETH TO THIS ADDRESS (gas wallet):</div>
+                      <div style={{ fontSize:12, fontFamily:'monospace', color:'#fbbf24', wordBreak:'break-all' }}>{execAddr}</div>
+                      <a href={`https://etherscan.io/address/${execAddr}`} target="_blank" rel="noopener noreferrer" style={{fontSize:10,color:'#60a5fa',textDecoration:'none',marginTop:3,display:'inline-block'}}>Etherscan ↗</a>
+                    </div>
+                  )}
+                  <div style={{marginTop:8,fontSize:10,color:'rgba(255,255,255,0.35)'}}>0.02 ETH covers ~20–50 automatic execution cycles. After funding, Vercel Cron fires every 5 min with no more action from you.</div>
+                </>;
+                action = address && <button onClick={triggerUpkeep} disabled={triggering||isSending} style={{padding:'6px 14px',borderRadius:8,background:'rgba(16,185,129,0.15)',border:'1px solid rgba(16,185,129,0.35)',color:'#34d399',fontSize:11,fontWeight:700,cursor:'pointer',whiteSpace:'nowrap'}}>{triggering?'Confirm…':'Trigger once via your wallet →'}</button>;
+              } else if (s === 'NOT_OWNER') {
+                color = '#ef4444'; bg = 'rgba(239,68,68,0.07)'; border = 'rgba(239,68,68,0.35)';
+                title = 'EXECUTOR_PRIVATE_KEY is not the vault owner';
+                body  = <>The key in Vercel maps to <code style={{fontSize:10}}>{execAddr}</code> but the vault owner is <code style={{fontSize:10}}>{autoStatus?.ownerAddress || setupStatus?.ownerAddress}</code>. Set <code>EXECUTOR_PRIVATE_KEY</code> to the deployer's private key in Vercel Environment Variables.</>;
+              } else if (s === 'NO_KEY') {
+                title = 'EXECUTOR_PRIVATE_KEY not set in Vercel';
+                body  = <>Go to Vercel → your project → Settings → Environment Variables → add <code>EXECUTOR_PRIVATE_KEY</code> = the private key of the wallet that deployed the vault. Redeploy after saving.</>;
+                action = address && <button onClick={triggerUpkeep} disabled={triggering||isSending} style={{padding:'6px 14px',borderRadius:8,background:'rgba(16,185,129,0.15)',border:'1px solid rgba(16,185,129,0.35)',color:'#34d399',fontSize:11,fontWeight:700,cursor:'pointer',whiteSpace:'nowrap'}}>{triggering?'Confirm…':'Trigger once via your wallet →'}</button>;
+              } else if (portfolioOnChain === 0 || s === 'PORTFOLIO_NOT_SET') {
+                title = 'Portfolio not configured on-chain — Run Auto-Setup';
+                body  = <>The vault is deployed but <code>setPortfolio()</code> + <code>setPhase2Registry()</code> + <code>setAutomationEnabled(true)</code> have not been called yet. The Vercel Cron tries every 5 min via the setup endpoint. Click <strong>Run Auto-Setup</strong> to trigger it now — requires <code>EXECUTOR_PRIVATE_KEY</code> = vault owner in Vercel.</>;
+                action = <button onClick={runSetup} disabled={runningSetup} style={{padding:'6px 14px',borderRadius:8,background:'rgba(245,158,11,0.18)',border:'1px solid rgba(245,158,11,0.4)',color:'#fbbf24',fontSize:11,fontWeight:700,cursor:runningSetup?'wait':'pointer',whiteSpace:'nowrap'}}>{runningSetup?'Running…':'Run Auto-Setup'}</button>;
+              } else if (!automationOn) {
+                title = 'Automation is disabled on-chain';
+                body  = <><code>setAutomationEnabled(true)</code> has not been called. Click Run Auto-Setup to call it now.</>;
+                action = <button onClick={runSetup} disabled={runningSetup} style={{padding:'6px 14px',borderRadius:8,background:'rgba(245,158,11,0.18)',border:'1px solid rgba(245,158,11,0.4)',color:'#fbbf24',fontSize:11,fontWeight:700,cursor:runningSetup?'wait':'pointer',whiteSpace:'nowrap'}}>{runningSetup?'Running…':'Run Auto-Setup'}</button>;
+              } else if (vaultEthOnChain < 0.010) {
+                title = 'Vault needs more ETH for trading';
+                body  = <>Current vault balance: <strong>{vaultEthOnChain.toFixed(4)} ETH</strong>. Minimum for execution: 0.010 ETH (0.005 reserve + 0.005 minimum deploy). Send ETH to <code style={{fontSize:10}}>{VAULT_ADDR}</code>.</>;
+              } else if (s === 'IDLE' && cyclesOnChain === 0) {
+                color = '#10b981'; bg = 'rgba(16,185,129,0.06)'; border = 'rgba(16,185,129,0.25)';
+                title = 'Vault ready — awaiting first automatic cycle';
+                body  = <>Portfolio configured ✓ · Vault funded ✓ · Automation on ✓. Vercel Cron will call <code>performUpkeep()</code> within the next 5 minutes automatically.{' '}<span style={{color:'rgba(255,255,255,0.4)'}}>Or trigger it right now below.</span></>;
+                action = address && <button onClick={triggerUpkeep} disabled={triggering||isSending} style={{padding:'6px 14px',borderRadius:8,background:'rgba(16,185,129,0.15)',border:'1px solid rgba(16,185,129,0.35)',color:'#34d399',fontSize:11,fontWeight:700,cursor:'pointer',whiteSpace:'nowrap'}}>{triggering?'Confirm…':'Trigger now →'}</button>;
+              } else {
+                return null;
+              }
+
+              return (
+                <div style={{ display:'flex', alignItems:'flex-start', gap:12, padding:'14px 18px', background:bg, border:`1px solid ${border}`, borderRadius:12, marginBottom:20 }}>
+                  <AlertTriangle size={16} color={color} style={{ flexShrink:0, marginTop:2 }} />
+                  <div style={{ flex:1, fontSize:12, color:'rgba(255,255,255,0.8)', lineHeight:1.6 }}>
+                    <strong style={{ color, display:'block', marginBottom:4, fontSize:12 }}>{title}</strong>
+                    {body}
+                  </div>
+                  {action && <div style={{ flexShrink:0, marginLeft:8 }}>{action}</div>}
                 </div>
-                {(portfolioOnChain === 0 || !automationOn) && (
-                  <button
-                    onClick={runSetup}
-                    disabled={runningSetup}
-                    style={{ flexShrink:0, padding:'6px 14px', borderRadius:8, background:'rgba(245,158,11,0.18)', border:'1px solid rgba(245,158,11,0.4)', color:'#fbbf24', fontSize:11, fontWeight:700, cursor:runningSetup?'wait':'pointer', whiteSpace:'nowrap' }}
-                  >
-                    {runningSetup ? 'Running…' : 'Run Auto-Setup'}
-                  </button>
-                )}
-              </div>
-            )}
+              );
+            })()}
             {setupStatus && (
               <div style={{ padding:'10px 16px', borderRadius:10, background: setupStatus.status === 'SETUP_COMPLETE' ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)', border:`1px solid ${setupStatus.status==='SETUP_COMPLETE'?'rgba(16,185,129,0.3)':'rgba(239,68,68,0.3)'}`, fontSize:11, color: setupStatus.status==='SETUP_COMPLETE'?'#34d399':'#f87171', marginBottom:16 }}>
                 <strong>{setupStatus.status}</strong>{setupStatus.message ? ` — ${setupStatus.message}` : ''}

@@ -153,10 +153,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
   }
 
-  if (signerBal < 0.005) {
+  if (signerBal === 0) {
     return res.status(200).json({
       status:        'SIGNER_NO_GAS',
-      message:       `Signer ${signer.address} has only ${signerBal.toFixed(6)} ETH — needs ≥0.005 ETH for setup gas fees.`,
+      message:       `Signer ${signer.address} has 0 ETH — send 0.02 ETH to this address to cover setup + first execution gas fees.`,
       signerAddress: signer.address,
       signerETH:     signerBal,
       timestamp:     new Date().toISOString(),

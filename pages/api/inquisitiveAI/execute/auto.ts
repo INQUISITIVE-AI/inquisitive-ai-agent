@@ -217,26 +217,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const executorBalRaw = await provider.getBalance(executor.address).catch(() => 0n);
     const execETH        = parseFloat(ethers.formatEther(executorBalRaw));
-    if (execETH < 0.001) {
+
+    if (execETH === 0) {
       return res.status(200).json({
-        status:        'EXECUTOR_NO_GAS',
-        autonomous:    false,
-        executorReady: false,
-        blockingReason:`Executor wallet ${executor.address} has ${execETH.toFixed(6)} ETH — needs ≥0.05 ETH for gas (performUpkeep costs ~200k-500k gas). Send ETH to this exact address to enable automatic execution.`,
+        status:          'EXECUTOR_NO_GAS',
+        autonomous:      false,
+        executorReady:   false,
         executorAddress: executor.address,
-        executorETH:   execETH,
-        fundingRequired: '0.05 ETH minimum (covers ~50 automatic execution cycles)',
-        vault:         { vaultETH, p1Assets, cycleCount },
-        timestamp:     new Date().toISOString(),
+        executorETH:     execETH,
+        blockingReason:  `Executor wallet ${executor.address} has 0 ETH. Send 0.02 ETH to this address — it pays Ethereum gas fees to trigger automatic execution. The vault's ${vaultETH.toFixed(4)} ETH is separate and used only for swaps.`,
+        vault:           { vaultETH, p1Assets, cycleCount },
+        timestamp:       new Date().toISOString(),
       });
     }
 
     if (!upkeepNeeded) {
       return res.status(200).json({
         status: 'IDLE', autonomous: true,
-        reason: 'Cooldown active or insufficient ETH',
+        reason: 'Cooldown active or vault ETH below minimum',
         vault: { vaultETH, p1Assets, cycleCount },
         executor: { address: executor.address, ethBalance: execETH },
+        executorAddress: executor.address,
         timestamp: new Date().toISOString(),
       });
     }
@@ -257,25 +258,36 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log(`performUpkeep tx: ${receipt.hash} (${p1Assets} assets deployed)`);
 
     return res.status(200).json({
-      status:      'EXECUTED',
-      autonomous:  true,
-      txHash:      receipt.hash,
-      blockNumber: receipt.blockNumber,
-      gasUsed:     receipt.gasUsed.toString(),
-      etherscan:   `https://etherscan.io/tx/${receipt.hash}`,
-      assets:      { deployed: p1Assets },
-      vault:       { vaultETH, cycleCount: cycleCount + 1 },
-      executor:    { address: executor.address, ethBalance: execETH },
-      timestamp:   new Date().toISOString(),
+      status:          'EXECUTED',
+      autonomous:      true,
+      txHash:          receipt.hash,
+      blockNumber:     receipt.blockNumber,
+      gasUsed:         receipt.gasUsed.toString(),
+      etherscan:       `https://etherscan.io/tx/${receipt.hash}`,
+      assets:          { deployed: p1Assets },
+      vault:           { vaultETH, cycleCount: cycleCount + 1 },
+      executor:        { address: executor.address, ethBalance: execETH },
+      executorAddress: executor.address,
+      timestamp:       new Date().toISOString(),
     });
 
   } catch (err: any) {
-    console.error('performUpkeep failed:', err.message);
+    const msg: string = err.message || '';
+    const isNoGas = msg.toLowerCase().includes('insufficient funds');
+    const executorBalRaw2 = await provider.getBalance(executor.address).catch(() => 0n);
+    const execETH2 = parseFloat(ethers.formatEther(executorBalRaw2));
+    console.error('performUpkeep failed:', msg);
     return res.status(200).json({
-      status:    'FAILED',
-      error:     err.message,
-      vaultAddr: VAULT_ADDR,
-      timestamp: new Date().toISOString(),
+      status:          isNoGas ? 'EXECUTOR_NO_GAS' : 'FAILED',
+      autonomous:      false,
+      executorAddress: executor.address,
+      executorETH:     execETH2,
+      blockingReason:  isNoGas
+        ? `Executor wallet ${executor.address} has only ${execETH2.toFixed(6)} ETH — not enough for gas. Send 0.02 ETH to this address.`
+        : msg,
+      error:           msg,
+      vaultAddr:       VAULT_ADDR,
+      timestamp:       new Date().toISOString(),
     });
   }
 }
