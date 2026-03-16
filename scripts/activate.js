@@ -431,8 +431,8 @@ async function main() {
   L('  (SOIL: ETH held as Lido stETH pending Uniswap V3 address verification)');
   L('');
   L('  deBridge DLN (13 cross-chain — native assets on destination chains):');
-  L('  → SOL, JUP, JITOSOL, JUPSOL, MNDE, HONEY, HNT, PYTH  (Solana)');
-  L('  → BNB (BSC)  |  AVAX (Avalanche)  |  OP (Optimism)  |  TRX (TRON)  |  FDUSD (BSC)');
+  L('  → SOL, JUP, JITOSOL, JUPSOL, mSOL, HONEY, HNT, PYTH  (Solana)');
+  L('  → BNB (BSC)  |  AVAX (Avalanche)  |  OP (Optimism)  |  TRX (TRON)  |  CNGN (BSC)');
   L('');
   L('  stETH yield positions (25 assets — ETH as Lido stETH, native price tracked):');
   L('  → XRP, ADA, SUI, DOT, NEAR, ICP, HYPE, TAO, ATOM, ALGO,');

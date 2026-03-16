@@ -22,6 +22,7 @@ const VAULT_ABI = [
   'function owner() external view returns (address)',
   'function getPortfolioLength() external view returns (uint256)',
   'function getPhase2Length() external view returns (uint256)',
+  'function phase2Registry(uint256 idx) external view returns (bytes tokenAddr, uint256 chainId, bytes receiver, uint256 weightBps, string symbol)',
   'function automationEnabled() external view returns (bool)',
   'function setPortfolio(address[] calldata _tokens, uint256[] calldata _weights, uint24[] calldata _fees) external',
   'function setPhase2Registry((bytes tokenAddr, uint256 chainId, bytes receiver, uint256 weightBps, string symbol)[] assets) external',
@@ -190,7 +191,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   // ── Step 2: setPhase2Registry() ──────────────────────────────────────────
   const p2Len = Number(await vault.getPhase2Length().catch(() => 0n));
-  if (p2Len === 0) {
+  let p2NeedsUpdate = (p2Len === 0);
+  if (p2Len === 13) {
+    try {
+      const a4 = await vault.phase2Registry(4); // index 4 should be mSOL (was MNDE)
+      const a9 = await vault.phase2Registry(9); // index 9 should be CNGN (was FDUSD)
+      if (a4.symbol !== 'mSOL' || a9.symbol !== 'CNGN') p2NeedsUpdate = true;
+    } catch { p2NeedsUpdate = true; }
+  }
+  if (p2NeedsUpdate) {
     try {
       const raw    = buildPhase2Assets();
       const assets = raw.map(a => ({
