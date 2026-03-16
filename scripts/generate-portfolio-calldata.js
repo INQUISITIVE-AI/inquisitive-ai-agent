@@ -55,7 +55,7 @@ const ALL_WEIGHTS = {
   USDC:3, PAXG:1.5, ONDO:1, XLM:0.5, LTC:0.5, BCH:0.5, HBAR:0.5, ZEC:0.25, XMR:0.25,
   ETC:0.5, XTZ:0.25, CHZ:0.25, HNT:0.25, VET:0.25, QNT:0.25, ALGO:0.25, FIL:0.25, AR:0.25,
   XDC:0.1, ZRO:0.25, ATOM:0.25, DBR:0.1, ACH:0.1, EOS:0.1, HONEY:0.1, XSGD:0.1, SOIL:0.1,
-  BRZ:0.1, JPYC:0.1, FDUSD:0.1, JITOSOL:0.5, JUPSOL:0.5, MNDE:0.5, CC:0.1, PYTH:0.1, STX:0.1,
+  BRZ:0.1, JPYC:0.1, CNGN:0.1, JITOSOL:0.5, JUPSOL:0.5, mSOL:0.5, CC:0.1, PYTH:0.1, STX:0.1,
 };
 
 // ── Phase 1: ETH mainnet assets (direct Uniswap V3) ───────────────────────────
@@ -140,9 +140,9 @@ console.log('\n── Phase 2: Cross-chain assets (deBridge DLN — native price
 console.log('Symbol  Portfolio%  Native Chain          Protocol');
 console.log('─────── ──────────  ───────────────────── ─────────────────────');
 const PHASE2_CHAINS = {
-  SOL:'Solana', JITOSOL:'Solana', JUPSOL:'Solana', MNDE:'Solana', JUP:'Solana',
+  SOL:'Solana', JITOSOL:'Solana', JUPSOL:'Solana', mSOL:'Solana', JUP:'Solana',
   PYTH:'Solana', HONEY:'Solana',
-  BNB:'BNB Chain', FDUSD:'BNB Chain',
+  BNB:'BNB Chain', CNGN:'BSC',
   XRP:'XRP Ledger', ADA:'Cardano', TRX:'TRON', AVAX:'Avalanche',
   SUI:'Sui', DOT:'Polkadot', NEAR:'NEAR', ICP:'ICP', ATOM:'Cosmos', XDC:'XDC Network',
   OP:'Optimism', HYPE:'HyperEVM', LTC:'Litecoin', BCH:'Bitcoin Cash',
@@ -153,8 +153,8 @@ const PHASE2_CHAINS = {
 };
 const PHASE2_PROTOCOLS = {
   SOL:'deBridge → Jupiter', JITOSOL:'deBridge → Jito', JUPSOL:'deBridge → Jupiter',
-  MNDE:'deBridge → Marinade', JUP:'deBridge → Jupiter', PYTH:'deBridge → Jupiter',
-  BNB:'deBridge → PancakeSwap', FDUSD:'deBridge → PancakeSwap',
+  mSOL:'deBridge → Marinade', JUP:'deBridge → Jupiter', PYTH:'deBridge → Jupiter',
+  BNB:'deBridge → PancakeSwap', CNGN:'deBridge → PancakeSwap',
   XRP:'deBridge → XRPL DEX', ADA:'deBridge → Minswap', TRX:'deBridge → SunSwap',
   AVAX:'deBridge → Trader Joe', SUI:'deBridge → Cetus', DOT:'deBridge → HydraDX',
   NEAR:'deBridge → Ref Finance', ICP:'deBridge → ICPSwap', ATOM:'deBridge → Osmosis',

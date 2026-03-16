@@ -5,6 +5,15 @@
   "installCommand": "npm install --legacy-peer-deps",
   "headers": [
     {
+      "source": "/(.*\\.html|analytics|help|buy|)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, no-cache, must-revalidate"
+        }
+      ]
+    },
+    {
       "source": "/(.*)",
       "headers": [
         {

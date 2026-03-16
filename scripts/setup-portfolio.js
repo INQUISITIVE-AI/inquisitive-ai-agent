@@ -114,12 +114,12 @@ const TOKEN_ADDRESSES = {
   SOIL:    null,  // Soil (very low liquidity)
   BRZ:     null,  // BRZ (very low liquidity)
   JPYC:    null,  // JPYC (very low liquidity)
-  FDUSD:   null,  // First Digital USD (BNB-chain primary)
+  CNGN:    null,  // Celo Nigerian Naira (BSC primary)
   CC:      null,  // Canton Network (no ERC-20)
   PYTH:    null,  // Pyth Network (Solana-native)
   JITOSOL: null,  // Solana-native (Jito staked SOL)
   JUPSOL:  null,  // Solana-native (Jupiter staked SOL)
-  MNDE:    null,  // Marinade (Solana-native)
+  mSOL:    null,  // Marinade staked SOL (Solana-native)
   STX:     null,  // Stacks (Bitcoin L2, low ETH liquidity)
 };
 
@@ -131,7 +131,7 @@ const PORTFOLIO_WEIGHTS = {
   USDC:3, PAXG:1.5, ONDO:1, XLM:0.5, LTC:0.5, BCH:0.5, HBAR:0.5, ZEC:0.25, XMR:0.25,
   ETC:0.5, XTZ:0.25, CHZ:0.25, HNT:0.25, VET:0.25, QNT:0.25, ALGO:0.25, FIL:0.25, AR:0.25,
   XDC:0.1, ZRO:0.25, ATOM:0.25, DBR:0.1, ACH:0.1, EOS:0.1, HONEY:0.1, XSGD:0.1, SOIL:0.1,
-  BRZ:0.1, JPYC:0.1, FDUSD:0.1, JITOSOL:0.5, JUPSOL:0.5, MNDE:0.5, CC:0.1, PYTH:0.1, STX:0.1,
+  BRZ:0.1, JPYC:0.1, CNGN:0.1, JITOSOL:0.5, JUPSOL:0.5, mSOL:0.5, CC:0.1, PYTH:0.1, STX:0.1,
 };
 
 function buildPortfolioArrays() {
