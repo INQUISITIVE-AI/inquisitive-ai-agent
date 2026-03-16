@@ -563,7 +563,26 @@ export default function AnalyticsPage() {
                       {onChainBalance > 0 && localHolding > 0 && onChainBalance <= localHolding * 2 + 5 && <span style={{ fontSize:9, padding:'2px 7px', borderRadius:100, background:'rgba(16,185,129,0.15)', color:'#34d399', border:'1px solid rgba(16,185,129,0.25)' }}>ON-CHAIN</span>}
                       {purchases.length > 0 && onChainBalance === 0 && <span style={{ fontSize:9, padding:'2px 7px', borderRadius:100, background:'rgba(124,58,237,0.15)', color:'#a78bfa', border:'1px solid rgba(124,58,237,0.25)' }}>PRESALE</span>}
                     </div>
-                    {!hasHoldings ? (
+                    {!hasHoldings && isVaultOwner && vaultEthOnChain > 0 ? (
+                      <div style={{ padding:'4px 0' }}>
+                        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10, marginBottom:12 }}>
+                          {[
+                            { l:'Vault ETH',     v:vaultEthOnChain.toFixed(4)+' ETH', c:'#60a5fa' },
+                            { l:'Vault Value',   v:fmtUsd(vaultEthOnChain*(nav?.treasury?.ethPrice??2000)), c:'#10b981' },
+                            { l:'7D Portfolio',  v:pct(return7d), c:grc(return7d) },
+                          ].map(s => (
+                            <div key={s.l} style={{ background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:10, padding:'10px 12px' }}>
+                              <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)', marginBottom:3 }}>{s.l}</div>
+                              <div style={{ fontSize:14, fontWeight:800, color:s.c, fontFamily:'monospace' }}>{s.v}</div>
+                            </div>
+                          ))}
+                        </div>
+                        <div style={{ padding:'10px 12px', background:'rgba(96,165,250,0.06)', border:'1px solid rgba(96,165,250,0.2)', borderRadius:10, fontSize:11, color:'rgba(255,255,255,0.5)', lineHeight:1.6, marginBottom:12 }}>
+                          You are the vault owner. Your ETH is in the portfolio vault and managed by the AI system across all 65 assets. INQAI token holdings reflect presale purchases — buy below to get a tokenized position.
+                        </div>
+                        <button onClick={() => router.push('/buy')} style={{ width:'100%', padding:'10px', borderRadius:10, background:'linear-gradient(135deg,#7c3aed,#4f46e5)', color:'#fff', border:'none', cursor:'pointer', fontSize:13, fontWeight:700 }}>Buy INQAI at $8</button>
+                      </div>
+                    ) : !hasHoldings ? (
                       <div style={{ textAlign:'center', padding:'20px 0' }}>
                         <div style={{ fontSize:13, color:'rgba(255,255,255,0.35)', marginBottom:12 }}>{address?'No INQAI holdings detected — connect to a wallet that holds INQAI, or buy below.':'Connect wallet to view your holdings.'}</div>
                         <div style={{ display:'flex', gap:10, justifyContent:'center', flexWrap:'wrap' }}>
