@@ -94,7 +94,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const [fg, coins] = await Promise.all([
         fetchFearGreed(),
         fetch(`https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd&include_24hr_change=true`, { signal: AbortSignal.timeout(8000) })
-          .then(r => r.ok ? r.json() : {}).catch(() => ({})),
+          .then(r => r.ok ? r.json() : {}).catch(() => ({})) as Promise<any>,
       ]);
       const btcChg = coins?.bitcoin?.usd_24h_change ?? 0;
       const ethChg = coins?.ethereum?.usd_24h_change ?? 0;

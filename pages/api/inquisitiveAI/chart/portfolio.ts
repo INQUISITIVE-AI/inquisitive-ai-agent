@@ -34,7 +34,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // ONE API call — sparkline=true gives 168-point hourly price series per asset
     const cgKey = process.env.COINGECKO_API_KEY;
-    const cgHeaders = cgKey ? { 'x-cg-demo-api-key': cgKey } : {};
+    const cgHeaders: Record<string, string> = cgKey ? { 'x-cg-demo-api-key': cgKey } : {};
     const marketsRes = await fetch(
       `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${allIds}` +
       `&order=market_cap_desc&per_page=100&sparkline=true&price_change_percentage=7d`,
