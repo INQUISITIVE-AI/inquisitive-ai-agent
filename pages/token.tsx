@@ -86,7 +86,7 @@ export default function TokenPage() {
     } catch {} finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { load(); const t = setInterval(load, 20000); return () => clearInterval(t); }, [load]);
+  useEffect(() => { load(); const t = setInterval(load, 60000); return () => clearInterval(t); }, [load]);
 
   useEffect(() => {
     if (qa && assets.length) {

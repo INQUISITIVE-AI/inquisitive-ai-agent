@@ -18,5 +18,5 @@ mainnet = { key = "${ETHERSCAN_API_KEY}" }
 
 # Hardware wallet configuration — signing is handled by --trezor flag at runtime
 [profile.mainnet]
-
+ 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options

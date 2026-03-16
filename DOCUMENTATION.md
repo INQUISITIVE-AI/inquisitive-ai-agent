@@ -122,15 +122,15 @@ The Oracle      → CoinGecko primary, CryptoCompare fallback — 65 native pric
 ### Execution Flow
 
 1. **Hybrid keeper** calls `performUpkeep()` every 1–5 minutes:
-   - cron-job.org pings `/api/inquisitiveAI/execute/auto` every 1 minute (primary)
-   - GitHub Actions vault-keeper runs every 5 minutes as redundant backup
-   - Vercel cron (`vercel.json`) fires every 5 minutes as tertiary backup
+   - cron-job.org pings `/api/inquisitiveAI/execute/auto` every 1 minute
+   - GitHub Actions vault-keeper.yml runs every 5 minutes
+   - Vercel Cron (`vercel.json`) fires every 5 minutes
 2. If `vaultBalance > minDeploy`, `performUpkeep()` executes on-chain
-3. **ETH → 27 ERC-20s** via Uniswap V3 (one batch)
+3. **ETH → 26 ERC-20s** via Uniswap V3 (one batch)
 4. **ETH → 13 native assets** via deBridge DLN `createOrder()` (one batch, including TRX on TRON)
 5. **Remaining ETH → stETH** via Lido for the 25 stETH yield positions
 6. All prices, NAV, signals updated in real-time via CoinGecko
-7. Chainlink Automation will be added as the project scales (register at automation.chain.link)
+7. Chainlink Automation: register at automation.chain.link
 
 ---
 
@@ -167,9 +167,9 @@ Each BTC, SOL, and TRX payment is assigned a unique amount for automatic on-chai
 ### Vault Contract Capabilities (`contracts/InquisitiveVaultUpdated.sol`)
 
 - `receive() payable` — accepts ETH
-- `performUpkeep(bytes calldata)` — keeper entry point; deploys across all 65 assets: 27 Uniswap V3 swaps + 13 deBridge cross-chain bridges + 25 Lido stETH positions
+- `performUpkeep(bytes calldata)` — keeper entry point; deploys across all 65 assets: 26 Uniswap V3 swaps + 13 deBridge cross-chain bridges + 25 Lido stETH positions
 - `checkUpkeep(bytes calldata)` → `(bool upkeepNeeded, bytes memory performData)`
-- `setPortfolio(address[], uint256[], uint24[])` — configures 27 ETH-mainnet ERC-20 targets (owner only)
+- `setPortfolio(address[], uint256[], uint24[])` — configures 26 ETH-mainnet ERC-20 targets (owner only)
 - `setPhase2Registry(Phase2Asset[])` — configures 13 cross-chain bridge targets (owner only)
 - `setAutomationEnabled(bool)` — enable/disable keeper automation (owner only)
 - `setAIExecutor(address)` — set optional executor address (owner only)
@@ -184,9 +184,9 @@ The full vault `InquisitiveVaultUpdated` is **live on mainnet** at `0xadcfff8770
 
 ```
 ✅ Vault deployed:           0xadcfff8770a162b63693aa84433ef8b93a35eb52
-✅ setPortfolio():           27 ETH-mainnet ERC-20s configured on-chain
+✅ setPortfolio():           26 ETH-mainnet ERC-20s configured on-chain (SOIL pending Uniswap V3 address verification)
 ✅ setPhase2Registry():      13 cross-chain deBridge DLN assets configured (25 stETH positions included)
-✅ Total assets:             65 (27 Uniswap + 13 cross-chain + 25 stETH)
+✅ Total assets:             65 (26 live Uniswap + 13 cross-chain + 25 stETH + SOIL pending)
 ✅ setAutomationEnabled():   true — vault will execute on every keeper call
 ✅ Hybrid keeper running:    cron-job.org (1 min) + GitHub Actions (5 min)
 ```
@@ -217,7 +217,7 @@ node scripts/activate.js
 ```
 
 This prints the exact arrays to paste into Etherscan Write Contract for:
-1. `setPortfolio()` — 27 ETH-mainnet tokens
+1. `setPortfolio()` — 26 ETH-mainnet tokens
 2. `setPhase2Registry()` — 13 cross-chain bridge targets
 3. `setAutomationEnabled(true)`
 
@@ -246,7 +246,11 @@ The vault keeper runs on a redundant hybrid schedule to ensure `performUpkeep()`
 
 ### Backup: GitHub Actions (5-Minute Interval)
 
-Configured in `.github/workflows/vault-keeper.yml`. Runs every 5 minutes as a redundant fallback.
+Configured in `.github/workflows/vault-keeper.yml`. Runs every 5 minutes.
+
+### Tertiary: Vercel Cron (5-Minute Interval)
+
+Configured in `vercel.json`. Fires every 5 minutes automatically on Vercel deployments.
 
 ### Chainlink Automation
 
@@ -333,7 +337,7 @@ All endpoints are Next.js API routes (`pages/api/`). No authentication required 
 
 - **Zero private keys** in any file, environment variable, or codebase
 - **Vault owner** = team wallet `0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746` — configures portfolio on-chain via Etherscan
-- **Hybrid keeper** (cron-job.org + GitHub Actions) executes `performUpkeep()` — zero cost, no subscription required. Chainlink Automation can be added at scale.
+- **Hybrid keeper** (cron-job.org + GitHub Actions + Vercel Cron) executes `performUpkeep()`. Chainlink Automation can be added at scale.
 - **deBridge DLN** is a fully on-chain bridge — no custodian, no API key, no off-chain intermediary
 - **Payment verification** uses public blockchain APIs (Blockstream, Solana public RPC) — no third-party processor
 - **WalletConnect only** — no MetaMask injection, no Coinbase popup, no custodial risk
@@ -343,7 +347,7 @@ All endpoints are Next.js API routes (`pages/api/`). No authentication required 
 ## Platform Status
 
 - ✅ **65/65 live native prices** — CoinGecko primary, CryptoCompare fallback, no mock data
-- ✅ **27 ETH-mainnet assets** — Uniswap V3 ERC-20 swaps ready
+- ✅ **26 ETH-mainnet assets** — Uniswap V3 ERC-20 swaps live (SOIL pending)
 - ✅ **13 cross-chain assets** — deBridge DLN bridges ready (Solana × 8, BSC, Avalanche, Optimism, TRON, BSC-FDUSD)
 - ✅ **25 stETH yield positions** — allocated and earning Lido yield, native prices tracked
 - ✅ **5 intelligence engines** — Pattern, Reasoning, Portfolio, Learning, Risk — live
@@ -351,8 +355,8 @@ All endpoints are Next.js API routes (`pages/api/`). No authentication required 
 - ✅ **INQAI ERC-20** — `0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5` — mainnet live
 - ✅ **BTC/SOL/TRX payment verification** — on-chain, automatic confirmation
 - ✅ **Token sale active** — presale $8, ETH/USDC/BTC/SOL/TRX accepted, INQAI delivered within 24h
-- ✅ **Vault live** — `0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52` — 26 assets + 13 bridges configured
-- ✅ **Hybrid keeper running** — cron-job.org (1 min) + GitHub Actions (5 min) — zero cost, no LINK required
+- ✅ **Vault live** — `0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52` — 26 ETH-mainnet assets + 13 bridges configured (SOIL pending)
+- ✅ **Hybrid keeper running** — cron-job.org (1 min) + GitHub Actions (5 min) + Vercel Cron (5 min)
 
 ---
 

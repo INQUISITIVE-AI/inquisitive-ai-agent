@@ -54,18 +54,20 @@ async function main() {
   const vault    = new ethers.Contract(VAULT_ADDR, VAULT_ABI, keeper);
   const readVault= new ethers.Contract(VAULT_ADDR, VAULT_ABI, provider);
 
-  const [portfolioLen, autoEnabled, upkeepResult, keeperBalRaw] = await Promise.all([
+  const [portfolioLen, autoEnabled, upkeepResult, keeperBalRaw, vaultBalRaw] = await Promise.all([
     readVault.getPortfolioLength().catch(() => 0n),
     readVault.automationEnabled().catch(() => false),
     readVault.checkUpkeep('0x').catch(() => [false, '0x']),
     provider.getBalance(keeper.address),
+    provider.getBalance(VAULT_ADDR),
   ]);
 
   const portfolioAssets = Number(portfolioLen);
   const upkeepNeeded    = upkeepResult[0];
   const keeperETH       = parseFloat(ethers.formatEther(keeperBalRaw));
+  const vaultETH        = parseFloat(ethers.formatEther(vaultBalRaw));
 
-  console.log(`Vault:    ${VAULT_ADDR}`);
+  console.log(`Vault:    ${VAULT_ADDR} (${vaultETH.toFixed(6)} ETH)`);
   console.log(`Keeper:   ${keeper.address} (${keeperETH.toFixed(4)} ETH)`);
   console.log(`Portfolio: ${portfolioAssets} assets configured`);
   console.log(`AutoEnabled: ${autoEnabled}`);
@@ -78,6 +80,13 @@ async function main() {
 
   if (!upkeepNeeded) {
     console.log('SKIP: checkUpkeep() returned false — vault idle or cooldown active');
+    process.exit(0);
+  }
+
+  // performUpkeep requires ethBal > 0.005 (gasReserve) + 0.005 (MIN_DEPLOY) = 0.010 ETH
+  if (vaultETH <= 0.010) {
+    console.warn(`SKIP: vault has ${vaultETH.toFixed(6)} ETH — performUpkeep needs >0.010 ETH.`);
+    console.warn(`Fund vault: send ETH to ${VAULT_ADDR} (recommend 0.1+ ETH)`);
     process.exit(0);
   }
 

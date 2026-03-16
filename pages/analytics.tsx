@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';
-import { useAccount, useReadContract } from 'wagmi';
-import { erc20Abi } from 'viem';
+import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { erc20Abi, parseUnits, isAddress } from 'viem';
 
 import {
   Brain, DollarSign, Target, Flame, Bot, TrendingUp, TrendingDown,
@@ -66,11 +66,19 @@ export default function AnalyticsPage() {
   const [tab,       setTab]      = useState<'portfolio'|'ai'|'positions'|'fees'>('portfolio');
   const [posFilter, setPosFilter]= useState<string>('all');
   const [purchases, setPurchases]= useState<any[]>([]);
+  const [sendOpen,  setSendOpen] = useState(false);
+  const [sendTo,    setSendTo]   = useState('');
+  const [sendAmt,   setSendAmt]  = useState('');
+  const [sendError, setSendError]= useState<string | null>(null);
+
+  const { writeContractAsync, isPending: isSending } = useWriteContract();
+  const [sendHash, setSendHash] = useState<`0x${string}` | undefined>();
+  const { isSuccess: sendConfirmed } = useWaitForTransactionReceipt({ hash: sendHash });
 
   // ── Vault on-chain state (live reads, no private key) ─────────────────────
   const { data: checkUpkeepData } = useReadContract({
     address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'checkUpkeep',
-    args: ['0x'], chainId: 1, query: { refetchInterval: 15000 },
+    args: ['0x'], chainId: 1, query: { refetchInterval: 30000 },
   });
   const { data: vaultPortfolioLen } = useReadContract({
     address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'getPortfolioLength',
@@ -78,7 +86,7 @@ export default function AnalyticsPage() {
   });
   const { data: vaultEthBal } = useReadContract({
     address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'getETHBalance',
-    chainId: 1, query: { refetchInterval: 15000 },
+    chainId: 1, query: { refetchInterval: 30000 },
   });
   const { data: automationEnabledData } = useReadContract({
     address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'automationEnabled',
@@ -86,7 +94,7 @@ export default function AnalyticsPage() {
   });
   const { data: vaultCycleCount } = useReadContract({
     address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'cycleCount',
-    chainId: 1, query: { refetchInterval: 15000 },
+    chainId: 1, query: { refetchInterval: 30000 },
   });
     const vaultEthOnChain = vaultEthBal ? Number(vaultEthBal) / 1e18 : 0;
   const portfolioOnChain= vaultPortfolioLen ? Number(vaultPortfolioLen) : 0;
@@ -115,7 +123,7 @@ export default function AnalyticsPage() {
   }, [address]);
 
   const load = useCallback(async (bust = false) => {
-    const t = bust ? `?_t=${Date.now()}` : `?_t=${Math.floor(Date.now() / 15000) * 15000}`;
+    const t = bust ? `?_t=${Date.now()}` : `?_t=${Math.floor(Date.now() / 60000) * 60000}`;
     if (bust) setRefreshing(true);
 
     const safe = async (url: string) => {
@@ -144,7 +152,7 @@ export default function AnalyticsPage() {
     Promise.allSettled([navP, chartP, catP, queueP, monitorP, statusP])
       .then(() => setRefreshing(false));
   }, []);
-  useEffect(() => { load(); const t = setInterval(() => load(), 15000); return () => clearInterval(t); }, [load]);
+  useEffect(() => { load(); const t = setInterval(() => load(), 60000); return () => clearInterval(t); }, [load]);
 
   const navPerToken       = nav?.token?.navPerToken       ?? INQAI_TOKEN.presalePrice;
   const navSource         = nav?.token?.navSource          ?? 'connecting';
@@ -165,7 +173,7 @@ export default function AnalyticsPage() {
   // Real on-chain treasury data
   const treasury      = nav?.treasury ?? {} as any;
   const aumUSD        = treasury.aumUSD        ?? 0;
-  const totalEthUSD   = (treasury.totalEth ?? 0) * (treasury.ethPrice ?? 3200);
+  const totalEthUSD   = (treasury.vaultEth ?? 0) * (treasury.ethPrice ?? 3200);
   const vaultAddress  = treasury.vaultAddress  || INQAI_TOKEN.teamWallet;
   const isOnChainNAV  = navSource === 'on-chain-aum';
 
@@ -212,6 +220,36 @@ export default function AnalyticsPage() {
   }, [purchases, navPerToken]);
 
   const chartData   = equity.length ? equity : userEquity.length ? userEquity : globalEquity;
+  const handleSend = async () => {
+    setSendError(null);
+    if (!isAddress(sendTo)) { setSendError('Invalid recipient address.'); return; }
+    const amt = parseFloat(sendAmt);
+    if (!amt || amt <= 0) { setSendError('Enter a valid amount.'); return; }
+    const spendable = onChainBalance > 0 ? onChainBalance : totalInqai;
+    if (onChainBalance === 0 && totalInqai > 0) {
+      setSendError('Your INQAI tokens are pending airdrop delivery. Once they arrive on-chain you can send them.'); return;
+    }
+    if (onChainBalance === 0) { setSendError('No on-chain INQAI balance found.'); return; }
+    if (amt > spendable) { setSendError(`Amount exceeds your balance of ${fmtN(spendable, 4)} INQAI.`); return; }
+    try {
+      const hash = await writeContractAsync({
+        address:      INQAI_TOKEN.address,
+        abi:          erc20Abi,
+        functionName: 'transfer',
+        args:         [sendTo as `0x${string}`, parseUnits(sendAmt, 18)],
+        chainId:      1,
+      });
+      setSendHash(hash);
+    } catch (e: any) {
+      const msg: string = e.shortMessage || e.message || '';
+      if (msg.toLowerCase().includes('rejected') || e.code === 4001) {
+        setSendError('Transaction rejected.');
+      } else {
+        setSendError(msg || 'Transfer failed. Please try again.');
+      }
+    }
+  };
+
   const ACTIVE_SIGS = ['BUY','STAKE','LEND','YIELD','BORROW','LOOP','MULTIPLY','EARN','REWARDS','SWAP'];
   const topSignals  = positions.filter(p => ACTIVE_SIGS.includes(p.action)).slice(0, 8);
   const dispValue   = hasHoldings ? currentValue : navPerToken;
@@ -270,7 +308,7 @@ export default function AnalyticsPage() {
               </div>
               <div style={{ display:'flex', gap:10, alignItems:'center' }}>
                 <div style={{ width:8, height:8, borderRadius:9, background:'#10b981', boxShadow:'0 0 8px #10b981' }} />
-                <span style={{ fontSize:12, color:'#10b981', fontWeight:700 }}>LIVE · {!nav ? 'Connecting…' : cycles > 0 ? `Cycle #${cycles.toLocaleString()}` : '65 assets · live'}</span>
+                <span style={{ fontSize:12, color:'#10b981', fontWeight:700 }}>LIVE · {!nav ? 'Connecting…' : cyclesOnChain > 0 ? `Cycle #${cyclesOnChain.toLocaleString()}` : '65 assets · live'}</span>
                 {isOnChainNAV && (
                   <span style={{ fontSize:10, padding:'2px 8px', borderRadius:100, background:'rgba(16,185,129,0.12)', color:'#34d399', border:'1px solid rgba(16,185,129,0.25)', fontWeight:700 }}>
                     ON-CHAIN NAV · {fmtUsd(aumUSD)} AUM
@@ -282,7 +320,7 @@ export default function AnalyticsPage() {
             {/* KPI Row — always shows real vault metrics, not deployer token holdings */}
             <div style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:12, marginBottom:24 }}>
               {([
-                { label:'Vault AUM',   val: aumUSD > 0 ? fmtUsd(aumUSD) : (treasury.totalEth??0) > 0 ? (treasury.totalEth??0).toFixed(4)+' ETH' : '—', sub: aumUSD > 0 ? `${(treasury.totalEth??0).toFixed(4)} ETH · ${isOnChainNAV?'on-chain':'basket-weighted'}` : 'Awaiting deposit', col:'#60a5fa', icon:'dollar' },
+                { label:'Vault AUM',   val: aumUSD > 0 ? fmtUsd(aumUSD) : (treasury.vaultEth??0) > 0 ? (treasury.vaultEth??0).toFixed(4)+' ETH' : '—', sub: aumUSD > 0 ? `${(treasury.vaultEth??0).toFixed(4)} ETH · ${isOnChainNAV?'on-chain':'basket-weighted'}` : 'Awaiting deposit', col:'#60a5fa', icon:'dollar' },
                 { label:'7D Return',   val:pct(return7d),    sub:'65-asset weighted basket',                     col:grc(return7d),  icon:'target' },
                 { label:'24H Return',  val:pct(return24h),   sub:`${(winRate*100).toFixed(0)}% assets up today`, col:grc(return24h), icon:'trend'  },
                 { label:'Target APY',  val:'18.5%',           sub:'Staking · Lending · LP · Yield',              col:'#f59e0b',      icon:'flame'  },
@@ -302,6 +340,23 @@ export default function AnalyticsPage() {
                 </div>
               ))}
             </div>
+
+            {/* Vault Execution Status — shown when brain cycles are 0 */}
+            {cyclesOnChain === 0 && (
+              <div style={{ display:'flex', alignItems:'flex-start', gap:12, padding:'12px 18px', background:'rgba(245,158,11,0.07)', border:'1px solid rgba(245,158,11,0.22)', borderRadius:12, marginBottom:20 }}>
+                <AlertTriangle size={16} color="#f59e0b" style={{ flexShrink:0, marginTop:2 }} />
+                <div style={{ fontSize:12, color:'rgba(245,158,11,0.9)', lineHeight:1.5 }}>
+                  {portfolioOnChain === 0
+                    ? <><strong>Portfolio not configured on-chain.</strong> Call <code>setPortfolio()</code> on Etherscan Write Contract to activate AI execution.</>
+                    : !automationOn
+                    ? <><strong>Automation disabled.</strong> Call <code>setAutomationEnabled(true)</code> on the vault contract via Etherscan Write Contract.</>
+                    : vaultEthOnChain < 0.005
+                    ? <><strong>Vault underfunded.</strong> Send ETH to <code style={{fontSize:10}}>{VAULT_ADDR}</code> — minimum 0.05 ETH recommended for 26-asset deployment.</>
+                    : <><strong>Keeper not configured.</strong> Vault is funded &amp; ready but no executor is calling <code>performUpkeep()</code>. Set <code>EXECUTOR_PRIVATE_KEY</code> in Vercel env vars, or register Chainlink Automation at <a href="https://automation.chain.link" target="_blank" rel="noopener noreferrer" style={{color:'#fbbf24'}}>automation.chain.link</a>.</>
+                  }
+                </div>
+              </div>
+            )}
 
             {/* Tabs */}
             <div style={{ display:'flex', gap:2, marginBottom:20, borderBottom:'1px solid rgba(255,255,255,0.06)', flexWrap:'wrap' }}>
@@ -383,6 +438,16 @@ export default function AnalyticsPage() {
                             <span style={{ color:'rgba(255,255,255,0.25)', fontSize:10 }}>{new Date(p.timestamp).toLocaleDateString()}</span>
                           </div>
                         ))}
+                        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginTop:14 }}>
+                          <button
+                            onClick={() => { setSendOpen(true); setSendError(null); setSendTo(''); setSendAmt(''); setSendHash(undefined); }}
+                            style={{ padding:'10px', borderRadius:10, fontSize:13, fontWeight:700, cursor:'pointer', background:'rgba(124,58,237,0.12)', border:'1px solid rgba(124,58,237,0.35)', color:'#a78bfa', transition:'all 0.2s' }}
+                          >Send INQAI →</button>
+                          <button
+                            onClick={() => router.push('/buy')}
+                            style={{ padding:'10px', borderRadius:10, fontSize:13, fontWeight:700, cursor:'pointer', background:'linear-gradient(135deg,#7c3aed,#4f46e5)', border:'1px solid rgba(255,255,255,0.1)', color:'#fff' }}
+                          >Acquire More</button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -399,7 +464,7 @@ export default function AnalyticsPage() {
                     <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10, marginBottom:12 }}>
                       {[
                         { l:'Total AUM',         v: fmtUsd(aumUSD),                             c:'#10b981' },
-                        { l:'ETH in Vault',       v: (treasury.totalEth??0).toFixed(4)+' ETH',   c:'#60a5fa' },
+                        { l:'ETH in Vault',       v: (treasury.vaultEth??0).toFixed(4)+' ETH',   c:'#60a5fa' },
                         { l:'Tokens Sold',        v: circulatingSupply > 0 ? fmtN(circulatingSupply,0)+' INQAI' : 'Pending', c:'#a78bfa' },
                       ].map(s => (
                         <div key={s.l} style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:10, padding:'10px 12px' }}>
@@ -511,7 +576,7 @@ export default function AnalyticsPage() {
                   <h3 style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.8)', marginBottom:18 }}>AI Agent Live Metrics</h3>
                   <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10 }}>
                     {([
-                      { l:'Brain Cycles', v:cycles.toLocaleString(), c:'#a78bfa', i:'brain' },
+                      { l:'Brain Cycles', v:cyclesOnChain.toLocaleString(), c:'#a78bfa', i:'brain' },
                       { l:'Buy Signals',  v:buys,   c:'#10b981', i:'up' },
                       { l:'Sell Signals', v:sells,  c:'#ef4444', i:'down' },
                       { l:'Regime',       v:regime, c:regimeCol, i:regime==='BULL'?'up':regime==='BEAR'?'down':'scale' },
@@ -555,7 +620,7 @@ export default function AnalyticsPage() {
                   </div>
                 </div>
                 <div style={{ background:'rgba(13,13,32,0.85)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:20, padding:'24px', backdropFilter:'blur(12px)', gridColumn:'1 / -1' }}>
-                  <h3 style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.8)', marginBottom:14 }}>Top AI Signals — Cycle #{cycles.toLocaleString()}</h3>
+                  <h3 style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.8)', marginBottom:14 }}>Top AI Signals — Cycle #{cyclesOnChain.toLocaleString()}</h3>
                   {topSignals.length > 0 ? (
                     <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10 }}>
                       {topSignals.map((s:any) => (
@@ -875,6 +940,95 @@ export default function AnalyticsPage() {
           </div>
         </div>
       </div>
+
+      {/* ── Send INQAI Modal ── */}
+      {sendOpen && (
+        <div style={{ position:'fixed', inset:0, zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(0,0,0,0.75)', backdropFilter:'blur(6px)' }}
+          onClick={(e) => { if (e.target === e.currentTarget) setSendOpen(false); }}
+        >
+          <div style={{ background:'#0d0d20', border:'1px solid rgba(124,58,237,0.35)', borderRadius:20, padding:'28px 24px', width:'100%', maxWidth:420, margin:'0 16px' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:22 }}>
+              <h3 style={{ fontSize:16, fontWeight:800, margin:0 }}>Send INQAI</h3>
+              <button onClick={() => setSendOpen(false)} style={{ background:'none', border:'none', color:'rgba(255,255,255,0.4)', fontSize:20, cursor:'pointer', lineHeight:1 }}>×</button>
+            </div>
+
+            {sendConfirmed ? (
+              <div style={{ textAlign:'center', padding:'16px 0' }}>
+                <div style={{ fontSize:32, marginBottom:8 }}>✓</div>
+                <div style={{ fontSize:14, fontWeight:700, color:'#10b981', marginBottom:6 }}>Transfer confirmed!</div>
+                <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)', marginBottom:16 }}>
+                  {sendAmt} INQAI sent to {sendTo.slice(0,8)}…{sendTo.slice(-6)}
+                </div>
+                {sendHash && (
+                  <a href={`https://etherscan.io/tx/${sendHash}`} target="_blank" rel="noopener noreferrer"
+                    style={{ fontSize:11, color:'#6ee7b7', display:'block', marginBottom:14 }}>
+                    View on Etherscan ↗
+                  </a>
+                )}
+                <button onClick={() => setSendOpen(false)}
+                  style={{ padding:'9px 20px', borderRadius:10, background:'linear-gradient(135deg,#7c3aed,#4f46e5)', color:'#fff', border:'none', cursor:'pointer', fontSize:13, fontWeight:700 }}>
+                  Done
+                </button>
+              </div>
+            ) : (
+              <>
+                <div style={{ marginBottom:14 }}>
+                  <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)', marginBottom:6 }}>Recipient address</div>
+                  <input
+                    value={sendTo} onChange={e => setSendTo(e.target.value)}
+                    placeholder="0x…"
+                    style={{ width:'100%', padding:'10px 12px', borderRadius:10, background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', color:'#fff', fontSize:13, fontFamily:'monospace', outline:'none', boxSizing:'border-box' }}
+                  />
+                </div>
+                <div style={{ marginBottom:18 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
+                    <span style={{ fontSize:11, color:'rgba(255,255,255,0.4)' }}>Amount (INQAI)</span>
+                    <button onClick={() => setSendAmt((onChainBalance > 0 ? onChainBalance : totalInqai).toFixed(4))}
+                      style={{ fontSize:10, background:'none', border:'none', color:'#a78bfa', cursor:'pointer', padding:0 }}>
+                      Max: {fmtN(onChainBalance > 0 ? onChainBalance : totalInqai, 4)}
+                    </button>
+                  </div>
+                  <input
+                    value={sendAmt} onChange={e => setSendAmt(e.target.value)}
+                    placeholder="0.0"
+                    type="number" min="0"
+                    style={{ width:'100%', padding:'10px 12px', borderRadius:10, background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', color:'#fff', fontSize:13, outline:'none', boxSizing:'border-box' }}
+                  />
+                </div>
+
+                {sendError && (
+                  <div style={{ padding:'9px 12px', background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.2)', borderRadius:8, fontSize:12, color:'#f87171', marginBottom:14 }}>
+                    {sendError}
+                  </div>
+                )}
+
+                {isSending && !sendConfirmed && !sendError && (
+                  <div style={{ padding:'9px 12px', background:'rgba(124,58,237,0.07)', border:'1px solid rgba(124,58,237,0.2)', borderRadius:8, fontSize:12, color:'#a78bfa', marginBottom:14 }}>
+                    Confirm in your wallet…
+                  </div>
+                )}
+
+                {sendHash && !sendConfirmed && (
+                  <div style={{ padding:'9px 12px', background:'rgba(16,185,129,0.07)', border:'1px solid rgba(16,185,129,0.2)', borderRadius:8, fontSize:12, color:'#6ee7b7', marginBottom:14 }}>
+                    Broadcast — waiting for confirmation…
+                  </div>
+                )}
+
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+                  <button onClick={() => setSendOpen(false)}
+                    style={{ padding:'11px', borderRadius:10, background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.08)', color:'rgba(255,255,255,0.5)', fontSize:13, fontWeight:600, cursor:'pointer' }}>
+                    Cancel
+                  </button>
+                  <button onClick={handleSend} disabled={isSending}
+                    style={{ padding:'11px', borderRadius:10, background: isSending ? 'rgba(124,58,237,0.25)' : 'linear-gradient(135deg,#7c3aed,#4f46e5)', border:'1px solid rgba(255,255,255,0.1)', color:'#fff', fontSize:13, fontWeight:700, cursor: isSending ? 'wait' : 'pointer' }}>
+                    {isSending ? 'Sending…' : 'Confirm Send'}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 }

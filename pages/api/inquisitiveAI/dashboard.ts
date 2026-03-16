@@ -1,26 +1,15 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ASSET_REGISTRY, PORTFOLIO_WEIGHTS, scoreAsset, getRegime } from './_brain';
 import type { AssetInput, FGIndex } from './_brain';
-
-const NO_CC   = new Set(['CC', 'JUPSOL']);
-const ALL_CGS = ASSET_REGISTRY.map(a => a.cgId).join(',');
-
-async function fetchMarkets(): Promise<any[]> {
-  const url = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${ALL_CGS}&order=market_cap_desc&per_page=100&sparkline=false&price_change_percentage=1h,24h,7d`;
-  const r = await fetch(url, { signal: AbortSignal.timeout(12000) });
-  if (!r.ok) throw new Error(`CG ${r.status}`);
-  return r.json();
-}
+import { getPrices } from './_priceCache';
+import { getOnchain } from './_onchainCache';
 
 async function buildInputMap(): Promise<Map<string, AssetInput>> {
+  const { map: priceMap } = await getPrices();
   const map = new Map<string, AssetInput>();
-
-  let coins: any[] = [];
-  try { coins = await fetchMarkets(); } catch {}
-
-  for (const coin of coins) {
-    const meta = ASSET_REGISTRY.find(a => a.cgId === coin.id);
-    if (!meta) continue;
+  for (const meta of ASSET_REGISTRY) {
+    const p = priceMap.get(meta.symbol);
+    if (!p) continue;
     map.set(meta.symbol, {
       symbol:    meta.symbol,
       category:  meta.category,
@@ -28,63 +17,17 @@ async function buildInputMap(): Promise<Map<string, AssetInput>> {
       stakeable: meta.stakeable,
       lendable:  meta.lendable,
       yieldable: meta.yieldable,
-      priceUsd:  coin.current_price ?? 0,
-      change24h: (coin.price_change_percentage_24h ?? 0) / 100,
-      change7d:  (coin.price_change_percentage_7d_in_currency ?? 0) / 100,
-      volume24h: coin.total_volume ?? 0,
-      marketCap: coin.market_cap ?? 0,
-      athChange: (coin.ath_change_percentage ?? 0) / 100,
+      priceUsd:  p.priceUsd,
+      change24h: p.change24h,
+      change7d:  p.change7d,
+      volume24h: p.volume24h,
+      marketCap: p.marketCap,
+      athChange: p.athChange,
     });
   }
-
-  // CryptoCompare fallback — parallel batches of 20
-  const missing = ASSET_REGISTRY.filter(a => !map.has(a.symbol) && !NO_CC.has(a.symbol));
-  if (missing.length > 0) {
-    const BSIZ = 20;
-    const chunks: (typeof ASSET_REGISTRY)[] = [];
-    for (let i = 0; i < missing.length; i += BSIZ) chunks.push(missing.slice(i, i + BSIZ));
-    const results = await Promise.allSettled(chunks.map(async ch => {
-      const fsyms = ch.map(a => a.symbol).join(',');
-      const r = await fetch(`https://min-api.cryptocompare.com/data/pricemultifull?fsyms=${fsyms}&tsyms=USD`, { signal: AbortSignal.timeout(8000) });
-      if (!r.ok) return {} as Record<string, any>;
-      const d = await r.json();
-      return (d?.RAW || {}) as Record<string, any>;
-    }));
-    for (let i = 0; i < chunks.length; i++) {
-      const res = results[i];
-      if (res.status !== 'fulfilled') continue;
-      const raw = res.value;
-      for (const meta of chunks[i]) {
-        const c = raw[meta.symbol]?.USD;
-        if (c?.PRICE > 0) {
-          map.set(meta.symbol, {
-            symbol: meta.symbol, category: meta.category, weight: PORTFOLIO_WEIGHTS[meta.symbol] ?? 0,
-            stakeable: meta.stakeable, lendable: meta.lendable, yieldable: meta.yieldable,
-            priceUsd: c.PRICE, change24h: (c.CHANGEPCT24HOUR ?? 0) / 100,
-            change7d: 0, volume24h: c.VOLUME24HOURTO ?? 0, marketCap: c.MKTCAP ?? 0, athChange: 0,
-          });
-        }
-      }
-    }
-  }
-
   return map;
 }
 
-
-const VAULT_ADDR_IQ = process.env.INQUISITIVE_VAULT_ADDRESS || '0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52';
-const VAULT_RPC_IQ  = [process.env.MAINNET_RPC_URL||'https://mainnet.infura.io/v3/d633cdc94aff412b90281fd14cd98868','https://eth.llamarpc.com','https://rpc.ankr.com/eth'];
-async function getVaultEthIQ(): Promise<number> {
-  for (const url of VAULT_RPC_IQ) {
-    try {
-      const r = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'eth_getBalance',params:[VAULT_ADDR_IQ,'latest']}),signal:AbortSignal.timeout(5000)});
-      if(!r.ok) continue;
-      const d = await r.json();
-      if(d.result && d.result!=='0x0') return Number(BigInt(d.result))/1e18;
-    } catch {}
-  }
-  return 0;
-}
 
 export const config = { maxDuration: 30 };
 
@@ -92,14 +35,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const [mapResult, fgResult, vaultEthResultIQ] = await Promise.allSettled([
+    const [mapResult, fgResult, snap] = await Promise.allSettled([
       buildInputMap(),
       fetch('https://api.alternative.me/fng/', { signal: AbortSignal.timeout(5000) }),
-      getVaultEthIQ(),
+      getOnchain(),
     ]);
 
-    const inputMap = mapResult.status === 'fulfilled' ? mapResult.value : new Map<string, AssetInput>();
-    const vaultEthIQ = vaultEthResultIQ.status === 'fulfilled' ? vaultEthResultIQ.value : 0;
+    const inputMap  = mapResult.status === 'fulfilled' ? mapResult.value : new Map<string, AssetInput>();
+    const vaultEthIQ = snap.status === 'fulfilled' ? snap.value.vaultEth : 0;
 
     let fg: FGIndex | null = null;
     if (fgResult.status === 'fulfilled' && fgResult.value.ok) {
@@ -142,7 +85,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const winRate         = assetsWithData.length > 0
       ? assetsWithData.filter(inp => inp.change24h > 0).length / assetsWithData.length : 0;
 
-    res.setHeader('Cache-Control', 's-maxage=15, stale-while-revalidate=30');
+    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
     res.status(200).json({
       aiSignals: {
         cycleCount: 0,

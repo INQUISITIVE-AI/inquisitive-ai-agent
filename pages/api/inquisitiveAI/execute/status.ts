@@ -1,121 +1,27 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { getOnchain, VAULT_ADDR } from '../_onchainCache';
 
-// ── On-chain system readiness check ──────────────────────────────────────────
-// Reads LIVE on-chain state to determine:
-//   1. Is the vault deployed with the autonomous code (has setPortfolio)?
-//   2. Is the portfolio configured on-chain (weights stored)?
-//   3. Is automation enabled?
-//   4. What is the vault ETH balance (deployable AUM)?
-//   5. Last execution time + cycle count
-// Returns a complete status object the analytics UI can render in real-time.
-
-const VAULT_ADDR  = process.env.INQUISITIVE_VAULT_ADDRESS || '0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52';
-const RPC_URLS    = [
-  process.env.MAINNET_RPC_URL || 'https://mainnet.infura.io/v3/d633cdc94aff412b90281fd14cd98868',
-  'https://eth.llamarpc.com',
-  'https://rpc.ankr.com/eth',
-];
+// ── On-chain system readiness check ──────────────────────────────────────────────
+// Reads LIVE on-chain state via shared _onchainCache (2-min TTL).
+// Replaces 10+ raw per-request RPC calls that were hammering Infura.
 
 const ETHERSCAN_API = 'https://api.etherscan.io/api';
 const ETHERSCAN_KEY = process.env.ETHERSCAN_API_KEY || '';
 
-function rpcBody(method: string, params: any[] = [], id = 1) {
-  return JSON.stringify({ jsonrpc: '2.0', method, params, id });
-}
-
-async function rpcCall(rpcUrl: string, method: string, params: any[] = []) {
-  const res = await fetch(rpcUrl, {
-    method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body:    rpcBody(method, params),
-    signal:  AbortSignal.timeout(5000),
-  });
-  const d = await res.json();
-  if (d.error) throw new Error(d.error.message);
-  return d.result;
-}
-
-async function getRpc(rpcUrl: string, to: string, data: string) {
-  return rpcCall(rpcUrl, 'eth_call', [{ to, data }, 'latest']);
-}
-
-// ABI-encode a call with no args (for view functions)
-function sig(fnSig: string) {
-  const hex = Buffer.from(fnSig).toString('hex');
-  const padded = hex.padEnd(64, '0');
-  const keccak = require('crypto').createHash('sha256').update(fnSig).digest('hex');
-  // Manually compute 4-byte selector for known functions
-  const SELECTORS: Record<string, string> = {
-    'getPortfolioLength()':  '0x' + 'f880b0ff',
-    'cycleCount()':          '0x' + 'a3ac3b7a',
-    'automationEnabled()':   '0x' + '2f8fa9d7',
-    'lastDeployTime()':      '0x' + 'a9e45c0b',
-    'MIN_DEPLOY()':          '0x' + '23f3c030',
-    'MIN_REDEPLOY_GAP()':    '0x' + 'e8f0fb6c',
-    'owner()':               '0x' + '8da5cb5b',
-    'checkUpkeep(bytes)':    '0x' + '6e04ff0d',
-  };
-  return SELECTORS[fnSig] || '0x00000000';
-}
-
-// Known 4-byte selectors for our vault functions
-const SEL: Record<string, string> = {
-  getPortfolioLength: '0xf880b0ff',
-  cycleCount:         '0xa3ac3b7a',
-  automationEnabled:  '0x2f8fa9d7',
-  lastDeployTime:     '0xa9e45c0b',
-  owner:              '0x8da5cb5b',
-};
-
-function decodeUint256(hex: string): bigint {
-  if (!hex || hex === '0x') return 0n;
-  return BigInt(hex);
-}
-function decodeBool(hex: string): boolean {
-  return hex !== '0x' && BigInt(hex) !== 0n;
-}
-function decodeAddress(hex: string): string {
-  if (!hex || hex === '0x' || hex.length < 42) return '';
-  return '0x' + hex.slice(-40);
-}
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=120');
 
-  let rpcUrl = RPC_URLS[0];
-  for (const url of RPC_URLS) {
-    try {
-      await rpcCall(url, 'eth_blockNumber');
-      rpcUrl = url;
-      break;
-    } catch {}
-  }
+  const snap = await getOnchain();
 
-  const [vaultBalHex, block] = await Promise.all([
-    rpcCall(rpcUrl, 'eth_getBalance', [VAULT_ADDR, 'latest']).catch(() => '0x0'),
-    rpcCall(rpcUrl, 'eth_blockNumber').catch(() => '0x0'),
-  ]);
+  const vaultETH         = snap.vaultEth;
+  const portfolioLength  = snap.portfolioLength;
+  const cycleCount       = snap.cycleCount;
+  const automationActive = snap.automationEnabled;
+  const lastDeployTime   = snap.lastDeployTime;
+  const ownerAddr        = snap.ownerAddr;
 
-  const vaultETH = parseFloat((BigInt(vaultBalHex) * 10000n / BigInt(1e18)) as any) / 10000;
-
-  // Read vault state in parallel — handle failures gracefully
-  const [portfolioLenHex, cycleHex, autoHex, lastDeployHex, ownerHex] = await Promise.all([
-    getRpc(rpcUrl, VAULT_ADDR, SEL.getPortfolioLength).catch(() => '0x'),
-    getRpc(rpcUrl, VAULT_ADDR, SEL.cycleCount).catch(() => '0x'),
-    getRpc(rpcUrl, VAULT_ADDR, SEL.automationEnabled).catch(() => '0x'),
-    getRpc(rpcUrl, VAULT_ADDR, SEL.lastDeployTime).catch(() => '0x'),
-    getRpc(rpcUrl, VAULT_ADDR, SEL.owner).catch(() => '0x'),
-  ]);
-
-  const portfolioLength  = Number(decodeUint256(portfolioLenHex));
-  const cycleCount       = Number(decodeUint256(cycleHex));
-  const automationActive = decodeBool(autoHex);
-  const lastDeployTime   = Number(decodeUint256(lastDeployHex));
-  const ownerAddr        = decodeAddress(ownerHex);
-
-  // Vault has the NEW code if getPortfolioLength() returns a valid value
-  // (old stub vault would revert or return garbage)
-  const hasNewCode = portfolioLenHex !== '0x' && portfolioLenHex.length >= 10;
+  // Vault has the new autonomous code if getPortfolioLength() returned a usable value
+  const hasNewCode = portfolioLength > 0 || snap.vaultEth > 0 || ownerAddr !== '';
 
   // Determine system readiness level
   type Level = 'NOT_DEPLOYED' | 'DEPLOYED' | 'PORTFOLIO_SET' | 'AUTOMATION_ACTIVE' | 'FULLY_OPERATIONAL';
@@ -151,7 +57,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     DEPLOYED:           'Call setPortfolio() on Etherscan Write Contract (run scripts/activate.js for arrays)',
     PORTFOLIO_SET:      'Call setAutomationEnabled(true) on Etherscan Write Contract, then activate hybrid keeper (GitHub Actions + cron-job.org) — see vault setup instructions',
     AUTOMATION_ACTIVE:  'Fund the vault — any ETH deposit will trigger autonomous deployment within 60 seconds',
-    FULLY_OPERATIONAL:  'System is live. 27 ETH-mainnet assets executing via Uniswap V3 + 13 cross-chain assets bridging via deBridge DLN — every keeper cycle (1-5 min). 25 assets held as Lido stETH earning yield while tracking native prices. All 65 allocated and live. Hybrid keeper: cron-job.org (1 min) + GitHub Actions (5 min) — zero cost, no LINK required.',    
+    FULLY_OPERATIONAL:  'System is live. 26 ETH-mainnet assets executing via Uniswap V3 + 13 cross-chain assets bridging via deBridge DLN — every keeper cycle (1-5 min). 25 assets held as Lido stETH earning yield while tracking native prices. All 65 allocated and live. Hybrid keeper: cron-job.org (1 min) + GitHub Actions (5 min) + Vercel Cron (5 min).',    
   };
 
   // Deployment instructions
@@ -167,21 +73,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       step: 2,
       done: portfolioLength > 0,
       title: 'Store portfolio weights on-chain',
-      detail: 'Run: node scripts/activate.js — prints exact arrays for setPortfolio() (27 ETH-mainnet tokens) and setPhase2Registry() (13 deBridge DLN bridges). Paste into Etherscan Write Contract → sign with MetaMask. No private key needed.'   ,
+      detail: 'Run: node scripts/activate.js — prints exact arrays for setPortfolio() (26 ETH-mainnet tokens) and setPhase2Registry() (13 deBridge DLN bridges). Paste into Etherscan Write Contract → sign with MetaMask. No private key needed.'   ,
       keyRequired: false,
     },
     {
       step: 3,
       done: automationActive,
       title: 'Enable autonomous execution',
-      detail: 'Call setAutomationEnabled(true) on Etherscan Write Contract. Then activate the hybrid keeper — zero cost: (1) cron-job.org: create a free cron job hitting https://getinqai.com/api/inquisitiveAI/execute/auto every 1 minute. (2) GitHub Actions backup: vault-keeper.yml already configured, runs every 5 minutes automatically. Both run in parallel for maximum uptime. No LINK, no Chainlink subscription required.',
+      detail: 'Call setAutomationEnabled(true) on Etherscan Write Contract. Activate hybrid keeper: (1) cron-job.org → https://getinqai.com/api/inquisitiveAI/execute/auto every 1 minute. (2) GitHub Actions: vault-keeper.yml configured, runs every 5 minutes. (3) Vercel Cron: vercel.json configured, fires every 5 minutes.',
       keyRequired: false,
     },
     {
       step: 4,
       done: vaultETH >= 0.005,
       title: 'Vault funded',
-      detail: 'ETH deposited to vault triggers performUpkeep() via hybrid keeper (GitHub Actions every 5 min + cron-job.org every 1 min). Deploys across 27 ETH-mainnet (Uniswap V3) + 13 cross-chain (deBridge DLN: Solana/BSC/Avalanche/Optimism/TRON). 25 assets held as Lido stETH earning yield. All 65 assets fully live — zero simulation.', 
+      detail: 'ETH deposited to vault triggers performUpkeep() via hybrid keeper (cron-job.org every 1 min + GitHub Actions every 5 min + Vercel Cron every 5 min). Deploys across 26 ETH-mainnet (Uniswap V3) + 13 cross-chain (deBridge DLN: Solana/BSC/Avalanche/Optimism/TRON). 25 assets held as Lido stETH earning yield.', 
       keyRequired: false,
     },
   ];
@@ -201,13 +107,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     ownerAddr,
     deploySteps,
     recentTrades,
-    blockNumber:     parseInt(block, 16),
     autonomous:      readiness === 'FULLY_OPERATIONAL',
     keylessArchitecture: {
-      description:   'Zero private keys in any file, env var, or server. Hybrid keeper (cron-job.org + GitHub Actions) calls performUpkeep() every 1-5 minutes. Identical institutional keeper pattern to Yearn, Compound, Aave — zero cost.',
+      description:   'Zero private keys in any file, env var, or server. Hybrid keeper (cron-job.org + GitHub Actions + Vercel Cron) calls performUpkeep() every 1-5 minutes.',
       deployMethod:  'Vault deployed via Remix IDE (MetaMask signs) — private key never in code or env. Portfolio configured via Etherscan Write Contract.',
-      executionMethod: 'Hybrid keeper: cron-job.org (every 1 min, free) + GitHub Actions vault-keeper.yml (every 5 min, free). Chainlink Automation can be added at scale via automation.chain.link.',
-      costPerMonth:  '$0 — cron-job.org (free tier) + GitHub Actions (free tier). Chainlink optional when scaling.',
+      executionMethod: 'Hybrid keeper: cron-job.org (every 1 min) + GitHub Actions vault-keeper.yml (every 5 min) + Vercel Cron (every 5 min). Chainlink Automation: automation.chain.link.',
     },
     timestamp: new Date().toISOString(),
   });

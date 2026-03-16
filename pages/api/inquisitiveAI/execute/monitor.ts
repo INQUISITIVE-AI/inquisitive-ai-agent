@@ -1,32 +1,26 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ASSET_REGISTRY, PORTFOLIO_WEIGHTS, scoreAsset, getRegime } from '../_brain';
 import type { AssetInput, FGIndex } from '../_brain';
+import { getPrices } from '../_priceCache';
+import { getOnchain, VAULT_ADDR, DEPLOYER_ADDR } from '../_onchainCache';
 
 // ── 65-Asset Execution Monitor ────────────────────────────────────────────────
 // ALL 65 assets scored with live NATIVE prices every cycle — CoinGecko primary.
 // NO proxy mapping — SOL is priced as SOL, BNB as BNB, TRX as TRX, etc.
 // Execution modes:
-//   ETH-DIRECT : 27 assets — Uniswap V3 ERC-20 swaps on Ethereum mainnet
+//   ETH-DIRECT : 26 assets — Uniswap V3 ERC-20 swaps on Ethereum mainnet (SOIL pending)
 //   BRIDGE     : 13 assets — deBridge DLN bridges to Solana/BSC/Avalanche/Optimism/TRON
 //   stETH-YIELD: 25 assets — ETH held as Lido stETH earning yield, native price tracked
 // All 65 allocations are LIVE — no simulation, no placeholders.
 // deBridge DLN: 0xeF4fB24aD0916217251F553c0596F8Edc630EB66
-// Hybrid keeper triggers performUpkeep(): cron-job.org (1 min) + GitHub Actions (5 min).
+// Hybrid keeper triggers performUpkeep(): cron-job.org (1 min) + GitHub Actions (5 min) + Vercel Cron (5 min).
 
-const TEAM_WALLET   = process.env.DEPLOYER_ADDRESS         || '0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746';
-const VAULT_ADDR    = process.env.INQUISITIVE_VAULT_ADDRESS || '0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52';
 const MIN_DEPLOY    = 0.005;
 const MAX_TRADE_PCT = 0.02;
 
-const RPC_URLS = [
-  process.env.MAINNET_RPC_URL || 'https://mainnet.infura.io/v3/d633cdc94aff412b90281fd14cd98868',
-  'https://eth.llamarpc.com',
-  'https://rpc.ankr.com/eth',
-];
-
 export const config = { maxDuration: 30 };
 
-// ── 27 ETH mainnet ERC-20s — direct Uniswap V3 execution ───────────────────
+// ── 26 ETH mainnet ERC-20s — direct Uniswap V3 execution (SOIL pending) ────
 export const ETH_NATIVE_TOKENS: Record<string, { address: string; fee: number }> = {
   BTC:  { address: '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599', fee: 3000 }, // WBTC
   ETH:  { address: '0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84', fee: 100  }, // stETH (Lido, rebasing 1:1 with ETH — no proxy disconnect)
@@ -62,7 +56,7 @@ export const ETH_NATIVE_TOKENS: Record<string, { address: string; fee: number }>
 //   live:true  = execution confirmed on destination chain (performUpkeep runs both automatically)
 //   live:false = ETH held as Lido stETH earning yield; native price tracked for full NAV
 export const ASSET_CHAIN: Record<string, { chain: string; chainId: number; protocol: string; mode: 'ETH-DIRECT' | 'BRIDGE'; live: boolean }> = {
-  // ── 27 ETH Mainnet ERC-20s — Uniswap V3 direct swap ─────────────────────
+  // ── 26 ETH Mainnet ERC-20s — Uniswap V3 direct swap (SOIL pending) ───────
   BTC:    { chain:'Ethereum', chainId:1, protocol:'Uniswap V3 → WBTC',              mode:'ETH-DIRECT', live:true },
   ETH:    { chain:'Ethereum', chainId:1, protocol:'Lido stETH (rebasing, 1:1 ETH)', mode:'ETH-DIRECT', live:true },
   USDC:   { chain:'Ethereum', chainId:1, protocol:'Uniswap V3',                     mode:'ETH-DIRECT', live:true },
@@ -135,71 +129,46 @@ export const ASSET_CHAIN: Record<string, { chain: string; chainId: number; proto
   EOS:    { chain:'Antelope',    chainId:0,   protocol:'stETH yield · native price tracked', mode:'BRIDGE', live:false },
 };
 
-async function rpc(method: string, params: any[]): Promise<any> {
-  for (const url of RPC_URLS) {
-    try {
-      const r = await fetch(url, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
-        signal: AbortSignal.timeout(7000),
-      });
-      const d = await r.json();
-      if (d.result !== undefined) return d.result;
-    } catch {}
-  }
-  return null;
-}
-
-function parse(h: string | null, dec = 18): number {
-  if (!h || h === '0x') return 0;
-  try { return Number(BigInt(h)) / Math.pow(10, dec); } catch { return 0; }
-}
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    // ── 1. On-chain balances + market data (parallel) ─────────────────────
-    const cgIds = ASSET_REGISTRY.map(a => a.cgId).join(',');
-    const [teamEthHex, vaultEthHex, ethPriceRes, cgRes, fgRes] = await Promise.all([
-      rpc('eth_getBalance', [TEAM_WALLET, 'latest']),
-      rpc('eth_getBalance', [VAULT_ADDR,  'latest']),
-      fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd', { signal: AbortSignal.timeout(5000) })
-        .then(r => r.ok ? r.json() : null).catch(() => null),
-      fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${cgIds}&order=market_cap_desc&per_page=100&sparkline=false&price_change_percentage=1h,24h,7d`,
-        { signal: AbortSignal.timeout(12000) }
-      ).then(r => r.ok ? r.json() : []).catch(() => []),
+    // ── 1. Cached on-chain snapshot + market data + Fear & Greed (parallel) ───
+    const [snap, priceResult, fgRaw] = await Promise.all([
+      getOnchain(),
+      getPrices(),
       fetch('https://api.alternative.me/fng/', { signal: AbortSignal.timeout(5000) })
         .then(r => r.ok ? r.json() : null).catch(() => null),
     ]);
 
-    const ethPrice = (ethPriceRes as any)?.ethereum?.usd ?? 3200;
-    const teamEth  = parse(teamEthHex,  18);
-    const vaultEth = parse(vaultEthHex, 18);
-    const totalEth = teamEth + vaultEth;
+    const ethPrice = priceResult.map.get('ETH')?.priceUsd ?? 3200;
+    const teamEth  = snap.deployerEth;
+    const vaultEth = snap.vaultEth;
+    const totalEth = snap.totalEth;
     const aumUSD   = totalEth * ethPrice;
 
     // ── 2. Fear & Greed ───────────────────────────────────────────────────
     let fg: FGIndex | null = null;
     try {
-      if ((fgRes as any)?.data?.[0]) {
-        fg = { value: parseInt((fgRes as any).data[0].value), valueClassification: (fgRes as any).data[0].value_classification };
+      if ((fgRaw as any)?.data?.[0]) {
+        fg = { value: parseInt((fgRaw as any).data[0].value), valueClassification: (fgRaw as any).data[0].value_classification };
       }
     } catch {}
 
     // ── 3. Build asset inputs (all 65) ────────────────────────────────────
     const inputMap = new Map<string, AssetInput>();
-    for (const coin of (cgRes as any[])) {
-      const meta = ASSET_REGISTRY.find(a => a.cgId === coin.id);
-      if (!meta) continue;
+    for (const meta of ASSET_REGISTRY) {
+      const p = priceResult.map.get(meta.symbol);
+      if (!p) continue;
       inputMap.set(meta.symbol, {
         symbol: meta.symbol, category: meta.category, weight: PORTFOLIO_WEIGHTS[meta.symbol] ?? 0,
         stakeable: meta.stakeable, lendable: meta.lendable, yieldable: meta.yieldable,
-        priceUsd:  coin.current_price ?? 0,
-        change24h: (coin.price_change_percentage_24h ?? 0) / 100,
-        change7d:  (coin.price_change_percentage_7d_in_currency ?? 0) / 100,
-        volume24h: coin.total_volume ?? 0, marketCap: coin.market_cap ?? 0,
-        athChange: (coin.ath_change_percentage ?? 0) / 100,
+        priceUsd:  p.priceUsd,
+        change24h: p.change24h,
+        change7d:  p.change7d,
+        volume24h: p.volume24h,
+        marketCap: p.marketCap,
+        athChange: p.athChange,
       });
     }
     const allInputs = ASSET_REGISTRY.map(m => inputMap.get(m.symbol) ?? {
@@ -288,7 +257,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return { symbol: t.symbol, address: ETH_NATIVE_TOKENS[t.symbol]?.address ?? '', fee: ETH_NATIVE_TOKENS[t.symbol]?.fee ?? 3000, weightBps: bps, weightPct: parseFloat((t.weight / ethNativeRawSum * 100).toFixed(2)) };
       });
 
-    res.setHeader('Cache-Control', 's-maxage=15, stale-while-revalidate=30');
+    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
     res.status(200).json({
       status: hasNewFunds ? 'READY_TO_DEPLOY' : 'MONITORING',
       architecture: {
@@ -300,7 +269,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         description:    `${ethDirectAssets.length} assets execute on Ethereum mainnet via Uniswap V3 + Lido stETH. ${bridgeLiveAssets.length} assets bridge to native chains via deBridge DLN (Solana/BSC/Avalanche/Optimism/TRON). ${bridgeTracked.length} assets held as Lido stETH earning yield while tracking native prices. All 65 allocated and live — zero simulation, zero proxy prices.`,
       },
       wallet: {
-        teamAddress:   TEAM_WALLET,
+        teamAddress:   DEPLOYER_ADDR,
         vaultAddress:  VAULT_ADDR,
         teamEth:       parseFloat(teamEth.toFixed(6)),
         vaultEth:      parseFloat(vaultEth.toFixed(6)),

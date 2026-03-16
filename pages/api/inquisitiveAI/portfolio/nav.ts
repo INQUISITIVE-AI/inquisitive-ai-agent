@@ -2,6 +2,8 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { getAddress } from 'viem';
 import { ASSET_REGISTRY, PORTFOLIO_WEIGHTS, scoreAsset, getRegime } from '../_brain';
 import type { AssetInput, FGIndex } from '../_brain';
+import { getPrices } from '../_priceCache';
+import { getOnchain, VAULT_ADDR, INQAI_ADDR, DEPLOYER_ADDR } from '../_onchainCache';
 
 // ── INQAI NAV Engine ─────────────────────────────────────────────────────────
 // Computes live Net Asset Value of the INQAI token from the 65-asset basket.
@@ -12,132 +14,35 @@ import type { AssetInput, FGIndex } from '../_brain';
 const PRESALE_PRICE = 8;    // USD — presale price paid per INQAI token
 const TOTAL_SUPPLY  = 100_000_000;
 
-// On-chain contract addresses
-const VAULT_ADDR    = process.env.INQUISITIVE_VAULT_ADDRESS || '0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52';
-const INQAI_ADDR    = process.env.INQAI_TOKEN_ADDRESS       || '0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5';
-const DEPLOYER_ADDR = process.env.DEPLOYER_ADDRESS          || '0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746';
-const USDC_ADDR     = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48';
-const RPC_URLS      = [
-  process.env.MAINNET_RPC_URL || 'https://mainnet.infura.io/v3/d633cdc94aff412b90281fd14cd98868',
-  'https://eth.llamarpc.com', 'https://rpc.ankr.com/eth',
-];
-
-async function rpcCall(method: string, params: any[]): Promise<string | null> {
-  for (const url of RPC_URLS) {
-    try {
-      const r = await fetch(url, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
-        signal: AbortSignal.timeout(6000),
-      });
-      if (!r.ok) continue;
-      const d = await r.json();
-      if (d.result !== undefined && d.result !== null) return d.result;
-    } catch {}
-  }
-  return null;
-}
-
-function parseHex(hex: string | null, dec = 18): number {
-  if (!hex || hex === '0x') return 0;
-  try { return Number(BigInt(hex)) / Math.pow(10, dec); } catch { return 0; }
-}
-
-function balanceOfData(addr: string): string {
-  return '0x70a08231' + addr.toLowerCase().replace('0x','').padStart(64,'0');
-}
-
-const NO_CC   = new Set(['CC', 'JUPSOL']);
-const ALL_CGS = ASSET_REGISTRY.map(a => a.cgId).join(',');
-
 export const config = { maxDuration: 30 };
-
-async function fetchAll(): Promise<{ inputs: Map<string, AssetInput>; fg: FGIndex | null }> {
-  const inputs = new Map<string, AssetInput>();
-
-  const [cgRes, fgRes] = await Promise.allSettled([
-    fetch(
-      `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${ALL_CGS}` +
-      `&order=market_cap_desc&per_page=100&sparkline=false&price_change_percentage=1h,24h,7d`,
-      { signal: AbortSignal.timeout(12000) },
-    ),
-    fetch('https://api.alternative.me/fng/?limit=1', { signal: AbortSignal.timeout(8000) }),
-  ]);
-
-  if (cgRes.status === 'fulfilled' && cgRes.value.ok) {
-    const coins: any[] = await cgRes.value.json();
-    for (const coin of coins) {
-      const meta = ASSET_REGISTRY.find(a => a.cgId === coin.id);
-      if (!meta) continue;
-      inputs.set(meta.symbol, {
-        symbol:    meta.symbol,
-        category:  meta.category,
-        weight:    PORTFOLIO_WEIGHTS[meta.symbol] ?? 0,
-        stakeable: meta.stakeable,
-        lendable:  meta.lendable,
-        yieldable: meta.yieldable,
-        priceUsd:  coin.current_price ?? 0,
-        change24h: (coin.price_change_percentage_24h ?? 0) / 100,
-        change7d:  (coin.price_change_percentage_7d_in_currency ?? 0) / 100,
-        volume24h: coin.total_volume  ?? 0,
-        marketCap: coin.market_cap    ?? 0,
-        athChange: (coin.ath_change_percentage ?? 0) / 100,
-      });
-    }
-  }
-
-  // CryptoCompare fallback for missing assets
-  const missing = ASSET_REGISTRY.filter(a => !inputs.has(a.symbol) && !NO_CC.has(a.symbol));
-  if (missing.length > 0) {
-    const chunks: (typeof ASSET_REGISTRY)[] = [];
-    for (let i = 0; i < missing.length; i += 20) chunks.push(missing.slice(i, i + 20));
-    const ccRes = await Promise.allSettled(chunks.map(ch => {
-      const fsyms = ch.map(a => a.symbol).join(',');
-      return fetch(`https://min-api.cryptocompare.com/data/pricemultifull?fsyms=${fsyms}&tsyms=USD`, { signal: AbortSignal.timeout(8000) })
-        .then(r => r.ok ? r.json() : {} as Record<string, any>);
-    }));
-    for (let i = 0; i < chunks.length; i++) {
-      const res = ccRes[i];
-      if (res.status !== 'fulfilled') continue;
-      const raw = (res.value as any)?.RAW || {};
-      for (const meta of chunks[i]) {
-        const c = raw[meta.symbol]?.USD;
-        if (c?.PRICE > 0) {
-          inputs.set(meta.symbol, {
-            symbol: meta.symbol, category: meta.category, weight: PORTFOLIO_WEIGHTS[meta.symbol] ?? 0,
-            stakeable: meta.stakeable, lendable: meta.lendable, yieldable: meta.yieldable,
-            priceUsd: c.PRICE, change24h: (c.CHANGEPCT24HOUR ?? 0) / 100,
-            change7d: 0, volume24h: c.VOLUME24HOURTO ?? 0, marketCap: c.MKTCAP ?? 0, athChange: 0,
-          });
-        }
-      }
-    }
-  }
-
-  let fg: FGIndex | null = null;
-  if (fgRes.status === 'fulfilled' && fgRes.value.ok) {
-    try {
-      const d = await fgRes.value.json();
-      if (d?.data?.[0]) fg = { value: parseInt(d.data[0].value), valueClassification: d.data[0].value_classification };
-    } catch {}
-  }
-  return { inputs, fg };
-}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    // Fetch market data AND on-chain treasury data in parallel
-    const [{ inputs, fg }, vaultEthHex, deployerEthHex, totalSupplyHex, deployerInqaiHex, deployerUsdcHex, vaultUsdcHex] = await Promise.all([
-      fetchAll(),
-      rpcCall('eth_getBalance', [VAULT_ADDR,    'latest']),
-      rpcCall('eth_getBalance', [DEPLOYER_ADDR, 'latest']),
-      rpcCall('eth_call', [{ to: INQAI_ADDR, data: '0x18160ddd' }, 'latest']),
-      rpcCall('eth_call', [{ to: INQAI_ADDR, data: balanceOfData(DEPLOYER_ADDR) }, 'latest']),
-      rpcCall('eth_call', [{ to: USDC_ADDR,  data: balanceOfData(DEPLOYER_ADDR) }, 'latest']),
-      rpcCall('eth_call', [{ to: USDC_ADDR,  data: balanceOfData(VAULT_ADDR)    }, 'latest']),
+    // Fetch prices, on-chain snapshot, and Fear & Greed in parallel
+    const [priceResult, snap, fgRaw] = await Promise.all([
+      getPrices(),
+      getOnchain(),
+      fetch('https://api.alternative.me/fng/?limit=1', { signal: AbortSignal.timeout(8000) })
+        .then(r => r.ok ? r.json() : null).catch(() => null),
     ]);
+
+    const inputs = new Map<string, AssetInput>();
+    for (const meta of ASSET_REGISTRY) {
+      const p = priceResult.map.get(meta.symbol);
+      if (!p) continue;
+      inputs.set(meta.symbol, {
+        symbol: meta.symbol, category: meta.category, weight: PORTFOLIO_WEIGHTS[meta.symbol] ?? 0,
+        stakeable: meta.stakeable, lendable: meta.lendable, yieldable: meta.yieldable,
+        priceUsd:  p.priceUsd,
+        change24h: p.change24h,
+        change7d:  p.change7d,
+        volume24h: p.volume24h,
+        marketCap: p.marketCap,
+        athChange: p.athChange,
+      });
+    }
 
     // Build full allInputs array (zero-fill assets with no price data)
     const allInputs: AssetInput[] = ASSET_REGISTRY.map(meta =>
@@ -152,7 +57,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const ethIn  = inputs.get('ETH');
     const regime = getRegime((btcIn?.change24h ?? 0) * 100, (ethIn?.change24h ?? 0) * 100);
 
-    const fgLive = fg; // real data only — null when alternative.me API unavailable
+    let fgLive: FGIndex | null = null;
+    try {
+      if ((fgRaw as any)?.data?.[0]) fgLive = { value: parseInt((fgRaw as any).data[0].value), valueClassification: (fgRaw as any).data[0].value_classification };
+    } catch {}
 
     // Run 5-engine brain on all 65 assets
     const signals = allInputs.map(inp => scoreAsset(inp, regime, fgLive, allInputs));
@@ -168,19 +76,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Portfolio index: what $100 invested 7 days ago is worth now (native-price weighted)
     const portfolioIndex = 100 * (1 + return7d);
 
-    // ── Real on-chain AUM ─────────────────────────────────────────────────────
+    // ── Real on-chain AUM (from shared cache — never zeros on RPC hiccup) ──────
     const ethPrice       = inputs.get('ETH')?.priceUsd ?? 3200;
-    const vaultEth       = parseHex(vaultEthHex,    18);
-    const deployerEth    = parseHex(deployerEthHex, 18);
-    const totalEth       = vaultEth + deployerEth;
-    const deployerUsdc   = parseHex(deployerUsdcHex, 6);
-    const vaultUsdc      = parseHex(vaultUsdcHex,    6);
-    const onChainAUM     = totalEth * ethPrice + deployerUsdc + vaultUsdc;
-
-    // ── Circulating supply ────────────────────────────────────────────────────
-    const totalSupplyOnChain = parseHex(totalSupplyHex, 18) || TOTAL_SUPPLY;
-    const deployerBalance    = parseHex(deployerInqaiHex, 18);
-    const circulatingSupply  = Math.max(0, totalSupplyOnChain - deployerBalance);
+    const { vaultEth, deployerEth, totalEth,
+            deployerUsdc, vaultUsdc,
+            totalSupply: totalSupplyOnChain,
+            deployerInqai: deployerBalance,
+            circulatingSupply } = snap;
+    const onChainAUM     = vaultEth * ethPrice + vaultUsdc;
 
     // ── NAV per token ─────────────────────────────────────────────────────────
     // Priority 1: real AUM / circulating supply (when tokens have been sold & ETH is in vault)
@@ -241,7 +144,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       })
       .sort((a, b) => b.weight - a.weight);
 
-    res.setHeader('Cache-Control', 's-maxage=15, stale-while-revalidate=30');
+    res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
     res.status(200).json({
       // INQAI token economics
       token: {

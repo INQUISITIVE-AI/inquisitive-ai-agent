@@ -595,7 +595,7 @@ export default function BuyPage() {
                 <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 18, color: 'rgba(255,255,255,0.7)' }}>How INQAI Works</h3>
                 {[
                   { n: '01', t: 'Acquire INQAI',              d: 'Purchase at the $8 presale price. Tokens are delivered directly to your self-custody wallet. No intermediary.' },
-                  { n: '02', t: 'ETH Deployed Across 65 Assets', d: 'Your ETH payment is received by the vault. The AI keeper automatically triggers performUpkeep() — diversifying across 27 Uniswap V3 swaps, 13 deBridge cross-chain bridges (including TRON for TRX), and 25 Lido stETH positions.' },
+                  { n: '02', t: 'ETH Deployed Across 65 Assets', d: 'Your ETH payment is received by the vault. The AI keeper automatically triggers performUpkeep() — diversifying across 26 Uniswap V3 swaps, 13 deBridge cross-chain bridges (including TRON for TRX), and 25 Lido stETH positions.' },
                   { n: '03', t: 'Proportional Asset-Backed Ownership', d: 'Each INQAI token represents proportional ownership in the underlying 65-asset portfolio. Live NAV is calculated from native CoinGecko prices — zero proxy disconnect.' },
                   { n: '04', t: 'Compounding Value Accrual',   d: '60% of all protocol fees are deployed for open-market buybacks. 20% is permanently burned. Circulating supply contracts over time.' },
                 ].map(item => (

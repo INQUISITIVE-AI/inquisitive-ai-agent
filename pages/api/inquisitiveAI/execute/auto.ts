@@ -1,29 +1,24 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
 
-// ── INQUISITIVE Vault — Fully Autonomous Executor ────────────────────────────
-// Architecture (post-contract-upgrade):
-//   performUpkeep() handles ALL 65 assets in ONE call:
-//     BRIDGE    (deBridge DLN, 13 cross-chain)    execute FIRST
-//     ETH-DIRECT (Uniswap V3, 27 ETH-mainnet)    execute AFTER
-//     stETH YIELD (25 assets)                    ETH held as Lido stETH
+// ── INQUISITIVE Vault Keeper ─────────────────────────────────────────────────
+// performUpkeep() handles ALL 65 assets in ONE call:
+//   BRIDGE     (deBridge DLN, 13 cross-chain)    — executed first
+//   ETH-DIRECT (Uniswap V3, 26 ETH-mainnet)      — executed after
+//   stETH YIELD (25 assets)                       — ETH held as Lido stETH
 //
-//   Cross-chain receiver addresses are STORED ON-CHAIN via setPhase2Registry().
-//   No off-chain env vars needed for execution. Run:
-//     node scripts/activate.js          ← generates calldata
-//     → Etherscan Write Contract        ← MetaMask signs (no code key needed)
+//   Cross-chain receiver addresses stored on-chain via setPhase2Registry().
+//   Activation: node scripts/activate.js  → paste calldata into Etherscan Write Contract
 //
-// Keyless execution (hybrid keeper — zero cost):
-//   Primary:   cron-job.org        — pings this endpoint every 60s (free)
-//   Backup:    GitHub Actions      — vault-keeper.yml every 5 min (free)
-//   Optional:  Chainlink Automation — add when project scales (register at automation.chain.link)
-//   Fallback:  EXECUTOR_PRIVATE_KEY — if set, calls performUpkeep() directly
+// Keeper execution model:
+//   Primary:   cron-job.org        — every 60s
+//   Backup:    GitHub Actions      — vault-keeper.yml every 5 min
+//   Tertiary:  Vercel Cron         — vercel.json every 5 min
+//   Optional:  Chainlink Automation — register at automation.chain.link
+//   Fallback:  EXECUTOR_PRIVATE_KEY — direct performUpkeep() call if set
 //
 // EXECUTOR_PRIVATE_KEY (optional):
-//   A minimal hot wallet for the Vercel Cron fallback.
-//   CAN ONLY call performUpkeep() — CANNOT withdraw funds, change ownership, or steal.
-//   Even if leaked: attacker can trigger trades, cannot steal vault assets.
-//   Standard institutional keeper pattern (Yearn, Compound, Aave all use this).
+//   CAN ONLY call performUpkeep() — cannot withdraw funds or change ownership.
 
 const VAULT_ADDR = process.env.INQUISITIVE_VAULT_ADDRESS || '0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52';
 const RPC_URLS   = [
@@ -76,7 +71,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // Read vault state
   const [upkeepNeeded, ethBalRaw, cycleCountRaw, portfolioLen, autoEnabled] = await Promise.all([
     readVault.checkUpkeep('0x').then(([n]: [boolean]) => n).catch(() => false),
-    provider.getBalance(VAULT_ADDR),
+    provider.getBalance(VAULT_ADDR).catch(() => 0n),
     readVault.cycleCount().catch(() => 0n),
     readVault.getPortfolioLength().catch(() => 0n),
     readVault.automationEnabled().catch(() => false),
@@ -99,23 +94,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
   }
 
-  // Vault idle
+  // Vault idle — below checkUpkeep threshold
   if (!upkeepNeeded && vaultETH < 0.005) {
     return res.status(200).json({
       status:      'IDLE',
       autonomous:  true,
       reason:      'Vault ETH below minimum — accepting deposits',
       vaultETH,    p1Assets, cycleCount,
-      keeper:      'cron-job.org primary + GitHub Actions backup — both active',
+      keeper:      'cron-job.org primary + GitHub Actions backup + Vercel Cron tertiary',
       timestamp:   new Date().toISOString(),
     });
   }
 
-  // ── Gelato relay path: keyless on-chain execution via Gelato Network ────────
-  // Gelato executor nodes call performUpkeep() on the vault — no private key.
-  // Setup: get a free API key at https://app.gelato.network → set GELATO_API_KEY.
-  // Gelato is free for sponsored calls (API key acts as a revocable credential only).
-  const executorKey = process.env.EXECUTOR_PRIVATE_KEY;
+  // checkUpkeep passes at >=0.005 ETH, but performUpkeep requires >0.010 ETH
+  // (contract reserves 0.005 ETH for gas before deploying the rest)
+  if (upkeepNeeded && vaultETH <= 0.010) {
+    return res.status(200).json({
+      status:      'UNDERFUNDED',
+      autonomous:  false,
+      reason:      `Vault has ${vaultETH.toFixed(6)} ETH — performUpkeep needs >0.010 ETH (0.005 gas reserve + 0.005 minimum deploy).`,
+      action:      `Send ETH to vault: ${VAULT_ADDR}  (recommend 0.1+ ETH for meaningful swaps across 26 assets)`,
+      vaultETH,    p1Assets, cycleCount,
+      timestamp:   new Date().toISOString(),
+    });
+  }
+
+  // ── Gelato relay path ────────────────────────────────────────────────────────
+  const executorKey = process.env.EXECUTOR_PRIVATE_KEY || process.env.KEEPER_PRIVATE_KEY;
   const gelatoKey   = process.env.GELATO_API_KEY;
 
   if (!executorKey && gelatoKey && upkeepNeeded) {
@@ -161,7 +166,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       upkeepNeeded: true,
       message:      'Upkeep ready. Gelato relay attempted but unavailable — cron-job.org / GitHub Actions will trigger.',
       execution: {
-        primary:   'cron-job.org (every 1 min) + GitHub Actions (every 5 min)',
+        primary:   'cron-job.org (1 min) + GitHub Actions (5 min) + Vercel Cron (5 min)',
         gelato:    'Gelato relay key set but relay unreachable this cycle',
         community: `https://etherscan.io/address/${VAULT_ADDR}#writeContract`,
       },
@@ -179,9 +184,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         ? 'Upkeep ready. Hybrid keeper (cron-job.org + GitHub Actions) will trigger next cycle.'
         : 'Vault is idle. Awaiting ETH deposit above 0.005 threshold.',
       execution: {
-        primary:   'cron-job.org (1 min) + GitHub Actions vault-keeper.yml (5 min)',
-        optional:  'Chainlink Automation — add at scale: https://automation.chain.link',
-        community: `Anyone can call performUpkeep() on Etherscan: https://etherscan.io/address/${VAULT_ADDR}#writeContract`,
+        primary:   'cron-job.org (1 min) + GitHub Actions (5 min) + Vercel Cron (5 min)',
+        optional:  'Chainlink Automation: https://automation.chain.link',
+        community: `https://etherscan.io/address/${VAULT_ADDR}#writeContract`,
       },
       vault:     { vaultETH, p1Assets, cycleCount, autoEnabled },
       timestamp: new Date().toISOString(),
@@ -189,13 +194,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   // ── Executor path: EXECUTOR_PRIVATE_KEY is set ──────────────────────────────
-  // performUpkeep() handles ETH-DIRECT (27 Uniswap V3) + BRIDGE (13 deBridge DLN) in one transaction.
+  // performUpkeep() handles ETH-DIRECT (26 Uniswap V3) + BRIDGE (13 deBridge DLN) in one transaction.
   // Cross-chain receiver addresses are stored on-chain — no wallet env vars needed here.
-  const executor = new ethers.Wallet(executorKey, provider);
+  const executor = new ethers.Wallet(executorKey!, provider);
   const vault    = new ethers.Contract(VAULT_ADDR, VAULT_ABI, executor);
 
   try {
-    const executorBalRaw = await provider.getBalance(executor.address);
+    const executorBalRaw = await provider.getBalance(executor.address).catch(() => 0n);
     const execETH        = parseFloat(ethers.formatEther(executorBalRaw));
     if (execETH < 0.003) {
       console.warn(`Executor gas low: ${execETH} ETH at ${executor.address}`);
@@ -215,7 +220,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const maxFeePerGas = feeData.maxFeePerGas ? feeData.maxFeePerGas * 120n / 100n : undefined;
     const maxPrioFee   = feeData.maxPriorityFeePerGas ?? undefined;
 
-    // One call handles ETH-DIRECT (27 Uniswap V3 swaps) + BRIDGE (13 deBridge DLN bridges)
+    // One call handles ETH-DIRECT (26 Uniswap V3 swaps) + BRIDGE (13 deBridge DLN bridges)
     const gasEst = await vault.performUpkeep.estimateGas('0x').catch(() => 5_000_000n);
     const tx     = await vault.performUpkeep('0x', {
       gasLimit:             gasEst * 130n / 100n,

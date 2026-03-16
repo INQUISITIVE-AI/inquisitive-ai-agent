@@ -214,7 +214,7 @@ export default function HelpPage() {
           ]},
           {icon:Zap,name:'The Executioner',col:'#2563eb',sub:'AI Smart Vault',detail:[
             'Executes all 11 trading functions: Buy, Sell, Swap, Lend, Yield, Borrow, Loop, Stake, Multiply, Earn, Rewards',
-            'Hybrid keeper model: cron-job.org (every 1 min) + GitHub Actions (every 5 min) — zero cost, fully redundant',
+            'Hybrid keeper model: cron-job.org (every 1 min) + GitHub Actions (every 5 min) + Vercel Cron (every 5 min) — fully redundant',
             'Integrates with Aave V3, Compound V3, Morpho Blue, Maple Finance for lending',
             'Uniswap V3, Jupiter Aggregator, 1inch for swapping with best route selection',
             'Lido, Jito, Sanctum, and 27 other protocols for staking',
@@ -238,7 +238,7 @@ export default function HelpPage() {
           ]},
           {icon:Eye,name:'The Oracle',col:'#7c3aed',sub:'Price Intelligence',detail:[
             'Primary: CoinGecko REAL LIVE API — 65 assets with 30-second polling',
-            'Fallback: CryptoCompare (free, no API key required)',
+            'Fallback: CryptoCompare API — 65-asset coverage',
             'Macro: Yahoo Finance — VIX, Treasury yields, DXY, S&P 500, Gold, Oil',
             'Fear & Greed: Alternative.me REAL API',
             'On-chain: Chainlink oracle integration planned',
@@ -432,7 +432,7 @@ export default function HelpPage() {
       <div>
         <h2 style={{fontSize:26,fontWeight:900,marginBottom:4}}>API Reference</h2>
         <p style={{color:'rgba(255,255,255,0.4)',fontSize:13,marginBottom:12}}>
-          Backend: <Code>http://localhost:3002</Code> · Next.js proxy: <Code>/api/inquisitiveAI/*</Code>
+          Production: <Code>https://getinqai.com/api/inquisitiveAI/*</Code> · All endpoints are Next.js API routes
         </p>
         <div style={{background:'rgba(16,185,129,0.05)',border:'1px solid rgba(16,185,129,0.15)',borderRadius:10,padding:'10px 14px',marginBottom:20,fontSize:12,color:'rgba(16,185,129,0.8)'}}>
           All endpoints return real live data. Price data from CoinGecko. Chart history is derived from live CoinGecko price + change fields. Portfolio equity curve reflects actual trading engine state.

@@ -4,6 +4,8 @@
 //
 // Generates ABI-encoded calldata for:
 //   • setPortfolio()       — 26 ETH-mainnet ERC-20s (Uniswap V3 on Ethereum)
+//                            NOTE: SOIL is the designed 27th ETH-mainnet asset — add to
+//                            PHASE1_TOKENS once its Uniswap V3 contract address is verified
 //   • setPhase2Registry()  — 13 cross-chain assets (deBridge DLN bridges)
 //   • setAutomationEnabled(true)
 //

@@ -1,52 +1,14 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ASSET_REGISTRY, PORTFOLIO_WEIGHTS } from '../_brain';
+import { getPrices } from '../_priceCache';
+import { getOnchain, VAULT_ADDR } from '../_onchainCache';
 
 // ── Live Vault Positions ───────────────────────────────────────────────────────
 // Reads actual vault ETH balance on-chain, maps it across portfolio weights
 // to show target allocations. These are the positions the vault holds / will
 // hold after the next performUpkeep() call by the hybrid keeper.
 
-const VAULT_ADDRESS = process.env.INQUISITIVE_VAULT_ADDRESS || '0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52';
-
-const RPC_URLS = [
-  process.env.MAINNET_RPC_URL || 'https://mainnet.infura.io/v3/d633cdc94aff412b90281fd14cd98868',
-  'https://eth.llamarpc.com',
-  'https://rpc.ankr.com/eth',
-  'https://ethereum.publicnode.com',
-];
-
-// Vault function selector — getPortfolioLength()
-const SEL_PORTFOLIO_LEN = '0xf880b0ff';
-
 export const config = { maxDuration: 20 };
-
-async function rpcPost(url: string, body: object): Promise<any> {
-  const r = await fetch(url, {
-    method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify(body),
-    signal:  AbortSignal.timeout(5000),
-  });
-  if (!r.ok) return null;
-  const d = await r.json();
-  return d.result ?? null;
-}
-
-async function getVaultState(): Promise<{ ethBalance: number; portfolioConfigured: boolean }> {
-  for (const url of RPC_URLS) {
-    try {
-      const [balHex, lenHex] = await Promise.all([
-        rpcPost(url, { jsonrpc:'2.0', id:1, method:'eth_getBalance',  params:[VAULT_ADDRESS,'latest'] }),
-        rpcPost(url, { jsonrpc:'2.0', id:2, method:'eth_call', params:[{ to: VAULT_ADDRESS, data: SEL_PORTFOLIO_LEN }, 'latest'] }),
-      ]);
-      const ethBalance        = balHex && balHex !== '0x0' ? Number(BigInt(balHex)) / 1e18 : 0;
-      const portfolioLength   = lenHex && lenHex !== '0x' ? parseInt(lenHex, 16) : 0;
-      const portfolioConfigured = portfolioLength > 0;
-      return { ethBalance, portfolioConfigured };
-    } catch {}
-  }
-  return { ethBalance: 0, portfolioConfigured: false };
-}
 
 // ETH-DIRECT assets: ERC-20 swaps via Uniswap V3 on Ethereum mainnet
 const ETH_DIRECT_SYMBOLS = new Set([
@@ -66,14 +28,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const [vaultState, ethPriceRes] = await Promise.all([
-      getVaultState(),
-      fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd', { signal: AbortSignal.timeout(5000) })
-        .then(r => r.ok ? r.json() : null).catch(() => null),
-    ]);
+    const [snap, priceResult] = await Promise.all([getOnchain(), getPrices()]);
 
-    const { ethBalance, portfolioConfigured } = vaultState;
-    const ethPrice      = (ethPriceRes as any)?.ethereum?.usd ?? 2000;
+    const ethBalance        = snap.vaultEth;
+    const portfolioConfigured = snap.portfolioConfigured;
+    const ethPrice          = priceResult.map.get('ETH')?.priceUsd ?? 2000;
     const vaultValueUSD = ethBalance * ethPrice;
 
     // Only show positions when vault is funded and portfolio is configured
@@ -103,9 +62,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           .sort((a, b) => b.weight - a.weight)
       : [];
 
-    res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
+    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
     res.status(200).json({
-      vaultAddress:       VAULT_ADDRESS,
+      vaultAddress:       VAULT_ADDR,
       vaultEth:           parseFloat(ethBalance.toFixed(6)),
       vaultValueUSD:      parseFloat(vaultValueUSD.toFixed(2)),
       ethPrice,

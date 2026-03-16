@@ -1,38 +1,14 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { getPrices } from '../_priceCache';
+import { getOnchain, VAULT_ADDR, DEPLOYER_ADDR } from '../_onchainCache';
 
 // ── Execution Queue — Live state of all pending and completed trades ──────────
 // Combines monitor output with Gelato task tracking.
 // Read-only. No private key needed.
 
-const VAULT_ADDR   = process.env.INQUISITIVE_VAULT_ADDRESS || '0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52';
-const DEPLOYER     = process.env.DEPLOYER_ADDRESS          || '0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746';
-const ETHERSCAN_KEY= process.env.ETHERSCAN_API_KEY         || 'M7JK1GRX6FI3XCNFP7X82RHF39SX66NVGX';
-const RPC          = [
-  process.env.MAINNET_RPC_URL || 'https://mainnet.infura.io/v3/d633cdc94aff412b90281fd14cd98868',
-  'https://eth.llamarpc.com',
-];
+const ETHERSCAN_KEY= process.env.ETHERSCAN_API_KEY || 'M7JK1GRX6FI3XCNFP7X82RHF39SX66NVGX';
 
 export const config = { maxDuration: 30 };
-
-async function rpc(method: string, params: any[]): Promise<any> {
-  for (const url of RPC) {
-    try {
-      const r = await fetch(url, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
-        signal: AbortSignal.timeout(7000),
-      });
-      const d = await r.json();
-      if (d.result !== undefined) return d.result;
-    } catch {}
-  }
-  return null;
-}
-
-function parse(h: string | null, dec = 18): number {
-  if (!h || h === '0x') return 0;
-  try { return Number(BigInt(h)) / Math.pow(10, dec); } catch { return 0; }
-}
 
 // ── Etherscan: get recent transactions for a wallet ──────────────────────────
 async function getRecentTxs(address: string): Promise<any[]> {
@@ -58,26 +34,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    // ── Parallel data fetch ───────────────────────────────────────────────
-    const [vaultEthHex, deployerEthHex, ethPriceRes, vaultTxs, deployerTxs, tokenTxs] = await Promise.all([
-      rpc('eth_getBalance', [VAULT_ADDR, 'latest']),
-      rpc('eth_getBalance', [DEPLOYER,   'latest']),
-      fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd', { signal: AbortSignal.timeout(5000) })
-        .then(r => r.ok ? r.json() : null).catch(() => null),
+    // ── Parallel data fetch ───────────────────────────────────────────────────
+    const [snap, priceResult, vaultTxs, deployerTxs, tokenTxs] = await Promise.all([
+      getOnchain(),
+      getPrices(),
       getRecentTxs(VAULT_ADDR),
-      getRecentTxs(DEPLOYER),
+      getRecentTxs(DEPLOYER_ADDR),
       getTokenTransfers(VAULT_ADDR),
     ]);
 
-    const ethPrice    = (ethPriceRes as any)?.ethereum?.usd ?? 3200;
-    const vaultEth    = parse(vaultEthHex,    18);
-    const deployerEth = parse(deployerEthHex, 18);
-    const totalEth    = vaultEth + deployerEth;
+    const ethPrice    = priceResult.map.get('ETH')?.priceUsd ?? 3200;
+    const vaultEth    = snap.vaultEth;
+    const deployerEth = snap.deployerEth;
+    const totalEth    = snap.totalEth;
     const aumUSD      = totalEth * ethPrice;
 
     // ── Parse incoming deposits to deployer wallet ────────────────────────
     const deposits = (deployerTxs as any[])
-      .filter(tx => tx.to?.toLowerCase() === DEPLOYER.toLowerCase() && parseFloat(tx.value) > 0)
+      .filter(tx => tx.to?.toLowerCase() === DEPLOYER_ADDR.toLowerCase() && parseFloat(tx.value) > 0)
       .slice(0, 10)
       .map(tx => ({
         type:       'DEPOSIT',
@@ -129,11 +103,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const totalDeployedEth = executions.filter(e => e.type === 'OUTGOING').reduce((s, e) => s + e.ethAmount, 0);
     const deploymentPct    = totalDeposited > 0 ? (totalDeployedEth / totalDeposited) * 100 : 0;
 
-    res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
+    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
     res.status(200).json({
       summary: {
         vaultAddress:      VAULT_ADDR,
-        deployerAddress:   DEPLOYER,
+        deployerAddress:   DEPLOYER_ADDR,
         vaultEth:          parseFloat(vaultEth.toFixed(6)),
         deployerEth:       parseFloat(deployerEth.toFixed(6)),
         totalEth:          parseFloat(totalEth.toFixed(6)),
@@ -146,15 +120,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         deploymentPct:     parseFloat(deploymentPct.toFixed(1)),
         tokenPositions:    tokenAcquisitions.length,
         keeperActive:    true,
-        keeperModel:     'cron-job.org (1 min) + GitHub Actions vault-keeper.yml (5 min)',
-        chainlinkOptional: 'Add Chainlink Automation at scale: https://automation.chain.link',
+        keeperModel:     'cron-job.org (1 min) + GitHub Actions (5 min) + Vercel Cron (5 min)',
+        chainlinkOptional: 'Chainlink Automation: https://automation.chain.link',
       },
       deposits,
       executions,
       tokenPositions: tokenAcquisitions,
       keeperSetup: {
-        primary:   'cron-job.org — pings /api/inquisitiveAI/execute/auto every 1 minute (free)',
-        backup:    'GitHub Actions vault-keeper.yml — runs every 5 minutes (free)',
+        primary:   'cron-job.org — pings /api/inquisitiveAI/execute/auto every 1 minute',
+        backup:    'GitHub Actions vault-keeper.yml — runs every 5 minutes',
+        tertiary:  'Vercel Cron — vercel.json fires every 5 minutes',
         optional:  'Chainlink Automation — register at automation.chain.link when scaling',
         vaultAddr: VAULT_ADDR,
       },

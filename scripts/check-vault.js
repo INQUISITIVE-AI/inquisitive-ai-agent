@@ -61,13 +61,13 @@ async function main() {
 
   // Selector check — keccak256 of function signatures
   const selectors = {
-    'getPortfolioLength()':   '0x82901869',
-    'checkUpkeep(bytes)':     '0x6e04d938',
+    'getPortfolioLength()':   '0xe6f713d5',
+    'checkUpkeep(bytes)':     '0x6e04ff0d',
     'performUpkeep(bytes)':   '0x4585e33b',
-    'setPortfolio(address[],uint256[],uint24[])': '0x5ce4f9b2',
-    'getETHBalance()':        '0xc8e45b86',
-    'automationEnabled()':    '0x6d92e8fd',
-    'cycleCount()':           '0x7b18a2d4',
+    'setPortfolio(address[],uint256[],uint24[])': '0x82c2d7ab',
+    'getETHBalance()':        '0x6e947298',
+    'automationEnabled()':    '0xd966a594',
+    'cycleCount()':           '0x316fda0f',
     'owner()':                '0x8da5cb5b',
   };
 
