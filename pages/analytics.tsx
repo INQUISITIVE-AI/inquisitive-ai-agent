@@ -23,6 +23,7 @@ const VAULT_ABI = [
   { name:'owner',                type:'function', stateMutability:'view',      inputs:[],                             outputs:[{name:'',type:'address'}] },
   { name:'setPortfolio',         type:'function', stateMutability:'nonpayable', inputs:[{name:'_tokens',type:'address[]'},{name:'_weights',type:'uint256[]'},{name:'_fees',type:'uint24[]'}], outputs:[] },
   { name:'setAutomationEnabled', type:'function', stateMutability:'nonpayable', inputs:[{name:'_enabled',type:'bool'}], outputs:[] },
+  { name:'collectFees',          type:'function', stateMutability:'nonpayable', inputs:[{name:'token',type:'address'},{name:'amount',type:'uint256'}], outputs:[] },
 ] as const;
 
 // PHASE1: 26 ETH-mainnet ERC-20s for setPortfolio() — same as setup.ts
@@ -85,6 +86,9 @@ export default function AnalyticsPage() {
   const [triggerHash, setTriggerHash] = useState<`0x${string}` | undefined>();
   const [triggerErr,  setTriggerErr]  = useState<string | null>(null);
   const [triggering,  setTriggering]  = useState(false);
+  const [withdrawHash, setWithdrawHash] = useState<`0x${string}` | undefined>();
+  const [withdrawErr,  setWithdrawErr]  = useState<string | null>(null);
+  const [withdrawing,  setWithdrawing]  = useState(false);
 
   const runSetup = async () => {
     setRunningSetup(true);
@@ -134,6 +138,25 @@ export default function AnalyticsPage() {
   const [sendHash, setSendHash] = useState<`0x${string}` | undefined>();
   const { isSuccess: sendConfirmed } = useWaitForTransactionReceipt({ hash: sendHash });
   const { isSuccess: triggerConfirmed } = useWaitForTransactionReceipt({ hash: triggerHash });
+  const { isSuccess: withdrawConfirmed } = useWaitForTransactionReceipt({ hash: withdrawHash });
+
+  const withdrawVault = async () => {
+    if (!vaultEthBal || vaultEthBal === 0n) return;
+    setWithdrawErr(null);
+    setWithdrawing(true);
+    try {
+      const h = await writeContractAsync({
+        address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'collectFees',
+        args: ['0x0000000000000000000000000000000000000000', vaultEthBal], chainId: 1,
+      });
+      setWithdrawHash(h);
+    } catch (e: any) {
+      const msg: string = e.shortMessage || e.message || '';
+      setWithdrawErr(msg.toLowerCase().includes('rejected') || e.code === 4001 ? 'Rejected in wallet.' : (msg || 'Withdraw failed.'));
+    } finally {
+      setWithdrawing(false);
+    }
+  };
 
   const triggerUpkeep = async () => {
     setTriggerErr(null);
@@ -744,6 +767,32 @@ export default function AnalyticsPage() {
                     )}
                     {sysStatus?.nextAction && portfolioOnChain === 0 && (
                       <div style={{ marginTop:8, fontSize:9, color:'rgba(255,255,255,0.3)', lineHeight:1.5 }}>{sysStatus.nextAction}</div>
+                    )}
+                    {/* Chainlink Automation note */}
+                    <div style={{ marginTop:10, padding:'8px 10px', background:'rgba(96,165,250,0.05)', border:'1px solid rgba(96,165,250,0.15)', borderRadius:8, fontSize:9, color:'rgba(96,165,250,0.7)', lineHeight:1.7 }}>
+                      <span style={{ fontWeight:700 }}>Chainlink Automation (primary keeper):</span>{' '}
+                      <a href="https://automation.chain.link" target="_blank" rel="noopener noreferrer" style={{ color:'#60a5fa', textDecoration:'none' }}>Register upkeep ↗</a>{' '}· Contract: {VAULT_ADDR.slice(0,10)}…{VAULT_ADDR.slice(-6)} · Gas limit: 5,000,000 · Fund with LINK
+                    </div>
+                    {/* Emergency Withdraw — owner only */}
+                    {isVaultOwner && vaultEthOnChain > 0 && (
+                      <div style={{ marginTop:10 }}>
+                        {withdrawConfirmed ? (
+                          <div style={{ padding:'7px 12px', background:'rgba(16,185,129,0.08)', border:'1px solid rgba(16,185,129,0.25)', borderRadius:8, fontSize:11, color:'#34d399', textAlign:'center' }}>
+                            ✓ Withdrawal sent to team address!{' '}
+                            {withdrawHash && <a href={`https://etherscan.io/tx/${withdrawHash}`} target="_blank" rel="noopener noreferrer" style={{ color:'#6ee7b7', textDecoration:'none' }}>View on Etherscan ↗</a>}
+                          </div>
+                        ) : (
+                          <button
+                            onClick={withdrawVault}
+                            disabled={withdrawing || isSending}
+                            style={{ width:'100%', padding:'8px', borderRadius:10, background: withdrawing ? 'rgba(239,68,68,0.08)' : 'linear-gradient(135deg,rgba(239,68,68,0.2),rgba(185,28,28,0.2))', border:'1px solid rgba(239,68,68,0.4)', color:'#f87171', fontSize:12, fontWeight:700, cursor:withdrawing?'wait':'pointer' }}
+                          >
+                            {withdrawing ? 'Confirm withdrawal in wallet…' : `🏦 Withdraw ${vaultEthOnChain.toFixed(4)} ETH → Team Address`}
+                          </button>
+                        )}
+                        {withdrawErr && <div style={{ marginTop:6, fontSize:10, color:'#f87171' }}>{withdrawErr}</div>}
+                        <div style={{ marginTop:4, fontSize:9, color:'rgba(255,255,255,0.25)', textAlign:'center' }}>collectFees() · Owner only · ETH goes to 0x4e7d…E746</div>
+                      </div>
                     )}
                   </div>
 

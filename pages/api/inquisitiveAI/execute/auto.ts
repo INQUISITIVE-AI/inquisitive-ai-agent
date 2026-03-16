@@ -11,10 +11,9 @@ import { ethers } from 'ethers';
 //   Activation: node scripts/activate.js  → paste calldata into Etherscan Write Contract
 //
 // Keeper execution model:
-//   Primary:   cron-job.org        — every 60s
-//   Backup:    GitHub Actions      — vault-keeper.yml every 5 min
-//   Tertiary:  Vercel Cron         — vercel.json every 5 min
-//   Optional:  Chainlink Automation — register at automation.chain.link
+//   Primary:   Chainlink Automation — register at automation.chain.link (fund with LINK)
+//   Backup:    Vercel Cron          — vercel.json every 5 min
+//   Tertiary:  GitHub Actions       — vault-keeper.yml every 5 min
 //   Fallback:  EXECUTOR_PRIVATE_KEY — direct performUpkeep() call if set
 //
 // EXECUTOR_PRIVATE_KEY (optional):
