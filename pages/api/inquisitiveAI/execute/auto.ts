@@ -87,13 +87,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const executorKey = rawKey ? (rawKey.startsWith('0x') ? rawKey : '0x' + rawKey) : '';
   const gelatoKey   = process.env.GELATO_API_KEY || '';
   const executorReady = !!executorKey && executorKey.length >= 66; // '0x' + 64 hex chars
+  // Derive executor address without RPC (pure key math — safe to do here)
+  let executorAddress = '';
+  try { if (executorReady) executorAddress = new ethers.Wallet(executorKey).address; } catch {}
 
   // Portfolio not configured yet
   if (p1Assets === 0) {
     return res.status(200).json({
       status:        'PORTFOLIO_NOT_SET',
       autonomous:    false,
-      executorReady,
+      executorReady, executorAddress,
       blockingReason:'Portfolio not configured on-chain. Setup endpoint will fix this automatically.',
       message:       'setPortfolio() + setPhase2Registry() + setAutomationEnabled() have not been called yet.',
       action:        'POST /api/inquisitiveAI/execute/setup  — or visit https://etherscan.io/address/' + VAULT_ADDR + '#writeContract',
@@ -214,14 +217,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const executorBalRaw = await provider.getBalance(executor.address).catch(() => 0n);
     const execETH        = parseFloat(ethers.formatEther(executorBalRaw));
-    if (execETH < 0.003) {
+    if (execETH < 0.001) {
       return res.status(200).json({
         status:        'EXECUTOR_NO_GAS',
         autonomous:    false,
         executorReady: false,
-        blockingReason:`Executor wallet ${executor.address} has only ${execETH.toFixed(6)} ETH — needs ≥0.003 ETH for gas. Send ETH to this address.`,
+        blockingReason:`Executor wallet ${executor.address} has ${execETH.toFixed(6)} ETH — needs ≥0.05 ETH for gas (performUpkeep costs ~200k-500k gas). Send ETH to this exact address to enable automatic execution.`,
         executorAddress: executor.address,
         executorETH:   execETH,
+        fundingRequired: '0.05 ETH minimum (covers ~50 automatic execution cycles)',
         vault:         { vaultETH, p1Assets, cycleCount },
         timestamp:     new Date().toISOString(),
       });

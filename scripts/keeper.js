@@ -43,9 +43,9 @@ async function getProvider() {
 }
 
 async function main() {
-  const keeperKey = process.env.KEEPER_PRIVATE_KEY;
+  const keeperKey = process.env.KEEPER_PRIVATE_KEY || process.env.EXECUTOR_PRIVATE_KEY;
   if (!keeperKey) {
-    console.error('KEEPER_PRIVATE_KEY not set in environment');
+    console.error('No keeper key found. Set KEEPER_PRIVATE_KEY or EXECUTOR_PRIVATE_KEY in GitHub Secrets (Settings → Secrets → Actions).');
     process.exit(1);
   }
 

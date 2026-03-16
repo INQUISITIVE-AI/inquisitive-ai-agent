@@ -386,6 +386,31 @@ export default function AnalyticsPage() {
               ))}
             </div>
 
+            {/* ── EXECUTOR NO GAS — highest priority banner ── */}
+            {autoStatus?.status === 'EXECUTOR_NO_GAS' && autoStatus?.executorAddress && (
+              <div style={{ display:'flex', alignItems:'flex-start', gap:12, padding:'16px 20px', background:'rgba(239,68,68,0.08)', border:'2px solid rgba(239,68,68,0.35)', borderRadius:14, marginBottom:20 }}>
+                <AlertTriangle size={18} color="#ef4444" style={{ flexShrink:0, marginTop:1 }} />
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:13, fontWeight:800, color:'#ef4444', marginBottom:6 }}>
+                    ⚠ Automatic execution is BLOCKED — executor wallet has no gas ETH
+                  </div>
+                  <div style={{ fontSize:12, color:'rgba(255,255,255,0.65)', lineHeight:1.7, marginBottom:10 }}>
+                    Your <code style={{ color:'#f87171', fontSize:11 }}>EXECUTOR_PRIVATE_KEY</code> is set in Vercel, but the wallet it controls has <strong style={{color:'#f87171'}}>{autoStatus.executorETH?.toFixed(6) ?? '0.000000'} ETH</strong> — not enough to pay Ethereum gas fees. The vault has {vaultEthOnChain.toFixed(4)} ETH for swaps, but the executor needs <strong style={{color:'#fbbf24'}}>separate ETH for gas</strong>.
+                  </div>
+                  <div style={{ background:'rgba(0,0,0,0.3)', border:'1px solid rgba(239,68,68,0.25)', borderRadius:10, padding:'10px 14px', marginBottom:10 }}>
+                    <div style={{ fontSize:10, color:'rgba(255,255,255,0.4)', marginBottom:4 }}>SEND 0.05 ETH TO THIS EXECUTOR WALLET ADDRESS:</div>
+                    <div style={{ fontSize:13, fontFamily:'monospace', color:'#fbbf24', letterSpacing:'0.03em', wordBreak:'break-all' }}>
+                      {autoStatus.executorAddress}
+                    </div>
+                    <a href={`https://etherscan.io/address/${autoStatus.executorAddress}`} target="_blank" rel="noopener noreferrer" style={{ fontSize:10, color:'#60a5fa', textDecoration:'none', marginTop:4, display:'inline-block' }}>View on Etherscan ↗</a>
+                  </div>
+                  <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)', lineHeight:1.6 }}>
+                    0.05 ETH covers ~50 automatic execution cycles. Once funded, the Vercel Cron will call <code style={{fontSize:10}}>performUpkeep()</code> automatically every 5 minutes — no further action needed.
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Vault Execution Status — shown when brain cycles are 0 */}
             {cyclesOnChain === 0 && (
               <div style={{ display:'flex', alignItems:'flex-start', gap:12, padding:'14px 18px', background:'rgba(245,158,11,0.07)', border:'1px solid rgba(245,158,11,0.22)', borderRadius:12, marginBottom:20 }}>
