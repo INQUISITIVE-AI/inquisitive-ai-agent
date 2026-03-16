@@ -121,15 +121,12 @@ The Oracle      → CoinGecko primary, CryptoCompare fallback — 65 native pric
 
 ### Execution Flow
 
-1. **Chainlink Automation** calls `performUpkeep()` automatically when `checkUpkeep()` returns true
-   - Register at automation.chain.link — no private keys, no cron jobs, fully decentralized
-   - Vercel Cron (`vercel.json`) fires every 5 minutes as a secondary fallback
-   - GitHub Actions vault-keeper.yml runs every 5 minutes as a tertiary fallback
-2. If `vaultBalance > minDeploy` (0.005 ETH), `performUpkeep()` executes on-chain
-3. **ETH → 26 ERC-20s** via Uniswap V3 (one batch)
-4. **ETH → 13 native assets** via deBridge DLN `createOrder()` (one batch, including TRX on TRON, CNGN on BSC)
-5. **Remaining ETH → stETH** via Lido for the 25 stETH yield positions
-6. All prices, NAV, signals updated in real-time via CoinGecko
+1. Chainlink Automation calls `performUpkeep()` when `checkUpkeep()` returns true
+2. If `vaultBalance > 0.005 ETH`, deploys across all 65 assets
+3. ETH → 26 ERC-20s via Uniswap V3
+4. ETH → 13 native assets via deBridge DLN `createOrder()`
+5. Remaining ETH → stETH via Lido (25 yield positions)
+6. Prices, NAV, signals updated via CoinGecko
 
 ---
 
@@ -146,8 +143,6 @@ INQAI is available at the presale price of **$8 per token**. Tokens are delivere
 | **BTC** | `bc1q54tccqs2z3gp74pdatfnfucrzxuv2755fq6cfg` |
 | **SOL** | `7a2WzumijyGTqALmqoDZd3mvyP2aS7R4GjBdBxMUjRPk` |
 | **TRX** | `TDSkgbhuMAHChDw6kGCLJmM9v7PPMJgHJA` |
-
-Each BTC, SOL, and TRX payment is assigned a unique amount for automatic on-chain identification. Payment confirmation is detected automatically.
 
 ---
 
@@ -177,8 +172,6 @@ Each BTC, SOL, and TRX payment is assigned a unique amount for automatic on-chai
 
 ## Vault Deployment
 
-The full vault `InquisitiveVaultUpdated` is **live on mainnet** at `0xadcfff8770a162b63693aa84433ef8b93a35eb52`. Deployment is complete — no redeployment needed.
-
 ### Deployed & Configured
 
 ```
@@ -187,102 +180,49 @@ The full vault `InquisitiveVaultUpdated` is **live on mainnet** at `0xadcfff8770
 ✅ setPhase2Registry():      13 cross-chain deBridge DLN assets configured (25 stETH positions included)
 ✅ Total assets:             65 (26 live Uniswap + 13 cross-chain + 25 stETH + SOIL pending)
 ✅ setAutomationEnabled():   true — vault will execute on every keeper call
-✅ Chainlink Automation:     register at automation.chain.link — primary keeper (fund with LINK)
-```
-
-### Re-deploy (if ever needed)
-
-```
-1. Go to https://remix.ethereum.org
-2. Upload contracts/InquisitiveVaultUpdated.sol
-3. Compile with Solidity 0.8.19, optimizer enabled (200 runs)
-4. Connect MetaMask (team wallet 0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746)
-5. Deploy InquisitiveVaultUpdated with constructor arg:
-      _token = 0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5
-6. Copy the new vault address
-7. Update INQUISITIVE_VAULT_ADDRESS in .env and Vercel env vars
-8. Re-run: node scripts/activate.js (generates setPortfolio + setPhase2Registry calldata)
+✅ Chainlink Automation:     automation.chain.link — register upkeep, fund with LINK
 ```
 
 ---
 
 ## Vault Activation
 
-After deployment, configure the vault via Etherscan — no private key required (sign with MetaMask as vault owner).
-
 ```bash
-# Generate all calldata and print step-by-step instructions:
 node scripts/activate.js
 ```
 
-This prints the exact arrays to paste into Etherscan Write Contract for:
+Prints calldata arrays to paste into Etherscan Write Contract (`https://etherscan.io/address/0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52#writeContract`):
 1. `setPortfolio()` — 26 ETH-mainnet tokens
 2. `setPhase2Registry()` — 13 cross-chain bridge targets
 3. `setAutomationEnabled(true)`
 
-**Etherscan Write Contract URL:**
-`https://etherscan.io/address/<VAULT_ADDRESS>#writeContract`
-
-Connect MetaMask (vault owner), call each function with the printed arrays.
-
 ---
 
-## ETH Withdrawal (Team Address Recovery)
+## Vault Withdrawal
 
-To withdraw all ETH from the vault back to the team address (`0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746`):
-
-### Method 1: Analytics Page (Easiest)
-1. Go to `https://getinqai.com/analytics`
-2. Connect MetaMask with the team wallet `0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746`
-3. In the **Vault Health** card, click **"Withdraw X ETH → Team Address"**
-4. Confirm in MetaMask — ETH arrives in team wallet immediately
-
-### Method 2: Etherscan Write Contract
 ```
-1. Go to https://etherscan.io/address/0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52#writeContract
-2. Click "Connect to Web3" → connect MetaMask (team wallet)
-3. Find collectFees:
-   token  → 0x0000000000000000000000000000000000000000
-   amount → <full vault ETH balance in wei>
-4. Click Write → confirm in MetaMask
+Vault: https://etherscan.io/address/0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52#writeContract
+Function: collectFees
+  token  → 0x0000000000000000000000000000000000000000
+  amount → <vault ETH balance in wei>
+Signer: 0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746
 ```
 
-### Method 3: Script (generates calldata)
-```bash
-node scripts/withdraw-vault.js
-```
-
-The vault `owner` is the team wallet — only that wallet can call `collectFees()`.
+Or connect team wallet at `getinqai.com/analytics` → Vault Health card → Withdraw ETH.
 
 ---
 
 ## Keeper Execution
 
-### ⚡ Primary: Chainlink Automation (Recommended)
-
-Chainlink Automation is the most reliable, decentralized keeper. No private keys, no cron jobs, no manual triggers — Chainlink nodes call `performUpkeep()` whenever `checkUpkeep()` returns true.
-
 ```
-1. Go to https://automation.chain.link
-2. Click "Register New Upkeep" → Custom Logic
+1. https://automation.chain.link
+2. Register New Upkeep → Custom Logic
 3. Network: Ethereum Mainnet
-4. Contract address: 0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52
+4. Contract: 0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52
 5. Gas limit: 5,000,000
-6. Starting balance: 5 LINK minimum (get LINK at app.uniswap.org or Coinbase)
-7. Upkeep name: INQUISITIVE Vault
-8. Click "Register Upkeep" and confirm in MetaMask (team wallet)
-9. Chainlink nodes will now call performUpkeep() automatically — no code, no servers needed
+6. Fund with LINK
+7. Confirm in MetaMask (team wallet)
 ```
-
-**That's it.** Once registered and funded with LINK, Chainlink handles all execution autonomously. No executor wallet, no ETH gas needed in any off-chain wallet.
-
-### Backup: Vercel Cron (5-Minute Interval)
-
-Configured in `vercel.json`. Fires every 5 minutes as a secondary fallback.
-
-### Backup: GitHub Actions (5-Minute Interval)
-
-Configured in `.github/workflows/vault-keeper.yml`. Runs every 5 minutes as a tertiary fallback.
 
 ---
 
@@ -343,7 +283,7 @@ All endpoints are Next.js API routes (`pages/api/`). No authentication required 
 | GET | `/api/inquisitiveAI/portfolio/positions` | Current positions with P&L |
 | GET | `/api/inquisitiveAI/portfolio/history` | Trade history |
 | GET | `/api/inquisitiveAI/execute/monitor` | Full 65-asset execution plan, allocation map, calldata |
-| GET | `/api/inquisitiveAI/execute/auto` | Trigger performUpkeep() — Vercel/GitHub fallback keeper (Chainlink is primary) |
+| GET | `/api/inquisitiveAI/execute/auto` | Trigger performUpkeep() manually |
 | GET | `/api/inquisitiveAI/execute/relay` | Optional Gelato relay status (GELATO_API_KEY required) |
 
 ### Payment Endpoints
@@ -359,7 +299,7 @@ All endpoints are Next.js API routes (`pages/api/`). No authentication required 
 
 - **Zero private keys** in any file, environment variable, or codebase
 - **Vault owner** = team wallet `0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746` — configures portfolio on-chain via Etherscan
-- **Hybrid keeper** (cron-job.org + GitHub Actions + Vercel Cron) executes `performUpkeep()`. Chainlink Automation can be added at scale.
+- **Chainlink Automation** executes `performUpkeep()` on-chain. No private keys, no servers, no cron jobs.
 - **deBridge DLN** is a fully on-chain bridge — no custodian, no API key, no off-chain intermediary
 - **Payment verification** uses public blockchain APIs (Blockstream, Solana public RPC) — no third-party processor
 - **WalletConnect only** — no MetaMask injection, no Coinbase popup, no custodial risk
@@ -378,7 +318,7 @@ All endpoints are Next.js API routes (`pages/api/`). No authentication required 
 - ✅ **BTC/SOL/TRX payment verification** — on-chain, automatic confirmation
 - ✅ **Token sale active** — presale $8, ETH/USDC/BTC/SOL/TRX accepted, INQAI delivered within 24h
 - ✅ **Vault live** — `0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52` — 26 ETH-mainnet assets + 13 bridges configured (SOIL pending)
-- ✅ **Chainlink Automation** — primary keeper at automation.chain.link (register upkeep, fund with LINK)
+- ✅ **Chainlink Automation** — automation.chain.link (register upkeep, fund with LINK)
 
 ---
 

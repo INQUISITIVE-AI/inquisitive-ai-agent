@@ -768,12 +768,12 @@ export default function AnalyticsPage() {
                     {sysStatus?.nextAction && portfolioOnChain === 0 && (
                       <div style={{ marginTop:8, fontSize:9, color:'rgba(255,255,255,0.3)', lineHeight:1.5 }}>{sysStatus.nextAction}</div>
                     )}
-                    {/* Chainlink Automation note */}
+                    {/* Chainlink Automation */}
                     <div style={{ marginTop:10, padding:'8px 10px', background:'rgba(96,165,250,0.05)', border:'1px solid rgba(96,165,250,0.15)', borderRadius:8, fontSize:9, color:'rgba(96,165,250,0.7)', lineHeight:1.7 }}>
-                      <span style={{ fontWeight:700 }}>Chainlink Automation (primary keeper):</span>{' '}
-                      <a href="https://automation.chain.link" target="_blank" rel="noopener noreferrer" style={{ color:'#60a5fa', textDecoration:'none' }}>Register upkeep ↗</a>{' '}· Contract: {VAULT_ADDR.slice(0,10)}…{VAULT_ADDR.slice(-6)} · Gas limit: 5,000,000 · Fund with LINK
+                      <span style={{ fontWeight:700 }}>Chainlink Automation:</span>{' '}
+                      <a href="https://automation.chain.link" target="_blank" rel="noopener noreferrer" style={{ color:'#60a5fa', textDecoration:'none' }}>automation.chain.link ↗</a>{' '}· Contract: {VAULT_ADDR.slice(0,10)}…{VAULT_ADDR.slice(-6)} · Gas limit: 5,000,000
                     </div>
-                    {/* Emergency Withdraw — owner only */}
+                    {/* Withdraw ETH — owner only */}
                     {isVaultOwner && vaultEthOnChain > 0 && (
                       <div style={{ marginTop:10 }}>
                         {withdrawConfirmed ? (
@@ -787,11 +787,11 @@ export default function AnalyticsPage() {
                             disabled={withdrawing || isSending}
                             style={{ width:'100%', padding:'8px', borderRadius:10, background: withdrawing ? 'rgba(239,68,68,0.08)' : 'linear-gradient(135deg,rgba(239,68,68,0.2),rgba(185,28,28,0.2))', border:'1px solid rgba(239,68,68,0.4)', color:'#f87171', fontSize:12, fontWeight:700, cursor:withdrawing?'wait':'pointer' }}
                           >
-                            {withdrawing ? 'Confirm withdrawal in wallet…' : `🏦 Withdraw ${vaultEthOnChain.toFixed(4)} ETH → Team Address`}
+                            {withdrawing ? 'Confirm in wallet…' : `Withdraw ${vaultEthOnChain.toFixed(4)} ETH → Team Address`}
                           </button>
                         )}
                         {withdrawErr && <div style={{ marginTop:6, fontSize:10, color:'#f87171' }}>{withdrawErr}</div>}
-                        <div style={{ marginTop:4, fontSize:9, color:'rgba(255,255,255,0.25)', textAlign:'center' }}>collectFees() · Owner only · ETH goes to 0x4e7d…E746</div>
+                        <div style={{ marginTop:4, fontSize:9, color:'rgba(255,255,255,0.25)', textAlign:'center' }}>collectFees() · Owner only · 0x4e7d…E746</div>
                       </div>
                     )}
                   </div>

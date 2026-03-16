@@ -10,14 +10,7 @@ import { ethers } from 'ethers';
 //   Cross-chain receiver addresses stored on-chain via setPhase2Registry().
 //   Activation: node scripts/activate.js  → paste calldata into Etherscan Write Contract
 //
-// Keeper execution model:
-//   Primary:   Chainlink Automation — register at automation.chain.link (fund with LINK)
-//   Backup:    Vercel Cron          — vercel.json every 5 min
-//   Tertiary:  GitHub Actions       — vault-keeper.yml every 5 min
-//   Fallback:  EXECUTOR_PRIVATE_KEY — direct performUpkeep() call if set
-//
-// EXECUTOR_PRIVATE_KEY (optional):
-//   CAN ONLY call performUpkeep() — cannot withdraw funds or change ownership.
+// Keeper: Chainlink Automation — register at automation.chain.link, fund with LINK.
 
 const VAULT_ADDR = process.env.INQUISITIVE_VAULT_ADDRESS || '0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52';
 const RPC_URLS   = [
