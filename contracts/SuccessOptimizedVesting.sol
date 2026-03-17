@@ -71,13 +71,9 @@ contract SuccessOptimizedVesting is Ownable {
     }
     
     function calculateReleasable() public view returns (uint256) {
-        if (block.timestamp < startTime + cliffDuration) {
-            return 0; // Cliff period
-        }
-        
         uint256 elapsed = block.timestamp - startTime;
         uint256 totalReleasable = 0;
-        uint256 periodStart = cliffDuration;
+        uint256 periodStart = 0;
         
         for (uint256 i = 0; i < stageAmounts.length; i++) {
             uint256 periodEnd = periodStart + (stageDurations[i] * 30 days);

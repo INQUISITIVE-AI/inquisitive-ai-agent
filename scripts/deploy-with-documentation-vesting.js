@@ -18,18 +18,18 @@ async function main() {
     
     const vestingContracts = {};
     
-    // Deploy vesting contracts for each category (except team which gets tokens immediately)
+    // Deploy vesting contracts for each category (except team and liquidity which get tokens immediately)
     const allocations = [
       { name: "Ecosystem Growth", amount: "35000000", beneficiary: TEAM_WALLET },
       { name: "Foundation", amount: "15000000", beneficiary: TEAM_WALLET },
-      { name: "Liquidity", amount: "15000000", beneficiary: TEAM_WALLET },
       { name: "Community", amount: "10000000", beneficiary: TEAM_WALLET }, // Will need proper community distribution later
       { name: "Strategic Reserve", amount: "5000000", beneficiary: TEAM_WALLET }
     ];
     
-    // Immediate allocations (no vesting)
+    // Immediate allocations (no vesting) - original design
     const immediateAllocations = [
-      { name: "Team & Advisors", amount: "20000000" }
+      { name: "Team & Advisors", amount: "20000000" },
+      { name: "Liquidity", amount: "15000000" }
     ];
     
     for (const alloc of allocations) {
@@ -41,15 +41,15 @@ async function main() {
       
       vestingContracts[alloc.name.toLowerCase().replace(' ', '')] = vesting.address;
       
-      // Initialize with your documentation parameters
-      const cliffDuration = 3 * 30 * 24 * 60 * 60; // 3 months
+      // Initialize with no cliff - linear vesting from day 1
+      const cliffDuration = 0; // No cliff period
       const totalDuration = 36 * 30 * 24 * 60 * 60; // 36 months
       
-      // Stage amounts (scaled for allocation)
+      // Stage amounts (scaled for allocation) - linear from month 1
       const totalTokens = ethers.utils.parseEther(alloc.amount);
-      const stage1Amount = totalTokens.mul(333).div(2000); // ~16.65% for months 4-12
-      const stage2Amount = totalTokens.mul(667).div(2000); // ~33.35% for months 13-24
-      const stage3Amount = totalTokens.mul(1000).div(2000); // 50% for months 25-36
+      const stage1Amount = totalTokens.mul(333).div(2000); // ~16.65% for months 1-9
+      const stage2Amount = totalTokens.mul(667).div(2000); // ~33.35% for months 10-21
+      const stage3Amount = totalTokens.mul(1000).div(2000); // 50% for months 22-36
       
       await vesting.initialize(
         alloc.beneficiary,
@@ -57,7 +57,7 @@ async function main() {
         cliffDuration,
         totalDuration,
         [stage1Amount, stage2Amount, stage3Amount],
-        [9, 12, 12] // Duration of each stage in months
+        [9, 12, 15] // Duration of each stage in months (9+12+15=36)
       );
       
       console.log(`   ✅ ${alloc.name} vesting deployed: ${vesting.address}`);
@@ -185,12 +185,12 @@ async function main() {
         deployer: ethers.utils.formatEther(deployerBalance)
       },
       vestingSchedule: {
-        cliff: "3 months",
+        cliff: "None - linear from day 1",
         total: "36 months",
         stages: [
-          "Months 4-12: 16.65% of allocation",
-          "Months 13-24: 33.35% of allocation", 
-          "Months 25-36: 50% of allocation"
+          "Months 1-9: 16.65% of allocation",
+          "Months 10-21: 33.35% of allocation", 
+          "Months 22-36: 50% of allocation"
         ]
       }
     };
@@ -200,7 +200,8 @@ async function main() {
     
     console.log("\n🎊 DEPLOYMENT COMPLETE!");
     console.log("   ✅ Team: 20M INQAI (NO VESTING - IMMEDIATE)");
-    console.log("   ✅ All others: 80M INQAI (SuccessOptimizedVesting - 36 months)");
+    console.log("   ✅ Liquidity: 15M INQAI (NO VESTING - IMMEDIATE)");
+    console.log("   ✅ Others: 65M INQAI (LINEAR VESTING - 36 months, NO CLIFF)");
     console.log("   ✅ Phase 2:", assets.length, "cross-chain assets");
     console.log("   💾 Info saved to documentation-vesting-deployment.json");
     

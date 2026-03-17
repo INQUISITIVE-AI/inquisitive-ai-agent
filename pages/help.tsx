@@ -491,7 +491,7 @@ export default function HelpPage() {
               {cat:'Ecosystem Growth',pct:'35%',amt:'35M INQAI',vest:'48 months linear'},
               {cat:'Team & Advisors', pct:'20%',amt:'20M INQAI',vest:'No vesting — held in team address'},
               {cat:'Foundation',      pct:'15%',amt:'15M INQAI',vest:'48 months linear'},
-              {cat:'Liquidity',       pct:'15%',amt:'15M INQAI',vest:'48 months linear'},
+              {cat:'Liquidity',       pct:'15%',amt:'15M INQAI',vest:'No vesting — held in team address'},
               {cat:'Community',       pct:'10%',amt:'10M INQAI',vest:'48 months linear'},
               {cat:'Strategic Reserve',pct:'5%',amt:'5M INQAI', vest:'48 months linear'},
             ].map(t=>(
