@@ -113,12 +113,9 @@ export default function Home() {
             <p style={{fontSize:15,color:'rgba(255,255,255,0.35)',maxWidth:600,margin:'0 auto 40px',lineHeight:1.8}}>
               INQAI is an ERC-20 token representing proportional ownership in a professionally managed portfolio of 65 digital assets. Proprietary AI systems execute portfolio management continuously across 11 discrete strategies. Fixed supply of 100,000,000 tokens.
             </p>
-            <div style={{display:'flex',gap:12,justifyContent:'center',flexWrap:'wrap',marginBottom:60}}>
+            <div style={{display:'flex',justifyContent:'center',marginBottom:60}}>
               <button onClick={()=>router.push('/buy')} style={{padding:'14px 36px',borderRadius:12,background:'linear-gradient(135deg,#7c3aed,#4f46e5)',color:'#fff',fontSize:16,fontWeight:700,cursor:'pointer',border:'1px solid rgba(255,255,255,0.1)',boxShadow:'0 8px 30px rgba(124,58,237,0.4)',transition:'all 0.2s'}}>
                 Acquire INQAI
-              </button>
-              <button onClick={()=>router.push('/send')} style={{padding:'14px 36px',borderRadius:12,background:'transparent',color:'rgba(255,255,255,0.7)',fontSize:16,fontWeight:600,cursor:'pointer',border:'1px solid rgba(255,255,255,0.15)',transition:'all 0.2s'}}>
-                Send INQAI
               </button>
             </div>
             <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,maxWidth:800,margin:'0 auto'}}>
