@@ -87,7 +87,7 @@ export default function Home() {
               <div className="anim-name-pulse" style={{fontWeight:900,fontSize:20,letterSpacing:'-0.6px',color:'#fff',lineHeight:1,marginLeft:0}}>INQUISITIVE</div>
             </button>
             <div style={{display:'flex',alignItems:'center',gap:6}}>
-              {[{l:'Portfolio',p:'/analytics',accent:true},{l:'Docs',p:'/help',accent:false}].map(n=>(
+              {[{l:'Portfolio',p:'/analytics',accent:true},{l:'Send',p:'/send',accent:false},{l:'Docs',p:'/help',accent:false}].map(n=>(
                 <button key={n.l} onClick={()=>router.push(n.p)} style={{
                   padding:'7px 14px',borderRadius:9,border:n.accent?'1px solid rgba(255,255,255,0.1)':'none',
                   background:n.accent?'linear-gradient(135deg,#7c3aed,#4f46e5)':'transparent',
@@ -116,6 +116,9 @@ export default function Home() {
             <div style={{display:'flex',gap:12,justifyContent:'center',flexWrap:'wrap',marginBottom:60}}>
               <button onClick={()=>router.push('/buy')} style={{padding:'14px 36px',borderRadius:12,background:'linear-gradient(135deg,#7c3aed,#4f46e5)',color:'#fff',fontSize:16,fontWeight:700,cursor:'pointer',border:'1px solid rgba(255,255,255,0.1)',boxShadow:'0 8px 30px rgba(124,58,237,0.4)',transition:'all 0.2s'}}>
                 Acquire INQAI
+              </button>
+              <button onClick={()=>router.push('/send')} style={{padding:'14px 36px',borderRadius:12,background:'transparent',color:'rgba(255,255,255,0.7)',fontSize:16,fontWeight:600,cursor:'pointer',border:'1px solid rgba(255,255,255,0.15)',transition:'all 0.2s'}}>
+                Send INQAI
               </button>
             </div>
             <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,maxWidth:800,margin:'0 auto'}}>
