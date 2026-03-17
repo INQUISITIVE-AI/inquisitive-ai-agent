@@ -285,7 +285,7 @@ export default function HelpPage() {
               <div style={{flex:1}}>
                 <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:6}}>
                   <h3 style={{fontSize:15,fontWeight:800,color:f.col,margin:0}}>{f.name}</h3>
-                  <Code>POST /api/inquisitiveAI/trade</Code>
+                  <Code>GET /api/inquisitiveAI/trade</Code>
                 </div>
                 <p style={{fontSize:12,color:'rgba(255,255,255,0.5)',lineHeight:1.7,marginBottom:8}}>{f.detail}</p>
                 <div style={{fontSize:11,color:'rgba(255,255,255,0.3)'}}>Params: <Code>{f.params}</Code></div>
@@ -389,7 +389,7 @@ export default function HelpPage() {
             This is the risk management backbone of the entire INQAI system. Every AI trade signal must pass through all 8 risk gates before execution. Capital preservation is always prioritized over profit generation.
           </p>
         </div>
-        <h2 style={{fontSize:26,fontWeight:900,marginBottom:20}}>Risk-First Methodology</h2>
+        <h2 style={{fontSize:26,fontWeight:900,marginBottom:20}}>8 Risk Gates</h2>
         {[
           {title:'Rule 1: Risk First, Profit Second',col:'#fbbf24',detail:'Capital preservation ALWAYS comes before profit maximization. The first question is never "how much can I make?" but "how much can I lose?" Every trade evaluation begins with risk assessment. If the risk is not acceptable, the trade is skipped regardless of potential profit.'},
           {title:'Rule 2: 2% Max Risk Per Trade',col:'#ef4444',detail:'Never risk more than 2% of total portfolio value on a single trade. Position size is calculated as: (Portfolio × 2%) ÷ (Entry Price - Stop Loss Price). This ensures 50 consecutive losing trades — an impossible streak — cannot wipe out the account. This is a HARD LIMIT.'},
@@ -452,7 +452,7 @@ export default function HelpPage() {
             {m:'GET', p:'/chart/price/:symbol',       d:'Derived hourly price history for a symbol — ?days=N (default 7). Based on live CoinGecko data.'},
             {m:'GET', p:'/chart/portfolio',           d:'Portfolio equity curve (48-hour window) reflecting trading engine P&L state'},
             {m:'GET', p:'/chart/categories',          d:'Market cap allocation by asset category — used for the donut chart in Analytics'},
-            {m:'POST',p:'/initialize',                d:'Re-initialize the AI agent and all services — triggers fresh price + macro fetch'},
+            {m:'GET', p:'/initialize',                d:'Re-initialize the AI agent and all services — triggers fresh price + macro fetch'},
           ].map(e=>(
             <div key={e.p} style={{display:'flex',alignItems:'center',gap:12,background:'rgba(13,13,32,0.8)',border:'1px solid rgba(255,255,255,0.05)',borderRadius:10,padding:'10px 14px',backdropFilter:'blur(12px)'}}>
               <span style={{fontSize:10,fontWeight:700,padding:'3px 8px',borderRadius:5,flexShrink:0,background:e.m==='GET'?'rgba(16,185,129,0.15)':'rgba(59,130,246,0.15)',color:e.m==='GET'?'#34d399':'#60a5fa',border:`1px solid ${e.m==='GET'?'rgba(16,185,129,0.25)':'rgba(59,130,246,0.25)'}`}}>{e.m}</span>
@@ -556,7 +556,7 @@ export default function HelpPage() {
             phase:'Phase 2 — Smart Contracts',
             status:'COMPLETE',
             col:'#10b981',
-            detail:'DEPLOYED — Asset-backed vault deployed to mainnet. INQAI token live, backed by 65-asset portfolio with 15% flat fee structure.',
+            detail:'DEPLOYED — Asset-backed vault deployed to mainnet. INQAI token live at 0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5.',
             items:[
               'Smart vault contract deployed — AI trading generates protocol yield distributed via buybacks and rewards',
               'INQAI ERC-20 token deployed — 100M fixed supply at 0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5',
@@ -571,9 +571,9 @@ export default function HelpPage() {
           },
           {
             phase:'Phase 3 — Live DeFi Execution',
-            status:'COMPLETE',
-            col:'#10b981',
-            detail:'LIVE — Trading engine executing real transactions. AI brain processing 65 assets with risk management.',
+            status:'IN PROGRESS',
+            col:'#f59e0b',
+            detail:'DEVELOPING — Trading engine being integrated with DeFi protocols. AI brain processing 65 assets.',
             items:[
               'Live Aave V3 lending — active positions with real yield generation',
               'Live Morpho Blue integration — isolated markets with optimized yields',
@@ -591,9 +591,9 @@ export default function HelpPage() {
           },
           {
             phase:'Phase 4 — Token Launch & Ecosystem',
-            status:'COMPLETE',
-            col:'#10b981',
-            detail:'LAUNCHED — Token publicly tradable. Buy page operational with payment flow and holdings display.',
+            status:'IN PROGRESS',
+            col:'#f59e0b',
+            detail:'DEPLOYING — Token contracts deployed, vesting setup in progress, ecosystem development underway.',
             items:[
               'INQAI public sale complete — token freely tradable on Ethereum mainnet',
               'Uniswap V3 pools — INQAI/USDC and INQAI/ETH liquidity seeded',
@@ -608,9 +608,9 @@ export default function HelpPage() {
           },
           {
             phase:'Phase 5 — Advanced AI & Cross-Chain',
-            status:'COMPLETE',
-            col:'#10b981',
-            detail:'OPERATIONAL — Advanced AI metrics visible. Confidence scores, regime detection, and signals live in analytics.',
+            status:'IN PROGRESS',
+            col:'#f59e0b',
+            detail:'DEVELOPING — Advanced AI metrics and cross-chain bridge integration being implemented.',
             items:[
               'AI metrics dashboard — confidence scores, regime signals visible',
               'Pattern engine — advanced market pattern recognition active',
