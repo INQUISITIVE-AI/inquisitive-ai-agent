@@ -18,13 +18,18 @@ async function main() {
     
     const vestingContracts = {};
     
-    // Deploy vesting contracts for each category (except team which gets tokens immediately)
+    // Deploy vesting contracts for each category (except team and community which get tokens immediately)
     const allocations = [
       { name: "Ecosystem Growth", amount: "35000000", beneficiary: TEAM_WALLET },
       { name: "Foundation", amount: "15000000", beneficiary: TEAM_WALLET },
       { name: "Liquidity", amount: "15000000", beneficiary: TEAM_WALLET },
-      { name: "Community", amount: "10000000", beneficiary: TEAM_WALLET },
       { name: "Strategic Reserve", amount: "5000000", beneficiary: TEAM_WALLET }
+    ];
+    
+    // Immediate allocations (no vesting)
+    const immediateAllocations = [
+      { name: "Team & Advisors", amount: "20000000" },
+      { name: "Community", amount: "10000000" }
     ];
     
     for (const alloc of allocations) {

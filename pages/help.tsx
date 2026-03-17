@@ -492,7 +492,7 @@ export default function HelpPage() {
               {cat:'Team & Advisors', pct:'20%',amt:'20M INQAI',vest:'No vesting — held in team address'},
               {cat:'Foundation',      pct:'15%',amt:'15M INQAI',vest:'48 months linear'},
               {cat:'Liquidity',       pct:'15%',amt:'15M INQAI',vest:'48 months linear'},
-              {cat:'Community',       pct:'10%',amt:'10M INQAI',vest:'48 months linear'},
+              {cat:'Community',       pct:'10%',amt:'10M INQAI',vest:'No vesting — held in team address'},
               {cat:'Strategic Reserve',pct:'5%',amt:'5M INQAI', vest:'48 months linear'},
             ].map(t=>(
               <div key={t.cat} style={{marginBottom:10}}>
