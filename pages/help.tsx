@@ -489,7 +489,7 @@ export default function HelpPage() {
             <h3 style={{fontSize:15,fontWeight:700,color:'#60a5fa',marginBottom:16}}>Token Distribution</h3>
             {[
               {cat:'Ecosystem Growth',pct:'35%',amt:'35M INQAI',vest:'36 months linear'},
-              {cat:'Team & Advisors', pct:'20%',amt:'20M INQAI',vest:'No vesting — held in team address'},
+              {cat:'Team & Advisors', pct:'20%',amt:'20M INQAI',vest:'48 months linear (6mo cliff)'},
               {cat:'Foundation',      pct:'15%',amt:'15M INQAI',vest:'48 months linear'},
               {cat:'Liquidity',       pct:'15%',amt:'15M INQAI',vest:'Immediate'},
               {cat:'Community',       pct:'10%',amt:'10M INQAI',vest:'Immediate'},
