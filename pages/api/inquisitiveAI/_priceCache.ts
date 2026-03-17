@@ -5,7 +5,7 @@
 
 import { ASSET_REGISTRY } from './_brain';
 
-const NO_CC   = new Set(['JUPSOL', 'CNGN', 'JITOSOL', 'mSOL']);
+const NO_CC   = new Set(['JUPSOL', 'CNGN', 'JITOSOL', 'INF', 'NIGHT', 'XCN']);
 const ALL_CGS = ASSET_REGISTRY.map(a => a.cgId).join(',');
 const CACHE_TTL = 5 * 60_000; // 5 minutes
 

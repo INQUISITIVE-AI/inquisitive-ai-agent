@@ -18,17 +18,17 @@ export default function WalletButton({ label = 'Connect Wallet' }: WalletButtonP
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         <button
-          onClick={() => router.push('/withdraw')}
+          onClick={() => router.push('/send')}
           style={{
             padding: '6px 12px', borderRadius: 9, cursor: 'pointer',
-            background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)',
-            color: '#f87171', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap',
+            background: 'rgba(124,58,237,0.12)', border: '1px solid rgba(124,58,237,0.3)',
+            color: '#a78bfa', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap',
             transition: 'all 0.15s',
           }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.22)'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.12)'; }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(124,58,237,0.22)'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(124,58,237,0.12)'; }}
         >
-          Send ETH →
+          Send INQAI →
         </button>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
           <div style={{
