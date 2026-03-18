@@ -10,7 +10,7 @@ import { ethers } from 'ethers';
 
 export const config = { maxDuration: 300 };
 
-const VAULT_ADDR = process.env.INQUISITIVE_VAULT_ADDRESS || '0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52';
+const VAULT_ADDR = process.env.INQUISITIVE_VAULT_ADDRESS || '0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb';
 const RPC_URLS = [
   process.env.MAINNET_RPC_URL || 'https://mainnet.infura.io/v3/d633cdc94aff412b90281fd14cd98868',
   'https://eth.llamarpc.com',

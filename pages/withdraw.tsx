@@ -9,7 +9,7 @@ import { Shield, Wallet, ArrowDown, CheckCircle2, AlertTriangle, ExternalLink } 
 
 const OpenWalletButton = dynamic(() => import('../src/components/OpenWalletButton'), { ssr: false, loading: () => null });
 
-const VAULT_ADDR  = '0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52' as `0x${string}`;
+const VAULT_ADDR  = '0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb' as `0x${string}`;
 const TEAM_WALLET = '0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746' as `0x${string}`;
 
 const VAULT_ABI = [

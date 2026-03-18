@@ -88,7 +88,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
     res.status(200).json({
       aiSignals: {
-        cycleCount: 0,
+        cycleCount: snap.status === 'fulfilled' ? snap.value.cycleCount : 0,
         buys, sells,
         topBuys: signals,
       },
@@ -100,7 +100,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         drawdown: 0,
         isLive: true,
       },
-      vault: { eth: parseFloat(vaultEthIQ.toFixed(6)), usd: parseFloat(vaultValueIQ.toFixed(2)), ethPrice: ethPriceIQ },
+      vault: { 
+        eth: parseFloat(vaultEthIQ.toFixed(6)), 
+        usd: parseFloat(vaultValueIQ.toFixed(2)), 
+        ethPrice: ethPriceIQ,
+        address: '0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb',
+        owner: snap.status === 'fulfilled' ? snap.value.ownerAddr : '',
+        automationEnabled: snap.status === 'fulfilled' ? snap.value.automationEnabled : false,
+        portfolioLength: snap.status === 'fulfilled' ? snap.value.portfolioLength : 0
+      },
       performance: {
         totalPnL: pnl24h,
         winRate,
