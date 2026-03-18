@@ -519,14 +519,8 @@ export default function AnalyticsPage() {
                     ) : !hasHoldings ? (
                       <div style={{ textAlign:'center', padding:'20px 0' }}>
                         <div style={{ fontSize:13, color:'rgba(255,255,255,0.35)', marginBottom:12 }}>{address?'No INQAI holdings detected — connect to a wallet that holds INQAI, or buy below.':'Connect wallet to view your holdings.'}</div>
-                        <div style={{ display:'flex', gap:10, justifyContent:'center', flexWrap:'wrap' }}>
+                        <div style={{ textAlign:'center', marginTop:16 }}>
                           <button onClick={() => router.push('/buy')} style={{ padding:'10px 20px', borderRadius:10, background:'linear-gradient(135deg,#7c3aed,#4f46e5)', color:'#fff', border:'none', cursor:'pointer', fontSize:13, fontWeight:700 }}>Buy INQAI at $8</button>
-                          {address && (
-                            <button
-                              onClick={() => { setSendOpen(true); setSendError(null); setSendTo(''); setSendAmt(''); setSendHash(undefined); }}
-                              style={{ padding:'10px 20px', borderRadius:10, background:'rgba(124,58,237,0.12)', border:'1px solid rgba(124,58,237,0.35)', color:'#a78bfa', cursor:'pointer', fontSize:13, fontWeight:700 }}
-                            >Send INQAI →</button>
-                          )}
                         </div>
                       </div>
                     ) : (

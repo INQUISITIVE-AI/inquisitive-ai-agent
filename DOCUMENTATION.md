@@ -10,7 +10,7 @@
 |------|-------|
 | **INQAI Token Contract** | `0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5` |
 | **Team / Treasury Wallet** | `0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746` |
-| **Vault Contract** | `0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52` |
+| **Vault Contract** | `0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb` |
 | **BTC Payment Address** | `bc1q54tccqs2z3gp74pdatfnfucrzxuv2755fq6cfg` |
 | **SOL Payment Address** | `7a2WzumijyGTqALmqoDZd3mvyP2aS7R4GjBdBxMUjRPk` |
 | **TRX Payment Address** | `TDSkgbhuMAHChDw6kGCLJmM9v7PPMJgHJA` |
@@ -153,7 +153,7 @@ INQAI is available at the presale price of **$8 per token**. Tokens are delivere
 | Contract | Address | Purpose |
 |----------|---------|---------|
 | **INQAI ERC-20** | `0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5` | Token — 100M fixed supply |
-| **InquisitiveVault** | `0xadcfff8770a162b63693aa84433ef8b93a35eb52` | Asset vault — live, fully configured |
+| **InquisitiveVault** | `0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb` | Asset vault — live, fully configured |
 | **InquisitiveStrategy** | `0xa2589adA4D647a9977e8e46Db5849883F2e66B3e` | Strategy manager |
 | **AIStrategyManager** | `0x8431173FA9594B43E226D907E26EF68cD6B6542D` | AI execution router |
 | **deBridge DLN** | `0xeF4fB24aD0916217251F553c0596F8Edc630EB66` | Cross-chain bridge (external) |
@@ -175,7 +175,7 @@ INQAI is available at the presale price of **$8 per token**. Tokens are delivere
 ### Deployed & Configured
 
 ```
-✅ Vault deployed:           0xadcfff8770a162b63693aa84433ef8b93a35eb52
+✅ Vault deployed:           0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb
 ✅ setPortfolio():           26 ETH-mainnet ERC-20s configured on-chain (SOIL pending Uniswap V3 address verification)
 ✅ setPhase2Registry():      13 cross-chain deBridge DLN assets configured (25 stETH positions included)
 ✅ Total assets:             65 (26 live Uniswap + 13 cross-chain + 25 stETH + SOIL pending)
@@ -191,7 +191,7 @@ INQAI is available at the presale price of **$8 per token**. Tokens are delivere
 node scripts/activate.js
 ```
 
-Prints calldata arrays to paste into Etherscan Write Contract (`https://etherscan.io/address/0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52#writeContract`):
+Prints calldata arrays to paste into Etherscan Write Contract (`https://etherscan.io/address/0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb#writeContract`):
 1. `setPortfolio()` — 26 ETH-mainnet tokens
 2. `setPhase2Registry()` — 13 cross-chain bridge targets
 3. `setAutomationEnabled(true)`
@@ -201,7 +201,7 @@ Prints calldata arrays to paste into Etherscan Write Contract (`https://ethersca
 ## Vault Withdrawal
 
 ```
-Vault: https://etherscan.io/address/0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52#writeContract
+Vault: https://etherscan.io/address/0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb#writeContract
 Function: collectFees
   token  → 0x0000000000000000000000000000000000000000
   amount → <vault ETH balance in wei>
@@ -218,7 +218,7 @@ Or connect team wallet at `getinqai.com/analytics` → Vault Health card → Wit
 1. https://automation.chain.link
 2. Register New Upkeep → Custom Logic
 3. Network: Ethereum Mainnet
-4. Contract: 0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52
+4. Contract: 0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb
 5. Gas limit: 5,000,000
 6. Fund with LINK
 7. Confirm in MetaMask (team wallet)
@@ -235,7 +235,7 @@ ETHERSCAN_API_KEY=<for contract verification>
 
 # Contract addresses
 INQAI_TOKEN_ADDRESS=0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5
-INQUISITIVE_VAULT_ADDRESS=0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52
+INQUISITIVE_VAULT_ADDRESS=0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb
 DEPLOYER_ADDRESS=0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746
 
 # Payment addresses (used by create-charge.ts and check-charge.ts)
@@ -317,7 +317,7 @@ All endpoints are Next.js API routes (`pages/api/`). No authentication required 
 - ✅ **INQAI ERC-20** — `0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5` — mainnet live
 - ✅ **BTC/SOL/TRX payment verification** — on-chain, automatic confirmation
 - ✅ **Token sale active** — presale $8, ETH/USDC/BTC/SOL/TRX accepted, INQAI delivered within 24h
-- ✅ **Vault live** — `0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52` — 26 ETH-mainnet assets + 13 bridges configured (SOIL pending)
+- ✅ **Vault live** — `0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb` — 26 ETH-mainnet assets + 13 bridges configured (SOIL pending)
 - ✅ **Chainlink Automation** — automation.chain.link (register upkeep, fund with LINK)
 
 ---
