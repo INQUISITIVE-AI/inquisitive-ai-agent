@@ -194,7 +194,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ai: {
         regime,
         fearGreed:  fgLive,
-        cycleCount: 0,
+        cycleCount: snap.cycleCount,
         buys,
         sells,
         riskScore:  regime === 'BULL' ? 0.35 : regime === 'BEAR' ? 0.72 : 0.5,

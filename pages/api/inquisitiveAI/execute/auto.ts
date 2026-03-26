@@ -10,13 +10,14 @@ import { ethers } from 'ethers';
 //   Cross-chain receiver addresses stored on-chain via setPhase2Registry().
 //   Activation: node scripts/activate.js  → paste calldata into Etherscan Write Contract
 //
-// Keeper: Chainlink Automation — register at automation.chain.link, fund with LINK.
+// Keeper: Chainlink Automation — registered at automation.chain.link, must fund with LINK tokens for execution.
 
 const VAULT_ADDR = process.env.INQUISITIVE_VAULT_ADDRESS || '0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb';
 const RPC_URLS   = [
-  process.env.MAINNET_RPC_URL || 'https://mainnet.infura.io/v3/d633cdc94aff412b90281fd14cd98868',
+  ...(process.env.MAINNET_RPC_URL ? [process.env.MAINNET_RPC_URL] : []),
   'https://eth.llamarpc.com',
   'https://rpc.ankr.com/eth',
+  'https://ethereum.publicnode.com',
 ];
 
 const VAULT_ABI = [
@@ -43,13 +44,8 @@ async function getProvider(): Promise<ethers.JsonRpcProvider> {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Auth: Vercel built-in cron (x-vercel-cron header), cron-job.org (Authorization: Bearer <CRON_SECRET>),
-  // or any unauthenticated ping when no EXECUTOR_PRIVATE_KEY is set (read-only vault state check).
-  const auth         = req.headers['authorization'] || req.headers['x-cron-secret'];
-  const isVercelCron = !!req.headers['x-vercel-cron'];
-  if (!isVercelCron && process.env.EXECUTOR_PRIVATE_KEY && process.env.CRON_SECRET && auth !== `Bearer ${process.env.CRON_SECRET}`) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
+  // Chainlink Automation-only: this endpoint only monitors vault status
+  // No auth needed - Chainlink calls performUpkeep() directly on-chain
 
   let provider: ethers.JsonRpcProvider;
   try {
@@ -73,26 +69,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const cycleCount = Number(cycleCountRaw);
   const p1Assets   = Number(portfolioLen);
 
-  // ── Executor key detection (moved up so every response carries executor status) ──────
-  const rawKey     = process.env.EXECUTOR_PRIVATE_KEY || process.env.KEEPER_PRIVATE_KEY || '';
-  // Normalise: ethers.Wallet requires '0x'-prefixed 32-byte hex
-  const executorKey = rawKey ? (rawKey.startsWith('0x') ? rawKey : '0x' + rawKey) : '';
-  const gelatoKey   = process.env.GELATO_API_KEY || '';
-  const executorReady = !!executorKey && executorKey.length >= 66; // '0x' + 64 hex chars
-  // Derive executor address without RPC (pure key math — safe to do here)
-  let executorAddress = '';
-  try { if (executorReady) executorAddress = new ethers.Wallet(executorKey).address; } catch {}
+  // Chainlink Automation handles all execution - no executor keys needed
 
   // Portfolio not configured yet
   if (p1Assets === 0) {
     return res.status(200).json({
       status:        'PORTFOLIO_NOT_SET',
       autonomous:    false,
-      executorReady, executorAddress,
       blockingReason:'Portfolio not configured on-chain. Setup endpoint will fix this automatically.',
       message:       'setPortfolio() + setPhase2Registry() + setAutomationEnabled() have not been called yet.',
       action:        'POST /api/inquisitiveAI/execute/setup  — or visit https://etherscan.io/address/' + VAULT_ADDR + '#writeContract',
-      setup:         'Vercel Cron calls /api/inquisitiveAI/execute/setup every 5 min until vault is configured.',
       setupEndpoint: '/api/inquisitiveAI/execute/setup',
       vaultETH, cycleCount,
       timestamp: new Date().toISOString(),
@@ -104,11 +90,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({
       status:        'IDLE',
       autonomous:    true,
-      executorReady,
       blockingReason: vaultETH === 0 ? 'Vault has 0 ETH — send ETH to the vault address to trigger execution.' : 'Vault ETH below 0.005 minimum — accepting deposits.',
       reason:         'Vault ETH below minimum — accepting deposits',
       vaultETH, p1Assets, cycleCount,
-      keeper:         'cron-job.org primary + GitHub Actions backup + Vercel Cron tertiary',
+      keeper:         'Chainlink Automation — automated upkeep execution when conditions are met',
       vaultAddress:   VAULT_ADDR,
       timestamp:      new Date().toISOString(),
     });
@@ -119,7 +104,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({
       status:        'UNDERFUNDED',
       autonomous:    false,
-      executorReady,
       blockingReason:`Vault has ${vaultETH.toFixed(6)} ETH. Minimum required for execution: 0.010 ETH.`,
       reason:        `Vault has ${vaultETH.toFixed(6)} ETH — performUpkeep needs >0.010 ETH (0.005 gas reserve + 0.005 minimum deploy).`,
       action:        `Send ETH to vault: ${VAULT_ADDR}  (recommend 0.1+ ETH for meaningful swaps across 26 assets)`,
@@ -128,158 +112,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
   }
 
-  // ── Gelato relay path ───────────────────────────────────────────────────────────────────────────────
-
-  if (!executorKey && gelatoKey && upkeepNeeded) {
-    // ABI-encode performUpkeep(bytes) with empty bytes argument
-    // selector = keccak256("performUpkeep(bytes)")[0:4] = 0x4585e33b
-    const calldata =
-      '0x4585e33b' +
-      '0000000000000000000000000000000000000000000000000000000000000020' +
-      '0000000000000000000000000000000000000000000000000000000000000000';
-
-    try {
-      const gelatoRes = await fetch('https://relay.gelato.network/relays/v2/sponsored-call', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${gelatoKey}` },
-        body:    JSON.stringify({ chainId: 1, target: VAULT_ADDR, data: calldata }),
-        signal:  AbortSignal.timeout(15000),
-      });
-
-      if (gelatoRes.ok) {
-        const { taskId } = await gelatoRes.json();
-        console.log(`performUpkeep submitted via Gelato relay — taskId: ${taskId}`);
-        return res.status(200).json({
-          status:      'EXECUTED_VIA_GELATO',
-          autonomous:  true,
-          taskId,
-          trackUrl:    `https://relay.gelato.network/tasks/status/${taskId}`,
-          vault:       { vaultETH, p1Assets, cycleCount, autoEnabled },
-          message:     `performUpkeep() submitted via Gelato relay. Hybrid keeper (cron-job.org + GitHub Actions) also active.`,
-          timestamp:   new Date().toISOString(),
-        });
-      }
-
-      const errBody = await gelatoRes.json().catch(() => ({ message: gelatoRes.statusText }));
-      console.warn('Gelato relay rejected:', errBody);
-    } catch (gelatoErr: any) {
-      console.warn('Gelato relay unreachable:', gelatoErr.message);
-    }
-
-    // Gelato failed — fall through to monitoring status
-    return res.status(200).json({
-      status:       'UPKEEP_READY',
-      autonomous:   autoEnabled,
-      upkeepNeeded: true,
-      message:      'Upkeep ready. Gelato relay attempted but unavailable — cron-job.org / GitHub Actions will trigger.',
-      execution: {
-        primary:   'cron-job.org (1 min) + GitHub Actions (5 min) + Vercel Cron (5 min)',
-        gelato:    'Gelato relay key set but relay unreachable this cycle',
-        community: `https://etherscan.io/address/${VAULT_ADDR}#writeContract`,
-      },
-      vault:     { vaultETH, p1Assets, cycleCount, autoEnabled },
-      timestamp: new Date().toISOString(),
-    });
-  }
-
-  if (!executorKey && !gelatoKey) {
-    return res.status(200).json({
-      status:       upkeepNeeded ? 'UPKEEP_READY' : 'IDLE',
-      autonomous:   autoEnabled,
-      upkeepNeeded,
-      message:      upkeepNeeded
-        ? 'Upkeep ready. Hybrid keeper (cron-job.org + GitHub Actions) will trigger next cycle.'
-        : 'Vault is idle. Awaiting ETH deposit above 0.005 threshold.',
-      execution: {
-        primary:   'cron-job.org (1 min) + GitHub Actions (5 min) + Vercel Cron (5 min)',
-        optional:  'Chainlink Automation: https://automation.chain.link',
-        community: `https://etherscan.io/address/${VAULT_ADDR}#writeContract`,
-      },
-      vault:     { vaultETH, p1Assets, cycleCount, autoEnabled },
-      timestamp: new Date().toISOString(),
-    });
-  }
-
-  // ── Executor path: EXECUTOR_PRIVATE_KEY is set ──────────────────────────────
-  // performUpkeep() handles ETH-DIRECT (26 Uniswap V3) + BRIDGE (13 deBridge DLN) in one transaction.
-  // Cross-chain receiver addresses are stored on-chain — no wallet env vars needed here.
-  const executor = new ethers.Wallet(executorKey!, provider);
-  const vault    = new ethers.Contract(VAULT_ADDR, VAULT_ABI, executor);
-
-  try {
-    const executorBalRaw = await provider.getBalance(executor.address).catch(() => 0n);
-    const execETH        = parseFloat(ethers.formatEther(executorBalRaw));
-
-    if (execETH === 0) {
-      return res.status(200).json({
-        status:          'EXECUTOR_NO_GAS',
-        autonomous:      false,
-        executorReady:   false,
-        executorAddress: executor.address,
-        executorETH:     execETH,
-        blockingReason:  `Executor wallet ${executor.address} has 0 ETH. Send 0.02 ETH to this address — it pays Ethereum gas fees to trigger automatic execution. The vault's ${vaultETH.toFixed(4)} ETH is separate and used only for swaps.`,
-        vault:           { vaultETH, p1Assets, cycleCount },
-        timestamp:       new Date().toISOString(),
-      });
-    }
-
-    if (!upkeepNeeded) {
-      return res.status(200).json({
-        status: 'IDLE', autonomous: true,
-        reason: 'Cooldown active or vault ETH below minimum',
-        vault: { vaultETH, p1Assets, cycleCount },
-        executor: { address: executor.address, ethBalance: execETH },
-        executorAddress: executor.address,
-        timestamp: new Date().toISOString(),
-      });
-    }
-
-    const feeData      = await provider.getFeeData();
-    const maxFeePerGas = feeData.maxFeePerGas ? feeData.maxFeePerGas * 120n / 100n : undefined;
-    const maxPrioFee   = feeData.maxPriorityFeePerGas ?? undefined;
-
-    // One call handles ETH-DIRECT (26 Uniswap V3 swaps) + BRIDGE (13 deBridge DLN bridges)
-    const gasEst = await vault.performUpkeep.estimateGas('0x').catch(() => 5_000_000n);
-    const tx     = await vault.performUpkeep('0x', {
-      gasLimit:             gasEst * 130n / 100n,
-      maxFeePerGas,
-      maxPriorityFeePerGas: maxPrioFee,
-    });
-    const receipt = await tx.wait(1);
-
-    console.log(`performUpkeep tx: ${receipt.hash} (${p1Assets} assets deployed)`);
-
-    return res.status(200).json({
-      status:          'EXECUTED',
-      autonomous:      true,
-      txHash:          receipt.hash,
-      blockNumber:     receipt.blockNumber,
-      gasUsed:         receipt.gasUsed.toString(),
-      etherscan:       `https://etherscan.io/tx/${receipt.hash}`,
-      assets:          { deployed: p1Assets },
-      vault:           { vaultETH, cycleCount: cycleCount + 1 },
-      executor:        { address: executor.address, ethBalance: execETH },
-      executorAddress: executor.address,
-      timestamp:       new Date().toISOString(),
-    });
-
-  } catch (err: any) {
-    const msg: string = err.message || '';
-    const isNoGas = msg.toLowerCase().includes('insufficient funds');
-    const executorBalRaw2 = await provider.getBalance(executor.address).catch(() => 0n);
-    const execETH2 = parseFloat(ethers.formatEther(executorBalRaw2));
-    console.error('performUpkeep failed:', msg);
-    return res.status(200).json({
-      status:          isNoGas ? 'EXECUTOR_NO_GAS' : 'FAILED',
-      autonomous:      false,
-      executorAddress: executor.address,
-      executorETH:     execETH2,
-      blockingReason:  isNoGas
-        ? `Executor wallet ${executor.address} has only ${execETH2.toFixed(6)} ETH — not enough for gas. Send 0.02 ETH to this address.`
-        : msg,
-      error:           msg,
-      vaultAddr:       VAULT_ADDR,
-      timestamp:       new Date().toISOString(),
-    });
-  }
+  // Chainlink Automation-only: just return status, no manual execution
+  return res.status(200).json({
+    status:       upkeepNeeded ? 'UPKEEP_READY' : 'IDLE',
+    autonomous:   autoEnabled,
+    upkeepNeeded,
+    message:      upkeepNeeded
+      ? 'Chainlink Automation will execute when funded with LINK tokens.'
+      : 'Vault is idle. Awaiting ETH deposit above 0.005 threshold.',
+    execution: {
+      method:     'Chainlink Automation — automated upkeep execution when conditions are met',
+      required:   'Fund with LINK tokens at automation.chain.link',
+      community:  `https://etherscan.io/address/${VAULT_ADDR}#writeContract`,
+    },
+    vault: {
+      address:     VAULT_ADDR,
+      ethBalance:  vaultETH,
+      assets:      p1Assets,
+      cycleCount,
+      automationEnabled: autoEnabled,
+    },
+    timestamp: new Date().toISOString(),
+  });
 }

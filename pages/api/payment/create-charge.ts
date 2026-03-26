@@ -25,7 +25,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { usdAmount, inqaiAmount, payToken, walletAddress } = req.body;
   if (!usdAmount || !payToken) return res.status(400).json({ error: 'Missing usdAmount or payToken' });
 
-  const usd     = Number(usdAmount);
+  const usd = Number(usdAmount);
+  if (!usd || usd < 10 || usd > 500_000) return res.status(400).json({ error: 'Amount must be between $10 and $500,000' });
+  if (!['BTC','SOL','TRX'].includes(payToken)) return res.status(400).json({ error: `Unsupported payment token: ${payToken}` });
+
   const now     = Date.now();
   const orderId = `INQAI-${now}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
   const expiresAt = new Date(now + TTL_MS).toISOString();

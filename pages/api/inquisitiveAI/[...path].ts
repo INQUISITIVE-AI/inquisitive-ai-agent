@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ASSET_REGISTRY, PORTFOLIO_WEIGHTS, scoreAsset, getRegime } from './_brain';
 import type { AssetInput, FGIndex } from './_brain';
+import { getOnchain } from './_onchainCache';
 
 const BACKEND = process.env.BACKEND_URL || '';
 const ALL_CGS = ASSET_REGISTRY.map(a => a.cgId).join(',');
@@ -117,9 +118,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (subPath === 'signals') {
-      const { signals, fg } = await buildAllSignals();
+      const [{ signals, fg }, snap] = await Promise.all([buildAllSignals(), getOnchain()]);
       res.setHeader('Cache-Control', 's-maxage=15, stale-while-revalidate=30');
-      return res.status(200).json({ signals, fearGreed: fg, cycleCount: 0 });
+      return res.status(200).json({ signals, fearGreed: fg, cycleCount: snap.cycleCount });
     }
 
     if (subPath === 'macro') {

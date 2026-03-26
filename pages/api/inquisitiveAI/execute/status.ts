@@ -55,9 +55,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const nextAction: Record<Level, string> = {
     NOT_DEPLOYED:       'Deploy the new vault via Hardhat: npx hardhat run scripts/deploy-upgraded.js --network mainnet',    
     DEPLOYED:           'Call setPortfolio() on Etherscan Write Contract (run scripts/activate.js for arrays)',
-    PORTFOLIO_SET:      'Call setAutomationEnabled(true) on Etherscan Write Contract, then activate hybrid keeper (GitHub Actions + cron-job.org) — see vault setup instructions',
-    AUTOMATION_ACTIVE:  'Fund the vault — any ETH deposit will trigger autonomous deployment within 60 seconds',
-    FULLY_OPERATIONAL:  'System is live. 26 ETH-mainnet assets executing via Uniswap V3 + 13 cross-chain assets bridging via deBridge DLN — every keeper cycle (1-5 min). 25 assets held as Lido stETH earning yield while tracking native prices. All 65 allocated and live. Hybrid keeper: cron-job.org (1 min) + GitHub Actions (5 min) + Vercel Cron (5 min).',    
+    PORTFOLIO_SET:      'Call setAutomationEnabled(true) on Etherscan Write Contract, then fund Chainlink Automation with LINK tokens — see vault setup instructions',
+    AUTOMATION_ACTIVE:  'Fund Chainlink Automation — LINK tokens needed for execution. Then any ETH deposit will trigger autonomous deployment within 60 seconds',
+    FULLY_OPERATIONAL:  'System is live. 26 ETH-mainnet assets executing via Uniswap V3 + 13 cross-chain assets bridging via deBridge DLN — every Chainlink upkeep. 25 assets held as Lido stETH earning yield while tracking native prices. All 65 allocated and live. Chainlink Automation handles all executions.',    
   };
 
   // Deployment instructions
@@ -80,14 +80,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       step: 3,
       done: automationActive,
       title: 'Enable autonomous execution',
-      detail: 'Call setAutomationEnabled(true) on Etherscan Write Contract. Activate hybrid keeper: (1) cron-job.org → https://getinqai.com/api/inquisitiveAI/execute/auto every 1 minute. (2) GitHub Actions: vault-keeper.yml configured, runs every 5 minutes. (3) Vercel Cron: vercel.json configured, fires every 5 minutes.',
+      detail: 'Call setAutomationEnabled(true) on Etherscan Write Contract. Fund Chainlink Automation with LINK tokens at automation.chain.link. Chainlink will call performUpkeep() automatically when conditions are met.',
       keyRequired: false,
     },
     {
       step: 4,
       done: vaultETH >= 0.005,
       title: 'Vault funded',
-      detail: 'ETH deposited to vault triggers performUpkeep() via hybrid keeper (cron-job.org every 1 min + GitHub Actions every 5 min + Vercel Cron every 5 min). Deploys across 26 ETH-mainnet (Uniswap V3) + 13 cross-chain (deBridge DLN: Solana/BSC/Avalanche/Optimism/TRON). 25 assets held as Lido stETH earning yield.', 
+      detail: 'ETH deposited to vault triggers performUpkeep() via Chainlink Automation. Deploys across 26 ETH-mainnet (Uniswap V3) + 13 cross-chain (deBridge DLN: Solana/BSC/Avalanche/Optimism/TRON). 25 assets held as Lido stETH earning yield.', 
       keyRequired: false,
     },
   ];
@@ -109,9 +109,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     recentTrades,
     autonomous:      readiness === 'FULLY_OPERATIONAL',
     keylessArchitecture: {
-      description:   'Zero private keys in any file, env var, or server. Hybrid keeper (cron-job.org + GitHub Actions + Vercel Cron) calls performUpkeep() every 1-5 minutes.',
+      description:   'Zero private keys in any file, env var, or server. Chainlink Automation calls performUpkeep() automatically when conditions are met.',
       deployMethod:  'Vault deployed via Remix IDE (MetaMask signs) — private key never in code or env. Portfolio configured via Etherscan Write Contract.',
-      executionMethod: 'Hybrid keeper: cron-job.org (every 1 min) + GitHub Actions vault-keeper.yml (every 5 min) + Vercel Cron (every 5 min). Chainlink Automation: automation.chain.link.',
+      executionMethod: 'Chainlink Automation: automated upkeep execution when vault conditions are met. No external keepers needed.',
     },
     timestamp: new Date().toISOString(),
   });

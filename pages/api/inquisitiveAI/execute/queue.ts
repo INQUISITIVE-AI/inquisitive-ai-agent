@@ -6,7 +6,7 @@ import { getOnchain, VAULT_ADDR, DEPLOYER_ADDR } from '../_onchainCache';
 // Combines monitor output with Gelato task tracking.
 // Read-only. No private key needed.
 
-const ETHERSCAN_KEY= process.env.ETHERSCAN_API_KEY || 'M7JK1GRX6FI3XCNFP7X82RHF39SX66NVGX';
+const ETHERSCAN_KEY = process.env.ETHERSCAN_API_KEY || '';
 
 export const config = { maxDuration: 30 };
 
@@ -120,17 +120,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         deploymentPct:     parseFloat(deploymentPct.toFixed(1)),
         tokenPositions:    tokenAcquisitions.length,
         keeperActive:    true,
-        keeperModel:     'cron-job.org (1 min) + GitHub Actions (5 min) + Vercel Cron (5 min)',
-        chainlinkOptional: 'Chainlink Automation: https://automation.chain.link',
+        keeperModel:     'Chainlink Automation — automated upkeep execution when conditions are met',
+        chainlinkStatus: 'Registered — requires LINK funding for execution',
       },
       deposits,
       executions,
       tokenPositions: tokenAcquisitions,
       keeperSetup: {
-        primary:   'cron-job.org — pings /api/inquisitiveAI/execute/auto every 1 minute',
-        backup:    'GitHub Actions vault-keeper.yml — runs every 5 minutes',
-        tertiary:  'Vercel Cron — vercel.json fires every 5 minutes',
-        optional:  'Chainlink Automation — register at automation.chain.link when scaling',
+        primary:   'Chainlink Automation — automated upkeep execution when conditions are met',
+        required:  'Fund with LINK tokens at automation.chain.link for execution',
         vaultAddr: VAULT_ADDR,
       },
       timestamp: new Date().toISOString(),

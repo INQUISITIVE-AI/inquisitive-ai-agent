@@ -6,9 +6,10 @@ import { useAccount, useBalance, useSendTransaction, useWriteContract, useDiscon
 import { parseEther, parseUnits, erc20Abi } from 'viem';
 import { mainnet } from 'wagmi/chains';
 import { INQAI_TOKEN } from '../src/config/wagmi';
-import { Lock, CheckCircle2, Loader, Shield, ExternalLink, AlertTriangle, Info } from 'lucide-react';
+import { Lock, CheckCircle2, Loader, Shield, ExternalLink, AlertTriangle } from 'lucide-react';
 
 const OpenWalletButton = dynamic(() => import('../src/components/OpenWalletButton'), { ssr: false, loading: () => null });
+const WalletButton     = dynamic(() => import('../src/components/WalletButton'),     { ssr: false, loading: () => null });
 
 const fmtUsd = (n: number) => {
   if (!n) return '$0';
@@ -243,6 +244,7 @@ export default function BuyPage() {
               }}>{n.l}</button>
             ))}
           </div>
+          <WalletButton label="Connect" />
         </nav>
 
         {/* PAGE CONTENT */}

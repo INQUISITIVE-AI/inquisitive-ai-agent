@@ -54,7 +54,7 @@ export default function Home() {
     {Icon:Zap,      name:'The Executioner', sub:'Execution Engine',     desc:'Eleven discrete trading functions — BUY, SELL, SWAP, LEND, YIELD, BORROW, LOOP, STAKE, MULTIPLY, EARN, REWARDS.', color:'#2563eb'},
     {Icon:BarChart3, name:'The X-Ray',      sub:'Performance Monitor',  desc:'Real-time P&L attribution, risk metrics, drawdown tracking, and full AI decision transparency.', color:'#0891b2'},
     {Icon:Shield,   name:'The Guardian',    sub:'Security Layer',       desc:'48-hour timelocks on all critical operations. AI circuit breakers. 15% drawdown emergency halt.', color:'#dc2626'},
-    {Icon:Eye,      name:'The Oracle',      sub:'Price Intelligence',   desc:'Primary: CoinGecko with 30-second polling. Fallback: CryptoCompare. Macro: Yahoo Finance and Alternative.me.', color:'#7c3aed'},
+    {Icon:Eye,      name:'The Oracle',      sub:'Price Intelligence',   desc:'Primary: CoinGecko with 30-second polling. Fallback: CryptoCompare. Macro: Alternative.me Fear & Greed + BTC/ETH regime signals.', color:'#7c3aed'},
   ];
 
   const TRADES: {Icon: any; name: string; col: string; desc: string}[] = [
@@ -87,7 +87,7 @@ export default function Home() {
               <div className="anim-name-pulse" style={{fontWeight:900,fontSize:20,letterSpacing:'-0.6px',color:'#fff',lineHeight:1,marginLeft:0}}>INQUISITIVE</div>
             </button>
             <div style={{display:'flex',alignItems:'center',gap:6}}>
-              {[{l:'Portfolio',p:'/analytics',accent:true},{l:'Send',p:'/send',accent:false},{l:'Docs',p:'/help',accent:false}].map(n=>(
+              {[{l:'Portfolio',p:'/analytics',accent:true},{l:'Docs',p:'/help',accent:false}].map(n=>(
                 <button key={n.l} onClick={()=>router.push(n.p)} style={{
                   padding:'7px 14px',borderRadius:9,border:n.accent?'1px solid rgba(255,255,255,0.1)':'none',
                   background:n.accent?'linear-gradient(135deg,#7c3aed,#4f46e5)':'transparent',
@@ -121,7 +121,7 @@ export default function Home() {
             <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,maxWidth:800,margin:'0 auto'}}>
               {[
                 {label:'Managed Assets', value: assets.length || 65, suffix:' / 65',  color:'#a78bfa'},
-                {label:'Target Yield',   value: '18.5',              suffix:'%',       color:'#34d399'},
+                {label:'7D Return',     value: data?.performance?.return7d !== undefined ? pct(data.performance.return7d) : '—', suffix:'', color: data?.performance?.return7d !== undefined ? (data.performance.return7d >= 0 ? '#10b981' : '#ef4444') : '#6b7280'},
                 {label:'Market Regime',  value: regime,              suffix:'',        color: regimeCol},
                 {label:'Fear & Greed',   value: fg?.value || '—',    suffix: fg ? ` — ${fg.valueClassification}` : '', color: fgColor},
               ].map(k=>(
@@ -265,7 +265,7 @@ export default function Home() {
               {label:'ERC-20 Standard', sub:'Ethereum Mainnet'},
               {label:'Non-Custodial',   sub:'Self-Custody Only'},
               {label:'65 Live Assets',  sub:'Real-Time AI Management'},
-              {label:'Live Data',       sub:'CoinGecko · Yahoo Finance'},
+              {label:'Live Data',       sub:'CoinGecko · CryptoCompare'},
               {label:'0% Mgmt Fee',     sub:'Performance-Only Structure'},
               {label:'Circuit Breakers',sub:'15% Drawdown Protection'},
             ].map(t=>(
@@ -301,13 +301,13 @@ export default function Home() {
               </div>
               <div>
                 <div style={{fontSize:11,fontWeight:700,color:'rgba(255,255,255,0.4)',textTransform:'uppercase',letterSpacing:'1px',marginBottom:12}}>Data Sources</div>
-                {['CoinGecko (primary prices)','Yahoo Finance (macro)','Alternative.me (Fear & Greed)','Chainlink (on-chain TWAP)'].map(s=>(
+                {['CoinGecko (primary prices)','CryptoCompare (price fallback)','Alternative.me (Fear & Greed)','Chainlink (on-chain TWAP)'].map(s=>(
                   <div key={s} style={{fontSize:12,color:'rgba(255,255,255,0.3)',padding:'3px 0'}}>{s}</div>
                 ))}
               </div>
             </div>
             <div style={{borderTop:'1px solid rgba(255,255,255,0.04)',paddingTop:20,fontSize:10,color:'rgba(255,255,255,0.15)',lineHeight:1.8,textAlign:'center'}}>
-              &copy; 2026 INQUISITIVE · INQAI token address: 0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5<br/>
+              &copy; {new Date().getFullYear()} INQUISITIVE · INQAI token address: 0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5<br/>
               <strong style={{color:'rgba(255,255,255,0.2)'}}>Risk Disclosure:</strong> Digital assets carry substantial risk including total loss of capital. INQAI is not a guaranteed investment. Past performance is not indicative of future results. Target APY of 18.5% is a projection, not a guarantee. This is not financial advice. Conduct your own due diligence before investing.
             </div>
           </div>

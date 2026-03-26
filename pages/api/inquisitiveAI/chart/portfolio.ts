@@ -11,19 +11,6 @@ const SPARK_CACHE_TTL = 10 * 60_000; // 10 minutes
 // Single /coins/markets call with sparkline=true returns 168-hour sparklines for all assets.
 // This replaces 15 individual market_chart calls that frequently hit CoinGecko rate limits.
 
-// Build 8-point daily synthetic equity curve from weighted 7d returns
-function buildSyntheticCurve(change7dMap: Record<string, number>) {
-  const totalWeight = Object.values(PORTFOLIO_WEIGHTS).reduce((s, w) => s + w, 0) || 1;
-  const weightedReturn7d = Object.entries(PORTFOLIO_WEIGHTS).reduce((s, [sym, w]) => {
-    return s + w * (change7dMap[sym] ?? 0);
-  }, 0) / totalWeight;
-  const now = Date.now(); const start = now - 7 * 24 * 3600_000;
-  return Array.from({ length: 8 }, (_, i) => ({
-    v: parseFloat((100 * (1 + weightedReturn7d * (i / 7))).toFixed(4)),
-    ts: new Date(start + i * 24 * 3600_000).toLocaleDateString(),
-    synthetic: true,
-  }));
-}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
@@ -46,7 +33,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
         return res.status(200).json({ curve: _sparkCache.curve, assetsInSeries: _sparkCache.assetsInSeries, totalWeight: _sparkCache.totalWeight, cached: true });
       }
-      return res.status(200).json({ curve: buildSyntheticCurve({}) });
+      return res.status(200).json({ curve: [], assetsInSeries: 0, totalWeight: 0, unavailable: true });
     }
 
     // Build series: normalize each asset's sparkline to index 1.0 at t=0
@@ -61,18 +48,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       series.push({ sym: meta.symbol, w, pts: prices.map(p => p / base) });
     }
 
-    // Build change7d map from markets response for synthetic fallback
-    const change7dMap: Record<string, number> = {};
-    for (const coin of marketsRes as any[]) {
-      const meta = ASSET_REGISTRY.find(a => a.cgId === coin.id);
-      if (meta) change7dMap[meta.symbol] = (coin.price_change_percentage_7d_in_currency ?? 0) / 100;
-    }
     if (series.length === 0) {
       if (_sparkCache && Date.now() - _sparkCache.ts < SPARK_CACHE_TTL) {
         res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
         return res.status(200).json({ curve: _sparkCache.curve, assetsInSeries: _sparkCache.assetsInSeries, totalWeight: _sparkCache.totalWeight, cached: true });
       }
-      return res.status(200).json({ curve: buildSyntheticCurve(change7dMap) });
+      return res.status(200).json({ curve: [], assetsInSeries: 0, totalWeight: 0, unavailable: true });
     }
 
     // Align all series to the shortest length (all should be ~168 points)

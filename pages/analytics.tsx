@@ -3,13 +3,14 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { waitForTransactionReceipt } from '@wagmi/core';
 import { erc20Abi, parseUnits, isAddress } from 'viem';
 
 import {
   Brain, DollarSign, Target, Flame, Bot, TrendingUp, TrendingDown,
   Scale, Wallet, Layers, Activity, BarChart3, Zap, Shield, AlertTriangle,
 } from 'lucide-react';
-import { INQAI_TOKEN } from '../src/config/wagmi';
+import { INQAI_TOKEN, wagmiConfig } from '../src/config/wagmi';
 
 
 const VAULT_ADDR = '0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb' as `0x${string}`;
@@ -109,20 +110,21 @@ export default function AnalyticsPage() {
     setRunningSetup(true);
     setSetupStep('Confirm setPortfolio() in MetaMask…');
     try {
-      const h1 = await writeContractAsync({
+      const h1 = await writeAdminAsync({
         address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'setPortfolio',
         args: [PHASE1_TOKENS, PHASE1_WEIGHTS, PHASE1_FEES], chainId: 1,
       });
-      setSetupStep('setPortfolio sent — waiting for confirmation…');
-      await new Promise(res => setTimeout(res, 8000));
+      setSetupStep('setPortfolio broadcast — waiting for on-chain confirmation…');
+      await waitForTransactionReceipt(wagmiConfig, { hash: h1 });
       setSetupStep('Confirm setAutomationEnabled(true) in MetaMask…');
-      const h2 = await writeContractAsync({
+      const h2 = await writeAdminAsync({
         address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'setAutomationEnabled',
         args: [true], chainId: 1,
       });
+      setSetupStep('setAutomationEnabled broadcast — confirming…');
+      await waitForTransactionReceipt(wagmiConfig, { hash: h2 });
       setSetupStep('Done! Portfolio configured on-chain. Reloading…');
       setSetupStatus({ status: 'SETUP_COMPLETE', message: `setPortfolio tx: ${h1} · setAutomationEnabled tx: ${h2}` });
-      await new Promise(res => setTimeout(res, 3000));
       load(true);
     } catch (e: any) {
       const msg: string = e.shortMessage || e.message || '';
@@ -134,7 +136,8 @@ export default function AnalyticsPage() {
     }
   };
 
-  const { writeContractAsync, isPending: isSending } = useWriteContract();
+  const { writeContractAsync: writeSendAsync, isPending: isSending } = useWriteContract();
+  const { writeContractAsync: writeAdminAsync } = useWriteContract();
   const [sendHash, setSendHash] = useState<`0x${string}` | undefined>();
   const { isSuccess: sendConfirmed } = useWaitForTransactionReceipt({ hash: sendHash });
   const { isSuccess: triggerConfirmed } = useWaitForTransactionReceipt({ hash: triggerHash });
@@ -145,7 +148,7 @@ export default function AnalyticsPage() {
     setWithdrawErr(null);
     setWithdrawing(true);
     try {
-      const h = await writeContractAsync({
+      const h = await writeAdminAsync({
         address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'collectFees',
         args: ['0x0000000000000000000000000000000000000000', vaultEthBal], chainId: 1,
       });
@@ -162,7 +165,7 @@ export default function AnalyticsPage() {
     setTriggerErr(null);
     setTriggering(true);
     try {
-      const h = await writeContractAsync({
+      const h = await writeAdminAsync({
         address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'performUpkeep',
         args: ['0x'], chainId: 1,
       });
@@ -306,15 +309,6 @@ export default function AnalyticsPage() {
     myPnl24h: effInvested > 0 ? effInvested * (p.allocPct / 100) * p.change24h : p.pnl24h,
   })), [positions, effInvested]);
 
-  const globalEquity = useMemo(() => {
-    if (!return7d) return [];
-    const now = Date.now(); const start = now - 7 * 24 * 3600_000;
-    const prior = return7d - (return24h ?? 0);
-    return Array.from({ length: 8 }, (_, i) => ({
-      v: parseFloat((100 * (1 + (i < 7 ? prior * (i / 6) : return7d))).toFixed(4)),
-      ts: new Date(start + i * 24 * 3600_000).toLocaleDateString(),
-    }));
-  }, [return7d, return24h]);
 
   const userEquity = useMemo(() => {
     if (!purchases.length || effInvested <= 0) return [];
@@ -332,7 +326,7 @@ export default function AnalyticsPage() {
     return pts;
   }, [purchases, navPerToken]);
 
-  const chartData   = equity.length ? equity : userEquity.length ? userEquity : globalEquity;
+  const chartData   = equity.length ? equity : userEquity;
   const handleSend = async () => {
     setSendError(null);
     if (!isAddress(sendTo)) { setSendError('Invalid recipient address.'); return; }
@@ -345,7 +339,7 @@ export default function AnalyticsPage() {
     if (onChainBalance === 0) { setSendError('No on-chain INQAI balance found.'); return; }
     if (amt > spendable) { setSendError(`Amount exceeds your balance of ${fmtN(spendable, 4)} INQAI.`); return; }
     try {
-      const hash = await writeContractAsync({
+      const hash = await writeSendAsync({
         address:      INQAI_TOKEN.address,
         abi:          erc20Abi,
         functionName: 'transfer',
@@ -436,7 +430,7 @@ export default function AnalyticsPage() {
                 { label:'Vault AUM',   val: aumUSD > 0 ? fmtUsd(aumUSD) : (treasury.vaultEth??0) > 0 ? (treasury.vaultEth??0).toFixed(4)+' ETH' : '—', sub: aumUSD > 0 ? `${(treasury.vaultEth??0).toFixed(4)} ETH · ${isOnChainNAV?'on-chain':'basket-weighted'}` : 'Awaiting deposit', col:'#60a5fa', icon:'dollar' },
                 { label:'7D Return',   val:pct(return7d),    sub:'65-asset weighted basket',                     col:grc(return7d),  icon:'target' },
                 { label:'24H Return',  val:pct(return24h),   sub:`${(winRate*100).toFixed(0)}% assets up today`, col:grc(return24h), icon:'trend'  },
-                { label:'Target APY',  val:'18.5%',           sub:'Staking · Lending · LP · Yield',              col:'#f59e0b',      icon:'flame'  },
+                { label:'Portfolio Index', val: nav?.token?.portfolioIndex ? nav.token.portfolioIndex.toFixed(2) : '—', sub:'Base 100 · 7-day basket performance', col: nav?.token?.portfolioIndex ? (nav.token.portfolioIndex >= 100 ? '#10b981' : '#ef4444') : '#6b7280', icon:'flame' },
                 { label:'AI Regime',   val:regime,            sub:`Risk ${(riskScore*100).toFixed(0)}% · F&G ${fg}`,col:regimeCol,   icon:'bot'    },
               ] as any[]).map(m => (
                 <div key={m.label} style={{ background:'rgba(13,13,32,0.85)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:16, padding:'16px 14px', backdropFilter:'blur(12px)', textAlign:'center' }}>
@@ -799,8 +793,7 @@ export default function AnalyticsPage() {
               </div>
             )}
 
-            {/* EXECUTION ENGINE TAB REMOVED */}
-            {false && (() => {
+            {false && false && (() => {
               const ss = sysStatus;
               const rPct   = ss?.readinessPct ?? 0;
               const rState = ss?.readiness    ?? 'NOT_DEPLOYED';

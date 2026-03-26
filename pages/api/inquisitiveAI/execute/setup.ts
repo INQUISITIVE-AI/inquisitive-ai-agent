@@ -245,7 +245,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     signerETH:     signerBal,
     steps,
     message: allDone
-      ? 'Vault is fully configured. performUpkeep() will execute on next keeper cycle.'
+      ? 'Vault is fully configured. performUpkeep() will execute on next Chainlink Automation cycle.'
       : 'Some setup steps failed — check steps[] for details.',
     etherscan:  `https://etherscan.io/address/${VAULT_ADDR}`,
     timestamp:  new Date().toISOString(),

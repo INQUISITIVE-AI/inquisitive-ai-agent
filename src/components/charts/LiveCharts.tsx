@@ -28,7 +28,7 @@ const DarkTooltip = ({ active, payload, label, prefix = '$', pricePrecision = 2 
 
 // ── Portfolio Equity Curve ─────────────────────────────────────
 export function PortfolioChart({ data, height = 120 }: { data: any[]; height?: number }) {
-  if (!data?.length) return <div style={{ height, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.2)', fontSize: 12 }}>Loading equity curve...</div>;
+  if (!data?.length) return <div style={{ height, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.2)', fontSize: 12, flexDirection: 'column', gap: 6 }}><span>No sparkline data available</span><span style={{ fontSize: 10 }}>Live 168-point curve loads from CoinGecko</span></div>;
   const first  = data[0]?.v || 10000;
   const last   = data[data.length - 1]?.v || 10000;
   const isUp   = last >= first;

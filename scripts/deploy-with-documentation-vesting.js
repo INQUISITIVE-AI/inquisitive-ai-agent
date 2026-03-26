@@ -1,5 +1,6 @@
 const { ethers } = require("hardhat");
 require("dotenv").config();
+const fs = require('fs');
 
 async function main() {
   console.log("🚀 DEPLOYING WITH DOCUMENTATION VESTING CONTRACT");
@@ -195,7 +196,6 @@ async function main() {
       }
     };
     
-    const fs = require('fs');
     fs.writeFileSync('documentation-vesting-deployment.json', JSON.stringify(deploymentInfo, null, 2));
     
     console.log("\n🎊 DEPLOYMENT COMPLETE!");
