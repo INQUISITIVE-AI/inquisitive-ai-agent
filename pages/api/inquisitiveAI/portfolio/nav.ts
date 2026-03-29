@@ -11,8 +11,9 @@ import { getOnchain, VAULT_ADDR, INQAI_ADDR, DEPLOYER_ADDR } from '../_onchainCa
 // NAV = presale_price × (current_portfolio_index / 100)
 // Portfolio index = 100 × (1 + weighted_7d_return) — resets to 100 each Monday.
 
-const PRESALE_PRICE = 8;    // USD — presale price paid per INQAI token
-const TOTAL_SUPPLY  = 100_000_000;
+const PRESALE_PRICE = parseFloat(process.env.NEXT_PUBLIC_PRESALE_PRICE || '0');
+const TARGET_PRICE  = parseFloat(process.env.NEXT_PUBLIC_TARGET_PRICE || '0');
+const TOTAL_SUPPLY  = parseInt(process.env.NEXT_PUBLIC_TOTAL_SUPPLY || '100000000');
 
 export const config = { maxDuration: 30 };
 
@@ -155,7 +156,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         portfolioIndex:   parseFloat(portfolioIndex.toFixed(4)),
         return24h:        parseFloat(return24h.toFixed(6)),
         return7d:         parseFloat(return7d.toFixed(6)),
-        targetPrice:      15,
+        targetPrice:      TARGET_PRICE,
         totalSupply:      totalSupplyOnChain || TOTAL_SUPPLY,
         circulatingSupply,
         tokensSold:       circulatingSupply,

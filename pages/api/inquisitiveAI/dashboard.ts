@@ -84,6 +84,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Win rate: fraction of portfolio assets up in last 24 h
     const winRate         = assetsWithData.length > 0
       ? assetsWithData.filter(inp => inp.change24h > 0).length / assetsWithData.length : 0;
+    // Portfolio heat: weighted average of absolute 24h changes
+    const portfolioHeat   = assetsWithData.reduce((s, inp) =>
+      s + (PORTFOLIO_WEIGHTS[inp.symbol] || 0) * Math.abs(inp.change24h), 0) / weightSum;
+    // Drawdown: negative return from 7d high (if portfolio is down)
+    const drawdown        = return7d < 0 ? Math.abs(return7d) : 0;
 
     res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
     res.status(200).json({
@@ -96,8 +101,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         regime,
         riskScore: regime === 'BULL' ? 0.35 : regime === 'BEAR' ? 0.72 : 0.5,
         fearGreed: fg,
-        portfolioHeat: 0,
-        drawdown: 0,
+        portfolioHeat: parseFloat(portfolioHeat.toFixed(6)),
+        drawdown: parseFloat(drawdown.toFixed(6)),
         isLive: true,
       },
       vault: { 

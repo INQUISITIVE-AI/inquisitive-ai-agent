@@ -29,8 +29,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // ── NAV per token ────────────────────────────────────────────────────────
     // If tokens have been sold: NAV = AUM / tokens_sold
-    // If no tokens sold yet: NAV = presale price ($8)
-    const PRESALE_PRICE   = 8;
+    // If no tokens sold yet: NAV = presale price from env
+    const PRESALE_PRICE   = parseFloat(process.env.NEXT_PUBLIC_PRESALE_PRICE || '0');
+    const TARGET_PRICE    = parseFloat(process.env.NEXT_PUBLIC_TARGET_PRICE || '0');
     const navPerToken     = circulatingSupply > 0
       ? aumUSD / circulatingSupply
       : PRESALE_PRICE;
@@ -72,8 +73,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       nav: {
         perToken:      parseFloat(navPerToken.toFixed(6)),
         presalePrice:  PRESALE_PRICE,
-        targetPrice:   15,
-        premiumPct:    parseFloat(((navPerToken / PRESALE_PRICE - 1) * 100).toFixed(4)),
+        targetPrice:   TARGET_PRICE,
+        premiumPct:    PRESALE_PRICE > 0 ? parseFloat(((navPerToken / PRESALE_PRICE - 1) * 100).toFixed(4)) : 0,
       },
       timestamp: new Date().toISOString(),
     });

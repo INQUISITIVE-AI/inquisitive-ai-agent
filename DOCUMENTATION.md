@@ -132,7 +132,7 @@ The Oracle      → CoinGecko primary, CryptoCompare fallback — 65 native pric
 
 ## Token Purchase
 
-INQAI is available at the presale price of **$8 per token**. Tokens are delivered to your self-custody wallet within 24 hours of confirmed payment.
+INQAI is available at the presale price. Tokens are delivered instantly to your self-custody wallet upon confirmed payment.
 
 ### Accepted Payment Methods
 
@@ -195,20 +195,6 @@ Prints calldata arrays to paste into Etherscan Write Contract (`https://ethersca
 1. `setPortfolio()` — 26 ETH-mainnet tokens
 2. `setPhase2Registry()` — 13 cross-chain bridge targets
 3. `setAutomationEnabled(true)`
-
----
-
-## Vault Withdrawal
-
-```
-Vault: https://etherscan.io/address/0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb#writeContract
-Function: collectFees
-  token  → 0x0000000000000000000000000000000000000000
-  amount → <vault ETH balance in wei>
-Signer: 0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746
-```
-
-Or connect team wallet at `getinqai.com/analytics` → Vault Health card → Withdraw ETH.
 
 ---
 

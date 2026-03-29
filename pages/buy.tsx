@@ -413,7 +413,7 @@ export default function BuyPage() {
                           <div style={{ textAlign: 'center', padding: '8px 0' }}>
                             <CheckCircle2 size={32} color="#10b981" strokeWidth={1.5} style={{ marginBottom: 8 }} />
                             <div style={{ fontSize: 13, color: '#6ee7b7', fontWeight: 700 }}>Payment Confirmed!</div>
-                            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>{inqaiAmt} INQAI will be delivered within 24 hours.</div>
+                            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>{inqaiAmt} INQAI delivered instantly to your wallet.</div>
                           </div>
                         ) : chargeStatus === 'expired' ? (
                           <div style={{ textAlign: 'center' }}>
@@ -439,7 +439,7 @@ export default function BuyPage() {
                               <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', marginBottom: 8 }}>Address expires: {new Date(chargeExpiry).toLocaleTimeString()}</div>
                             )}
                             <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', lineHeight: 1.7, padding: '8px 10px', background: 'rgba(0,0,0,0.2)', borderRadius: 8 }}>
-                              This address is <strong style={{ color: 'rgba(255,255,255,0.5)' }}>unique to your purchase</strong>. Send the exact amount above. Payment is detected automatically. INQAI tokens delivered within 24 hours.
+                              This address is <strong style={{ color: 'rgba(255,255,255,0.5)' }}>unique to your purchase</strong>. Send the exact amount above. Payment is detected automatically. INQAI tokens delivered instantly.
                             </div>
                             <button onClick={() => { setShowManual(false); setChargeId(null); setChargeAddress(null); setChargeStatus(null); setChargeCheckParams(null); }} style={{ marginTop: 10, background: 'none', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: 'rgba(255,255,255,0.4)', fontSize: 11, padding: '5px 12px', cursor: 'pointer' }}>← Back</button>
                           </>
@@ -495,9 +495,9 @@ export default function BuyPage() {
                     </h3>
                     <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', marginBottom: 20 }}>
                       {txHash ? (
-                        <><strong style={{ color: '#a78bfa' }}>{inqaiAmt} INQAI</strong> will be airdropped to your wallet within 24 hours.</>
+                        <><strong style={{ color: '#a78bfa' }}>{inqaiAmt} INQAI</strong> delivered instantly to your wallet.</>
                       ) : (
-                        <><strong style={{ color: '#a78bfa' }}>{payToken}</strong> payment detected on-chain. <strong style={{ color: '#a78bfa' }}>{inqaiAmt} INQAI</strong> will be delivered within 24 hours.</>
+                        <><strong style={{ color: '#a78bfa' }}>{payToken}</strong> payment detected on-chain. <strong style={{ color: '#a78bfa' }}>{inqaiAmt} INQAI</strong> delivered instantly.</>
                       )}
                     </p>
                     {txHash ? (
@@ -514,7 +514,7 @@ export default function BuyPage() {
                       <div style={{ background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.18)', borderRadius: 12, padding: '14px 16px', marginBottom: 16, textAlign: 'left' }}>
                         <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.7 }}>
                           Your {payToken} payment of <strong style={{ color: '#6ee7b7' }}>{chargeAmount} {payToken}</strong> has been confirmed.
-                          <br />INQAI tokens will be airdropped to your registered wallet within 24 hours.
+                          <br />INQAI tokens delivered instantly to your registered wallet.
                           <br /><span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)' }}>Payment ID: {chargeId}</span>
                         </div>
                       </div>

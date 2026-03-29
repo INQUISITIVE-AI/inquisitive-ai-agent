@@ -5,7 +5,7 @@
 // Used by: treasury.ts, nav.ts, positions.ts
 
 const RPC_URLS = [
-  process.env.MAINNET_RPC_URL || 'https://mainnet.infura.io/v3/d633cdc94aff412b90281fd14cd98868',
+  ...(process.env.MAINNET_RPC_URL ? [process.env.MAINNET_RPC_URL] : []),
   'https://eth.llamarpc.com',
   'https://rpc.ankr.com/eth',
   'https://ethereum.publicnode.com',
