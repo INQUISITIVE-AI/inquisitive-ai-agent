@@ -222,7 +222,7 @@ export default function BuyPage() {
     <>
       <Head>
         <title>Acquire INQAI | INQUISITIVE</title>
-        <meta name="description" content="Acquire INQAI — proportional ownership in a professionally managed portfolio of 65 digital assets. $8 presale price. 100M fixed supply. Self-custody." />
+        <meta name="description" content={`Acquire INQAI — proportional ownership in a professionally managed portfolio of 65 digital assets. $${INQAI_TOKEN.presalePrice} presale price. ${Number(process.env.NEXT_PUBLIC_TOTAL_SUPPLY||100000000).toLocaleString()} fixed supply. Self-custody.`} />
       </Head>
 
       <div style={{ minHeight: '100vh', background: '#07071a', color: '#fff', fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif' }}>
@@ -479,7 +479,7 @@ export default function BuyPage() {
                       <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
                         <AlertTriangle size={12} color="#fbbf24" style={{ flexShrink: 0, marginTop: 1 }} />
                         <p style={{ margin: 0, fontSize: 10, color: 'rgba(255,255,255,0.3)', lineHeight: 1.7 }}>
-                          <strong style={{ color: 'rgba(255,255,255,0.4)' }}>Risk Disclosure:</strong> Digital assets carry substantial risk including total loss of capital. Target APY of 18.5% is a projection based on AI strategy backtesting, not a guarantee. Past performance does not guarantee future results. Minimum $10. This is not financial advice.
+                          <strong style={{ color: 'rgba(255,255,255,0.4)' }}>Risk Disclosure:</strong> Digital assets carry substantial risk including total loss of capital. Target APY of {(INQAI_TOKEN.targetAPY*100).toFixed(1)}% is a projection based on AI strategy backtesting, not a guarantee. Past performance does not guarantee future results. Minimum $10. This is not financial advice.
                         </p>
                       </div>
                     </div>
@@ -553,7 +553,7 @@ export default function BuyPage() {
                   { label: 'Presale Price',  val: `$${INQAI_TOKEN.presalePrice}`,                   col: '#a78bfa' },
                   { label: 'Target Price',   val: `$${INQAI_TOKEN.targetPrice}`,                    col: '#fff'    },
                   { label: 'Target APY',     val: `${(INQAI_TOKEN.targetAPY * 100).toFixed(1)}%`,   col: '#10b981' },
-                  { label: 'Total Supply',   val: '100,000,000',                                    col: '#fff'    },
+                  { label: 'Total Supply',   val: Number(process.env.NEXT_PUBLIC_TOTAL_SUPPLY||100000000).toLocaleString(), col: '#fff' },
                   { label: 'Token Standard', val: 'ERC-20',                                         col: '#60a5fa' },
                   { label: 'Backing',        val: '65 Digital Assets',                              col: '#60a5fa' },
                   { label: 'Target MCap',    val: '$1.5B',                                          col: '#f59e0b' },
@@ -603,7 +603,7 @@ export default function BuyPage() {
               <div style={{ background: 'rgba(13,13,32,0.8)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 20, padding: '24px', backdropFilter: 'blur(12px)' }}>
                 <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 18, color: 'rgba(255,255,255,0.7)' }}>How INQAI Works</h3>
                 {[
-                  { n: '01', t: 'Acquire INQAI',              d: 'Purchase at the $8 presale price. Tokens are delivered directly to your self-custody wallet. No intermediary.' },
+                  { n: '01', t: 'Acquire INQAI',              d: `Purchase at the $${INQAI_TOKEN.presalePrice} presale price. Tokens are delivered directly to your self-custody wallet. No intermediary.` },
                   { n: '02', t: 'ETH Deployed Across 65 Assets', d: 'Your ETH payment is received by the vault. The AI keeper automatically triggers performUpkeep() — diversifying across 26 Uniswap V3 swaps, 13 deBridge cross-chain bridges (including TRON for TRX), and 25 Lido stETH positions.' },
                   { n: '03', t: 'Proportional Asset-Backed Ownership', d: 'Each INQAI token represents proportional ownership in the underlying 65-asset portfolio. Live NAV is calculated from native CoinGecko prices — zero proxy disconnect.' },
                   { n: '04', t: 'Compounding Value Accrual',   d: '60% of all protocol fees are deployed for open-market buybacks. 20% is permanently burned. Circulating supply contracts over time.' },

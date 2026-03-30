@@ -99,28 +99,46 @@ export interface AssetInput {
 export interface FGIndex { value: number; valueClassification: string }
 export type Regime = 'BULL' | 'BEAR' | 'NEUTRAL';
 
-export function getRegime(btcChgPct: number, ethChgPct: number): Regime {
-  const avg = (btcChgPct + ethChgPct) / 2;
-  return avg > 2.5 ? 'BULL' : avg < -2.5 ? 'BEAR' : 'NEUTRAL';
+export function getRegime(btcChgPct: number, ethChgPct: number, btcChg7dPct = 0, ethChg7dPct = 0): Regime {
+  const avg24h = (btcChgPct + ethChgPct) / 2;
+  const avg7d  = (btcChg7dPct + ethChg7dPct) / 2;
+  // Primary signal: 24h. Confirmation: 7d trend aligns
+  if (avg24h > 2.5 && avg7d > 0)  return 'BULL';
+  if (avg24h < -2.5 && avg7d < 0) return 'BEAR';
+  if (avg7d > 10)  return 'BULL';  // strong weekly trend overrides flat daily
+  if (avg7d < -10) return 'BEAR';
+  return avg24h > 2.5 ? 'BULL' : avg24h < -2.5 ? 'BEAR' : 'NEUTRAL';
 }
 
-// ── Pattern Engine: RL action-value scoring ────────────────────────────────────
+// ── Pattern Engine: momentum + volume-price confirmation ─────────────────────
 function patternEngine(a: AssetInput, regime: Regime): number {
   let q = 0.5;
+
+  // Momentum: 24h price direction
   if      (a.change24h >  0.05) q += 0.20;
   else if (a.change24h >  0.02) q += 0.10;
   else if (a.change24h < -0.05) q -= 0.20;
   else if (a.change24h < -0.02) q -= 0.10;
 
+  // Volume-price confirmation: price up on high volume = strong signal
   if (a.volume24h > 0 && a.marketCap > 0) {
     const turnover = a.volume24h / a.marketCap;
-    if (turnover > 0.10) q += 0.10;
+    if (turnover > 0.10) q += 0.08;
     if (turnover > 0.25) q += 0.05;
+    // Volume confirms direction: up price + high volume = extra conviction
+    if (a.change24h > 0.02 && turnover > 0.08) q += 0.05;
+    // Down price on high volume = distribution, penalise more
+    if (a.change24h < -0.02 && turnover > 0.10) q -= 0.05;
   }
 
-  if (a.athChange < -0.70) q += 0.08;
+  // Value zone: deep below ATH is contrarian accumulation opportunity
+  if      (a.athChange < -0.80) q += 0.10;
+  else if (a.athChange < -0.70) q += 0.07;
   else if (a.athChange < -0.50) q += 0.04;
+  // Near ATH: momentum but also near resistance
+  else if (a.athChange > -0.05) q -= 0.03;
 
+  // Trend-regime alignment bonus/penalty
   if (regime === 'BULL') q += 0.08;
   if (regime === 'BEAR') q -= 0.12;
 
@@ -172,15 +190,25 @@ function portfolioEngine(a: AssetInput, all: AssetInput[]): number {
   return Math.max(0, Math.min(1, 0.5 + sharpe * 0.2 + diversBonus + capBonus));
 }
 
-// ── Learning Engine: 7d trend + volume quality ─────────────────────────────────
+// ── Learning Engine: trend consistency + volume quality + momentum alignment ──
 function learningEngine(a: AssetInput): number {
   let score = 0.5;
 
-  if      (a.change7d >  0.15) score += 0.15;
-  else if (a.change7d >  0.05) score += 0.08;
-  else if (a.change7d < -0.15) score -= 0.15;
-  else if (a.change7d < -0.05) score -= 0.08;
+  // Weekly trend strength
+  if      (a.change7d >  0.20) score += 0.18;
+  else if (a.change7d >  0.10) score += 0.12;
+  else if (a.change7d >  0.05) score += 0.06;
+  else if (a.change7d < -0.20) score -= 0.18;
+  else if (a.change7d < -0.10) score -= 0.12;
+  else if (a.change7d < -0.05) score -= 0.06;
 
+  // Trend consistency: 24h and 7d pointing same direction = confirmed trend
+  if (a.change24h > 0 && a.change7d > 0.05)  score += 0.06; // both up
+  if (a.change24h < 0 && a.change7d < -0.05) score -= 0.06; // both down
+  // Divergence: daily reversal against weekly trend = potential momentum shift
+  if (a.change24h < -0.03 && a.change7d > 0.15) score -= 0.04;
+
+  // Liquidity quality: only trade assets with real volume
   if      (a.volume24h > 1_000_000_000) score += 0.10;
   else if (a.volume24h >   100_000_000) score += 0.05;
   else if (a.volume24h <     1_000_000) score -= 0.10;

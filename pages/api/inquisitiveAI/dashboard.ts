@@ -61,7 +61,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const btcIn  = inputMap.get('BTC');
     const ethIn  = inputMap.get('ETH');
     const solIn  = inputMap.get('SOL');
-    const regime = getRegime((btcIn?.change24h ?? 0) * 100, (ethIn?.change24h ?? 0) * 100);
+    const regime = getRegime(
+      (btcIn?.change24h ?? 0) * 100, (ethIn?.change24h ?? 0) * 100,
+      (btcIn?.change7d  ?? 0) * 100, (ethIn?.change7d  ?? 0) * 100,
+    );
 
     const signals = allInputs
       .map(inp => scoreAsset(inp, regime, fg, allInputs))

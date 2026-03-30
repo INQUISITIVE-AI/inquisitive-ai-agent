@@ -472,9 +472,9 @@ export default function HelpPage() {
             {[
               ['Name','INQUISITIVE'],['Symbol','INQAI'],['Standard','ERC-20'],
               ['Backing','65-Asset Digital Portfolio'],['Network','Ethereum Mainnet'],
-              ['Total Supply','100,000,000 INQAI'],['Inflation','None — fixed supply'],
-              ['Presale Price','$8/token'],['Target Price','$15/token'],
-              ['Target Market Cap','$1.5B'],['Target APY','18.5%'],
+              ['Total Supply', `${Number(process.env.NEXT_PUBLIC_TOTAL_SUPPLY || 100000000).toLocaleString()} INQAI`],['Inflation','None — fixed supply'],
+              ['Presale Price', `$${process.env.NEXT_PUBLIC_PRESALE_PRICE || '8'}/token`],['Target Price', `$${process.env.NEXT_PUBLIC_TARGET_PRICE || '15'}/token`],
+              ['Target Market Cap','$1.5B'],['Target APY', `${((parseFloat(process.env.NEXT_PUBLIC_TARGET_APY || '0.185')) * 100).toFixed(1)}%`],
               ['Performance Fee','15% flat on yields'],
               ['Fee Distribution','60% buybacks · 20% burns · 20% treasury'],
             ].map(([k,v])=>(

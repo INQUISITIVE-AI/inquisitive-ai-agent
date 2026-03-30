@@ -607,10 +607,10 @@ export default function AnalyticsPage() {
                     <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:6 }}>
                       <Layers size={16} color="#a78bfa" />
                       <h3 style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.8)', margin:0 }}>Your Portfolio Backing</h3>
-                      <div style={{ marginLeft:'auto', fontSize:10, color:'rgba(255,255,255,0.3)', fontFamily:'monospace' }}>{effInvested>0?fmtUsd(effInvested)+' → 65 assets':'$8/token → 65 assets'}</div>
+                      <div style={{ marginLeft:'auto', fontSize:10, color:'rgba(255,255,255,0.3)', fontFamily:'monospace' }}>{effInvested>0?fmtUsd(effInvested)+' → 65 assets':'$'+INQAI_TOKEN.presalePrice+'/token → 65 assets'}</div>
                     </div>
                     <div style={{ fontSize:11, color:'rgba(255,255,255,0.28)', marginBottom:12, lineHeight:1.6 }}>
-                      The AI deploys {effInvested>0?'your investment':'each $8 INQAI token'} across 65 assets. Bar width = relative weight, colour = live AI signal.
+                      The AI deploys {effInvested>0?'your investment':'each $'+INQAI_TOKEN.presalePrice+' INQAI token'} across 65 assets. Bar width = relative weight, colour = live AI signal.
                     </div>
                     <div style={{ display:'grid', gridTemplateColumns:'54px 1fr 70px 58px 62px', gap:6, marginBottom:6, fontSize:9, color:'rgba(255,255,255,0.3)', padding:'0 2px' }}>
                       <span>Asset</span><span>Allocation</span><span style={{textAlign:'right'}}>My USD</span><span style={{textAlign:'right'}}>24H</span><span style={{textAlign:'right'}}>Signal</span>
@@ -1027,10 +1027,10 @@ export default function AnalyticsPage() {
                   <h3 style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.8)', marginBottom:18 }}>Tokenomics</h3>
                   <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16 }}>
                     {[
-                      { l:'Total Supply',  v:'100,000,000',       sub:'Fixed · never changes',       c:'#fff',    i:'flame' },
-                      { l:'Presale Price', v:'$8.00',              sub:'47% below $15 target',        c:'#a78bfa', i:'price' },
-                      { l:'Target Price',  v:'$15.00',             sub:'Based on portfolio + fees',   c:'#10b981', i:'target' },
-                      { l:'Target APY',    v:'18.5%',              sub:'Multi-strategy AI yield',     c:'#f59e0b', i:'apy' },
+                      { l:'Total Supply',  v:Number(process.env.NEXT_PUBLIC_TOTAL_SUPPLY||100000000).toLocaleString(), sub:'Fixed · never changes',      c:'#fff',    i:'flame' },
+                      { l:'Presale Price', v:'$'+INQAI_TOKEN.presalePrice.toFixed(2),                                sub:`${(((INQAI_TOKEN.targetPrice/INQAI_TOKEN.presalePrice)-1)*100).toFixed(0)}% below target`, c:'#a78bfa', i:'price' },
+                      { l:'Target Price',  v:'$'+INQAI_TOKEN.targetPrice.toFixed(2),                                sub:'Based on portfolio + fees',  c:'#10b981', i:'target' },
+                      { l:'Target APY',    v:(INQAI_TOKEN.targetAPY*100).toFixed(1)+'%',                            sub:'Multi-strategy AI yield',    c:'#f59e0b', i:'apy' },
                     ].map(t => (
                       <div key={t.l} style={{ textAlign:'center', padding:'20px 16px', background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:14 }}>
                         <div style={{ marginBottom:8, display:'flex', justifyContent:'center' }}>

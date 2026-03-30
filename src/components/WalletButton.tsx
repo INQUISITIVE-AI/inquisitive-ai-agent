@@ -1,6 +1,5 @@
 import { useAppKit } from '@reown/appkit/react';
 import { useAccount, useDisconnect } from 'wagmi';
-import { useRouter } from 'next/router';
 import { Wallet } from 'lucide-react';
 
 interface WalletButtonProps {
@@ -12,24 +11,9 @@ export default function WalletButton({ label = 'Connect Wallet' }: WalletButtonP
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
 
-  const router = useRouter();
-
   if (isConnected && address) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        <button
-          onClick={() => router.push('/send')}
-          style={{
-            padding: '6px 12px', borderRadius: 9, cursor: 'pointer',
-            background: 'rgba(124,58,237,0.12)', border: '1px solid rgba(124,58,237,0.3)',
-            color: '#a78bfa', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap',
-            transition: 'all 0.15s',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(124,58,237,0.22)'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(124,58,237,0.12)'; }}
-        >
-          Send INQAI →
-        </button>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
           <div style={{
             display: 'flex', alignItems: 'center', gap: 6,
