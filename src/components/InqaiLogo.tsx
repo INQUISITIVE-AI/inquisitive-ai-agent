@@ -3,165 +3,170 @@ export default function InqaiLogo({ size = 32, className = '' }: Props) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width={size} height={size} className={className} aria-label="INQAI" style={{display:'block',flexShrink:0}}>
       <defs>
-        {/* ── COIN BODY ── */}
-        <radialGradient id="iq_b" cx="33%" cy="25%" r="88%">
-          <stop offset="0%"   stopColor="#6B2FD9"/>
-          <stop offset="12%"  stopColor="#38178A"/>
-          <stop offset="32%"  stopColor="#180948"/>
-          <stop offset="58%"  stopColor="#07021C"/>
-          <stop offset="100%" stopColor="#02010B"/>
+        {/* ── BASE COIN GRADIENT ── */}
+        <radialGradient id="iq_b" cx="34%" cy="26%" r="88%">
+          <stop offset="0%"   stopColor="#7B35E8"/>
+          <stop offset="14%"  stopColor="#3D1A8E"/>
+          <stop offset="36%"  stopColor="#130640"/>
+          <stop offset="65%"  stopColor="#060118"/>
+          <stop offset="100%" stopColor="#01000A"/>
         </radialGradient>
-        {/* broad specular – soft bloom top-left */}
-        <radialGradient id="iq_s1" cx="30%" cy="22%" r="52%">
-          <stop offset="0%"   stopColor="#fff"    stopOpacity="0.38"/>
-          <stop offset="28%"  stopColor="#DDD6FE"  stopOpacity="0.14"/>
-          <stop offset="62%"  stopColor="#7C3AED"  stopOpacity="0.03"/>
-          <stop offset="100%" stopColor="#4C1D95"  stopOpacity="0"/>
-        </radialGradient>
-        {/* tight hot-spot – pure white pinpoint */}
-        <radialGradient id="iq_s2" cx="26%" cy="18%" r="20%">
-          <stop offset="0%"   stopColor="#fff"    stopOpacity="0.82"/>
-          <stop offset="38%"  stopColor="#fff"    stopOpacity="0.22"/>
-          <stop offset="100%" stopColor="#fff"    stopOpacity="0"/>
-        </radialGradient>
-        {/* ambient counter-light bottom-right */}
-        <radialGradient id="iq_a" cx="80%" cy="84%" r="36%">
-          <stop offset="0%"   stopColor="#5B21B6" stopOpacity="0.20"/>
-          <stop offset="100%" stopColor="#1E0A5A" stopOpacity="0"/>
-        </radialGradient>
-        {/* ── 8-STOP METALLIC RIM ── */}
-        <linearGradient id="iq_r1" x1="12%" y1="3%" x2="88%" y2="97%">
-          <stop offset="0%"   stopColor="#F5F3FF" stopOpacity="1.00"/>
-          <stop offset="9%"   stopColor="#C4B5FD" stopOpacity="0.90"/>
-          <stop offset="22%"  stopColor="#7C3AED" stopOpacity="0.58"/>
-          <stop offset="38%"  stopColor="#1E0A5A" stopOpacity="0.18"/>
-          <stop offset="54%"  stopColor="#1E0A5A" stopOpacity="0.14"/>
-          <stop offset="70%"  stopColor="#6D28D9" stopOpacity="0.60"/>
-          <stop offset="86%"  stopColor="#A78BFA" stopOpacity="0.90"/>
+
+        {/* ── PHYSICS-BASED 3D METALLIC LIGHTING ──
+             feGaussianBlur on SourceAlpha creates a dome-shaped bump map.
+             feSpecularLighting + fePointLight compute real Phong specular.
+             feDiffuseLighting computes diffuse (shaded) body.
+             Result: genuinely 3D coin surface, not flat gradient overlay. */}
+        <filter id="iq_3d" x="-5%" y="-5%" width="110%" height="110%">
+          <feGaussianBlur in="SourceAlpha" stdDeviation="14" result="bump"/>
+          <feSpecularLighting in="bump" surfaceScale="20" specularConstant="3.5"
+            specularExponent="95" lightingColor="#ffffff" result="spec">
+            <fePointLight x="58" y="42" z="130"/>
+          </feSpecularLighting>
+          <feComposite in="spec" in2="SourceAlpha" operator="in" result="specClip"/>
+          <feDiffuseLighting in="bump" surfaceScale="12" diffuseConstant="1.1"
+            lightingColor="#8B5CF6" result="diff">
+            <fePointLight x="58" y="42" z="130"/>
+          </feDiffuseLighting>
+          <feComposite in="diff" in2="SourceAlpha" operator="in" result="diffClip"/>
+          <feBlend in="SourceGraphic" in2="diffClip" mode="multiply" result="lit"/>
+          <feBlend in="lit" in2="specClip" mode="screen"/>
+        </filter>
+
+        {/* ── METALLIC RIM (8-stop, simulates coin bevel facets) ── */}
+        <linearGradient id="iq_rim" x1="10%" y1="3%" x2="90%" y2="97%">
+          <stop offset="0%"   stopColor="#FFFFFF" stopOpacity="1.00"/>
+          <stop offset="8%"   stopColor="#E9E2FF" stopOpacity="0.95"/>
+          <stop offset="22%"  stopColor="#8B5CF6" stopOpacity="0.65"/>
+          <stop offset="38%"  stopColor="#18084A" stopOpacity="0.18"/>
+          <stop offset="55%"  stopColor="#0C0328" stopOpacity="0.12"/>
+          <stop offset="70%"  stopColor="#5B21B6" stopOpacity="0.55"/>
+          <stop offset="86%"  stopColor="#9B72FA" stopOpacity="0.90"/>
           <stop offset="100%" stopColor="#EDE9FE" stopOpacity="1.00"/>
         </linearGradient>
-        {/* shadow overlay on rim */}
-        <linearGradient id="iq_r2" x1="12%" y1="3%" x2="88%" y2="97%">
-          <stop offset="0%"   stopColor="#fff" stopOpacity="0.08"/>
-          <stop offset="50%"  stopColor="#000" stopOpacity="0.28"/>
+        <linearGradient id="iq_rim2" x1="10%" y1="3%" x2="90%" y2="97%">
+          <stop offset="0%"   stopColor="#fff" stopOpacity="0.12"/>
+          <stop offset="45%"  stopColor="#000" stopOpacity="0.30"/>
           <stop offset="100%" stopColor="#000" stopOpacity="0.00"/>
         </linearGradient>
+
         {/* ── COMET ARC ── */}
-        <linearGradient id="iq_c" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%"   stopColor="#8B5CF6" stopOpacity="0"/>
-          <stop offset="50%"  stopColor="#C4B5FD" stopOpacity="0.35"/>
-          <stop offset="80%"  stopColor="#EDE9FE" stopOpacity="0.75"/>
-          <stop offset="100%" stopColor="#fff"    stopOpacity="1.00"/>
+        <linearGradient id="iq_cmt" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%"   stopColor="#9B72FA" stopOpacity="0"/>
+          <stop offset="45%"  stopColor="#C4B5FD" stopOpacity="0.32"/>
+          <stop offset="80%"  stopColor="#EDE9FE" stopOpacity="0.78"/>
+          <stop offset="100%" stopColor="#FFFFFF" stopOpacity="1.00"/>
         </linearGradient>
-        {/* ── SIGNAL WAVEFORM ── */}
-        {/* vertical luster gradient */}
-        <linearGradient id="iq_sg" x1="0" y1="60" x2="0" y2="140" gradientUnits="userSpaceOnUse">
-          <stop offset="0%"   stopColor="#fff"/>
-          <stop offset="18%"  stopColor="#EDE9FE"/>
-          <stop offset="52%"  stopColor="#A78BFA"/>
-          <stop offset="100%" stopColor="#4C1D95"/>
+
+        {/* ── SIGNAL WAVEFORM — vertical luster (peak=white, base=deep violet) ── */}
+        <linearGradient id="iq_sig" x1="0" y1="50" x2="0" y2="150" gradientUnits="userSpaceOnUse">
+          <stop offset="0%"   stopColor="#FFFFFF"/>
+          <stop offset="16%"  stopColor="#EDE9FE"/>
+          <stop offset="48%"  stopColor="#A78BFA"/>
+          <stop offset="82%"  stopColor="#5B21B6"/>
+          <stop offset="100%" stopColor="#2D1180"/>
         </linearGradient>
-        {/* emboss shadow (dark, offset ↘) */}
-        <linearGradient id="iq_es" x1="44" y1="102" x2="156" y2="102" gradientUnits="userSpaceOnUse">
-          <stop offset="0%"   stopColor="#000"    stopOpacity="0.38"/>
-          <stop offset="50%"  stopColor="#04011A"  stopOpacity="0.52"/>
-          <stop offset="100%" stopColor="#000"    stopOpacity="0.32"/>
+        {/* Emboss shadow layer (offset ↘, simulates engraved depth) */}
+        <linearGradient id="iq_es" x1="38" y1="104" x2="162" y2="104" gradientUnits="userSpaceOnUse">
+          <stop offset="0%"   stopColor="#000000" stopOpacity="0.42"/>
+          <stop offset="50%"  stopColor="#020110" stopOpacity="0.58"/>
+          <stop offset="100%" stopColor="#000000" stopOpacity="0.36"/>
         </linearGradient>
-        {/* emboss highlight (bright, offset ↖) */}
-        <linearGradient id="iq_eh" x1="44" y1="98" x2="156" y2="98" gradientUnits="userSpaceOnUse">
-          <stop offset="0%"   stopColor="#EDE9FE"  stopOpacity="0.52"/>
-          <stop offset="42%"  stopColor="#fff"    stopOpacity="0.72"/>
-          <stop offset="72%"  stopColor="#C4B5FD"  stopOpacity="0.42"/>
-          <stop offset="100%" stopColor="#A78BFA"  stopOpacity="0.28"/>
+        {/* Emboss highlight layer (offset ↖, simulates top edge catching light) */}
+        <linearGradient id="iq_eh" x1="38" y1="96" x2="162" y2="96" gradientUnits="userSpaceOnUse">
+          <stop offset="0%"   stopColor="#EDE9FE" stopOpacity="0.58"/>
+          <stop offset="35%"  stopColor="#FFFFFF" stopOpacity="0.88"/>
+          <stop offset="65%"  stopColor="#DDD6FE" stopOpacity="0.52"/>
+          <stop offset="100%" stopColor="#C4B5FD" stopOpacity="0.32"/>
         </linearGradient>
+
         {/* ── SHIMMER BAND ── */}
-        <linearGradient id="iq_sh" x1="0%" y1="0%" x2="100%" y2="0%">
+        <linearGradient id="iq_shm" x1="0%" y1="0%" x2="100%" y2="0%">
           <stop offset="0%"   stopColor="#fff" stopOpacity="0"/>
           <stop offset="44%"  stopColor="#fff" stopOpacity="0"/>
-          <stop offset="50%"  stopColor="#fff" stopOpacity="0.072"/>
+          <stop offset="50%"  stopColor="#fff" stopOpacity="0.08"/>
           <stop offset="56%"  stopColor="#fff" stopOpacity="0"/>
           <stop offset="100%" stopColor="#fff" stopOpacity="0"/>
         </linearGradient>
-        {/* ── FILTERS ── */}
-        <filter id="iq_gw" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="4.5" result="b"/>
+
+        {/* ── UTILITY FILTERS ── */}
+        <filter id="iq_gw" x="-55%" y="-55%" width="210%" height="210%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="b"/>
           <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
         </filter>
-        <filter id="iq_bl" x="-110%" y="-110%" width="320%" height="320%">
-          <feGaussianBlur stdDeviation="11"/>
+        <filter id="iq_bl" x="-120%" y="-120%" width="340%" height="340%">
+          <feGaussianBlur stdDeviation="13"/>
         </filter>
-        <filter id="iq_dt" x="-140%" y="-140%" width="380%" height="380%">
-          <feGaussianBlur stdDeviation="4.8"/>
+        <filter id="iq_dt" x="-150%" y="-150%" width="400%" height="400%">
+          <feGaussianBlur stdDeviation="5.5"/>
         </filter>
         <clipPath id="iq_cp"><circle cx="100" cy="100" r="93"/></clipPath>
       </defs>
 
       <style>{`
-        .iqR {transform-origin:100px 100px;animation:iqSpin 11s linear infinite}
-        .iqGP{animation:iqGP 3.4s ease-in-out infinite}
-        .iqSD{stroke-dasharray:258;animation:iqSD 4.2s ease-in-out infinite}
-        .iqDB{animation:iqDB 4.2s ease-in-out infinite}
-        .iqSW{animation:iqSW 10s ease-in-out 2s infinite}
-        .iqGL{animation:iqGL 6s ease-in-out 1.2s infinite}
+        .iqA {transform-origin:100px 100px;animation:iqSpin 11s linear infinite}
+        .iqGP{animation:iqGP 3.5s ease-in-out infinite}
+        .iqSD{stroke-dasharray:282;animation:iqSD 4.5s ease-in-out infinite}
+        .iqDB{animation:iqDB 4.5s ease-in-out infinite}
+        .iqSW{animation:iqSW 10s ease-in-out 2.2s infinite}
+        .iqGL{animation:iqGL 6.5s ease-in-out 1.5s infinite}
         @keyframes iqSpin{to{transform:rotate(360deg)}}
-        @keyframes iqGP{0%,100%{opacity:.10}50%{opacity:.50}}
-        @keyframes iqSD{0%{stroke-dashoffset:258;opacity:1}50%{stroke-dashoffset:-258;opacity:1}51%{opacity:0;stroke-dashoffset:258}52%{opacity:1}100%{stroke-dashoffset:258}}
-        @keyframes iqDB{0%,100%{opacity:1}50%{opacity:.12}}
-        @keyframes iqSW{0%{transform:translateX(-220px) skewX(-10deg);opacity:0}12%{opacity:1}88%{opacity:1}100%{transform:translateX(220px) skewX(-10deg);opacity:0}}
-        @keyframes iqGL{0%,62%,100%{opacity:0;transform:scale(.1)}70%{opacity:1;transform:scale(1)}76%{opacity:.3;transform:scale(1.5)}82%{opacity:0;transform:scale(.3)}}
+        @keyframes iqGP{0%,100%{opacity:.08}50%{opacity:.52}}
+        @keyframes iqSD{0%{stroke-dashoffset:282;opacity:1}50%{stroke-dashoffset:-282;opacity:1}51%{opacity:0;stroke-dashoffset:282}52%{opacity:1}100%{stroke-dashoffset:282}}
+        @keyframes iqDB{0%,100%{opacity:1}50%{opacity:.10}}
+        @keyframes iqSW{0%{transform:translateX(-225px) skewX(-10deg);opacity:0}12%{opacity:1}88%{opacity:1}100%{transform:translateX(225px) skewX(-10deg);opacity:0}}
+        @keyframes iqGL{0%,60%,100%{opacity:0;transform:scale(.08)}68%{opacity:1;transform:scale(1)}74%{opacity:.25;transform:scale(1.6)}80%{opacity:0;transform:scale(.3)}}
       `}</style>
 
-      {/* drop shadow */}
-      <circle cx="100" cy="105" r="90" fill="#10005C" opacity="0.48" filter="url(#iq_bl)"/>
+      {/* ── DROP SHADOW ── */}
+      <circle cx="100" cy="108" r="88" fill="#0A0030" opacity="0.62" filter="url(#iq_bl)"/>
 
-      {/* coin body – 4 gradient layers */}
-      <circle cx="100" cy="100" r="97" fill="url(#iq_b)"/>
-      <circle cx="100" cy="100" r="97" fill="url(#iq_a)"/>
-      <circle cx="100" cy="100" r="97" fill="url(#iq_s1)"/>
-      <circle cx="100" cy="100" r="97" fill="url(#iq_s2)"/>
+      {/* ── COIN BODY with physics-based 3D metallic lighting ── */}
+      <circle cx="100" cy="100" r="96" fill="url(#iq_b)" filter="url(#iq_3d)"/>
 
-      {/* shimmer sweep */}
-      <rect className="iqSW" x="-88" y="3" width="140" height="194" fill="url(#iq_sh)" clipPath="url(#iq_cp)"/>
+      {/* ── SHIMMER SWEEP ── */}
+      <rect className="iqSW" x="-85" y="3" width="140" height="194" fill="url(#iq_shm)" clipPath="url(#iq_cp)"/>
 
-      {/* metallic rim – two passes */}
-      <circle cx="100" cy="100" r="98"   fill="none" stroke="url(#iq_r1)" strokeWidth="6"/>
-      <circle cx="100" cy="100" r="98"   fill="none" stroke="url(#iq_r2)" strokeWidth="6"/>
-      <circle cx="100" cy="100" r="94.5" fill="none" stroke="#000"        strokeWidth="1.8" opacity="0.88"/>
+      {/* ── METALLIC RIM (two-pass: gradient + shadow overlay) ── */}
+      <circle cx="100" cy="100" r="97.5" fill="none" stroke="url(#iq_rim)"  strokeWidth="7"/>
+      <circle cx="100" cy="100" r="97.5" fill="none" stroke="url(#iq_rim2)" strokeWidth="7"/>
+      <circle cx="100" cy="100" r="93"   fill="none" stroke="#000000" strokeWidth="2" opacity="0.92"/>
 
-      {/* rotating comet arc */}
-      <g className="iqR">
-        <circle cx="100" cy="100" r="98" fill="none" stroke="url(#iq_c)" strokeWidth="4.2" strokeDasharray="92 524" strokeLinecap="round"/>
+      {/* ── ROTATING COMET ARC ── */}
+      <g className="iqA">
+        <circle cx="100" cy="100" r="97.5" fill="none" stroke="url(#iq_cmt)"
+          strokeWidth="4.5" strokeDasharray="100 530" strokeLinecap="round"/>
       </g>
 
-      {/* ── SIGNAL WAVEFORM ── */}
-      {/* outer bloom */}
-      <path d="M44,100 L72,100 L88,60 L112,140 L128,100 L156,100"
-        stroke="#2D1B69" strokeWidth="26" strokeLinecap="round" strokeLinejoin="round" fill="none"
-        opacity="0.22" filter="url(#iq_bl)"/>
-      {/* emboss shadow ↘ */}
-      <path d="M44.8,101.5 L72.8,101.5 L88.8,61.5 L112.8,141.5 L128.8,101.5 L156.8,101.5"
-        stroke="url(#iq_es)" strokeWidth="9.5" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.72"/>
-      {/* pulse glow */}
-      <path className="iqGP" d="M44,100 L72,100 L88,60 L112,140 L128,100 L156,100"
-        stroke="#7C3AED" strokeWidth="15" strokeLinecap="round" strokeLinejoin="round" fill="none"
+      {/* ── SIGNAL WAVEFORM — peak y=50, trough y=150 (62% of coin diameter) ── */}
+      {/* Outer bloom halo */}
+      <path d="M38,100 L68,100 L88,50 L112,150 L132,100 L162,100"
+        stroke="#2D1B69" strokeWidth="30" strokeLinecap="round" strokeLinejoin="round" fill="none"
+        opacity="0.26" filter="url(#iq_bl)"/>
+      {/* Emboss shadow ↘ (+2px offset) */}
+      <path d="M38.8,102 L68.8,102 L88.8,52 L112.8,152 L132.8,102 L162.8,102"
+        stroke="url(#iq_es)" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.80"/>
+      {/* Pulse glow */}
+      <path className="iqGP" d="M38,100 L68,100 L88,50 L112,150 L132,100 L162,100"
+        stroke="#8B5CF6" strokeWidth="20" strokeLinecap="round" strokeLinejoin="round" fill="none"
         filter="url(#iq_gw)"/>
-      {/* animated draw stroke */}
-      <path className="iqSD" d="M44,100 L72,100 L88,60 L112,140 L128,100 L156,100"
-        stroke="url(#iq_sg)" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" fill="none"
+      {/* Main animated draw stroke */}
+      <path className="iqSD" d="M38,100 L68,100 L88,50 L112,150 L132,100 L162,100"
+        stroke="url(#iq_sig)" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" fill="none"
         filter="url(#iq_gw)"/>
-      {/* emboss highlight ↖ */}
-      <path d="M43.2,98.5 L71.2,98.5 L87.2,58.5 L111.2,138.5 L127.2,98.5 L155.2,98.5"
-        stroke="url(#iq_eh)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.58"/>
+      {/* Emboss highlight ↖ (-2px offset) */}
+      <path d="M37.2,98 L67.2,98 L87.2,48 L111.2,148 L131.2,98 L161.2,98"
+        stroke="url(#iq_eh)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.65"/>
 
       {/* ── PEAK DOT ── */}
-      <circle cx="88" cy="60" r="16"  fill="#4C1D95" opacity="0.32" filter="url(#iq_bl)"/>
-      <circle cx="88" cy="60" r="8"   fill="#A78BFA"  opacity="0.68" filter="url(#iq_dt)"/>
-      <circle className="iqDB" cx="88" cy="60" r="2.6" fill="#fff"/>
+      <circle cx="88" cy="50" r="20" fill="#3B1F8C" opacity="0.38" filter="url(#iq_bl)"/>
+      <circle cx="88" cy="50" r="10" fill="#B09AFD" opacity="0.75" filter="url(#iq_dt)"/>
+      <circle className="iqDB" cx="88" cy="50" r="3" fill="#FFFFFF"/>
 
-      {/* specular catchlight glint (4-point star) */}
-      <g className="iqGL" style={{transformOrigin:'68px 65px'}}>
-        <path d="M68,59 L68.5,64 L74,64.5 L68.5,65 L68,70 L67.5,65 L62,64.5 L67.5,64 Z"
-          fill="#fff" opacity="0.96" filter="url(#iq_dt)"/>
+      {/* ── SPECULAR GLINT SPARKLE (4-point star at light-source catchpoint) ── */}
+      <g className="iqGL" style={{transformOrigin:'65px 62px'}}>
+        <path d="M65,55 L65.5,61.5 L72,62 L65.5,62.5 L65,69 L64.5,62.5 L58,62 L64.5,61.5 Z"
+          fill="#FFFFFF" opacity="0.98" filter="url(#iq_dt)"/>
       </g>
     </svg>
   );

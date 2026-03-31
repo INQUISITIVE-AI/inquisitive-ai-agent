@@ -15,7 +15,7 @@ const NAV_ITEMS = [
   {id:'overview',     Icon:LayoutDashboard, label:'Overview'},
   {id:'architecture', Icon:Building2,       label:'Architecture'},
   {id:'trading',      Icon:Zap,             label:'Trading Functions'},
-  {id:'assets',       Icon:Coins,           label:'65 Assets'},
+  {id:'assets',       Icon:Coins,           label:'66 Assets'},
   {id:'research',     Icon:FlaskConical,    label:'Research'},
   {id:'security',     Icon:Shield,          label:'Security'},
   {id:'api',          Icon:Plug,            label:'API Reference'},
@@ -89,6 +89,7 @@ const ASSETS_65 = [
   {n:63,s:'JITOSOL', name:'Jito Staked SOL',                      cat:'liquid-stake'},
   {n:64,s:'JUPSOL',  name:'Jupiter Staked SOL',                   cat:'liquid-stake'},
   {n:65,s:'INF',     name:'Sanctum Infinity',                     cat:'liquid-stake'},
+  {n:66,s:'ETHFI',   name:'EtherFi',                              cat:'defi'},
 ];
 
 const catColor = (c: string) => {
@@ -171,11 +172,11 @@ export default function HelpPage() {
 
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:24}}>
           {[
-            {icon:Brain,label:'AI Decision Cycles',v:'Every 8 seconds',desc:'The Brain processes all 65 assets every 8 seconds using 4 AI models in consensus'},
+            {icon:Brain,label:'AI Decision Cycles',v:'Every 8 seconds',desc:'The Brain processes all 66 assets every 8 seconds using 5 AI models in consensus'},
             {icon:Gem,label:'Target APY',v:'18.5%',desc:'Annual yield target through AI-optimized multi-strategy execution across all assets'},
             {icon:Shield,label:'Max Risk/Trade',v:'2%',desc:'Never risk more than 2% of portfolio on a single trade — hard-coded rule'},
             {icon:Zap,label:'Trading Functions',v:'11',desc:'BUY, SELL, SWAP, LEND, YIELD, BORROW, LOOP, STAKE, MULTIPLY, EARN, REWARDS. All executed autonomously.'},
-            {icon:Coins,label:'Portfolio Assets',v:'65',desc:'65 assets spanning major, DeFi, AI, Layer 2, stablecoins, RWA, and liquid staking categories.'},
+            {icon:Coins,label:'Portfolio Assets',v:'66',desc:'66 assets spanning major, DeFi, AI, Layer 2, stablecoins, RWA, liquid staking, and restaking categories.'},
             {icon:Flame,label:'Token Burns',v:'20% of fees',desc:'20% of all protocol fees are permanently burned. Combined with 60% buyback allocation, supply contracts over time.'},
           ].map(k=>(
             <div key={k.label} style={{background:'rgba(13,13,32,0.8)',border:'1px solid rgba(255,255,255,0.06)',borderRadius:14,padding:18,backdropFilter:'blur(12px)'}}>
@@ -206,7 +207,7 @@ export default function HelpPage() {
         <p style={{color:'rgba(255,255,255,0.4)',fontSize:13,marginBottom:28}}>Five specialized components working in perfect coordination — Standard of Procedure (SoP)</p>
         {[
           {icon:Brain,name:'The Brain',col:'#7c3aed',sub:'AI Decision Engine',detail:[
-            'Processes all 65 assets every 8 seconds',
+            'Processes all 66 assets every 8 seconds',
             'Combines 5 intelligence engines: Pattern Engine, Reasoning Engine, Portfolio Engine, Learning Engine, Risk Engine',
             'Applies risk-first methodology as final gate before any execution',
             'Outputs signals: BUY / SELL / HOLD / REDUCE / SKIP',
@@ -239,8 +240,8 @@ export default function HelpPage() {
             '15% drawdown emergency stop — all trading halts automatically',
           ]},
           {icon:Eye,name:'The Oracle',col:'#7c3aed',sub:'Price Intelligence',detail:[
-            'Primary: CoinGecko REAL LIVE API — 65 assets with 30-second polling',
-            'Fallback: CryptoCompare API — 65-asset coverage',
+            'Primary: CoinGecko REAL LIVE API — 66 assets with 30-second polling',
+            'Fallback: CryptoCompare API — 66-asset coverage',
             'Macro: CoinGecko BTC/ETH/SOL regime signals + Alternative.me Fear & Greed index',
             'On-chain: Chainlink oracle integration planned',
             'TWAP oracles prevent flash loan / price manipulation attacks',
@@ -299,7 +300,7 @@ export default function HelpPage() {
 
     assets: (
       <div>
-        <h2 style={{fontSize:26,fontWeight:900,marginBottom:4}}>All 65 Assets</h2>
+        <h2 style={{fontSize:26,fontWeight:900,marginBottom:4}}>All 66 Assets</h2>
         <p style={{color:'rgba(255,255,255,0.4)',fontSize:13,marginBottom:20}}>Exact specification — real live prices from CoinGecko API · 30-second polling</p>
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))',gap:6}}>
           {ASSETS_65.map(a=>(
@@ -322,7 +323,7 @@ export default function HelpPage() {
         <p style={{color:'rgba(255,255,255,0.4)',fontSize:13,marginBottom:28}}>5 AI engines powering every 8-second decision cycle — built by INQUISITIVE</p>
         {[
           {org:'Pattern Engine',badge:'RL · Regime Detection',col:'#3b82f6',icon:'Brain',pts:[
-            'Reinforcement learning action-value scoring across all 65 assets simultaneously',
+            'Reinforcement learning action-value scoring across all 66 assets simultaneously',
             'Pattern recognition — volume-price relationship analysis in real time',
             'Regime detection: BULL / BEAR / NEUTRAL using multi-factor state space',
             'Q-value scoring: assigns future-state value to every potential trade action',
@@ -343,7 +344,7 @@ export default function HelpPage() {
             'Market cap tier weighting: mega-cap (>$100B) for stability, small-cap for alpha',
             'Kelly Criterion position sizing with 2% hard risk floor per trade',
             'TWAP execution for large orders to minimize market impact',
-            'Multi-factor model: momentum, value, quality, size applied to all 65 assets',
+            'Multi-factor model: momentum, value, quality, size applied to all 66 assets',
           ]},
           {org:'Learning Engine',badge:'Adaptive · Meta-Cognitive',col:'#f97316',icon:'Activity',pts:[
             'Meta-cognitive self-awareness: monitors own confidence calibration over time',
@@ -441,11 +442,11 @@ export default function HelpPage() {
         <div style={{display:'flex',flexDirection:'column',gap:6}}>
           {[
             {m:'GET', p:'/status',                    d:'Full system status — brain cycles, price feed health, macro indicators, trading stats'},
-            {m:'GET', p:'/assets',                    d:'All 65 assets: live price, 24h/7d change, volume, market cap, AI signal + confidence score'},
+            {m:'GET', p:'/assets',                    d:'All 66 assets: live price, 24h/7d change, volume, market cap, AI signal + confidence score'},
             {m:'GET', p:'/assets/:symbol',             d:'Single asset — live price + full AI analysis from all 5 engines'},
             {m:'GET', p:'/signals',                   d:'All AI brain signals, top buy opportunities, borrow opportunities, risk assessment, cycle count'},
             {m:'GET', p:'/analyze/:symbol',            d:'Deep analysis: Pattern/Reasoning/Portfolio/Learning engine scores + risk gate result + explanation'},
-            {m:'GET', p:'/prices',                    d:'Raw price map for all 65 assets (symbol → price object) from CoinGecko'},
+            {m:'GET', p:'/prices',                    d:'Raw price map for all 66 assets (symbol → price object) from CoinGecko'},
             {m:'GET', p:'/prices/:symbol',             d:'Single asset live price, 24h/7d change, volume, market cap, ATH distance'},
             {m:'GET', p:'/macro',                     d:'Macro indicators: Fear & Greed (Alternative.me) + BTC/ETH/SOL prices (CoinGecko) + market regime'},
             {m:'GET', p:'/portfolio/positions',       d:'All open positions with current price, unrealized P&L, entry price, stop, target'},
@@ -572,9 +573,9 @@ export default function HelpPage() {
           },
           {
             phase:'Phase 3 — Live DeFi Execution',
-            status:'IN PROGRESS',
-            col:'#f59e0b',
-            detail:'DEVELOPING — Trading engine being integrated with DeFi protocols. AI brain processing 65 assets.',
+            status:'COMPLETE',
+            col:'#10b981',
+            detail:'LIVE — AI brain processing 66 assets across 5 scoring engines. Chainlink Automation executing trades on-chain via Uniswap V3 and deBridge DLN.',
             items:[
               'Live Aave V3 lending — active positions with real yield generation',
               'Live Morpho Blue integration — isolated markets with optimized yields',
@@ -592,9 +593,9 @@ export default function HelpPage() {
           },
           {
             phase:'Phase 4 — Token Launch & Ecosystem',
-            status:'IN PROGRESS',
-            col:'#f59e0b',
-            detail:'DEPLOYING — Token contracts deployed, vesting setup in progress, ecosystem development underway.',
+            status:'COMPLETE',
+            col:'#10b981',
+            detail:'LIVE — INQAI token freely tradable on Ethereum mainnet. Uniswap V3 liquidity seeded. Analytics dashboard fully operational with real-time portfolio tracking.',
             items:[
               'INQAI public sale complete — token freely tradable on Ethereum mainnet',
               'Uniswap V3 pools — INQAI/USDC and INQAI/ETH liquidity seeded',
@@ -609,9 +610,9 @@ export default function HelpPage() {
           },
           {
             phase:'Phase 5 — Advanced AI & Cross-Chain',
-            status:'IN PROGRESS',
-            col:'#f59e0b',
-            detail:'DEVELOPING — Advanced AI metrics and cross-chain bridge integration being implemented.',
+            status:'COMPLETE',
+            col:'#10b981',
+            detail:'LIVE — 5-engine AI brain with regime detection, DCA zones, market structure, volume confirmation, and trend following. deBridge DLN cross-chain execution active for 13 assets.',
             items:[
               'AI metrics dashboard — confidence scores, regime signals visible',
               'Pattern engine — advanced market pattern recognition active',
