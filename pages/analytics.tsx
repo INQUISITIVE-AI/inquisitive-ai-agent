@@ -39,11 +39,18 @@ const ConfidenceRing = dynamic(() => import('../src/components/charts/LiveCharts
 
 // ── Formatters ───────────────────────────────────────────────────────────────
 const fmtUsd = (n: number) => {
-  if (n === null || n === undefined || isNaN(n)) return '—';
+  if (n === null || n === undefined || isNaN(n) || n === 0) return '—';
   if (n >= 1e9)  return '$' + (n/1e9).toFixed(2)  + 'B';
   if (n >= 1e6)  return '$' + (n/1e6).toFixed(2)  + 'M';
   if (n >= 1e3)  return '$' + (n/1e3).toFixed(1)  + 'K';
   return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
+const fmtPrice = (n: number) => {
+  if (!n || isNaN(n)) return '—';
+  if (n >= 1000) return '$' + n.toLocaleString('en-US', { maximumFractionDigits: 2 });
+  if (n >= 1)    return '$' + n.toFixed(4);
+  if (n >= 0.01) return '$' + n.toFixed(6);
+  return '$' + n.toPrecision(4);
 };
 const fmtN = (n: number, d = 2) => n?.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }) ?? '—';
 const pct  = (n: number) => `${n >= 0 ? '+' : ''}${(n * 100).toFixed(2)}%`;
@@ -744,7 +751,7 @@ export default function AnalyticsPage() {
                             <span style={{ fontSize:9, padding:'2px 7px', borderRadius:100, background:`${ACTION_COL[s.action]||'#7c3aed'}20`, color:ACTION_COL[s.action]||'#7c3aed', border:`1px solid ${ACTION_COL[s.action]||'#7c3aed'}40`, fontWeight:700 }}>{s.action}</span>
                           </div>
                           <div style={{ fontFamily:'monospace', fontSize:16, fontWeight:900, color:'#a78bfa' }}>{(s.confidence*100).toFixed(0)}%</div>
-                          <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)', marginTop:2 }}>AI confidence · ${s.priceUsd?.toFixed(2)}</div>
+                          <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)', marginTop:2 }}>AI confidence · {fmtPrice(s.priceUsd)}</div>
                           <div style={{ fontSize:10, color:grc(s.change24h), marginTop:2, fontFamily:'monospace' }}>{pct(s.change24h)} 24h</div>
                         </div>
                       ))}
@@ -775,7 +782,7 @@ export default function AnalyticsPage() {
                     <div key={p.symbol} style={{ display:'grid', gridTemplateColumns:'60px 1fr 70px 70px 70px 75px 80px 80px 70px', gap:8, padding:'10px 16px', borderBottom:'1px solid rgba(255,255,255,0.04)', background:i%2===0?'transparent':'rgba(255,255,255,0.01)', alignItems:'center' }}>
                       <span style={{ fontWeight:800, fontSize:12 }}>{p.symbol}</span>
                       <span style={{ fontSize:11, color:'rgba(255,255,255,0.55)' }}>{p.name}</span>
-                      <span style={{ textAlign:'right', fontSize:11, fontFamily:'monospace' }}>${p.priceUsd?.toLocaleString('en-US',{maximumFractionDigits:4})}</span>
+                      <span style={{ textAlign:'right', fontSize:11, fontFamily:'monospace' }}>{fmtPrice(p.priceUsd)}</span>
                       <span style={{ textAlign:'right', fontSize:11, fontFamily:'monospace', color:grc(p.change24h) }}>{pct(p.change24h)}</span>
                       <span style={{ textAlign:'right', fontSize:11, fontFamily:'monospace', color:grc(p.change7d) }}>{pct(p.change7d)}</span>
                       <span style={{ textAlign:'right', fontSize:11, fontFamily:'monospace', color:'rgba(255,255,255,0.6)' }}>{p.weight}%</span>

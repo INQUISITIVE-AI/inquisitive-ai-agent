@@ -7,7 +7,7 @@ import { Lock, DollarSign, Wheat, Infinity, Gem } from 'lucide-react';
 const WalletButton = dynamic(() => import('../src/components/WalletButton'), { ssr: false });
 
 const fmtUsd = (n: number) => {
-  if (!n) return '$0';
+  if (!n || isNaN(n)) return '—';
   if (n >= 1e12) return '$' + (n/1e12).toFixed(2) + 'T';
   if (n >= 1e9)  return '$' + (n/1e9).toFixed(2) + 'B';
   if (n >= 1e6)  return '$' + (n/1e6).toFixed(2) + 'M';
@@ -15,6 +15,13 @@ const fmtUsd = (n: number) => {
   return '$' + n.toFixed(2);
 };
 const fmtP = (n: number, d = 2) => n?.toLocaleString('en-US', {minimumFractionDigits:d,maximumFractionDigits:d}) ?? '0';
+const fmtPrice = (n: number) => {
+  if (!n || isNaN(n)) return '—';
+  if (n >= 1000) return '$' + n.toLocaleString('en-US', {maximumFractionDigits:2});
+  if (n >= 1)    return '$' + n.toFixed(4);
+  if (n >= 0.01) return '$' + n.toFixed(6);
+  return '$' + n.toPrecision(4);
+};
 const pct = (n: number) => `${n>=0?'+':''}${(n*100).toFixed(2)}%`;
 const grc = (n: number) => n >= 0 ? '#10b981' : '#ef4444';
 const sigStyle = (s: string) => {
@@ -237,7 +244,7 @@ export default function TokenPage() {
                     </div>
                     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                       <div>
-                        <div style={{fontFamily:'monospace',fontSize:12,fontWeight:700}}>${asset.priceUsd>=1?fmtP(asset.priceUsd,2):fmtP(asset.priceUsd,4)}</div>
+                        <div style={{fontFamily:'monospace',fontSize:12,fontWeight:700}}>{fmtPrice(asset.priceUsd)}</div>
                         <div style={{fontSize:9,color:'rgba(255,255,255,0.3)',marginTop:1}}>{fmtUsd(asset.marketCap||0)} MCap</div>
                       </div>
                       <div style={{textAlign:'right'}}>
@@ -296,7 +303,7 @@ export default function TokenPage() {
                           <span style={{...ss,fontSize:9,padding:'1px 5px',borderRadius:4,fontWeight:700,border:`1px solid ${ss.br}`}}>{a.signal||'—'}</span>
                         </div>
                         <div style={{fontFamily:'monospace',fontSize:12,fontWeight:700,marginBottom:3}}>
-                          ${a.priceUsd>=1?fmtP(a.priceUsd,2):fmtP(a.priceUsd,4)}
+                          {fmtPrice(a.priceUsd)}
                         </div>
                         <div style={{fontSize:11,color:grc(a.change24h||0),fontWeight:600}}>{pct(a.change24h||0)}</div>
                         <div style={{fontSize:9,color:'rgba(255,255,255,0.25)',marginTop:2}}>{fmtUsd(a.marketCap||0)}</div>
@@ -327,8 +334,8 @@ export default function TokenPage() {
                       </div>
                     </div>
                     <div style={{textAlign:'right'}}>
-                      <div style={{fontSize:28,fontWeight:900,fontFamily:'monospace'}}>
-                        ${selected.priceUsd>=1?fmtP(selected.priceUsd,2):fmtP(selected.priceUsd,6)}
+                        <div style={{fontSize:28,fontWeight:900,fontFamily:'monospace'}}>
+                        {fmtPrice(selected.priceUsd)}
                       </div>
                       <div style={{fontSize:15,fontWeight:700,color:grc(selected.change24h||0)}}>{pct(selected.change24h||0)} 24h</div>
                     </div>
@@ -339,12 +346,12 @@ export default function TokenPage() {
                       {l:'Market Cap',v:fmtUsd(selected.marketCap||0)},
                       {l:'Volume 24h', v:fmtUsd(selected.volume24h||0)},
                       {l:'7d Change',  v:pct(selected.change7d||0), col:grc(selected.change7d||0)},
-                      {l:'High 24h',   v:'$'+(selected.high24h>=1?fmtP(selected.high24h,2):fmtP(selected.high24h,4))},
-                      {l:'Low 24h',    v:'$'+(selected.low24h>=1?fmtP(selected.low24h,2):fmtP(selected.low24h,4))},
+                      {l:'High 24h',   v:fmtPrice(selected.high24h)},
+                      {l:'Low 24h',    v:fmtPrice(selected.low24h)},
                       {l:'Weight',     v:(selected.weight||0).toFixed(1)+'%'},
                     ].map(m=>(
                       <div key={m.l} style={{background:'rgba(255,255,255,0.04)',borderRadius:9,padding:'8px 10px',textAlign:'center'}}>
-                        <div style={{fontSize:13,fontWeight:700,color:m.col||'#fff',fontFamily:'monospace'}}>{m.v}</div>
+                        <div style={{fontSize:13,fontWeight:700,color:(m as any).col||'#fff',fontFamily:'monospace'}}>{m.v}</div>
                         <div style={{fontSize:9,color:'rgba(255,255,255,0.3)',marginTop:2,textTransform:'uppercase',letterSpacing:'0.3px'}}>{m.l}</div>
                       </div>
                     ))}
