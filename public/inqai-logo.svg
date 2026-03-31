@@ -48,11 +48,37 @@
     <filter id="soft" x="-60%" y="-60%" width="220%" height="220%">
       <feGaussianBlur in="SourceGraphic" stdDeviation="3"/>
     </filter>
-
+    <linearGradient id="comet" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#A78BFA" stop-opacity="0"/>
+      <stop offset="75%"  stop-color="#C4B5FD" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#F5F3FF" stop-opacity="1"/>
+    </linearGradient>
+    <linearGradient id="shim" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#fff" stop-opacity="0"/>
+      <stop offset="50%"  stop-color="#fff" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <clipPath id="cc"><circle cx="100" cy="100" r="96"/></clipPath>
   </defs>
+
+  <style>
+    .ring{transform-origin:100px 100px;animation:spin 9s linear infinite}
+    .gp{animation:gp 3s ease-in-out infinite}
+    .sd{stroke-dasharray:220;animation:sd 3.6s ease-in-out infinite}
+    .sb{animation:sb 5s ease-in-out infinite}
+    .sw{animation:sw 7s ease-in-out 2s infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    @keyframes gp{0%,100%{opacity:.22}50%{opacity:.68}}
+    @keyframes sd{0%{stroke-dashoffset:220;opacity:1}55%{stroke-dashoffset:-220;opacity:1}56%{opacity:0;stroke-dashoffset:220}57%{opacity:1}100%{stroke-dashoffset:220;opacity:1}}
+    @keyframes sb{0%,100%{opacity:.9}50%{opacity:.3}}
+    @keyframes sw{0%{transform:translateX(-210px) skewX(-12deg);opacity:0}20%{opacity:1}80%{opacity:1}100%{transform:translateX(210px) skewX(-12deg);opacity:0}}
+  </style>
 
   <!-- ── Layer 1: coin body ── -->
   <circle cx="100" cy="100" r="99" fill="url(#coin-bg)"/>
+
+  <!-- ── Shimmer sweep ── -->
+  <rect class="sw" x="-100" y="4" width="140" height="192" fill="url(#shim)" clip-path="url(#cc)"/>
 
   <!-- ── Layer 2: inner bevel shine ── -->
   <circle cx="100" cy="100" r="95" fill="url(#bevel)"/>
@@ -63,7 +89,11 @@
   <!-- ── Layer 4: outer rim ── -->
   <circle cx="100" cy="100" r="98" stroke="url(#rim)"  stroke-width="3"   fill="none"/>
   <!-- inner rim shadow line -->
-  <circle cx="100" cy="100" r="93" stroke="#1E0755"    stroke-width="1.5" fill="none" opacity="0.6"/>
+  <circle cx="100" cy="100" r="93" stroke="#1E0755" stroke-width="1.5" fill="none" opacity="0.6"/>
+  <!-- ── Rotating comet arc ── -->
+  <g class="ring">
+    <circle cx="100" cy="100" r="97" stroke="url(#comet)" stroke-width="3" stroke-dasharray="88 522" stroke-linecap="round" fill="none"/>
+  </g>
 
   <!-- ── Symbol: AI Signal Pulse ──
        Bold EKG-style mark: flat entry → sharp peak → deep valley → flat exit
@@ -71,18 +101,18 @@
        Unique silhouette, works at 16 px favicon up to 512 px
   ── -->
 
-  <!-- Glow layer (blurred) -->
-  <path d="M 40 100 L 72 100 L 89 64 L 111 136 L 128 100 L 160 100"
+  <!-- Glow layer (blurred + pulsing) -->
+  <path class="gp" d="M 40 100 L 72 100 L 89 64 L 111 136 L 128 100 L 160 100"
         stroke="#9333EA" stroke-width="18" stroke-linecap="round"
-        stroke-linejoin="round" fill="none" opacity="0.35" filter="url(#soft)"/>
+        stroke-linejoin="round" fill="none" filter="url(#soft)"/>
 
-  <!-- Main symbol -->
-  <path d="M 40 100 L 72 100 L 89 64 L 111 136 L 128 100 L 160 100"
+  <!-- Main symbol (animated draw) -->
+  <path class="sd" d="M 40 100 L 72 100 L 89 64 L 111 136 L 128 100 L 160 100"
         stroke="url(#sym)" stroke-width="10" stroke-linecap="round"
         stroke-linejoin="round" fill="none" filter="url(#glow)"/>
 
-  <!-- Peak specular dot (hottest point of the signal) -->
+  <!-- Peak specular dot (breathing) -->
   <circle cx="89" cy="64" r="5" fill="#FFFFFF" opacity="0.55" filter="url(#soft)"/>
-  <circle cx="89" cy="64" r="2.5" fill="#FFFFFF" opacity="0.9"/>
+  <circle class="sb" cx="89" cy="64" r="2.5" fill="#FFFFFF"/>
 
 </svg>

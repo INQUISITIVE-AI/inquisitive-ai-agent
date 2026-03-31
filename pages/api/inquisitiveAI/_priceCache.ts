@@ -30,14 +30,17 @@ let _cache: { data: Map<string, RawCoin>; ts: number } | null = null;
 
 function cgHeaders(): HeadersInit {
   const key = process.env.COINGECKO_API_KEY;
-  return key ? { 'x-cg-demo-api-key': key } : {};
+  if (!key) return {};
+  // Support both Demo and Pro keys
+  return key.startsWith('CG-') ? { 'x-cg-demo-api-key': key } : { 'x-cg-pro-api-key': key };
 }
 
 async function fetchFromCoinGecko(): Promise<Map<string, RawCoin>> {
   const url =
     `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${ALL_CGS}` +
-    `&order=market_cap_desc&per_page=100&sparkline=false&price_change_percentage=1h,24h,7d`;
-  const r = await fetch(url, { headers: cgHeaders(), signal: AbortSignal.timeout(12000) });
+    `&order=market_cap_desc&per_page=250&sparkline=false&price_change_percentage=1h,24h,7d`;
+  const r = await fetch(url, { headers: cgHeaders(), signal: AbortSignal.timeout(15000) });
+  if (r.status === 429) throw new Error('CoinGecko rate-limited (429)');
   if (!r.ok) throw new Error(`CoinGecko ${r.status}`);
   const coins: any[] = await r.json();
   const map = new Map<string, RawCoin>();

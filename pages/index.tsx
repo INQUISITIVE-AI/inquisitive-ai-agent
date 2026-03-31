@@ -164,7 +164,7 @@ export default function Home() {
             <div style={{textAlign:'center',marginBottom:40}}>
               <div style={{fontSize:11,letterSpacing:2,color:'#7c3aed',textTransform:'uppercase',marginBottom:10}}>Execution Engine</div>
               <h2 style={{fontSize:30,fontWeight:800}}>11 Execution Functions</h2>
-              <p style={{color:'rgba(255,255,255,0.4)',marginTop:8,fontSize:14}}>Eleven discrete DeFi strategies managed autonomously by the AI agent, operating continuously across all market conditions.</p>
+              <p style={{color:'rgba(255,255,255,0.4)',marginTop:8,fontSize:14}}>Eleven discrete DeFi execution functions — the AI agent executes these on your behalf 24/7. You hold the token, the AI does the rest.</p>
             </div>
             <div style={{display:'grid',gridTemplateColumns:'repeat(6,1fr)',gap:10}}>
               {TRADES.map(f=>(
@@ -207,7 +207,7 @@ export default function Home() {
               {[
                 {Icon:Flame,     title:'Systematic Buybacks and Burns', desc:'60% of all protocol fees are deployed for open-market INQAI buybacks. 20% is permanently burned, reducing circulating supply over time.',col:'#f59e0b'},
                 {Icon:Shield,    title:'Non-Custodial Architecture',     desc:'INQAI tokens are delivered directly to your self-custody wallet. No exchange custody, no counterparty exposure, no intermediary.',col:'#34d399'},
-                {Icon:BarChart3, title:'Full Operational Transparency',   desc:'The Analytics dashboard provides real-time access to every AI cycle, trading signal, position, and risk metric.',col:'#f97316'},
+                {Icon:BarChart3, title:'Full Operational Transparency',   desc:'The Analytics dashboard provides real-time access to every AI trade decision, position, portfolio composition, and live risk metric.',col:'#f97316'},
               ].map(c=>(
                 <div key={c.title} style={{background:'rgba(13,13,32,0.8)',border:'1px solid rgba(255,255,255,0.06)',borderRadius:20,padding:28,backdropFilter:'blur(12px)'}}>
                   <div style={{marginBottom:16,width:48,height:48,borderRadius:14,background:`rgba(255,255,255,0.05)`,display:'flex',alignItems:'center',justifyContent:'center'}}><c.Icon size={24} color={c.col} strokeWidth={1.8} /></div>
