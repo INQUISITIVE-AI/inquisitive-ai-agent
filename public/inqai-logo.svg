@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+
+    <!-- ── Coin background: off-centre radial simulates 3-D lighting ── -->
+    <radialGradient id="coin-bg" cx="36%" cy="30%" r="70%" gradientUnits="objectBoundingBox">
+      <stop offset="0%"   stop-color="#2B0E6A"/>
+      <stop offset="30%"  stop-color="#16053C"/>
+      <stop offset="70%"  stop-color="#0C0226"/>
+      <stop offset="100%" stop-color="#060115"/>
+    </radialGradient>
+
+    <!-- ── Rim: bright top-left → dark mid → bright bottom-right ── -->
+    <linearGradient id="rim" x1="15%" y1="5%" x2="85%" y2="95%">
+      <stop offset="0%"   stop-color="#A78BFA" stop-opacity="1"/>
+      <stop offset="35%"  stop-color="#5B21B6" stop-opacity="0.5"/>
+      <stop offset="65%"  stop-color="#3730A3" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#7C3AED" stop-opacity="0.85"/>
+    </linearGradient>
+
+    <!-- ── Inner-bevel shine ring ── -->
+    <linearGradient id="bevel" x1="10%" y1="5%" x2="90%" y2="95%">
+      <stop offset="0%"   stop-color="#DDD6FE" stop-opacity="0.18"/>
+      <stop offset="45%"  stop-color="#7C3AED" stop-opacity="0.04"/>
+      <stop offset="100%" stop-color="#312E81" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- ── Specular hotspot (top-left) ── -->
+    <radialGradient id="spec" cx="32%" cy="26%" r="38%" gradientUnits="objectBoundingBox">
+      <stop offset="0%"   stop-color="#FFFFFF" stop-opacity="0.18"/>
+      <stop offset="55%"  stop-color="#C4B5FD" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#7C3AED" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- ── Symbol: top bright → bottom deep (user-space so gradient tracks path) ── -->
+    <linearGradient id="sym" x1="0" y1="62" x2="0" y2="138" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#F3EEFF"/>
+      <stop offset="38%"  stop-color="#C4B5FD"/>
+      <stop offset="100%" stop-color="#5B21B6"/>
+    </linearGradient>
+
+    <!-- ── Ambient glow behind symbol ── -->
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <!-- ── Soft glow for specular dot ── -->
+    <filter id="soft" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3"/>
+    </filter>
+
+  </defs>
+
+  <!-- ── Layer 1: coin body ── -->
+  <circle cx="100" cy="100" r="99" fill="url(#coin-bg)"/>
+
+  <!-- ── Layer 2: inner bevel shine ── -->
+  <circle cx="100" cy="100" r="95" fill="url(#bevel)"/>
+
+  <!-- ── Layer 3: specular highlight (physics of light on a sphere) ── -->
+  <circle cx="100" cy="100" r="99" fill="url(#spec)"/>
+
+  <!-- ── Layer 4: outer rim ── -->
+  <circle cx="100" cy="100" r="98" stroke="url(#rim)"  stroke-width="3"   fill="none"/>
+  <!-- inner rim shadow line -->
+  <circle cx="100" cy="100" r="93" stroke="#1E0755"    stroke-width="1.5" fill="none" opacity="0.6"/>
+
+  <!-- ── Symbol: AI Signal Pulse ──
+       Bold EKG-style mark: flat entry → sharp peak → deep valley → flat exit
+       Represents: real-time AI market signal monitoring
+       Unique silhouette, works at 16 px favicon up to 512 px
+  ── -->
+
+  <!-- Glow layer (blurred) -->
+  <path d="M 40 100 L 72 100 L 89 64 L 111 136 L 128 100 L 160 100"
+        stroke="#9333EA" stroke-width="18" stroke-linecap="round"
+        stroke-linejoin="round" fill="none" opacity="0.35" filter="url(#soft)"/>
+
+  <!-- Main symbol -->
+  <path d="M 40 100 L 72 100 L 89 64 L 111 136 L 128 100 L 160 100"
+        stroke="url(#sym)" stroke-width="10" stroke-linecap="round"
+        stroke-linejoin="round" fill="none" filter="url(#glow)"/>
+
+  <!-- Peak specular dot (hottest point of the signal) -->
+  <circle cx="89" cy="64" r="5" fill="#FFFFFF" opacity="0.55" filter="url(#soft)"/>
+  <circle cx="89" cy="64" r="2.5" fill="#FFFFFF" opacity="0.9"/>
+
+</svg>

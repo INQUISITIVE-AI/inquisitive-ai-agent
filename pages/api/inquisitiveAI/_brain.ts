@@ -110,15 +110,32 @@ export function getRegime(btcChgPct: number, ethChgPct: number, btcChg7dPct = 0,
   return avg24h > 2.5 ? 'BULL' : avg24h < -2.5 ? 'BEAR' : 'NEUTRAL';
 }
 
-// ── Pattern Engine: momentum + volume-price confirmation ─────────────────────
+// RSI proxy (0-100) derived from 7d momentum
+function rsiProxy(c7d: number): number { return Math.min(95, Math.max(5, 50 + c7d * 150)); }
+// MA proxy: >0 means price likely above key moving averages
+function maProxy(c7d: number, c24h: number): number { return (c7d * 0.7 + c24h * 0.3); }
+
+// ── Pattern Engine: trend-following + RSI + volume breakout ──────────────────
 function patternEngine(a: AssetInput, regime: Regime): number {
   let q = 0.5;
 
-  // Momentum: 24h price direction
-  if      (a.change24h >  0.05) q += 0.20;
-  else if (a.change24h >  0.02) q += 0.10;
-  else if (a.change24h < -0.05) q -= 0.20;
-  else if (a.change24h < -0.02) q -= 0.10;
+  const rsi = rsiProxy(a.change7d);
+  const ma  = maProxy(a.change7d, a.change24h);
+  // RSI zones: oversold = buy, overbought = caution
+  if      (rsi < 25) q += 0.18;
+  else if (rsi < 35) q += 0.10;
+  else if (rsi > 75) q -= 0.10;
+  else if (rsi > 85) q -= 0.18;
+  // MA position: price above MAs = trend is up
+  if      (ma >  0.12) q += 0.12;
+  else if (ma >  0.04) q += 0.06;
+  else if (ma < -0.12) q -= 0.12;
+  else if (ma < -0.04) q -= 0.06;
+  // 24h momentum confirmation
+  if      (a.change24h >  0.05) q += 0.08;
+  else if (a.change24h >  0.02) q += 0.04;
+  else if (a.change24h < -0.05) q -= 0.08;
+  else if (a.change24h < -0.02) q -= 0.04;
 
   // Volume-price confirmation: price up on high volume = strong signal
   if (a.volume24h > 0 && a.marketCap > 0) {
@@ -163,12 +180,33 @@ function reasoningEngine(a: AssetInput, fg: FGIndex | null): { score: number; re
 
   score += CAT_BONUS[a.category] ?? 0.02;
 
+  // Market structure: HH+HL = bullish, LH+LL = bearish, pullback in uptrend = entry
+  const bullStruct     = a.change24h > 0     && a.change7d >  0.05;
+  const bearStruct     = a.change24h < 0     && a.change7d < -0.05;
+  const pullbackEntry  = a.change24h < -0.02 && a.change7d >  0.08;
+  const deadCatBounce  = a.change24h > 0.03  && a.change7d < -0.15;
+  if      (bullStruct)    { score += 0.09; reasons.push('Bullish structure — higher highs + higher lows confirmed'); }
+  else if (bearStruct)    { score -= 0.09; reasons.push('Bearish structure — lower highs + lower lows confirmed'); }
+  else if (pullbackEntry) { score += 0.07; reasons.push('Healthy pullback in uptrend — high-probability accumulation entry'); }
+  else if (deadCatBounce) { score -= 0.06; reasons.push('Relief bounce in downtrend — avoid fakeout'); }
+
+  // Market cycle phase via ATH distance
+  if      (a.athChange < -0.85) { score += 0.08; reasons.push('Deep value zone — extreme discount from ATH'); }
+  else if (a.athChange < -0.65) { score += 0.05; reasons.push('Discount zone — potential DCA accumulation entry'); }
+  else if (a.athChange > -0.08) { score -= 0.05; reasons.push('Near ATH resistance — distribution risk, tighten stops'); }
+
+  // DCA zone: quality asset in oversold weekly condition with strong liquidity
+  if ((a.category === 'major' || a.category === 'liquid-stake') &&
+      a.change7d < -0.10 && a.volume24h > 500_000_000) {
+    score += 0.06; reasons.push('DCA zone — quality asset in oversold condition with institutional liquidity');
+  }
+
   if (fg) {
     const v = fg.value;
-    if      (v < 20) { score += 0.10; reasons.push(`Extreme Fear (${v}) — contrarian accumulation zone`); }
-    else if (v < 30) { score += 0.05; reasons.push(`Fear (${v}) — potential buy zone`); }
-    if      (v > 80) { score -= 0.08; reasons.push(`Extreme Greed (${v}) — reduce exposure`); }
-    else if (v > 70) { score -= 0.04; reasons.push(`Greed (${v}) — tighten stops`); }
+    if      (v < 15) { score += 0.12; reasons.push(`Extreme Fear (${v}) — historically strongest accumulation zone`); }
+    else if (v < 30) { score += 0.07; reasons.push(`Fear (${v}) — contrarian buy signal`); }
+    else if (v > 85) { score -= 0.10; reasons.push(`Extreme Greed (${v}) — reduce exposure, protect profits`); }
+    else if (v > 70) { score -= 0.05; reasons.push(`Greed (${v}) — tighten stops, watch for reversal`); }
   }
 
   return { score: Math.max(0, Math.min(1, score)), reasons };
@@ -202,13 +240,25 @@ function learningEngine(a: AssetInput): number {
   else if (a.change7d < -0.10) score -= 0.12;
   else if (a.change7d < -0.05) score -= 0.06;
 
-  // Trend consistency: 24h and 7d pointing same direction = confirmed trend
-  if (a.change24h > 0 && a.change7d > 0.05)  score += 0.06; // both up
-  if (a.change24h < 0 && a.change7d < -0.05) score -= 0.06; // both down
-  // Divergence: daily reversal against weekly trend = potential momentum shift
-  if (a.change24h < -0.03 && a.change7d > 0.15) score -= 0.04;
+  // Trend confirmation: both 24h and 7d align = high-conviction signal
+  if (a.change24h > 0.01 && a.change7d > 0.05)  score += 0.07; // confirmed uptrend
+  if (a.change24h < -0.01 && a.change7d < -0.05) score -= 0.07; // confirmed downtrend
+  // Trend-following: ride strong momentum, don't fight it
+  if (a.change24h > 0.03 && a.change7d > 0.12) score += 0.05;  // strong momentum continuation
+  if (a.change24h < -0.03 && a.change7d < -0.12) score -= 0.05; // strong downtrend continuation
+  // Bullish divergence: 7d oversold but 24h starting to recover = early reversal signal
+  if (a.change24h > 0.02 && a.change7d < -0.12) score += 0.04;
+  // Death signal: fresh breakdown through weekly support
+  if (a.change24h < -0.04 && a.change7d < -0.08) score -= 0.05;
 
-  // Liquidity quality: only trade assets with real volume
+  // Volume breakout: price up + very high relative volume = confirmed breakout
+  if (a.volume24h > 0 && a.marketCap > 0) {
+    const relVol = a.volume24h / a.marketCap;
+    if (a.change24h > 0.04 && relVol > 0.12) { score += 0.08; } // volume-confirmed breakout
+    if (a.change24h < -0.04 && relVol > 0.12) { score -= 0.08; } // volume-confirmed breakdown
+  }
+
+  // Liquidity quality: only trade assets with real institutional volume
   if      (a.volume24h > 1_000_000_000) score += 0.10;
   else if (a.volume24h >   100_000_000) score += 0.05;
   else if (a.volume24h <     1_000_000) score -= 0.10;
