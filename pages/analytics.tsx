@@ -691,8 +691,8 @@ export default function AnalyticsPage() {
                   <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10 }}>
                     {([
                       { l:'Brain Cycles', v:cyclesOnChain.toLocaleString(), c:'#a78bfa', i:'brain' },
-                      { l:'Buy Signals',  v:buys,   c:'#10b981', i:'up' },
-                      { l:'Sell Signals', v:sells,  c:'#ef4444', i:'down' },
+                      { l:'Buy Actions',  v:buys,   c:'#10b981', i:'up' },
+                      { l:'Sell Actions', v:sells,  c:'#ef4444', i:'down' },
                       { l:'Regime',       v:regime, c:regimeCol, i:regime==='BULL'?'up':regime==='BEAR'?'down':'scale' },
                       { l:'Fear & Greed', v:fg,     c:typeof fg==='number'&&fg<30?'#ef4444':typeof fg==='number'&&fg>70?'#10b981':'#f59e0b', i:'brain' },
                       { l:'Assets Live',  v:nav?.portfolio?.assetCount??65, c:'#60a5fa', i:'target' },

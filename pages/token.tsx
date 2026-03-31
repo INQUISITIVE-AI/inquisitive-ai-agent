@@ -176,7 +176,7 @@ export default function TokenPage() {
                 {label:'Total Assets',    val:`${assets.length}/65`,  col:'#a78bfa'},
                 {label:'Total MCap',      val:fmtUsd(totalMCap),     col:'#60a5fa'},
                 {label:'Avg 24h Change',  val:pct(avgChange),         col:grc(avgChange)},
-                {label:'AI Buy Signals',  val:buys+' assets',         col:'#34d399'},
+                {label:'AI Buy Positions', val:buys+' assets',         col:'#34d399'},
                 {label:'Stakeable',       val:stakeable+' assets',    col:'#f59e0b'},
                 {label:'Best APY',        val:'27% ENA',              col:'#10b981'},
               ].map(s=>(

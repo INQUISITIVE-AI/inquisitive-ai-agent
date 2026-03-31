@@ -266,7 +266,7 @@ export default function HelpPage() {
         <h2 style={{fontSize:26,fontWeight:900,marginBottom:4}}>11 Trading Functions</h2>
         <p style={{color:'rgba(255,255,255,0.4)',fontSize:13,marginBottom:28}}>Every major DeFi strategy executed autonomously by the trading engine. Zero human intervention.</p>
         {[
-          {icon:TrendingUp,name:'BUY',col:'#10b981',detail:'Optimal market entry using AI signal with 2% max risk limit. Position sized by Kelly Criterion with 2:1 R:R floor. Stop loss at 2× ATR below entry. Checks portfolio heat (max 6% open risk) before executing.',params:'symbol, amount, stopLoss?, target?'},
+          {icon:TrendingUp,name:'BUY',col:'#10b981',detail:'Optimal market entry. AI determines entry timing with 2% max risk limit. Position sized by Kelly Criterion with 2:1 R:R floor. Stop loss at 2× ATR below entry. Checks portfolio heat (max 6% open risk) before executing.',params:'symbol, amount, stopLoss?, target?'},
           {icon:TrendingDown,name:'SELL',col:'#ef4444',detail:'Profit-optimized exit with stop-loss enforcement. Tracks unrealized P&L in real-time. Updates portfolio heat and drawdown metrics after each exit. Records win/loss for performance attribution.',params:'symbol, amount'},
           {icon:ArrowLeftRight,name:'SWAP',col:'#3b82f6',detail:'Best-route DEX aggregation. Solana assets: routes through Jupiter Aggregator for best price across all Solana DEXs. Ethereum/EVM assets: routes through 1inch or Uniswap V3. Auto-detects chain from asset type. Max 0.3% slippage.',params:'fromSymbol, toSymbol, amount, params.slippage?'},
           {icon:Landmark,name:'LEND',col:'#f59e0b',detail:'Supply assets to lending protocols for yield. Protocol priority: Aave V3 (primary), Compound V3, SparkLend, Morpho Blue, Maple Finance. APY data: USDC ~4.8%, ETH ~1.8%, BTC ~0.25%, Stables ~4.5%. Tracked with position ID for withdrawal.',params:'symbol, amount, params.protocol?'},
@@ -617,7 +617,7 @@ export default function HelpPage() {
               'Portfolio engine — automated rebalancing and optimization',
               'Learning engine — continuous improvement from market data',
               'Risk engine — institutional-grade risk management',
-              'Real-time signals — AI trading signals broadcast every 8 seconds',
+              'Real-time execution — AI trade decisions executed automatically every 8 seconds',
               'Performance tracking — win rate, profit factor, sharpe ratio live',
               'Market regime detection — bull/bear/sideways identification',
               'Advanced analytics — comprehensive AI performance metrics',
