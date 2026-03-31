@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
+import InqaiLogo from '../src/components/InqaiLogo';
 import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';
 import {
@@ -84,7 +85,7 @@ export default function Home() {
         <nav style={{position:'fixed',top:0,left:0,right:0,zIndex:100,background:'rgba(7,7,26,0.9)',backdropFilter:'blur(20px)',borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
           <div style={{maxWidth:1400,margin:'0 auto',padding:'0 24px',height:60,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
             <button onClick={()=>router.push('/')} style={{display:'flex',alignItems:'center',gap:10,background:'none',border:'none',cursor:'pointer',padding:0,marginLeft:-8}}>
-              <img src="/inqai-logo.svg" alt="INQAI" style={{width:34,height:34,borderRadius:'50%',flexShrink:0}} />
+              <InqaiLogo size={34} />
               <div className="anim-name-pulse" style={{fontWeight:900,fontSize:20,letterSpacing:'-0.6px',color:'#fff',lineHeight:1}}>INQUISITIVE</div>
             </button>
             <div style={{display:'flex',alignItems:'center',gap:6}}>

@@ -3,6 +3,7 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';
 import { Lock, DollarSign, Wheat, Infinity, Gem } from 'lucide-react';
+import InqaiLogo from '../src/components/InqaiLogo';
 
 const WalletButton = dynamic(() => import('../src/components/WalletButton'), { ssr: false });
 
@@ -155,7 +156,7 @@ export default function TokenPage() {
         {/* NAV */}
         <nav style={{position:'sticky',top:0,zIndex:50,background:'rgba(7,7,26,0.92)',backdropFilter:'blur(20px)',borderBottom:'1px solid rgba(255,255,255,0.05)',height:52,display:'flex',alignItems:'center',padding:'0 20px',gap:12}}>
           <button onClick={()=>router.push('/')} style={{display:'flex',alignItems:'center',gap:9,background:'none',border:'none',cursor:'pointer',marginRight:16,padding:0}}>
-            <img src="/inqai-logo.svg" alt="INQAI" style={{width:30,height:30,borderRadius:'50%',flexShrink:0}} />
+            <InqaiLogo size={30} />
             <div>
               <div className="anim-name-pulse" style={{fontWeight:900,fontSize:16,letterSpacing:'-0.4px',color:'#fff',lineHeight:1}}>INQUISITIVE</div>
               <div style={{fontSize:8,color:'rgba(255,255,255,0.35)',letterSpacing:'2px',textTransform:'uppercase',marginTop:2}}>INQAI</div>

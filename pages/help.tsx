@@ -7,6 +7,8 @@ import {
   Shield, Plug, DollarSign, Map, Book, Brain, Lock, Layers, Gem, Gift, RotateCcw, Flame, Wallet, Bot, Scale, CheckCircle2, ArrowRight, TrendingUp, TrendingDown, ArrowLeftRight, Landmark, Leaf, AlertTriangle, Activity, Target, Infinity, X, BarChart3, Eye, Microscope, Key
 } from 'lucide-react';
 
+import InqaiLogo from '../src/components/InqaiLogo';
+
 const WalletButton = dynamic(() => import('../src/components/WalletButton'), { ssr: false });
 
 const NAV_ITEMS = [
@@ -652,7 +654,7 @@ export default function HelpPage() {
         {/* Nav */}
         <nav style={{position:'sticky',top:0,zIndex:50,background:'rgba(7,7,26,0.92)',backdropFilter:'blur(20px)',borderBottom:'1px solid rgba(255,255,255,0.05)',height:52,display:'flex',alignItems:'center',padding:'0 20px',gap:10}}>
           <button onClick={()=>router.push('/')} style={{display:'flex',alignItems:'center',gap:9,background:'none',border:'none',cursor:'pointer',marginRight:16,padding:0}}>
-            <img src="/inqai-logo.svg" alt="INQAI" style={{width:30,height:30,borderRadius:'50%',flexShrink:0}} />
+            <InqaiLogo size={30} />
             <div className="anim-name-pulse" style={{fontWeight:900,fontSize:16,letterSpacing:'-0.4px',color:'#fff',lineHeight:1}}>INQUISITIVE</div>
           </button>
           <div style={{display:'flex',gap:4,flex:1}}>

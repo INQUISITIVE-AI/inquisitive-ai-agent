@@ -7,6 +7,7 @@ import { parseEther, parseUnits, erc20Abi } from 'viem';
 import { mainnet } from 'wagmi/chains';
 import { INQAI_TOKEN } from '../src/config/wagmi';
 import { Lock, CheckCircle2, Loader, Shield, ExternalLink, AlertTriangle } from 'lucide-react';
+import InqaiLogo from '../src/components/InqaiLogo';
 
 const OpenWalletButton = dynamic(() => import('../src/components/OpenWalletButton'), { ssr: false, loading: () => null });
 const WalletButton     = dynamic(() => import('../src/components/WalletButton'),     { ssr: false, loading: () => null });
@@ -231,7 +232,7 @@ export default function BuyPage() {
         {/* NAV */}
         <nav style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(7,7,26,0.92)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.05)', height: 60, display: 'flex', alignItems: 'center', padding: '0 24px', gap: 8 }}>
           <button onClick={() => router.push('/')} style={{ display: 'flex', alignItems: 'center', gap: 9, background: 'none', border: 'none', cursor: 'pointer', marginRight: 24, padding: 0 }}>
-            <img src="/inqai-logo.svg" alt="INQAI" style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0 }} />
+            <InqaiLogo size={32} />
             <div className="anim-name-pulse" style={{ fontWeight: 900, fontSize: 18, letterSpacing: '-0.5px', color: '#fff', lineHeight: 1 }}>INQUISITIVE</div>
           </button>
           <div style={{ display: 'flex', gap: 3, flex: 1 }}>
