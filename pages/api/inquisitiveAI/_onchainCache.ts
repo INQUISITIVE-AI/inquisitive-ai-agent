@@ -104,11 +104,17 @@ async function fetchOnchain(): Promise<OnchainSnapshot> {
     rpcOne('eth_call', [{ to: VAULT_ADDR, data: SEL_OWNER },                     'latest']),
   ]);
 
-  const vaultEth      = parseHex(vaultEthHex,      18);
-  const deployerEth   = parseHex(deployerEthHex,   18);
-  const totalSupply   = parseHex(totalSupplyHex,   18) || 100_000_000;
-  const deployerInqai = parseHex(deployerInqaiHex, 18);
-  const vaultInqai    = parseHex(vaultInqaiHex,    18);
+  const vaultEth    = parseHex(vaultEthHex,    18);
+  const deployerEth = parseHex(deployerEthHex, 18);
+  const totalSupply = parseHex(totalSupplyHex, 18) || 100_000_000;
+  const vaultInqai  = parseHex(vaultInqaiHex,  18);
+  // Guard: if deployer INQAI balance RPC returned null/failed, assume deployer
+  // still holds the full supply. This prevents a null read from producing a
+  // fake 100M circulating supply and a spurious ~$800M market cap.
+  const deployerInqaiRaw = parseHex(deployerInqaiHex, 18);
+  const deployerInqai    = deployerInqaiHex === null
+    ? totalSupply          // RPC failed — conservative: assume none sold yet
+    : deployerInqaiRaw;
   const deployerUsdc  = parseHex(deployerUsdcHex,   6);
   const vaultUsdc     = parseHex(vaultUsdcHex,      6);
   const portfolioLength    = portfolioLenHex && portfolioLenHex !== '0x' ? parseInt(portfolioLenHex, 16) : 0;

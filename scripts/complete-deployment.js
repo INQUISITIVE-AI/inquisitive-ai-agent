@@ -11,7 +11,7 @@ async function main() {
   // Addresses
   const INQAI_ADDRESS = "0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5";
   const TEAM_WALLET = "0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746";
-  const VAULT_ADDRESS = "0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb";
+  const VAULT_ADDRESS = process.env.INQUISITIVE_VAULT_ADDRESS || "0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb";
   
   try {
     // 1. Deploy Vesting Contracts for all allocations (except team)

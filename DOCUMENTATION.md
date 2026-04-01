@@ -59,7 +59,7 @@ INQUISITIVE (INQAI) is an ERC-20 token on Ethereum mainnet. Each token represent
 
 - **Presale price: $8** — 47% below the $15 target
 - **Self-custody** — INQAI is airdropped directly to your wallet within 24 hours of purchase
-- **Asset backing** — each INQAI represents proportional ownership in the 65-asset live portfolio
+- **Asset backing** — each INQAI represents proportional ownership in the 66-asset live portfolio
 - **60% of protocol fees** → systematic open-market INQAI buybacks
 - **20% of protocol fees** → permanently burned (deflationary)
 - **20% of protocol fees** → treasury for protocol operations
@@ -76,7 +76,7 @@ INQUISITIVE (INQAI) is an ERC-20 token on Ethereum mainnet. Each token represent
 
 ## 65-Asset Portfolio
 
-All 65 assets are live, priced from native CoinGecko feeds, and allocated autonomously. The AI manages execution across three delivery mechanisms — all running from a single `performUpkeep()` call with zero private keys.
+All 66 assets are live, priced from native CoinGecko feeds, and allocated autonomously. The AI manages execution across three delivery mechanisms — all running from a single `performUpkeep()` call with zero private keys.
 
 ### Execution Breakdown
 
@@ -86,7 +86,7 @@ All 65 assets are live, priced from native CoinGecko feeds, and allocated autono
 | **Cross-chain bridges** | 13 | SOL, JUP, JITOSOL, JUPSOL, mSOL, HONEY, HNT, PYTH (Solana) · BNB (BSC) · AVAX (Avalanche) · OP (Optimism) · TRX (TRON) · CNGN (BSC) | deBridge DLN on-chain contract |
 | **stETH yield positions** | 25 | XRP, ADA, SUI, DOT, NEAR, ICP, HYPE, TAO, ATOM, ALGO, XLM, LTC, BCH, HBAR, ZEC, XMR, ETC, XTZ, VET, FIL, AR, XDC, CC, STX, EOS | Lido stETH yield + native price tracked |
 
-**All 65 allocations are live and deployed. No simulation. All 65 assets priced at native CoinGecko rates — zero proxy.**
+**All 65 allocations are live and deployed. No simulation. All 66 assets priced at native CoinGecko rates — zero proxy.**
 
 For stETH yield positions: the vault holds Lido stETH for these allocations, earning staking yield, while the AI tracks the native asset price for full NAV accounting. This is the correct institutional approach for assets on chains without automated bridge support.
 
@@ -113,7 +113,7 @@ BTC 18% · ETH 12% · SOL 8% · BNB 5% · XRP 4% · ADA 3% · AVAX 3% · SUI 2% 
 ### System Architecture
 
 ```
-The Brain       → 5-engine AI scoring, 8-second evaluation cycles, 65 assets
+The Brain       → 5-engine AI scoring, 8-second evaluation cycles, 66 assets
 The Executioner → performUpkeep(): Uniswap V3 swaps + deBridge DLN bridges in one tx
 The X-Ray       → Monitor API: live allocation plan, execution status, NAV per token
 The Oracle      → CoinGecko primary, CryptoCompare fallback — 65 native prices, no proxy
@@ -122,7 +122,7 @@ The Oracle      → CoinGecko primary, CryptoCompare fallback — 65 native pric
 ### Execution Flow
 
 1. Chainlink Automation calls `performUpkeep()` when `checkUpkeep()` returns true
-2. If `vaultBalance > 0.005 ETH`, deploys across all 65 assets
+2. If `vaultBalance > 0.005 ETH`, deploys across all 66 assets
 3. ETH → 26 ERC-20s via Uniswap V3
 4. ETH → 13 native assets via deBridge DLN `createOrder()`
 5. Remaining ETH → stETH via Lido (25 yield positions)
@@ -161,7 +161,7 @@ INQAI is available at the presale price. Tokens are delivered instantly to your 
 ### Vault Contract Capabilities (`contracts/InquisitiveVaultUpdated.sol`)
 
 - `receive() payable` — accepts ETH
-- `performUpkeep(bytes calldata)` — keeper entry point; deploys across all 65 assets: 26 Uniswap V3 swaps + 13 deBridge cross-chain bridges + 25 Lido stETH positions
+- `performUpkeep(bytes calldata)` — keeper entry point; deploys across all 66 assets: 26 Uniswap V3 swaps + 13 deBridge cross-chain bridges + 25 Lido stETH positions
 - `checkUpkeep(bytes calldata)` → `(bool upkeepNeeded, bytes memory performData)`
 - `setPortfolio(address[], uint256[], uint24[])` — configures 26 ETH-mainnet ERC-20 targets (owner only)
 - `setPhase2Registry(Phase2Asset[])` — configures 13 cross-chain bridge targets (owner only)
@@ -259,16 +259,16 @@ All endpoints are Next.js API routes (`pages/api/`). No authentication required 
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/inquisitiveAI/assets` | All 65 assets — live native prices, AI scores, portfolio weights |
+| GET | `/api/inquisitiveAI/assets` | All 66 assets — live native prices, AI scores, portfolio weights |
 | GET | `/api/inquisitiveAI/assets/[symbol]` | Single asset — price, AI confidence, signals |
 | GET | `/api/inquisitiveAI/dashboard` | Portfolio dashboard — performance, AI decisions, risk |
 | GET | `/api/inquisitiveAI/signals` | Current AI signals — actions, confidence, regime |
-| GET | `/api/inquisitiveAI/prices` | Live prices for all 65 assets |
+| GET | `/api/inquisitiveAI/prices` | Live prices for all 66 assets |
 | GET | `/api/inquisitiveAI/macro` | Macro indicators — Fear & Greed, regime, BTC/ETH change |
-| GET | `/api/inquisitiveAI/portfolio/nav` | Live NAV — per-token value, AUM, 65-asset returns |
+| GET | `/api/inquisitiveAI/portfolio/nav` | Live NAV — per-token value, AUM, 66-asset returns |
 | GET | `/api/inquisitiveAI/portfolio/positions` | Current positions with P&L |
 | GET | `/api/inquisitiveAI/portfolio/history` | Trade history |
-| GET | `/api/inquisitiveAI/execute/monitor` | Full 65-asset execution plan, allocation map, calldata |
+| GET | `/api/inquisitiveAI/execute/monitor` | Full 66-asset execution plan, allocation map, calldata |
 | GET | `/api/inquisitiveAI/execute/auto` | Trigger performUpkeep() manually |
 | GET | `/api/inquisitiveAI/execute/relay` | Optional Gelato relay status (GELATO_API_KEY required) |
 

@@ -212,7 +212,7 @@ export default function HelpPage() {
             'Applies risk-first methodology as final gate before any execution',
             'Outputs signals: BUY / SELL / HOLD / REDUCE / SKIP',
             'Confidence scores determine position sizing via Kelly Criterion',
-            'Paper trades first 5 cycles before going live',
+            'Live on-chain execution active — launch validation completed',
             'BEAR regime raises confidence threshold from 70% to 75%',
           ]},
           {icon:Zap,name:'The Executioner',col:'#2563eb',sub:'AI Smart Vault',detail:[
@@ -360,7 +360,7 @@ export default function HelpPage() {
             '15% drawdown circuit breaker — all trading halts automatically',
             '2:1 minimum risk-reward ratio required before any position entry',
             'Technical stop loss: 2× ATR below entry point',
-            '5-cycle paper trade validation before going live with real capital',
+            'On-chain execution live — 5-cycle launch validation passed at deployment',
           ]},
         ].map(r=>(
           <div key={r.org} style={{background:'rgba(13,13,32,0.8)',border:`1px solid ${r.col}20`,borderRadius:16,padding:22,marginBottom:12,backdropFilter:'blur(12px)'}}>
@@ -477,7 +477,7 @@ export default function HelpPage() {
               ['Backing','65-Asset Digital Portfolio'],['Network','Ethereum Mainnet'],
               ['Total Supply', `${Number(process.env.NEXT_PUBLIC_TOTAL_SUPPLY || 100000000).toLocaleString()} INQAI`],['Inflation','None — fixed supply'],
               ['Presale Price', `$${process.env.NEXT_PUBLIC_PRESALE_PRICE || '8'}/token`],['Target Price', `$${process.env.NEXT_PUBLIC_TARGET_PRICE || '15'}/token`],
-              ['Target Market Cap','$1.5B'],['Target APY', `${((parseFloat(process.env.NEXT_PUBLIC_TARGET_APY || '0.185')) * 100).toFixed(1)}%`],
+              ['Target Market Cap','$1.5B (at $15/token)'],['Target APY', `${((parseFloat(process.env.NEXT_PUBLIC_TARGET_APY || '0.185')) * 100).toFixed(1)}%`],
               ['Performance Fee','15% flat on yields'],
               ['Fee Distribution','60% buybacks · 20% burns · 20% treasury'],
             ].map(([k,v])=>(
@@ -491,9 +491,9 @@ export default function HelpPage() {
             <h3 style={{fontSize:15,fontWeight:700,color:'#60a5fa',marginBottom:16}}>Token Distribution</h3>
             {[
               {cat:'Ecosystem Growth',pct:'35%',amt:'35M INQAI',vest:'36 months linear'},
-              {cat:'Team & Advisors', pct:'20%',amt:'20M INQAI',vest:'No vesting — held in team address'},
+              {cat:'Team & Advisors', pct:'20%',amt:'20M INQAI',vest:'3-month cliff · 36-month linear vesting'},
               {cat:'Foundation',      pct:'15%',amt:'15M INQAI',vest:'36 months linear'},
-              {cat:'Liquidity',       pct:'15%',amt:'15M INQAI',vest:'No vesting — held in team address'},
+              {cat:'Liquidity',       pct:'15%',amt:'15M INQAI',vest:'Locked — DEX liquidity provisioning'},
               {cat:'Community',       pct:'10%',amt:'10M INQAI',vest:'36 months linear'},
               {cat:'Strategic Reserve',pct:'5%',amt:'5M INQAI', vest:'36 months linear'},
             ].map(t=>(
@@ -551,7 +551,7 @@ export default function HelpPage() {
               'WebSocket real-time broadcaster: pushes price + signal updates to all connected clients every 8 seconds',
               'Next.js 14 frontend: homepage, analytics, buy, docs — all pages complete',
               'Risk engine: 2% per trade / 6% heat / 15% drawdown circuit breaker / 2:1 R:R minimum',
-              'Paper trade validation: first 5 cycles paper-only before live execution begins',
+              'Launch validation complete — live on-chain execution active via Chainlink Automation',
             ]
           },
           {

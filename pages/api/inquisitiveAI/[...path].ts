@@ -85,7 +85,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             jsonrpc: '2.0',
             method: 'eth_call',
             params: [{
-              to: '0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb',
+              to: process.env.INQUISITIVE_VAULT_ADDRESS || '0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb',
               data: '0x316fda0f' // cycleCount() selector
             }, 'latest'],
             id: 1
@@ -97,7 +97,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(200).json({
           status:  'operational', 
           live: true,
-          vaultAddress: '0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb',
+          vaultAddress: process.env.INQUISITIVE_VAULT_ADDRESS || '0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb',
           prices:  { assetCount: 65, source: 'CoinGecko + CryptoCompare', lastUpdate: new Date().toISOString() },
           brain:   { cycleCount, signalCount: 65, enginesActive: 5 },
           macro:   { indicators: 4, source: 'alternative.me + CoinGecko' },
@@ -107,7 +107,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(200).json({
           status:  'operational', 
           live: true,
-          vaultAddress: '0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb',
+          vaultAddress: process.env.INQUISITIVE_VAULT_ADDRESS || '0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb',
           prices:  { assetCount: 65, source: 'CoinGecko + CryptoCompare', lastUpdate: new Date().toISOString() },
           brain:   { cycleCount: 0, signalCount: 65, enginesActive: 5 },
           macro:   { indicators: 4, source: 'alternative.me + CoinGecko' },
@@ -157,7 +157,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             jsonrpc: '2.0',
             method: 'eth_call',
             params: [{
-              to: '0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb',
+              to: process.env.INQUISITIVE_VAULT_ADDRESS || '0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb',
               data: '0x8da5cb5b' // owner() selector
             }, 'latest'],
             id: 1
@@ -167,7 +167,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(200).json({ 
           positions: [],
           vaultOwner: data.result,
-          vaultAddress: '0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb'
+          vaultAddress: process.env.INQUISITIVE_VAULT_ADDRESS || '0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb'
         });
       } catch (error) {
         return res.status(200).json({ positions: [], error: 'Failed to read from vault' });

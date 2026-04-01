@@ -34,5 +34,10 @@
       "maxDuration": 300
     }
   },
-  "crons": []
+  "crons": [
+    {
+      "path": "/api/inquisitiveAI/portfolio/nav",
+      "schedule": "*/1 * * * *"
+    }
+  ]
 }

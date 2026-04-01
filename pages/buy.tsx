@@ -46,6 +46,7 @@ export default function BuyPage() {
   const [chargeStatus, setChargeStatus] = useState<'pending'|'confirmed'|'expired'|'failed' | null>(null);
   const [chargeCheckParams, setChargeCheckParams] = useState<{ since: number; expectedAmount: string; currency: string } | null>(null);
   const [copied, setCopied]             = useState(false);
+  const [salesData, setSalesData]       = useState<any>(null);
 
   const { sendTransactionAsync }    = useSendTransaction();
   const { writeContractAsync }      = useWriteContract();
@@ -61,6 +62,14 @@ export default function BuyPage() {
         if (d?.tron?.usd)     setTrxPrice(d.tron.usd);
       })
       .catch(() => {});
+    const loadSales = () =>
+      fetch('/api/inquisitiveAI/token/sales')
+        .then(r => r.ok ? r.json() : null)
+        .then(d => { if (d) setSalesData(d); })
+        .catch(() => {});
+    loadSales();
+    const t = setInterval(loadSales, 60000);
+    return () => clearInterval(t);
   }, []);
 
   const { data: ethBal }  = useBalance({ address, chainId: mainnet.id });
@@ -555,10 +564,11 @@ export default function BuyPage() {
                   { label: 'Presale Price',  val: `$${INQAI_TOKEN.presalePrice}`,                   col: '#a78bfa' },
                   { label: 'Target Price',   val: `$${INQAI_TOKEN.targetPrice}`,                    col: '#fff'    },
                   { label: 'Target APY',     val: `${(INQAI_TOKEN.targetAPY * 100).toFixed(1)}%`,   col: '#10b981' },
+                  { label: 'Tokens Sold',    val: salesData?.token?.tokensSold > 0 ? salesData.token.tokensSold.toLocaleString('en-US', {maximumFractionDigits:0}) : (salesData ? '0' : '—'), col: salesData?.token?.tokensSold > 0 ? '#10b981' : '#6b7280' },
                   { label: 'Total Supply',   val: Number(process.env.NEXT_PUBLIC_TOTAL_SUPPLY||100000000).toLocaleString(), col: '#fff' },
                   { label: 'Token Standard', val: 'ERC-20',                                         col: '#60a5fa' },
                   { label: 'Backing',        val: '65 Digital Assets',                              col: '#60a5fa' },
-                  { label: 'Target MCap',    val: '$1.5B',                                          col: '#f59e0b' },
+                  { label: salesData?.marketCap?.circulatingUSD > 0 ? 'Market Cap' : 'Target MCap', val: salesData?.marketCap?.circulatingUSD > 0 ? (salesData.marketCap.circulatingUSD >= 1e9 ? '$' + (salesData.marketCap.circulatingUSD/1e9).toFixed(3) + 'B' : salesData.marketCap.circulatingUSD >= 1e6 ? '$' + (salesData.marketCap.circulatingUSD/1e6).toFixed(2) + 'M' : '$' + salesData.marketCap.circulatingUSD.toFixed(0)) : '$1.5B Target', col: '#f59e0b' },
                 ].map(r => (
                   <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                     <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>{r.label}</span>
@@ -574,6 +584,43 @@ export default function BuyPage() {
                 </div>
               </div>
               </div>
+
+              {/* Live Purchase Feed */}
+              {salesData?.recentPurchases?.length > 0 && (
+                <div style={{ background: 'rgba(13,13,32,0.8)', border: '1px solid rgba(16,185,129,0.15)', borderRadius: 20, padding: '20px 22px', backdropFilter: 'blur(12px)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+                    <span className="anim-blink" style={{ width: 6, height: 6, borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
+                    <h3 style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.7)', margin: 0 }}>Recent On-Chain Purchases</h3>
+                    <span style={{ marginLeft: 'auto', fontSize: 9, padding: '2px 7px', borderRadius: 100, background: 'rgba(16,185,129,0.1)', color: '#34d399', border: '1px solid rgba(16,185,129,0.2)', fontWeight: 700 }}>LIVE</span>
+                  </div>
+                  {salesData.recentPurchases.slice(0, 5).map((p: any, i: number) => (
+                    <div key={p.hash || i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0', borderBottom: i < 4 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                      <div>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: '#a78bfa' }}>
+                          {p.inqaiAmount > 0 ? `${p.inqaiAmount.toLocaleString('en-US', {maximumFractionDigits:0})} INQAI` : '—'}
+                        </div>
+                        <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 1 }}>
+                          {new Date(p.timestamp).toLocaleDateString()} · {p.type}
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: '#10b981' }}>${(p.usdValue || 0).toLocaleString('en-US', {maximumFractionDigits:0})}</div>
+                        {p.etherscan && (
+                          <a href={p.etherscan} target="_blank" rel="noopener noreferrer" style={{ fontSize: 9, color: '#60a5fa', textDecoration: 'none' }}>Etherscan ↗</a>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {salesData.fundraise?.totalUsdRaised > 0 && (
+                    <div style={{ marginTop: 12, padding: '8px 10px', background: 'rgba(16,185,129,0.05)', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>Total Raised</span>
+                      <span style={{ fontSize: 12, fontWeight: 800, color: '#10b981', fontFamily: 'monospace' }}>
+                        ${salesData.fundraise.totalUsdRaised.toLocaleString('en-US', {maximumFractionDigits:0})}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Security + Audit Status */}
               <div style={{ background: 'rgba(13,13,32,0.8)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 20, padding: '24px', backdropFilter: 'blur(12px)' }}>

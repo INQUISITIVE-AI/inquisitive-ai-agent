@@ -27,15 +27,18 @@ export default function Home() {
   const router = useRouter();
   const [data, setData]   = useState<any>(null);
   const [assets, setAssets] = useState<any[]>([]);
+  const [sales, setSales]  = useState<any>(null);
 
   const load = useCallback(async () => {
     try {
-      const [dr, ar] = await Promise.all([
+      const [dr, ar, sr] = await Promise.all([
         fetch('/api/inquisitiveAI/dashboard'),
         fetch('/api/inquisitiveAI/assets'),
+        fetch('/api/inquisitiveAI/token/sales'),
       ]);
       if (dr.ok) setData(await dr.json());
       if (ar.ok) { const d = await ar.json(); setAssets(d.assets || []); }
+      if (sr.ok) setSales(await sr.json());
     } catch {}
   }, []);
 
@@ -122,10 +125,10 @@ export default function Home() {
             </div>
             <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,maxWidth:800,margin:'0 auto'}}>
               {[
-                {label:'Managed Assets', value: assets.length || 65, suffix:' / 65',  color:'#a78bfa'},
-                {label:'7D Return',     value: data?.performance?.return7d !== undefined ? pct(data.performance.return7d) : '—', suffix:'', color: data?.performance?.return7d !== undefined ? (data.performance.return7d >= 0 ? '#10b981' : '#ef4444') : '#6b7280'},
-                {label:'Market Regime',  value: regime,              suffix:'',        color: regimeCol},
-                {label:'Fear & Greed',   value: fg?.value || '—',    suffix: fg ? ` — ${fg.valueClassification}` : '', color: fgColor},
+                {label:'Tokens Sold', value: sales?.token?.tokensSold > 0 ? Number(sales.token.tokensSold.toFixed(0)).toLocaleString() : (sales ? '0' : '—'), suffix: sales?.token?.tokensSold > 0 ? ' INQAI' : '', color:'#10b981'},
+                {label:'7D Return',   value: data?.performance?.return7d !== undefined ? pct(data.performance.return7d) : '—', suffix:'', color: data?.performance?.return7d !== undefined ? (data.performance.return7d >= 0 ? '#10b981' : '#ef4444') : '#6b7280'},
+                {label:'Market Cap',  value: sales?.marketCap?.circulatingUSD > 0 ? fmtUsd(sales.marketCap.circulatingUSD) : (sales?.marketCap?.aumUSD > 0 ? fmtUsd(sales.marketCap.aumUSD) : 'Presale'), suffix:'', color:'#a78bfa'},
+                {label:'Fear & Greed', value: fg?.value || '—', suffix: fg ? ` — ${fg.valueClassification}` : '', color: fgColor},
               ].map(k=>(
                 <div key={k.label} style={{background:'rgba(13,13,32,0.8)',border:'1px solid rgba(255,255,255,0.06)',borderRadius:14,padding:'18px 14px',textAlign:'center',backdropFilter:'blur(12px)'}}>
                   <div style={{fontSize:22,fontWeight:800,color:k.color,fontFamily:'monospace'}}>{k.value}<span style={{fontSize:11,fontWeight:500,color:'rgba(255,255,255,0.3)'}}>{k.suffix}</span></div>

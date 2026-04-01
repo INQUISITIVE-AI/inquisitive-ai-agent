@@ -4,7 +4,7 @@
   "timestamp": "2026-03-07T02:56:43.309Z",
   "contracts": {
     "INQAI": "0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5",
-    "InquisitiveVault": "0xaDCFfF8770a162b63693aA84433Ef8B93A35eb52",
+    "InquisitiveVault": "0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb",
     "InquisitiveStrategy": "0xa2589adA4D647a9977e8e46Db5849883F2e66B3e",
     "AIStrategyManager": "0x8431173FA9594B43E226D907E26EF68cD6B6542D",
     "InquisitiveProfitMaximizer": "0x23a033c08e3562786068cB163967626234A45E37"

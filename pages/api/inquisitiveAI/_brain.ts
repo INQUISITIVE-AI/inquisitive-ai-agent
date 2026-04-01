@@ -2,7 +2,7 @@
 // Exact TypeScript port of server/services/inquisitiveBrain.js
 // Used by assets.ts, dashboard.ts, api/dashboard.ts
 
-// ── Shared 65-asset registry (mirrors server/services/priceFeed.js ASSET_REGISTRY) ──
+// ── Shared 66-asset registry (mirrors server/services/priceFeed.js ASSET_REGISTRY) ──
 export interface RegistryEntry {
   symbol: string; cgId: string; name: string; category: string;
   stakeable: boolean; lendable: boolean; yieldable: boolean;
