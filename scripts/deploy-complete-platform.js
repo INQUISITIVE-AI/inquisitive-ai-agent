@@ -1,16 +1,18 @@
 const { ethers } = require("hardhat");
-require("dotenv").config();
 
 /**
- * Complete Platform Deployment
+ * Complete Platform Deployment — ZERO PRIVATE KEYS VERSION
  * 
- * Deploys all ecosystem contracts:
- * 1. LiquidityLauncher - Community-funded liquidity ($10K threshold)
- * 2. FeeDistributor - 60% buybacks, 20% burns, 20% treasury
- * 3. INQAIStaking - Staking rewards for holders
- * 4. ReferralTracker - Viral growth engine
+ * Deploys all ecosystem contracts WITHOUT requiring PRIVATE_KEY in .env
  * 
- * Run: npx hardhat run scripts/deploy-complete-platform.js --network mainnet
+ * Methods (choose one):
+ * 1. MetaMask + Hardhat: npx hardhat node, connect MetaMask, run with --network localhost
+ * 2. Remix IDE: Copy contracts to remix.ethereum.org, deploy with MetaMask
+ * 
+ * NEVER add PRIVATE_KEY to .env. NEVER hardcode private keys in code.
+ * MetaMask handles all signing.
+ * 
+ * See DEPLOY_NO_KEYS.md for detailed instructions.
  */
 
 const ADDRESSES = {
