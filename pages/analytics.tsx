@@ -880,6 +880,7 @@ export default function AnalyticsPage() {
                   </div>
 
                   {/* THE ONE MISSING STEP — fund Chainlink Automation with LINK */}
+                  {isVaultOwner && (
                   <div style={{ background:'rgba(251,191,36,0.06)', border:'2px solid rgba(251,191,36,0.3)', borderRadius:14, padding:'18px 20px', marginBottom:16 }}>
                     <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12 }}>
                       <AlertTriangle size={16} color="#fbbf24" />
@@ -918,6 +919,7 @@ export default function AnalyticsPage() {
                       </a>
                     </div>
                   </div>
+                  )}
 
                   <div style={{ fontSize:10, color:'rgba(255,255,255,0.3)', lineHeight:1.8, padding:'10px 14px', background:'rgba(255,255,255,0.03)', borderRadius:10 }}>
                     <strong style={{color:'rgba(255,255,255,0.4)'}}>Architecture:</strong> Chainlink nodes call <code style={{color:'#a78bfa'}}>performUpkeep()</code> when vault balance ≥ 0.005 ETH.
