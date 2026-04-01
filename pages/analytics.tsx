@@ -463,12 +463,15 @@ export default function AnalyticsPage() {
 
             {/* Tabs */}
             <div style={{ display:'flex', gap:2, marginBottom:20, borderBottom:'1px solid rgba(255,255,255,0.06)', flexWrap:'wrap' }}>
-              {(['portfolio','ai','positions','execution','fees'] as const).map(t => (
+              {(() => {
+                const tabs = isVaultOwner ? ['portfolio','ai','positions','execution','fees'] : ['portfolio','ai','positions','fees'];
+                return tabs.map(t => (
                 <button key={t} onClick={() => setTab(t)} style={{ padding:'10px 18px', fontSize:13, fontWeight:tab===t?700:500, cursor:'pointer', background:'none', border:'none', borderBottom:`2px solid ${tab===t?'#7c3aed':'transparent'}`, color:tab===t?'#a78bfa':'rgba(255,255,255,0.4)', transition:'all 0.15s', position:'relative' }}>
                   {{portfolio:'Portfolio',ai:'AI Activity',positions:`Positions (${positions.length})`,execution:'Execution',fees:'Fee Flow'}[t as string]}
                   {t==='execution'&&!automationOn&&<span style={{position:'absolute',top:6,right:6,width:6,height:6,borderRadius:'50%',background:'#f59e0b',display:'block'}}/>}
                 </button>
-              ))}
+              ));
+              })()}
             </div>
 
             {/* ── PORTFOLIO TAB ── */}
@@ -807,21 +810,6 @@ export default function AnalyticsPage() {
             )}
 
             {/* ── EXECUTION TAB — OWNER ONLY ── */}
-            {tab === 'execution' && !isVaultOwner && (
-              <div style={{ background:'rgba(13,13,32,0.85)', border:'1px solid rgba(99,102,241,0.25)', borderRadius:20, padding:'40px', backdropFilter:'blur(12px)', textAlign:'center' }}>
-                <Zap size={40} color="#6366f1" style={{ marginBottom:16 }} />
-                <h3 style={{ fontSize:18, fontWeight:800, color:'#fff', marginBottom:12 }}>Autonomous Execution Engine</h3>
-                <p style={{ fontSize:14, color:'rgba(255,255,255,0.5)', lineHeight:1.8, maxWidth:480, margin:'0 auto' }}>
-                  All portfolio operations execute automatically via Chainlink Automation. 
-                  Zero manual intervention. Zero private keys. 
-                  ETH deposits are autonomously allocated across 66 assets every 60 seconds.
-                </p>
-                <div style={{ marginTop:24, padding:'12px 24px', background:'rgba(99,102,241,0.1)', border:'1px solid rgba(99,102,241,0.2)', borderRadius:100, display:'inline-block' }}>
-                  <span style={{ fontSize:12, color:'#818cf8' }}>Fully Autonomous · No Human Intervention</span>
-                </div>
-              </div>
-            )}
-
             {tab === 'execution' && isVaultOwner && (() => {
               const ss = sysStatus;
               const rPct   = ss?.readinessPct ?? 0;
