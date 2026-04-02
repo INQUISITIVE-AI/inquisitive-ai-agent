@@ -33,11 +33,5 @@
     "pages/api/inquisitiveAI/execute/setup": {
       "maxDuration": 300
     }
-  },
-  "crons": [
-    {
-      "path": "/api/inquisitiveAI/portfolio/nav",
-      "schedule": "*/1 * * * *"
-    }
-  ]
+  }
 }
