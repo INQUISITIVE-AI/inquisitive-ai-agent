@@ -11,6 +11,7 @@ import {
   Scale, Wallet, Layers, Activity, BarChart3, Zap, Shield, AlertTriangle, Clock,
 } from 'lucide-react';
 import { INQAI_TOKEN, wagmiConfig } from '../src/config/wagmi';
+import InqaiLogo from '../src/components/InqaiLogo';
 import PriceActionDashboard from '../src/components/PriceActionDashboard';
 
 
