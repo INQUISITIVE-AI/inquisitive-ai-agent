@@ -61,7 +61,7 @@ async function buy({ symbol, amount, portfolioValue = 100_000, slippage = 0.005 
   const signal = brain.getSignal(symbol);
   const risk   = brain.getRiskAssessment();
 
-  // Risk gate
+  // ── Hard risk gates ──────────────────────────────────────────────────────
   if (risk.portfolioHeat >= CT.MAX_PORTFOLIO_HEAT) {
     return { success: false, reason: `Portfolio heat ${(risk.portfolioHeat*100).toFixed(1)}% — no new buys`, risk };
   }
@@ -69,39 +69,153 @@ async function buy({ symbol, amount, portfolioValue = 100_000, slippage = 0.005 
     return { success: false, reason: `Emergency stop: drawdown ${(risk.drawdown*100).toFixed(1)}%`, risk };
   }
 
+  // ── Price Action confirmation gate (Naked Forex rule) ────────────────────
+  // Never enter without a pattern. Patience is the edge.
+  const paScore   = signal?.components?.priceActionEngine ?? 0.5;
+  const macroMult = signal?.components?.macroMultiplier   ?? 1.0;
+  const regime    = risk.regime || 'NEUTRAL';
+
+  if (signal && paScore < 0.52) {
+    return {
+      success: false,
+      reason:  `No price action pattern confirmed for ${symbol} (PA score ${(paScore*100).toFixed(0)}% < 52% threshold) — wait for Kangaroo Tail, Wammie, or Big Shadow`,
+      paScore,
+      signal,
+    };
+  }
+
+  // ── Bear market altcoin block (Cryptoteacher rule) ───────────────────────
+  if (regime === 'BEAR' && !['BTC','ETH','USDC','USDT','DAI'].includes(symbol)) {
+    if (paScore < 0.65) {
+      return {
+        success: false,
+        reason:  `Bear market: ${symbol} blocked — no strong reversal pattern at support zone. Only BTC/ETH qualify in bear regime without exceptional setup.`,
+        regime,
+        paScore,
+      };
+    }
+  }
+
+  // ── Trend alignment gate (Naked Forex rule) ──────────────────────────────
+  // Don't fight a confirmed downtrend — wait for reversal candle
+  const c24 = asset.change24h || 0;
+  const c7d = asset.change7d  || 0;
+  const confirmedDowntrend = c24 < -0.03 && c7d < -0.08;
+  if (confirmedDowntrend && paScore < 0.70) {
+    return {
+      success: false,
+      reason:  `Trend alignment: ${symbol} in confirmed downtrend (24h:${(c24*100).toFixed(1)}%, 7d:${(c7d*100).toFixed(1)}%) — need strong reversal pattern (70%+ PA score). Current: ${(paScore*100).toFixed(0)}%`,
+      c24, c7d, paScore,
+    };
+  }
+
+  // ── Pattern-aware stop loss placement ───────────────────────────────────
+  // Kangaroo Tail / Wammie: stop goes BEYOND the tail tip (absolute invalidation)
+  // Big Shadow / Last Kiss: tighter stop just outside the zone
+  const ath         = asset.athChange || -0.5;
+  const isReversal  = paScore > 0.65 && c7d < -0.05 && c24 > 0;
+  const isLastKiss  = c7d > 0.10 && c24 < 0 && Math.abs(c24) < Math.abs(c7d) * 0.25;
+  const isBigShadow = c24 > 0.05 && Math.abs(c24) > Math.abs(c7d) / 7 * 1.5;
+
+  // Wider stop for reversal patterns (kangaroo tail needs room — stop at zone boundary)
+  // Tighter stop for continuation/last kiss trades
+  let stopMultiplier;
+  if (isReversal)       stopMultiplier = 0.035; // 3.5% stop — reversal at deep zone
+  else if (isLastKiss)  stopMultiplier = 0.020; // 2.0% stop — retest entry, tighter
+  else if (isBigShadow) stopMultiplier = 0.025; // 2.5% stop — engulfing with momentum
+  else                  stopMultiplier = CT.STOP_LOSS_ATR_MULT * Math.abs(c24 || 0.02);
+
   const entryPrice = asset.priceUsd * (1 + slippage);
-  const stopPrice  = entryPrice * (1 - CT.STOP_LOSS_ATR_MULT * Math.abs(asset.change24h || 0.02));
-  const posSize    = computePositionSize(portfolioValue, CT.MAX_RISK_PER_TRADE, entryPrice, stopPrice);
+  const stopPrice  = entryPrice * (1 - Math.max(0.015, stopMultiplier));
+
+  // ── Target: next S/R zone (minimum 2:1 R:R enforced) ────────────────────
+  const stopDist    = entryPrice - stopPrice;
+  const minTarget   = entryPrice + (stopDist * CT.RISK_REWARD_MIN);         // 2:1 minimum
+  const idealTarget = entryPrice + (stopDist * 3.0);                         // 3:1 ideal
+
+  // Estimate realistic target from ATH proximity
+  // If deep in ATH discount: project move toward prior zones (typically 20-40% bounces)
+  const projectedMove = ath < -0.50 ? 0.25 : ath < -0.30 ? 0.15 : 0.08;
+  const zoneTarget    = entryPrice * (1 + projectedMove);
+  const targetPrice   = Math.max(minTarget, Math.min(zoneTarget, idealTarget));
+
+  const riskReward = stopDist > 0 ? (targetPrice - entryPrice) / stopDist : 0;
+
+  // ── Enforce minimum 2:1 R:R before execution ────────────────────────────
+  if (riskReward < CT.RISK_REWARD_MIN) {
+    return {
+      success: false,
+      reason:  `R:R ${riskReward.toFixed(2)}:1 below minimum ${CT.RISK_REWARD_MIN}:1 — trade not worth taking`,
+      riskReward, entryPrice, stopPrice, targetPrice,
+    };
+  }
+
+  // ── Regime-based position sizing (Cryptoteacher: protect capital in bear) ─
+  let riskPct = CT.MAX_RISK_PER_TRADE; // base 2%
+  if (regime === 'BEAR')         riskPct *= 0.50; // bear: half size — preserve capital
+  else if (regime === 'NEUTRAL') riskPct *= 0.75; // neutral: 75% size — wait for confirmation
+  // Bull: full 2% — ride the macro trend
+
+  // Scale further by PA score confidence (stronger pattern = larger position)
+  const confidenceScale = Math.max(0.5, Math.min(1.0, (paScore - 0.50) * 5));
+  riskPct *= confidenceScale;
+
+  // Scale by macro multiplier
+  riskPct *= Math.min(1.0, macroMult);
+
+  const posSize    = computePositionSize(portfolioValue, riskPct, entryPrice, stopPrice);
   const actualSize = Math.min(amount || posSize, posSize);
 
+  if (actualSize <= 0) {
+    return { success: false, reason: `Position size computed as zero — check price feed for ${symbol}` };
+  }
+
+  // ── Identify the pattern that triggered this trade ───────────────────────
+  let pattern = 'PRICE_ACTION';
+  const reasons = signal?.reasons || [];
+  if (reasons.some(r => r.includes('Kangaroo Tail')))  pattern = 'KANGAROO_TAIL';
+  else if (reasons.some(r => r.includes('Wammie')))    pattern = 'WAMMIE';
+  else if (reasons.some(r => r.includes('Last Kiss'))) pattern = 'LAST_KISS';
+  else if (reasons.some(r => r.includes('Big Shadow')))pattern = 'BIG_SHADOW';
+  else if (reasons.some(r => r.includes('Trend: confirmed uptrend'))) pattern = 'TREND_CONTINUATION';
+
   const trade = {
-    id:          genTxId(),
-    type:        'BUY',
+    id:           genTxId(),
+    type:         'BUY',
     symbol,
-    name:        asset.name,
+    name:         asset.name,
     entryPrice,
     stopPrice,
-    targetPrice: entryPrice * (1 + CT.RISK_REWARD_MIN * CT.STOP_LOSS_ATR_MULT * Math.abs(asset.change24h || 0.02)),
-    amount:      actualSize,
-    units:       actualSize / entryPrice,
+    targetPrice,
+    riskReward:   parseFloat(riskReward.toFixed(2)),
+    amount:       actualSize,
+    units:        actualSize / entryPrice,
     slippage,
-    timestamp:   new Date().toISOString(),
-    signal:      signal?.action || 'MANUAL',
-    confidence:  signal?.finalScore || 0,
-    protocol:    'MARKET',
-    status:      'EXECUTED',
-    pnl:         0,
+    timestamp:    new Date().toISOString(),
+    signal:       signal?.action || 'MANUAL',
+    confidence:   signal?.finalScore || 0,
+    paScore:      parseFloat(paScore.toFixed(4)),
+    macroMult:    parseFloat(macroMult.toFixed(4)),
+    pattern,
+    regime,
+    protocol:     'MARKET',
+    status:       'EXECUTED',
+    pnl:          0,
     riskGate: {
-      riskPerTrade: CT.MAX_RISK_PER_TRADE,
-      stopLoss:     stopPrice,
-      target:       entryPrice * 1.06,
-      riskReward:   CT.RISK_REWARD_MIN,
+      riskPerTrade:   parseFloat(riskPct.toFixed(4)),
+      stopLoss:       stopPrice,
+      target:         targetPrice,
+      riskReward:     parseFloat(riskReward.toFixed(2)),
+      regime,
+      paScore:        parseFloat(paScore.toFixed(4)),
+      macroMultiplier: parseFloat(macroMult.toFixed(4)),
     },
+    reasons: signal?.reasons || [],
   };
 
   tradeHistory.push(trade);
   activePositions.set(symbol, trade);
-  brain.portfolioHeat = Math.min(brain.portfolioHeat + CT.MAX_RISK_PER_TRADE, CT.MAX_PORTFOLIO_HEAT);
+  brain.portfolioHeat = Math.min(brain.portfolioHeat + riskPct, CT.MAX_PORTFOLIO_HEAT);
 
   return { success: true, trade };
 }
@@ -113,33 +227,86 @@ async function sell({ symbol, amount, reason = 'MANUAL' }) {
   const asset    = priceFeed.getPrice(symbol);
   if (!asset)    throw new Error(`No live price for ${symbol}`);
   const position = activePositions.get(symbol);
+  const signal   = brain.getSignal(symbol);
 
   const exitPrice = asset.priceUsd * 0.9995; // 0.05% slippage
-  let pnl = 0;
 
+  // ── Pattern-aware exit decision ──────────────────────────────────────────
+  // Check current PA signals to determine exit reason
+  const paScore   = signal?.components?.priceActionEngine ?? 0.5;
+  const c24       = asset.change24h || 0;
+  const c7d       = asset.change7d  || 0;
+  const reasons   = signal?.reasons || [];
+
+  let exitReason = reason;
+  let exitType   = 'MANUAL';
+
+  if (position) {
+    const currentPrice  = asset.priceUsd;
+    const entryPrice    = position.entryPrice || currentPrice;
+    const stopPrice     = position.stopPrice  || (entryPrice * 0.97);
+    const targetPrice   = position.targetPrice|| (entryPrice * 1.06);
+
+    // ── Auto-detect exit triggers ────────────────────────────────────────
+    if (currentPrice <= stopPrice) {
+      exitReason = 'STOP_LOSS_HIT';
+      exitType   = 'STOP';
+    } else if (currentPrice >= targetPrice) {
+      exitReason = 'TARGET_HIT';
+      exitType   = 'TARGET';
+    } else if (reasons.some(r => r.includes('Moolah'))) {
+      exitReason = 'MOOLAH_PATTERN — double top forming, exit before reversal';
+      exitType   = 'PATTERN_EXIT';
+    } else if (reasons.some(r => r.includes('Kangaroo Tail: rejection wick near ATH'))) {
+      exitReason = 'BEARISH_KANGAROO_TAIL — rejection at ATH resistance, take profit';
+      exitType   = 'PATTERN_EXIT';
+    } else if (reasons.some(r => r.includes('Big Shadow: bearish engulfing'))) {
+      exitReason = 'BEARISH_BIG_SHADOW — seller commitment at resistance, exit';
+      exitType   = 'PATTERN_EXIT';
+    } else if (reasons.some(r => r.includes('confirmed downtrend'))) {
+      exitReason = 'TREND_REVERSAL — downtrend confirmed, exit to protect capital';
+      exitType   = 'TREND_EXIT';
+    } else if (c24 < -0.05 && c7d < -0.10 && paScore < 0.40) {
+      exitReason = 'BEARISH_MOMENTUM — both timeframes down, PA score collapsed';
+      exitType   = 'MOMENTUM_EXIT';
+    }
+  }
+
+  let pnl = 0;
   if (position) {
     pnl = (exitPrice - position.entryPrice) * (position.units || 1);
     totalPnL += pnl;
-    brain.portfolioHeat = Math.max(0, brain.portfolioHeat - CT.MAX_RISK_PER_TRADE);
+    const releasedHeat = position.riskGate?.riskPerTrade || CT.MAX_RISK_PER_TRADE;
+    brain.portfolioHeat = Math.max(0, brain.portfolioHeat - releasedHeat);
     if (pnl < 0 && totalPnL < 0) {
       brain.drawdown = Math.abs(totalPnL) / 100_000;
     }
     activePositions.delete(symbol);
   }
 
+  // ── Win/loss tracking for stats ──────────────────────────────────────────
+  const isWin = pnl > 0;
+
   const trade = {
-    id:         genTxId(),
-    type:       'SELL',
+    id:          genTxId(),
+    type:        'SELL',
     symbol,
-    name:       asset.name,
+    name:        asset.name,
     exitPrice,
-    amount:     amount || (position?.amount || 0),
-    units:      position?.units || 0,
-    pnl,
-    reason,
-    timestamp:  new Date().toISOString(),
-    status:     'EXECUTED',
-    entryRef:   position?.id || null,
+    entryPrice:  position?.entryPrice || exitPrice,
+    amount:      amount || (position?.amount || 0),
+    units:       position?.units || 0,
+    pnl:         parseFloat(pnl.toFixed(2)),
+    pnlPct:      position?.entryPrice ? parseFloat(((exitPrice / position.entryPrice - 1) * 100).toFixed(2)) : 0,
+    reason:      exitReason,
+    exitType,
+    isWin,
+    paScore:     parseFloat(paScore.toFixed(4)),
+    pattern:     position?.pattern || 'MANUAL',
+    regime:      position?.regime  || brain.getRiskAssessment().regime,
+    timestamp:   new Date().toISOString(),
+    status:      'EXECUTED',
+    entryRef:    position?.id || null,
   };
 
   tradeHistory.push(trade);
@@ -616,40 +783,120 @@ async function rewards({ symbol, action = 'CLAIM' }) {
 
 // ═══════════════════════════════════════════════════════════
 // AUTO-TRADING: Brain-driven execution loop
+// Full PA + Macro confluence required. No pattern = no trade.
 // ═══════════════════════════════════════════════════════════
 let autoTradingInterval = null;
+
+async function _monitorOpenPositions() {
+  for (const [symbol, position] of activePositions) {
+    const asset  = priceFeed.getPrice(symbol);
+    const signal = brain.getSignal(symbol);
+    if (!asset || !position.entryPrice) continue;
+
+    const currentPrice = asset.priceUsd;
+    const stopPrice    = position.stopPrice   || (position.entryPrice * 0.97);
+    const targetPrice  = position.targetPrice || (position.entryPrice * 1.06);
+    const paScore      = signal?.components?.priceActionEngine ?? 0.5;
+    const reasons      = signal?.reasons || [];
+
+    // ── Stop loss hit ─────────────────────────────────────────────────────
+    if (currentPrice <= stopPrice) {
+      console.log(`🛑 [AutoTrade] STOP HIT ${symbol} @ $${currentPrice.toFixed(2)} (entry: $${position.entryPrice.toFixed(2)})`);
+      try { await sell({ symbol, reason: 'STOP_LOSS_HIT' }); } catch(e) {}
+      continue;
+    }
+
+    // ── Target hit ────────────────────────────────────────────────────────
+    if (currentPrice >= targetPrice) {
+      console.log(`✅ [AutoTrade] TARGET HIT ${symbol} @ $${currentPrice.toFixed(2)} — R:R ${position.riskReward}:1`);
+      try { await sell({ symbol, reason: 'TARGET_HIT' }); } catch(e) {}
+      continue;
+    }
+
+    // ── Pattern-based exits ───────────────────────────────────────────────
+    const hasBearPattern = reasons.some(r =>
+      r.includes('Moolah') ||
+      r.includes('Kangaroo Tail: rejection wick near ATH') ||
+      r.includes('Big Shadow: bearish engulfing') ||
+      r.includes('confirmed downtrend')
+    );
+    if (hasBearPattern && paScore < 0.40) {
+      console.log(`📉 [AutoTrade] BEARISH PATTERN EXIT ${symbol} @ $${currentPrice.toFixed(2)}`);
+      try { await sell({ symbol, reason: 'BEARISH_PATTERN_DETECTED' }); } catch(e) {}
+    }
+  }
+}
 
 function startAutoTrading() {
   if (autoTradingInterval) return { success: false, reason: 'Already running' };
   tradingActive = true;
 
-  // Start brain cycles if not already running
-  if (!brain.running) {
-    brain._startCycles();
-  }
+  if (!brain.running) brain._startCycles();
 
   brain.on('cycle', async (cycleData) => {
     if (!tradingActive) return;
-    const risk = brain.getRiskAssessment();
+
+    const risk   = brain.getRiskAssessment();
+    const regime = risk.regime || 'NEUTRAL';
+
+    // ── Emergency stop ────────────────────────────────────────────────────
     if (risk.drawdown >= CT.MAX_DRAWDOWN) {
-      console.warn('🛑 [Trading] Emergency stop — drawdown limit reached');
+      console.warn('🛑 [Trading] Emergency stop — max drawdown reached. Closing all positions.');
       tradingActive = false;
+      for (const symbol of activePositions.keys()) {
+        try { await sell({ symbol, reason: 'EMERGENCY_DRAWDOWN_STOP' }); } catch(e) {}
+      }
       return;
     }
 
-    // Execute top buys
-    for (const signal of (cycleData.topBuys || []).slice(0, 3)) {
-      if (signal.confidence >= CT.CONFIDENCE_THRESHOLD && signal.riskGate?.pass) {
-        try {
-          await buy({ symbol: signal.symbol, amount: 1000, portfolioValue: 100_000 });
-        } catch (e) {
-          console.warn(`⚠️  [AutoTrade] Buy ${signal.symbol}: ${e.message}`);
+    // ── Monitor existing positions every cycle ────────────────────────────
+    await _monitorOpenPositions();
+
+    // ── Filter: only signals with BOTH pattern AND macro confluence ───────
+    const qualifiedBuys = (cycleData.topBuys || []).filter(signal => {
+      const paScore   = signal.components?.priceActionEngine ?? 0;
+      const macroMult = signal.components?.macroMultiplier   ?? 1;
+      const confidence = signal.confidence || 0;
+
+      // Require: pattern confirmed + macro not headwind + confidence above threshold
+      if (paScore < 0.55) return false;               // No pattern = no trade
+      if (confidence < CT.CONFIDENCE_THRESHOLD) return false; // Brain confidence gate
+      if (!signal.riskGate?.pass) return false;        // Risk gate must pass
+      if (macroMult < 0.65) return false;              // Macro too bearish
+      if (activePositions.has(signal.symbol)) return false; // Already in position
+
+      // Bear market: only BTC/ETH buys
+      if (regime === 'BEAR' && !['BTC','ETH'].includes(signal.symbol)) {
+        return paScore >= 0.68; // Very strong pattern required for altcoins in bear
+      }
+
+      return true;
+    });
+
+    // ── Execute top 2 qualified buys per cycle (avoid over-trading) ───────
+    for (const signal of qualifiedBuys.slice(0, 2)) {
+      if (risk.portfolioHeat >= CT.MAX_PORTFOLIO_HEAT) break;
+      try {
+        const result = await buy({
+          symbol:         signal.symbol,
+          portfolioValue: 100_000,
+        });
+        if (result.success) {
+          console.log(`🟢 [AutoTrade] BUY ${signal.symbol} | Pattern: ${result.trade?.pattern} | PA: ${(signal.components?.priceActionEngine*100).toFixed(0)}% | R:R ${result.trade?.riskReward}:1`);
+        } else {
+          console.log(`⏸  [AutoTrade] SKIP ${signal.symbol}: ${result.reason}`);
         }
+      } catch (e) {
+        console.warn(`⚠️  [AutoTrade] Error ${signal.symbol}: ${e.message}`);
       }
     }
+
+    const openCount = activePositions.size;
+    const paSignals = (cycleData.topBuys || []).filter(s => (s.components?.priceActionEngine ?? 0) > 0.55).length;
+    console.log(`📊 [AutoTrade] Cycle ${cycleData.cycleCount} | Regime:${regime} | Open:${openCount} | PA signals:${paSignals} | Qualified:${qualifiedBuys.length}`);
   });
 
-  return { success: true, message: 'Auto-trading started with risk-first management' };
+  return { success: true, message: 'Auto-trading started — full PA + macro confluence required for entries' };
 }
 
 function stopAutoTrading() {
@@ -682,19 +929,85 @@ class TradingEngine extends EventEmitter {
   isActive()               { return tradingActive; }
 
   getStats() {
-    const wins   = tradeHistory.filter(t => t.type === 'SELL' && (t.pnl || 0) > 0).length;
-    const losses = tradeHistory.filter(t => t.type === 'SELL' && (t.pnl || 0) < 0).length;
-    const total  = wins + losses;
+    const closed = tradeHistory.filter(t => t.type === 'SELL');
+    const wins   = closed.filter(t => (t.pnl || 0) > 0);
+    const losses = closed.filter(t => (t.pnl || 0) <= 0);
+    const total  = closed.length;
+
+    // ── Win rate by pattern ──────────────────────────────────────────────
+    const patterns = ['KANGAROO_TAIL','WAMMIE','LAST_KISS','BIG_SHADOW','TREND_CONTINUATION','PRICE_ACTION','MANUAL'];
+    const byPattern = {};
+    for (const p of patterns) {
+      const pt = closed.filter(t => t.pattern === p);
+      const pw = pt.filter(t => (t.pnl || 0) > 0);
+      byPattern[p] = {
+        trades:  pt.length,
+        wins:    pw.length,
+        losses:  pt.length - pw.length,
+        winRate: pt.length > 0 ? parseFloat((pw.length / pt.length).toFixed(3)) : null,
+        totalPnl: parseFloat(pt.reduce((s,t) => s + (t.pnl || 0), 0).toFixed(2)),
+      };
+    }
+
+    // ── Win rate by regime ───────────────────────────────────────────────
+    const regimes = ['BULL','BEAR','NEUTRAL'];
+    const byRegime = {};
+    for (const r of regimes) {
+      const rt = closed.filter(t => t.regime === r);
+      const rw = rt.filter(t => (t.pnl || 0) > 0);
+      byRegime[r] = {
+        trades:  rt.length,
+        winRate: rt.length > 0 ? parseFloat((rw.length / rt.length).toFixed(3)) : null,
+        totalPnl: parseFloat(rt.reduce((s,t) => s + (t.pnl || 0), 0).toFixed(2)),
+      };
+    }
+
+    // ── Exit type breakdown ──────────────────────────────────────────────
+    const exitTypes = ['TARGET_HIT','STOP_LOSS_HIT','PATTERN_EXIT','TREND_EXIT','MOMENTUM_EXIT','MANUAL'];
+    const byExitType = {};
+    for (const e of exitTypes) {
+      const et = closed.filter(t => t.exitType === e);
+      byExitType[e] = {
+        count:   et.length,
+        totalPnl: parseFloat(et.reduce((s,t) => s + (t.pnl || 0), 0).toFixed(2)),
+      };
+    }
+
+    // ── Average R:R of winning trades ────────────────────────────────────
+    const avgWinPnl  = wins.length  > 0 ? wins.reduce((s,t) => s + (t.pnl||0), 0) / wins.length  : 0;
+    const avgLossPnl = losses.length> 0 ? losses.reduce((s,t) => s + (t.pnl||0), 0) / losses.length : 0;
+    const expectancy = total > 0
+      ? ((wins.length / total) * avgWinPnl) + ((losses.length / total) * avgLossPnl)
+      : 0;
+
     return {
-      totalTrades:     tradeHistory.length,
-      openPositions:   activePositions.size,
-      totalPnL,
-      winRate:         total > 0 ? wins / total : 0,
-      wins,
-      losses,
+      totalTrades:       tradeHistory.length,
+      closedTrades:      total,
+      openPositions:     activePositions.size,
+      totalPnL:          parseFloat(totalPnL.toFixed(2)),
+      winRate:           total > 0 ? parseFloat((wins.length / total).toFixed(3)) : 0,
+      wins:              wins.length,
+      losses:            losses.length,
+      avgWinPnl:         parseFloat(avgWinPnl.toFixed(2)),
+      avgLossPnl:        parseFloat(avgLossPnl.toFixed(2)),
+      expectancyPerTrade: parseFloat(expectancy.toFixed(2)),
       tradingActive,
-      portfolioHeat:   brain.portfolioHeat,
-      drawdown:        brain.drawdown,
+      portfolioHeat:     parseFloat(brain.portfolioHeat.toFixed(4)),
+      drawdown:          parseFloat(brain.drawdown.toFixed(4)),
+      byPattern,
+      byRegime,
+      byExitType,
+      openPositionsList: Array.from(activePositions.values()).map(p => ({
+        symbol:      p.symbol,
+        entryPrice:  p.entryPrice,
+        stopPrice:   p.stopPrice,
+        targetPrice: p.targetPrice,
+        riskReward:  p.riskReward,
+        pattern:     p.pattern,
+        regime:      p.regime,
+        paScore:     p.paScore,
+        timestamp:   p.timestamp,
+      })),
     };
   }
 }

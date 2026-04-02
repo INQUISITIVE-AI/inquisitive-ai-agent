@@ -27,7 +27,279 @@ const CT = {
   REWARD_SCORE_WEIGHT:    0.30,   // 30% weight on reward in scoring
   CONFIDENCE_THRESHOLD:   0.70,   // Min 70% confidence to execute
   PAPER_TRADE_CYCLES:     5,      // Paper trade for 5 cycles before live
+  // Price Action thresholds
+  KANGAROO_TAIL_RATIO:    2.0,    // Wick must be 2× the body size
+  ZONE_FRESHNESS_ATH:     0.65,   // athChange < -65% = deep fresh zone
+  BEAR_ALTCOIN_PENALTY:   0.40,   // 40% score reduction for altcoins in bear market
+  WAMMIE_MIN_CANDLES:     6,      // Minimum candles between double bottom touches
+  BTC_MACRO_THRESHOLD:    -0.10,  // BTC weekly loss > 10% = macro headwind
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PRICE ACTION ENGINE
+// Implements Naked Forex strategies: Kangaroo Tail, Wammie, Moolah,
+// Big Shadow, Last Kiss, Zone Strength, Trend Structure
+// ─────────────────────────────────────────────────────────────────────────────
+function priceActionEngine(asset, allAssets) {
+  let score = 0.5;
+  const signals = [];
+
+  const c24    = asset.change24h  || 0;
+  const c7d    = asset.change7d   || 0;
+  const ath    = asset.athChange  || -0.5;
+  const vol    = asset.volume24h  || 0;
+  const mcap   = asset.marketCap  || 0;
+  const price  = asset.priceUsd   || 0;
+  const high24 = asset.high24h    || price * (1 + Math.abs(c24));
+  const low24  = asset.low24h     || price * (1 - Math.abs(c24));
+
+  // ── Derived candle geometry (using real high/low data) ──────────────────
+  // Approximate open from close and 24h change: open ≈ close / (1 + change24h)
+  const close  = price;
+  const open   = price > 0 && c24 !== -1 ? price / (1 + c24) : price;
+  const body   = Math.abs(close - open);
+  const range  = high24 - low24;  // true 24h range
+
+  // Upper and lower wicks
+  const upperWick = high24 - Math.max(open, close);
+  const lowerWick = Math.min(open, close) - low24;
+
+  // ── 1. TREND STRUCTURE (Higher Highs/Lower Lows principle) ──────────────
+  const uptrendConfirmed   = c24 > 0.01 && c7d > 0.02;
+  const downtrendConfirmed = c24 < -0.01 && c7d < -0.02;
+  const trendConflict      = (c24 > 0 && c7d < -0.05) || (c24 < 0 && c7d > 0.05);
+
+  if (uptrendConfirmed)   { score += 0.12; signals.push('Trend: confirmed uptrend — higher timeframes aligned'); }
+  if (downtrendConfirmed) { score -= 0.15; signals.push('Trend: confirmed downtrend — avoid new longs'); }
+  if (trendConflict)      { score -= 0.08; signals.push('Trend: conflict between 24h and 7d — wait for clarity'); }
+
+  // ── 2. KANGAROO TAIL (Pin Bar) — PRECISE DETECTION ──────────────────────
+  // Rules: tail > 2× body, close within top/bottom 1/3, "room to the left"
+  // Bullish: long LOWER wick, close in upper 1/3 of range
+  // Bearish: long UPPER wick, close in lower 1/3 of range
+  const bodyToRange   = range > 0 ? body / range : 0;
+  const closePosition = range > 0 ? (close - low24) / range : 0.5;
+
+  const bullishKangaroo = body > 0 && (lowerWick / body) >= CT.KANGAROO_TAIL_RATIO
+                        && closePosition > 0.55   // close in upper 55% of range
+                        && lowerWick > upperWick   // tail is downward
+                        && bodyToRange < 0.40;     // small body relative to range
+
+  const bearishKangaroo = body > 0 && (upperWick / body) >= CT.KANGAROO_TAIL_RATIO
+                        && closePosition < 0.45   // close in lower 45% of range
+                        && upperWick > lowerWick   // tail is upward
+                        && bodyToRange < 0.40;
+
+  if (bullishKangaroo && ath < -0.35) {
+    score += 0.22;
+    signals.push(`Kangaroo Tail: bullish pin bar — lower wick ${(lowerWick/body).toFixed(1)}× body at deep support zone — very high probability reversal`);
+  } else if (bullishKangaroo) {
+    score += 0.14;
+    signals.push('Kangaroo Tail: bullish pin bar — long lower wick rejection — potential reversal');
+  }
+
+  if (bearishKangaroo && ath > -0.12) {
+    score -= 0.22;
+    signals.push(`Kangaroo Tail: bearish pin bar — upper wick ${(upperWick/body).toFixed(1)}× body near ATH resistance — reversal signal`);
+  } else if (bearishKangaroo) {
+    score -= 0.14;
+    signals.push('Kangaroo Tail: bearish pin bar — long upper wick rejection — potential reversal down');
+  }
+
+  const isKangarooLike = bullishKangaroo || bearishKangaroo
+    || (Math.abs(c24) > 0.03 && Math.abs(c24) < Math.abs(c7d) * 0.4); // fallback approx
+
+  // ── 3. BIG SHADOW (Engulfing) — PRECISE DETECTION ───────────────────────
+  // Current candle range > 1.5× prior range + body closes outside zone
+  // Using 24h range vs estimated prior range (7d avg daily range)
+  const avgDailyRange = range > 0 ? range : Math.abs(c7d / 7) * price;
+  const priorRange    = (Math.abs(c7d) / 7) * price;  // estimated prior daily range
+  const engulfingBull = c24 > 0 && range > 0 && priorRange > 0 && (range / priorRange) > 1.5
+                      && close > (low24 + range * 0.60); // closes in upper 40%
+  const engulfingBear = c24 < 0 && range > 0 && priorRange > 0 && (range / priorRange) > 1.5
+                      && close < (low24 + range * 0.40); // closes in lower 40%
+
+  if (engulfingBull && ath < -0.20) {
+    score += 0.16;
+    signals.push(`Big Shadow: bullish engulfing candle (range ${(range/priorRange).toFixed(1)}× avg) — strong buyer commitment at support`);
+  } else if (engulfingBear && ath > -0.20) {
+    score -= 0.16;
+    signals.push(`Big Shadow: bearish engulfing candle (range ${(range/priorRange).toFixed(1)}× avg) — strong seller commitment at resistance`);
+  }
+
+  // ── 4. WAMMIE (Double Bottom) ─────────────────────────────────────────────
+  // 7d trend was down, now 24h bouncing with higher low = accumulation
+  // "Second touch higher than first" encoded as 24h low > expected prior low
+  const wammieForming = c7d < -0.08 && c24 > 0.02 && ath < -0.35
+                      && low24 > (price * (1 + c7d) * 0.98); // 24h low above 7d low
+  if (wammieForming) {
+    score += 0.20;
+    signals.push('Wammie: double bottom — 7d made low, 24h bouncing with higher low at support zone — strong accumulation signal');
+  }
+
+  // ── 5. MOOLAH (Double Top) ────────────────────────────────────────────────
+  const moolahForming = c7d > 0.08 && c24 < -0.02 && ath > -0.15
+                      && high24 < (price * (1 + c7d) * 1.02); // 24h high below 7d high
+  if (moolahForming) {
+    score -= 0.20;
+    signals.push('Moolah: double top — 7d made high, 24h reversing with lower high at resistance zone — distribution signal');
+  }
+
+  // ── 6. LAST KISS (Breakout Retest) ───────────────────────────────────────
+  // Strong 7d breakout, 24h small retest back to level, holding
+  const lastKissBull = c7d > 0.10 && c24 < 0 && Math.abs(c24) < Math.abs(c7d) * 0.25
+                     && close > (price * (1 + c7d * 0.60)); // holding above 60% of the breakout level
+  const lastKissBear = c7d < -0.10 && c24 > 0 && Math.abs(c24) < Math.abs(c7d) * 0.25
+                     && close < (price * (1 + c7d * 0.60));
+
+  if (lastKissBull) {
+    score += 0.15;
+    signals.push('Last Kiss: breakout retest — retested broken resistance as support, holding — high probability continuation');
+  } else if (lastKissBear) {
+    score -= 0.15;
+    signals.push('Last Kiss: breakdown retest — retested broken support as resistance, rejecting — continuation down');
+  }
+
+  // ── 7. ZONE STRENGTH — "Room to the Left" ────────────────────────────────
+  if (ath < CT.ZONE_FRESHNESS_ATH) {
+    score += 0.12;
+    signals.push('Zone: deep historical level — "room to the left" — fresh untested support zone with strong potential');
+  } else if (ath < -0.85) {
+    score += 0.06;
+    signals.push('Zone: extreme discount — near multi-year lows — macro accumulation zone');
+  } else if (ath > -0.05) {
+    score -= 0.10;
+    signals.push('Zone: near ATH — strong overhead resistance — reduce long exposure');
+  }
+
+  // ── 8. REJECTION WICKS AT ROUND NUMBERS ──────────────────────────────────
+  const magnitude = Math.pow(10, Math.floor(Math.log10(price || 1)));
+  const nearRound  = price > 0 && (
+    Math.abs(price % magnitude) / magnitude < 0.05 ||
+    Math.abs(price % magnitude) / magnitude > 0.95 ||
+    (magnitude >= 1000 && Math.abs(price % (magnitude/2)) / (magnitude/2) < 0.04) // half-levels too
+  );
+  if (nearRound && isKangarooLike) {
+    score += 0.08;
+    signals.push('Zone: rejection wick at psychological round number — institutional stop hunt complete, reversal likely');
+  }
+
+  // ── 9. WICKS STACKING (pressure building) ────────────────────────────────
+  const wicksStackingBull = lowerWick > upperWick * 1.5 && c7d < 0 && close > open;
+  const wicksStackingBear = upperWick > lowerWick * 1.5 && c7d > 0 && close < open;
+  if (wicksStackingBull) { score += 0.07; signals.push('Wicks: lower wicks dominating — buying pressure building, sellers losing control'); }
+  if (wicksStackingBear) { score -= 0.07; signals.push('Wicks: upper wicks dominating — selling pressure building, buyers exhausted'); }
+
+  // ── 10. VOLUME CONFIRMATION ───────────────────────────────────────────────
+  const turnover = mcap > 0 ? vol / mcap : 0;
+  if ((engulfingBull || bullishKangaroo) && turnover > 0.06) {
+    score += 0.07;
+    signals.push(`Volume: ${(turnover*100).toFixed(1)}% turnover on bullish candle — institutional commitment confirmed`);
+  }
+  if ((engulfingBear || bearishKangaroo) && turnover > 0.06) {
+    score -= 0.05;
+    signals.push(`Volume: ${(turnover*100).toFixed(1)}% turnover on bearish candle — selling confirmed`);
+  }
+
+  // ── 11. INSIDE BAR / CONSOLIDATION before breakout ───────────────────────
+  // Low range candle after big move = coiling for next move
+  const isInsideBar = range > 0 && priorRange > 0 && (range / priorRange) < 0.50 && Math.abs(c24) < 0.02;
+  if (isInsideBar && uptrendConfirmed) {
+    score += 0.05;
+    signals.push('Inside Bar: tight consolidation in uptrend — coiling for breakout continuation');
+  }
+
+  return { score: Math.max(0, Math.min(1, score)), signals };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MACRO FILTER ENGINE (Cryptoteacher)
+// BTC-first macro analysis: regime, dominance, accumulation zones
+// Don't trade against the macro. Bear market = protect capital, not grow it.
+// ─────────────────────────────────────────────────────────────────────────────
+function macroFilterEngine(asset, allAssets, regime, fearGreed) {
+  let multiplier = 1.0;
+  const filters = [];
+
+  // ── BTC as macro barometer ────────────────────────────────────────────────
+  const btc = allAssets.find(a => a.symbol === 'BTC');
+  const btcChange7d = btc ? (btc.change7d || 0) : 0;
+  const btcChange24h = btc ? (btc.change24h || 0) : 0;
+
+  // Compute rough BTC dominance proxy: BTC mcap vs total top assets
+  const totalMcap = allAssets.reduce((sum, a) => sum + (a.marketCap || 0), 0);
+  const btcMcap = btc ? (btc.marketCap || 0) : 0;
+  const btcDominance = totalMcap > 0 ? btcMcap / totalMcap : 0.45;
+
+  const isBtcMajor   = ['BTC','ETH'].includes(asset.symbol);
+  const isAltcoin    = !isBtcMajor;
+
+  // ── Bear market: protect capital first ───────────────────────────────────
+  if (regime === 'BEAR') {
+    if (isAltcoin) {
+      multiplier *= (1 - CT.BEAR_ALTCOIN_PENALTY);
+      filters.push('Macro BEAR: altcoin score reduced 40% — buy only BTC/ETH in bear market');
+    } else {
+      multiplier *= 0.85; // Even BTC/ETH get 15% caution in full bear
+      filters.push('Macro BEAR: BTC/ETH caution — only buy at major historical support zones');
+    }
+  }
+
+  // ── BTC macro headwind ────────────────────────────────────────────────────
+  if (btcChange7d < CT.BTC_MACRO_THRESHOLD) {
+    const headwindPct = Math.abs(btcChange7d);
+    const penalty = Math.min(0.30, headwindPct * 1.5); // up to 30% penalty
+    multiplier *= (1 - penalty);
+    filters.push(`Macro headwind: BTC down ${(btcChange7d*100).toFixed(1)}% weekly — reduce exposure across all assets`);
+  }
+
+  // ── BTC dominance rising = flee altcoins ─────────────────────────────────
+  // When BTC dominance > 55% in current cycle + rising (BTC outperforming alts)
+  const btcOutperforming = btcChange7d > 0 && isAltcoin &&
+                           btc && asset.change7d < btcChange7d - 0.05;
+  if (btcOutperforming && btcDominance > 0.50) {
+    multiplier *= 0.75;
+    filters.push('Macro: BTC dominance rising — rotate out of altcoins into BTC');
+  }
+
+  // ── Extreme fear = accumulation zone (contrarian buy) ────────────────────
+  // Cryptoteacher: accumulation in bear = best entries of the cycle
+  if (fearGreed) {
+    const fg = parseInt(fearGreed.value);
+    if (fg < 15) {
+      // Extreme extreme fear = capitulation = highest probability reversal
+      multiplier *= 1.25;
+      filters.push('Macro: extreme capitulation fear — high-probability accumulation zone');
+    } else if (fg < 25) {
+      multiplier *= 1.15;
+      filters.push('Macro: extreme fear — contrarian accumulation opportunity');
+    } else if (fg > 85) {
+      // Extreme greed = distribution zone (Cryptoteacher: don\'t chase hype)
+      multiplier *= 0.70;
+      filters.push('Macro: extreme greed — hype-driven market — trim longs, avoid new entries');
+    } else if (fg > 75) {
+      multiplier *= 0.85;
+      filters.push('Macro: greed elevated — reduce position sizes, avoid FOMO entries');
+    }
+  }
+
+  // ── BTC new economy cycle filter ─────────────────────────────────────────
+  // Only trade what the new cycle supports — AI, RWA, infrastructure, not speculation
+  const cycleFavoredCategories = ['major','ai','rwa','oracle','liquid-stake','defi','l2','interop'];
+  if (!cycleFavoredCategories.includes(asset.category) && regime === 'BEAR') {
+    multiplier *= 0.80;
+    filters.push('Macro: cycle filter — low-priority category in bear regime — reduce allocation');
+  }
+
+  // ── BTC weekly structure check ────────────────────────────────────────────
+  if (isBtcMajor && btcChange7d > 0.05 && btcChange24h > 0) {
+    multiplier *= 1.10;
+    filters.push('Macro: BTC weekly structure bullish — ride the macro trend');
+  }
+
+  return { multiplier: Math.max(0.1, Math.min(2.0, multiplier)), filters };
+}
+
 
 // ── Pattern Engine: RL action-value scoring ──────────────────
 function patternEngineScore(asset, regime) {
@@ -145,7 +417,7 @@ function learningEngineScore(asset, history) {
 }
 
 // ── Risk-First Validation Gate ──────────────────────────────
-function riskGate(asset, portfolioHeat, drawdown) {
+function riskGate(asset, portfolioHeat, drawdown, regime) {
   const reasons = [];
   let pass = true;
 
@@ -161,11 +433,12 @@ function riskGate(asset, portfolioHeat, drawdown) {
     reasons.push(`Drawdown ${(drawdown*100).toFixed(1)}% ≥ limit ${(CT.MAX_DRAWDOWN*100)}% — EMERGENCY STOP`);
   }
 
-  // Gate 3: Volatility filter — don't trade in chaos
+  // Gate 3: Volatility filter — don't trade in chaos (widen in bear to catch capitulation)
   const absChange = Math.abs(asset.change24h);
-  if (absChange > 0.20) {
+  const volLimit = regime === 'BEAR' ? 0.30 : 0.20;
+  if (absChange > volLimit) {
     pass = false;
-    reasons.push(`24h volatility ${(absChange*100).toFixed(1)}% > 20% — skip this cycle`);
+    reasons.push(`24h volatility ${(absChange*100).toFixed(1)}% > ${volLimit*100}% — skip this cycle`);
   }
 
   // Gate 4: Minimum liquidity — only trade what you can exit
@@ -174,8 +447,26 @@ function riskGate(asset, portfolioHeat, drawdown) {
     reasons.push(`Volume $${asset.volume24h.toLocaleString()} < $500k minimum liquidity`);
   }
 
-  // Gate 5: Risk-reward gate — only bullish signals pass
-  const riskReward = absChange > 0 ? Math.abs(asset.change7d || 0) / absChange : 0;
+  // Gate 5: Trend alignment — don't fight confirmed downtrend (Naked Forex rule)
+  const c24 = asset.change24h || 0;
+  const c7d = asset.change7d  || 0;
+  const confirmedDowntrend = c24 < -0.02 && c7d < -0.05;
+  if (confirmedDowntrend && !['BTC','ETH'].includes(asset.symbol)) {
+    pass = false;
+    reasons.push(`Trend alignment: confirmed downtrend on ${asset.symbol} — wait for reversal pattern`);
+  }
+
+  // Gate 6: Bear market altcoin block — Cryptoteacher rule
+  if (regime === 'BEAR' && !['BTC','ETH','USDC','USDT','DAI'].includes(asset.symbol)) {
+    // Allow altcoins only if strong wammie/kangaroo tail signal (score will handle)
+    if (absChange < 0.02 && c7d < -0.10) {
+      pass = false;
+      reasons.push(`Bear market: ${asset.symbol} in drawdown with no reversal pattern — skip`);
+    }
+  }
+
+  // Gate 7: Risk-reward calculation
+  const riskReward = absChange > 0 ? Math.abs(c7d) / absChange : 0;
 
   return { pass, reasons, riskReward };
 }
@@ -184,29 +475,58 @@ function riskGate(asset, portfolioHeat, drawdown) {
 function scoreAsset(asset, context) {
   const { regime, fearGreed, allAssets, portfolioHeat, drawdown } = context;
 
-  // Individual engine scores
+  // ── Five original engines ──
   const dmScore   = patternEngineScore(asset, regime);
   const oaiResult = reasoningEngineScore(asset, fearGreed);
   const mitScore  = portfolioEngineScore(asset, allAssets);
   const stanScore = learningEngineScore(asset, []);
-  const ctGate    = riskGate(asset, portfolioHeat, drawdown);
 
-  // Weighted ensemble (risk-first 70/30)
-  const rawScore = (dmScore * 0.25) + (oaiResult.score * 0.25) + (mitScore * 0.25) + (stanScore * 0.25);
-  const riskAdj  = ctGate.pass ? rawScore : rawScore * 0.3; // Heavy penalty if risk gate fails
+  // ── Two new engines ──
+  const paResult    = priceActionEngine(asset, allAssets);   // Naked Forex patterns
+  const macroResult = macroFilterEngine(asset, allAssets, regime, fearGreed); // Cryptoteacher macro
+
+  // ── Risk gate now aware of regime + trend alignment ──
+  const ctGate = riskGate(asset, portfolioHeat, drawdown, regime);
+
+  // ── Weighted ensemble: price action + macro get significant weight ──
+  // Original 4 engines: 50% weight total (12.5% each)
+  // New price action engine: 30% weight (Naked Forex — pattern is the trigger)
+  // Macro filter multiplier: applied as final multiplier (Cryptoteacher — context filter)
+  const rawScore = (
+    (dmScore          * 0.125) +
+    (oaiResult.score  * 0.125) +
+    (mitScore         * 0.125) +
+    (stanScore        * 0.125) +
+    (paResult.score   * 0.500)   // price action is the dominant signal
+  );
+
+  // Apply macro multiplier from Cryptoteacher filter
+  const macroAdjusted = rawScore * macroResult.multiplier;
+
+  // Risk gate penalty
+  const riskAdj = ctGate.pass ? macroAdjusted : macroAdjusted * 0.25;
 
   // Final combined score
-  const finalScore = (riskAdj * CT.RISK_SCORE_WEIGHT) + (rawScore * CT.REWARD_SCORE_WEIGHT);
+  const finalScore = Math.max(0, Math.min(1,
+    (riskAdj * CT.RISK_SCORE_WEIGHT) + (rawScore * CT.REWARD_SCORE_WEIGHT)
+  ));
 
-  // Determine action
+  // Determine action — tighter thresholds require more confirmation
   let action = 'HOLD';
   if (ctGate.pass) {
     if      (finalScore >= 0.72) action = 'BUY';
     else if (finalScore >= 0.65) action = 'ACCUMULATE';
-    else if (finalScore <= 0.35) action = 'SELL';
-    else if (finalScore <= 0.42) action = 'REDUCE';
+    else if (finalScore <= 0.28) action = 'SELL';
+    else if (finalScore <= 0.38) action = 'REDUCE';
   } else {
     action = 'SKIP';
+  }
+
+  // In bear market: no altcoin buys without a strong pattern signal
+  if (regime === 'BEAR' && !['BTC','ETH','USDC','USDT'].includes(asset.symbol)) {
+    if (paResult.score < 0.62 && (action === 'BUY' || action === 'ACCUMULATE')) {
+      action = 'HOLD'; // Need strong PA pattern to buy altcoins in bear market
+    }
   }
 
   return {
@@ -216,15 +536,22 @@ function scoreAsset(asset, context) {
     finalScore:   parseFloat(finalScore.toFixed(4)),
     rawScore:     parseFloat(rawScore.toFixed(4)),
     components: {
-      patternEngine:   parseFloat(dmScore.toFixed(4)),
-      reasoningEngine: parseFloat(oaiResult.score.toFixed(4)),
-      portfolioEngine: parseFloat(mitScore.toFixed(4)),
-      learningEngine:  parseFloat(stanScore.toFixed(4)),
+      patternEngine:    parseFloat(dmScore.toFixed(4)),
+      reasoningEngine:  parseFloat(oaiResult.score.toFixed(4)),
+      portfolioEngine:  parseFloat(mitScore.toFixed(4)),
+      learningEngine:   parseFloat(stanScore.toFixed(4)),
+      priceActionEngine: parseFloat(paResult.score.toFixed(4)),
+      macroMultiplier:  parseFloat(macroResult.multiplier.toFixed(4)),
     },
     action,
     confidence:    finalScore,
     riskGate:      ctGate,
-    reasons:       [...oaiResult.reasons, ...ctGate.reasons],
+    reasons: [
+      ...oaiResult.reasons,
+      ...paResult.signals,
+      ...macroResult.filters,
+      ...ctGate.reasons,
+    ],
     weight:        asset.weight || 0,
     priceUsd:      asset.priceUsd || 0,
     change24h:     asset.change24h || 0,
@@ -404,20 +731,50 @@ class InquisitiveBrain extends EventEmitter {
   getExplanation(symbol) {
     const signal = this.getSignal(symbol);
     if (!signal) return null;
+
+    const paScore   = signal.components?.priceActionEngine ?? 0;
+    const macroMult = signal.components?.macroMultiplier   ?? 1;
+
+    // Identify the strongest pattern signal
+    const patternSignals = (signal.reasons || []).filter(r =>
+      r.includes('Kangaroo Tail') || r.includes('Wammie') || r.includes('Moolah') ||
+      r.includes('Big Shadow') || r.includes('Last Kiss') || r.includes('Trend:') ||
+      r.includes('Zone:') || r.includes('Wicks:') || r.includes('Inside Bar') ||
+      r.includes('Volume:')
+    );
+    const macroSignals = (signal.reasons || []).filter(r =>
+      r.includes('Macro') || r.includes('macro') || r.includes('BTC') || r.includes('dominance')
+    );
+
     return {
       symbol,
-      action:     signal.action,
-      confidence: (signal.finalScore * 100).toFixed(1) + '%',
-      explanation: `${symbol} scored ${(signal.finalScore*100).toFixed(1)}% overall. ` +
+      action:        signal.action,
+      confidence:    (signal.finalScore * 100).toFixed(1) + '%',
+      priceAction:   (paScore * 100).toFixed(1) + '%',
+      macroMult:     macroMult.toFixed(2) + '×',
+      explanation:
+        `${symbol} final score: ${(signal.finalScore*100).toFixed(1)}%. ` +
+        `Price Action Engine: ${(paScore*100).toFixed(0)}% (dominant signal, 50% weight). ` +
+        `Macro Multiplier: ${macroMult.toFixed(2)}× (BTC regime filter). ` +
         `Pattern Engine: ${(signal.components.patternEngine*100).toFixed(0)}%, ` +
-        `Reasoning Engine: ${(signal.components.reasoningEngine*100).toFixed(0)}%, ` +
-        `Portfolio Engine: ${(signal.components.portfolioEngine*100).toFixed(0)}%, ` +
-        `Learning Engine: ${(signal.components.learningEngine*100).toFixed(0)}%.`,
-      reasons:    signal.reasons,
-      riskGate:   signal.riskGate,
-      riskGateNote: signal.riskGate.pass
-        ? '✅ Passed all risk gates'
-        : '❌ Blocked by risk management',
+        `Reasoning: ${(signal.components.reasoningEngine*100).toFixed(0)}%, ` +
+        `Portfolio: ${(signal.components.portfolioEngine*100).toFixed(0)}%, ` +
+        `Learning: ${(signal.components.learningEngine*100).toFixed(0)}%.`,
+      patternSignals,
+      macroSignals,
+      allReasons:    signal.reasons,
+      riskGate:      signal.riskGate,
+      riskGateNote:  signal.riskGate.pass
+        ? '✅ All gates passed — pattern + macro + risk confirmed'
+        : '❌ Blocked: ' + (signal.riskGate.reasons?.[0] || 'risk gate failed'),
+      components:    signal.components,
+      priceData: {
+        price:     signal.priceUsd,
+        change24h: (signal.change24h * 100).toFixed(2) + '%',
+        change7d:  (signal.change7d  * 100).toFixed(2) + '%',
+        volume24h: signal.volume24h,
+        marketCap: signal.marketCap,
+      },
     };
   }
 

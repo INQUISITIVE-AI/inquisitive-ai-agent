@@ -32,11 +32,13 @@ router.get('/status', (req, res) => {
       targetMCap:  1_500_000_000,
     },
     architecture: {
-      brain:       'AI Scoring Engine — Pattern + Reasoning + Portfolio + Learning + Risk Engine',
-      executioner: 'Trading Engine — buy/sell/swap/lend/yield/loop/stake/multiply/earn/rewards',
-      xray:        'Real-time Dashboard — performance attribution + risk metrics',
-      guardian:    'Multi-layer Security — HSM + multi-sig + time-locks + circuit breakers',
-      oracle:      'Real Price Feeds — CoinGecko + Yahoo Finance + Alternative.me',
+      brain:        'AI Scoring Engine — Pattern + Reasoning + Portfolio + Learning + Risk Engine',
+      priceAction:  'Price Action Engine — Kangaroo Tail, Wammie, Moolah, Big Shadow, Last Kiss, Zone Strength',
+      macroFilter:  'Macro Filter Engine — BTC regime, dominance, accumulation zones, fear/greed',
+      executioner:  'Trading Engine — buy/sell/swap/lend/yield/loop/stake/multiply/earn/rewards',
+      xray:         'Real-time Dashboard — performance attribution + risk metrics',
+      guardian:     'Multi-layer Security — HSM + multi-sig + time-locks + circuit breakers',
+      oracle:       'Real Price Feeds — CoinGecko + Yahoo Finance + Alternative.me',
     },
     dataSource: 'REAL LIVE APIs — no mock data',
     timestamp:  new Date().toISOString(),
@@ -51,9 +53,16 @@ router.get('/assets', (req, res) => {
 
   const enriched = assets.map(a => ({
     ...a,
-    signal:     sigMap[a.symbol]?.action     || 'PENDING',
-    confidence: sigMap[a.symbol]?.finalScore || 0,
-    brainScore: sigMap[a.symbol]?.finalScore || 0,
+    signal:           sigMap[a.symbol]?.action                              || 'PENDING',
+    confidence:       sigMap[a.symbol]?.finalScore                          || 0,
+    brainScore:       sigMap[a.symbol]?.finalScore                          || 0,
+    paScore:          sigMap[a.symbol]?.components?.priceActionEngine       || 0,
+    macroMultiplier:  sigMap[a.symbol]?.components?.macroMultiplier         || 1,
+    patternSignals:   (sigMap[a.symbol]?.reasons || []).filter(r =>
+      r.includes('Kangaroo') || r.includes('Wammie') || r.includes('Moolah') ||
+      r.includes('Big Shadow') || r.includes('Last Kiss') || r.includes('Zone:') ||
+      r.includes('Wicks:') || r.includes('Inside Bar') || r.includes('Trend:')
+    ),
   }));
 
   res.json({
@@ -117,6 +126,17 @@ router.get('/dashboard', (req, res) => {
   const topBuys   = signals.filter(s => s.action === 'BUY' || s.action === 'ACCUMULATE')
                            .sort((a, b) => b.finalScore - a.finalScore).slice(0, 10);
 
+  // Price Action signal breakdown
+  const paSignals = signals.filter(s => (s.components?.priceActionEngine ?? 0) > 0.60);
+  const patternBreakdown = {
+    kangarooTails: paSignals.filter(s => (s.reasons || []).some(r => r.includes('Kangaroo Tail'))).length,
+    wammies:       paSignals.filter(s => (s.reasons || []).some(r => r.includes('Wammie'))).length,
+    moolahs:       paSignals.filter(s => (s.reasons || []).some(r => r.includes('Moolah'))).length,
+    bigShadows:    paSignals.filter(s => (s.reasons || []).some(r => r.includes('Big Shadow'))).length,
+    lastKisses:    paSignals.filter(s => (s.reasons || []).some(r => r.includes('Last Kiss'))).length,
+    trendSignals:  paSignals.filter(s => (s.reasons || []).some(r => r.includes('Trend: confirmed uptrend'))).length,
+  };
+
   res.json({
     portfolio: {
       assetCount:    assets.length,
@@ -126,11 +146,18 @@ router.get('/dashboard', (req, res) => {
       categories:    categoryMap,
     },
     performance: {
-      totalPnL:         stats.totalPnL,
-      winRate:          stats.winRate,
-      totalTrades:      stats.totalTrades,
-      openPositions:    stats.openPositions,
-      targetAPY:        0.185,
+      totalPnL:            stats.totalPnL,
+      winRate:             stats.winRate,
+      closedTrades:        stats.closedTrades,
+      totalTrades:         stats.totalTrades,
+      openPositions:       stats.openPositions,
+      avgWinPnl:           stats.avgWinPnl,
+      avgLossPnl:          stats.avgLossPnl,
+      expectancyPerTrade:  stats.expectancyPerTrade,
+      byPattern:           stats.byPattern,
+      byRegime:            stats.byRegime,
+      byExitType:          stats.byExitType,
+      targetAPY:           0.185,
     },
     risk: {
       regime:           risk.regime,
@@ -142,11 +169,13 @@ router.get('/dashboard', (req, res) => {
       isLive:           risk.isLive,
     },
     aiSignals: {
-      totalSignals: signals.length,
+      totalSignals:     signals.length,
       buys, sells, holds, skips,
       topBuys,
-      cycleCount:   brain.getStatus().cycleCount,
-      lastCycle:    brain.getStatus().lastCycle,
+      patternBreakdown,
+      paQualified:      paSignals.length,
+      cycleCount:       brain.getStatus().cycleCount,
+      lastCycle:        brain.getStatus().lastCycle,
     },
     macro: {
       regime:     macro.regime,
@@ -266,6 +295,54 @@ router.get('/signals', (req, res) => {
     lastCycle:   brain.getStatus().lastCycle,
     source:      'AI Brain REAL LIVE analysis',
     timestamp:   new Date().toISOString(),
+  });
+});
+
+// ── GET /signals/price-action — PA pattern signals only ───────
+router.get('/signals/price-action', (req, res) => {
+  const signals  = brain.getAllSignals();
+  const macro    = macroData.getSummary();
+  const risk     = brain.getRiskAssessment();
+  const minScore = parseFloat(req.query.min) || 0.55;
+
+  const paSignals = signals
+    .filter(s => (s.components?.priceActionEngine ?? 0) >= minScore)
+    .map(s => ({
+      symbol:          s.symbol,
+      name:            s.name,
+      category:        s.category,
+      action:          s.action,
+      finalScore:      s.finalScore,
+      paScore:         s.components?.priceActionEngine ?? 0,
+      macroMultiplier: s.components?.macroMultiplier   ?? 1,
+      priceUsd:        s.priceUsd,
+      change24h:       s.change24h,
+      change7d:        s.change7d,
+      patterns: (s.reasons || []).filter(r =>
+        r.includes('Kangaroo') || r.includes('Wammie') || r.includes('Moolah') ||
+        r.includes('Big Shadow') || r.includes('Last Kiss') || r.includes('Zone:') ||
+        r.includes('Wicks:') || r.includes('Inside Bar')
+      ),
+      macroFilters: (s.reasons || []).filter(r =>
+        r.includes('Macro') || r.includes('macro') || r.includes('BTC') || r.includes('dominance')
+      ),
+      riskGatePass: s.riskGate?.pass,
+    }))
+    .sort((a, b) => b.paScore - a.paScore);
+
+  const highProb = paSignals.filter(s => s.paScore >= 0.70 && s.riskGatePass && s.action !== 'SKIP');
+
+  res.json({
+    paSignals,
+    highProbability:  highProb,
+    count:            paSignals.length,
+    highProbCount:    highProb.length,
+    regime:           risk.regime,
+    fearGreed:        macro.fearGreed,
+    riskAssessment:   risk,
+    minScoreFilter:   minScore,
+    source:           'Price Action Engine — Kangaroo Tail, Wammie, Moolah, Big Shadow, Last Kiss',
+    timestamp:        new Date().toISOString(),
   });
 });
 
