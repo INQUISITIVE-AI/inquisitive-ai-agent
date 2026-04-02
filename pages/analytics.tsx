@@ -11,7 +11,7 @@ import {
   Scale, Wallet, Layers, Activity, BarChart3, Zap, Shield, AlertTriangle, Clock,
 } from 'lucide-react';
 import { INQAI_TOKEN, wagmiConfig } from '../src/config/wagmi';
-import InqaiLogo from '../src/components/InqaiLogo';
+import PriceActionDashboard from '../src/components/PriceActionDashboard';
 
 
 const VAULT_ADDR = (process.env.NEXT_PUBLIC_VAULT_ADDRESS || '0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb') as `0x${string}`;
@@ -81,7 +81,7 @@ export default function AnalyticsPage() {
   const [sysStatus, setSysStatus]= useState<any>(null);
   const [loading,   setLoading]  = useState(true);
   const [refreshing,setRefreshing]= useState(false);
-  const [tab,       setTab]      = useState<'portfolio'|'ai'|'positions'|'execution'|'fees'>('portfolio');
+  const [tab,       setTab]      = useState<'portfolio'|'ai'|'positions'|'execution'|'fees'|'price-action'>('portfolio');
   const [posFilter, setPosFilter]= useState<string>('all');
   const [purchases, setPurchases]= useState<any[]>([]);
   const [vesting,   setVesting]  = useState<any>(null);
@@ -464,10 +464,10 @@ export default function AnalyticsPage() {
             {/* Tabs */}
             <div style={{ display:'flex', gap:2, marginBottom:20, borderBottom:'1px solid rgba(255,255,255,0.06)', flexWrap:'wrap' }}>
               {(() => {
-                const tabs = isVaultOwner ? ['portfolio','ai','positions','execution','fees'] : ['portfolio','ai','positions','fees'];
+                const tabs = isVaultOwner ? ['portfolio','ai','price-action','positions','execution','fees'] : ['portfolio','ai','price-action','positions','fees'];
                 return tabs.map(t => (
                 <button key={t} onClick={() => setTab(t)} style={{ padding:'10px 18px', fontSize:13, fontWeight:tab===t?700:500, cursor:'pointer', background:'none', border:'none', borderBottom:`2px solid ${tab===t?'#7c3aed':'transparent'}`, color:tab===t?'#a78bfa':'rgba(255,255,255,0.4)', transition:'all 0.15s', position:'relative' }}>
-                  {{portfolio:'Portfolio',ai:'AI Activity',positions:`Positions (${positions.length})`,execution:'Execution',fees:'Fee Flow'}[t as string]}
+                  {{portfolio:'Portfolio',ai:'AI Activity','price-action':'Price Action',positions:`Positions (${positions.length})`,execution:'Execution',fees:'Fee Flow'}[t as string]}
                   {t==='execution'&&!automationOn&&<span style={{position:'absolute',top:6,right:6,width:6,height:6,borderRadius:'50%',background:'#f59e0b',display:'block'}}/>}
                 </button>
               ));
@@ -769,6 +769,29 @@ export default function AnalyticsPage() {
                   )}
                 </div>
               </div>
+            )}
+
+            {/* ── PRICE ACTION TAB ── */}
+            {tab === 'price-action' && (
+              <PriceActionDashboard
+                signals={positions.filter((p:any) => p.paScore && p.paScore > 0.5).map((p:any) => ({
+                  symbol: p.symbol,
+                  name: p.name,
+                  category: p.category,
+                  paScore: p.paScore,
+                  finalScore: p.confidence,
+                  action: p.action,
+                  priceUsd: p.priceUsd,
+                  change24h: p.change24h,
+                  change7d: p.change7d,
+                  patterns: p.patternSignals || [],
+                  macroFilters: p.macroFilters || [],
+                  macroMultiplier: p.macroMultiplier || 1,
+                  riskGatePass: p.riskGate?.pass ?? true,
+                }))}
+                macro={{ regime: nav?.ai?.regime || 'NEUTRAL', fearGreed: nav?.ai?.fearGreed }}
+                onSignalClick={(symbol) => router.push(`/analytics?symbol=${symbol}`)}
+              />
             )}
 
             {/* ── POSITIONS TAB ── */}
