@@ -28,17 +28,17 @@ const CT = {
   CONFIDENCE_THRESHOLD:   0.70,   // Min 70% confidence to execute
   PAPER_TRADE_CYCLES:     5,      // Paper trade for 5 cycles before live
   // Price Action thresholds
-  KANGAROO_TAIL_RATIO:    2.0,    // Wick must be 2× the body size
+  LONG_WICK_RATIO:        2.0,    // Wick must be 2× the body size
   ZONE_FRESHNESS_ATH:     0.65,   // athChange < -65% = deep fresh zone
   BEAR_ALTCOIN_PENALTY:   0.40,   // 40% score reduction for altcoins in bear market
-  WAMMIE_MIN_CANDLES:     6,      // Minimum candles between double bottom touches
+  DOUBLE_FLOOR_MIN_CANDLES: 6,      // Minimum candles between double bottom touches
   BTC_MACRO_THRESHOLD:    -0.10,  // BTC weekly loss > 10% = macro headwind
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PRICE ACTION ENGINE
-// Implements Naked Forex strategies: Kangaroo Tail, Wammie, Moolah,
-// Big Shadow, Last Kiss, Zone Strength, Trend Structure
+// Implements price action strategies: Long Wick Reversal, Double Floor, Double Ceiling,
+// Engulfing Bar, Breakout Test, Support Zone, Trend Structure
 // ─────────────────────────────────────────────────────────────────────────────
 function priceActionEngine(asset, allAssets) {
   let score = 0.5;
@@ -73,43 +73,43 @@ function priceActionEngine(asset, allAssets) {
   if (downtrendConfirmed) { score -= 0.15; signals.push('Trend: confirmed downtrend — avoid new longs'); }
   if (trendConflict)      { score -= 0.08; signals.push('Trend: conflict between 24h and 7d — wait for clarity'); }
 
-  // ── 2. KANGAROO TAIL (Pin Bar) — PRECISE DETECTION ──────────────────────
+  // ── 2. LONG WICK REVERSAL — PRECISE DETECTION ──────────────────────
   // Rules: tail > 2× body, close within top/bottom 1/3, "room to the left"
   // Bullish: long LOWER wick, close in upper 1/3 of range
   // Bearish: long UPPER wick, close in lower 1/3 of range
   const bodyToRange   = range > 0 ? body / range : 0;
   const closePosition = range > 0 ? (close - low24) / range : 0.5;
 
-  const bullishKangaroo = body > 0 && (lowerWick / body) >= CT.KANGAROO_TAIL_RATIO
+  const bullishLongWick = body > 0 && (lowerWick / body) >= CT.LONG_WICK_RATIO
                         && closePosition > 0.55   // close in upper 55% of range
                         && lowerWick > upperWick   // tail is downward
                         && bodyToRange < 0.40;     // small body relative to range
 
-  const bearishKangaroo = body > 0 && (upperWick / body) >= CT.KANGAROO_TAIL_RATIO
+  const bearishLongWick = body > 0 && (upperWick / body) >= CT.LONG_WICK_RATIO
                         && closePosition < 0.45   // close in lower 45% of range
                         && upperWick > lowerWick   // tail is upward
                         && bodyToRange < 0.40;
 
-  if (bullishKangaroo && ath < -0.35) {
+  if (bullishLongWick && ath < -0.35) {
     score += 0.22;
-    signals.push(`Kangaroo Tail: bullish pin bar — lower wick ${(lowerWick/body).toFixed(1)}× body at deep support zone — very high probability reversal`);
-  } else if (bullishKangaroo) {
+    signals.push(`Long Wick Reversal: bullish extended shadow — lower wick ${(lowerWick/body).toFixed(1)}× body at deep support — high probability bounce`);
+  } else if (bullishLongWick) {
     score += 0.14;
-    signals.push('Kangaroo Tail: bullish pin bar — long lower wick rejection — potential reversal');
+    signals.push('Long Wick Reversal: bullish extended shadow — long lower wick showing rejection — potential upward move');
   }
 
-  if (bearishKangaroo && ath > -0.12) {
+  if (bearishLongWick && ath > -0.12) {
     score -= 0.22;
-    signals.push(`Kangaroo Tail: bearish pin bar — upper wick ${(upperWick/body).toFixed(1)}× body near ATH resistance — reversal signal`);
-  } else if (bearishKangaroo) {
+    signals.push(`Long Wick Reversal: bearish extended shadow — upper wick ${(upperWick/body).toFixed(1)}× body near highs — reversal signal`);
+  } else if (bearishLongWick) {
     score -= 0.14;
-    signals.push('Kangaroo Tail: bearish pin bar — long upper wick rejection — potential reversal down');
+    signals.push('Long Wick Reversal: bearish extended shadow — long upper wick showing rejection — potential downward move');
   }
 
-  const isKangarooLike = bullishKangaroo || bearishKangaroo
+  const isLongWickPattern = bullishLongWick || bearishLongWick
     || (Math.abs(c24) > 0.03 && Math.abs(c24) < Math.abs(c7d) * 0.4); // fallback approx
 
-  // ── 3. BIG SHADOW (Engulfing) — PRECISE DETECTION ───────────────────────
+  // ── 3. ENGULFING BAR — PRECISE DETECTION ───────────────────────
   // Current candle range > 1.5× prior range + body closes outside zone
   // Using 24h range vs estimated prior range (7d avg daily range)
   const avgDailyRange = range > 0 ? range : Math.abs(c7d / 7) * price;
@@ -121,55 +121,55 @@ function priceActionEngine(asset, allAssets) {
 
   if (engulfingBull && ath < -0.20) {
     score += 0.16;
-    signals.push(`Big Shadow: bullish engulfing candle (range ${(range/priorRange).toFixed(1)}× avg) — strong buyer commitment at support`);
+    signals.push(`Engulfing Bar: bullish consuming candle (range ${(range/priorRange).toFixed(1)}× avg) — strong buyer commitment at support`);
   } else if (engulfingBear && ath > -0.20) {
     score -= 0.16;
-    signals.push(`Big Shadow: bearish engulfing candle (range ${(range/priorRange).toFixed(1)}× avg) — strong seller commitment at resistance`);
+    signals.push(`Engulfing Bar: bearish consuming candle (range ${(range/priorRange).toFixed(1)}× avg) — strong seller commitment at resistance`);
   }
 
-  // ── 4. WAMMIE (Double Bottom) ─────────────────────────────────────────────
+  // ── 4. DOUBLE FLOOR ─────────────────────────────────────────────
   // 7d trend was down, now 24h bouncing with higher low = accumulation
   // "Second touch higher than first" encoded as 24h low > expected prior low
-  const wammieForming = c7d < -0.08 && c24 > 0.02 && ath < -0.35
+  const doubleFloorForming = c7d < -0.08 && c24 > 0.02 && ath < -0.35
                       && low24 > (price * (1 + c7d) * 0.98); // 24h low above 7d low
-  if (wammieForming) {
+  if (doubleFloorForming) {
     score += 0.20;
-    signals.push('Wammie: double bottom — 7d made low, 24h bouncing with higher low at support zone — strong accumulation signal');
+    signals.push('Double Floor: twin lows forming — 7d made low, 24h bouncing with higher low at support — strong accumulation signal');
   }
 
-  // ── 5. MOOLAH (Double Top) ────────────────────────────────────────────────
-  const moolahForming = c7d > 0.08 && c24 < -0.02 && ath > -0.15
+  // ── 5. DOUBLE CEILING ────────────────────────────────────────────────
+  const doubleCeilingForming = c7d > 0.08 && c24 < -0.02 && ath > -0.15
                       && high24 < (price * (1 + c7d) * 1.02); // 24h high below 7d high
-  if (moolahForming) {
+  if (doubleCeilingForming) {
     score -= 0.20;
-    signals.push('Moolah: double top — 7d made high, 24h reversing with lower high at resistance zone — distribution signal');
+    signals.push('Double Ceiling: twin highs forming — 7d made high, 24h reversing with lower high at resistance — distribution signal');
   }
 
-  // ── 6. LAST KISS (Breakout Retest) ───────────────────────────────────────
+  // ── 6. BREAKOUT TEST ───────────────────────────────────────
   // Strong 7d breakout, 24h small retest back to level, holding
-  const lastKissBull = c7d > 0.10 && c24 < 0 && Math.abs(c24) < Math.abs(c7d) * 0.25
+  const breakoutTestBull = c7d > 0.10 && c24 < 0 && Math.abs(c24) < Math.abs(c7d) * 0.25
                      && close > (price * (1 + c7d * 0.60)); // holding above 60% of the breakout level
-  const lastKissBear = c7d < -0.10 && c24 > 0 && Math.abs(c24) < Math.abs(c7d) * 0.25
+  const breakoutTestBear = c7d < -0.10 && c24 > 0 && Math.abs(c24) < Math.abs(c7d) * 0.25
                      && close < (price * (1 + c7d * 0.60));
 
-  if (lastKissBull) {
+  if (breakoutTestBull) {
     score += 0.15;
-    signals.push('Last Kiss: breakout retest — retested broken resistance as support, holding — high probability continuation');
-  } else if (lastKissBear) {
+    signals.push('Breakout Test: level retest — retested breached resistance as support, holding — high probability continuation');
+  } else if (breakoutTestBear) {
     score -= 0.15;
-    signals.push('Last Kiss: breakdown retest — retested broken support as resistance, rejecting — continuation down');
+    signals.push('Breakout Test: breakdown retest — retested breached support as resistance, rejecting — continuation down');
   }
 
-  // ── 7. ZONE STRENGTH — "Room to the Left" ────────────────────────────────
+  // ── 7. SUPPORT ZONE — "Room to the Left" ────────────────────────────────
   if (ath < CT.ZONE_FRESHNESS_ATH) {
     score += 0.12;
-    signals.push('Zone: deep historical level — "room to the left" — fresh untested support zone with strong potential');
+    signals.push('Support Zone: deep historical level — fresh untested support area with strong potential');
   } else if (ath < -0.85) {
     score += 0.06;
-    signals.push('Zone: extreme discount — near multi-year lows — macro accumulation zone');
+    signals.push('Support Zone: extreme discount — near multi-year lows — macro accumulation zone');
   } else if (ath > -0.05) {
     score -= 0.10;
-    signals.push('Zone: near ATH — strong overhead resistance — reduce long exposure');
+    signals.push('Support Zone: near highs — strong overhead resistance — reduce long exposure');
   }
 
   // ── 8. REJECTION WICKS AT ROUND NUMBERS ──────────────────────────────────
@@ -179,34 +179,34 @@ function priceActionEngine(asset, allAssets) {
     Math.abs(price % magnitude) / magnitude > 0.95 ||
     (magnitude >= 1000 && Math.abs(price % (magnitude/2)) / (magnitude/2) < 0.04) // half-levels too
   );
-  if (nearRound && isKangarooLike) {
+  if (nearRound && isLongWickPattern) {
     score += 0.08;
-    signals.push('Zone: rejection wick at psychological round number — institutional stop hunt complete, reversal likely');
+    signals.push('Support Zone: rejection at psychological round number — institutional stop hunt complete, reversal likely');
   }
 
-  // ── 9. WICKS STACKING (pressure building) ────────────────────────────────
-  const wicksStackingBull = lowerWick > upperWick * 1.5 && c7d < 0 && close > open;
-  const wicksStackingBear = upperWick > lowerWick * 1.5 && c7d > 0 && close < open;
-  if (wicksStackingBull) { score += 0.07; signals.push('Wicks: lower wicks dominating — buying pressure building, sellers losing control'); }
-  if (wicksStackingBear) { score -= 0.07; signals.push('Wicks: upper wicks dominating — selling pressure building, buyers exhausted'); }
+  // ── 9. STACKED WICKS (pressure building) ────────────────────────────────
+  const stackedWicksBull = lowerWick > upperWick * 1.5 && c7d < 0 && close > open;
+  const stackedWicksBear = upperWick > lowerWick * 1.5 && c7d > 0 && close < open;
+  if (stackedWicksBull) { score += 0.07; signals.push('Stacked Wicks: lower shadows dominating — buying pressure building, sellers losing control'); }
+  if (stackedWicksBear) { score -= 0.07; signals.push('Stacked Wicks: upper shadows dominating — selling pressure building, buyers exhausted'); }
 
   // ── 10. VOLUME CONFIRMATION ───────────────────────────────────────────────
   const turnover = mcap > 0 ? vol / mcap : 0;
-  if ((engulfingBull || bullishKangaroo) && turnover > 0.06) {
+  if ((engulfingBull || bullishLongWick) && turnover > 0.06) {
     score += 0.07;
-    signals.push(`Volume: ${(turnover*100).toFixed(1)}% turnover on bullish candle — institutional commitment confirmed`);
+    signals.push(`Volume Spike: ${(turnover*100).toFixed(1)}% turnover on bullish candle — institutional commitment confirmed`);
   }
-  if ((engulfingBear || bearishKangaroo) && turnover > 0.06) {
+  if ((engulfingBear || bearishLongWick) && turnover > 0.06) {
     score -= 0.05;
-    signals.push(`Volume: ${(turnover*100).toFixed(1)}% turnover on bearish candle — selling confirmed`);
+    signals.push(`Volume Spike: ${(turnover*100).toFixed(1)}% turnover on bearish candle — selling confirmed`);
   }
 
-  // ── 11. INSIDE BAR / CONSOLIDATION before breakout ───────────────────────
+  // ── 11. CONSOLIDATION / TIGHT RANGE before breakout ───────────────────────
   // Low range candle after big move = coiling for next move
-  const isInsideBar = range > 0 && priorRange > 0 && (range / priorRange) < 0.50 && Math.abs(c24) < 0.02;
-  if (isInsideBar && uptrendConfirmed) {
+  const isConsolidation = range > 0 && priorRange > 0 && (range / priorRange) < 0.50 && Math.abs(c24) < 0.02;
+  if (isConsolidation && uptrendConfirmed) {
     score += 0.05;
-    signals.push('Inside Bar: tight consolidation in uptrend — coiling for breakout continuation');
+    signals.push('Consolidation: tight range in uptrend — coiling for breakout continuation');
   }
 
   return { score: Math.max(0, Math.min(1, score)), signals };

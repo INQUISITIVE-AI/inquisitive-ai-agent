@@ -173,10 +173,10 @@ async function buy({ symbol, amount, portfolioValue = 100_000, slippage = 0.005 
   // ── Identify the pattern that triggered this trade ───────────────────────
   let pattern = 'PRICE_ACTION';
   const reasons = signal?.reasons || [];
-  if (reasons.some(r => r.includes('Kangaroo Tail')))  pattern = 'KANGAROO_TAIL';
-  else if (reasons.some(r => r.includes('Wammie')))    pattern = 'WAMMIE';
-  else if (reasons.some(r => r.includes('Last Kiss'))) pattern = 'LAST_KISS';
-  else if (reasons.some(r => r.includes('Big Shadow')))pattern = 'BIG_SHADOW';
+  if (reasons.some(r => r.includes('Long Wick Reversal')))  pattern = 'LONG_WICK_REVERSAL';
+  else if (reasons.some(r => r.includes('Double Floor')))    pattern = 'DOUBLE_FLOOR';
+  else if (reasons.some(r => r.includes('Breakout Test')))  pattern = 'BREAKOUT_TEST';
+  else if (reasons.some(r => r.includes('Engulfing Bar')))  pattern = 'ENGULFING_BAR';
   else if (reasons.some(r => r.includes('Trend: confirmed uptrend'))) pattern = 'TREND_CONTINUATION';
 
   const trade = {
@@ -254,14 +254,14 @@ async function sell({ symbol, amount, reason = 'MANUAL' }) {
     } else if (currentPrice >= targetPrice) {
       exitReason = 'TARGET_HIT';
       exitType   = 'TARGET';
-    } else if (reasons.some(r => r.includes('Moolah'))) {
-      exitReason = 'MOOLAH_PATTERN — double top forming, exit before reversal';
+    } else if (reasons.some(r => r.includes('Double Ceiling'))) {
+      exitReason = 'DOUBLE_CEILING_PATTERN — twin highs forming, exit before reversal';
       exitType   = 'PATTERN_EXIT';
-    } else if (reasons.some(r => r.includes('Kangaroo Tail: rejection wick near ATH'))) {
-      exitReason = 'BEARISH_KANGAROO_TAIL — rejection at ATH resistance, take profit';
+    } else if (reasons.some(r => r.includes('Long Wick Reversal: bearish extended shadow near highs'))) {
+      exitReason = 'BEARISH_LONG_WICK — rejection at resistance, take profit';
       exitType   = 'PATTERN_EXIT';
-    } else if (reasons.some(r => r.includes('Big Shadow: bearish engulfing'))) {
-      exitReason = 'BEARISH_BIG_SHADOW — seller commitment at resistance, exit';
+    } else if (reasons.some(r => r.includes('Engulfing Bar: bearish consuming'))) {
+      exitReason = 'BEARISH_ENGULFING — seller commitment at resistance, exit';
       exitType   = 'PATTERN_EXIT';
     } else if (reasons.some(r => r.includes('confirmed downtrend'))) {
       exitReason = 'TREND_REVERSAL — downtrend confirmed, exit to protect capital';
@@ -815,9 +815,9 @@ async function _monitorOpenPositions() {
 
     // ── Pattern-based exits ───────────────────────────────────────────────
     const hasBearPattern = reasons.some(r =>
-      r.includes('Moolah') ||
-      r.includes('Kangaroo Tail: rejection wick near ATH') ||
-      r.includes('Big Shadow: bearish engulfing') ||
+      r.includes('Double Ceiling') ||
+      r.includes('Long Wick Reversal: bearish extended shadow near highs') ||
+      r.includes('Engulfing Bar: bearish consuming') ||
       r.includes('confirmed downtrend')
     );
     if (hasBearPattern && paScore < 0.40) {

@@ -129,12 +129,12 @@ router.get('/dashboard', (req, res) => {
   // Price Action signal breakdown
   const paSignals = signals.filter(s => (s.components?.priceActionEngine ?? 0) > 0.60);
   const patternBreakdown = {
-    kangarooTails: paSignals.filter(s => (s.reasons || []).some(r => r.includes('Kangaroo Tail'))).length,
-    wammies:       paSignals.filter(s => (s.reasons || []).some(r => r.includes('Wammie'))).length,
-    moolahs:       paSignals.filter(s => (s.reasons || []).some(r => r.includes('Moolah'))).length,
-    bigShadows:    paSignals.filter(s => (s.reasons || []).some(r => r.includes('Big Shadow'))).length,
-    lastKisses:    paSignals.filter(s => (s.reasons || []).some(r => r.includes('Last Kiss'))).length,
-    trendSignals:  paSignals.filter(s => (s.reasons || []).some(r => r.includes('Trend: confirmed uptrend'))).length,
+    longWickReversals: paSignals.filter(s => (s.reasons || []).some(r => r.includes('Long Wick Reversal'))).length,
+    doubleFloors:       paSignals.filter(s => (s.reasons || []).some(r => r.includes('Double Floor'))).length,
+    doubleCeilings:     paSignals.filter(s => (s.reasons || []).some(r => r.includes('Double Ceiling'))).length,
+    engulfingBars:      paSignals.filter(s => (s.reasons || []).some(r => r.includes('Engulfing Bar'))).length,
+    breakoutTests:      paSignals.filter(s => (s.reasons || []).some(r => r.includes('Breakout Test'))).length,
+    trendSignals:       paSignals.filter(s => (s.reasons || []).some(r => r.includes('Trend: confirmed uptrend'))).length,
   };
 
   res.json({
@@ -319,9 +319,9 @@ router.get('/signals/price-action', (req, res) => {
       change24h:       s.change24h,
       change7d:        s.change7d,
       patterns: (s.reasons || []).filter(r =>
-        r.includes('Kangaroo') || r.includes('Wammie') || r.includes('Moolah') ||
-        r.includes('Big Shadow') || r.includes('Last Kiss') || r.includes('Zone:') ||
-        r.includes('Wicks:') || r.includes('Inside Bar')
+        r.includes('Long Wick Reversal') || r.includes('Double Floor') || r.includes('Double Ceiling') ||
+        r.includes('Engulfing Bar') || r.includes('Breakout Test') || r.includes('Support Zone') ||
+        r.includes('Stacked Wicks') || r.includes('Consolidation')
       ),
       macroFilters: (s.reasons || []).filter(r =>
         r.includes('Macro') || r.includes('macro') || r.includes('BTC') || r.includes('dominance')
@@ -341,7 +341,7 @@ router.get('/signals/price-action', (req, res) => {
     fearGreed:        macro.fearGreed,
     riskAssessment:   risk,
     minScoreFilter:   minScore,
-    source:           'Price Action Engine — Kangaroo Tail, Wammie, Moolah, Big Shadow, Last Kiss',
+    source:           'Price Action Engine — Long Wick Reversal, Double Floor, Double Ceiling, Engulfing Bar, Breakout Test',
     timestamp:        new Date().toISOString(),
   });
 });

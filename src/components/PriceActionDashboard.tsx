@@ -34,16 +34,16 @@ interface PASignal {
 }
 
 const PATTERN_COLORS: Record<string, string> = {
-  'Kangaroo Tail': '#10b981',    // Green
-  'Wammie': '#3b82f6',           // Blue
-  'Moolah': '#ef4444',           // Red
-  'Big Shadow': '#f59e0b',       // Amber
-  'Last Kiss': '#8b5cf6',        // Purple
-  'Zone': '#06b6d4',             // Cyan
-  'Wicks': '#84cc16',            // Lime
-  'Trend': '#ec4899',            // Pink
-  'Volume': '#f97316',           // Orange
-  'Inside Bar': '#6366f1',       // Indigo
+  'Long Wick Reversal': '#10b981',    // Green - was Kangaroo Tail
+  'Double Floor': '#3b82f6',           // Blue - was Wammie
+  'Double Ceiling': '#ef4444',           // Red - was Moolah
+  'Engulfing Bar': '#f59e0b',       // Amber - was Big Shadow
+  'Breakout Test': '#8b5cf6',        // Purple - was Last Kiss
+  'Support Zone': '#06b6d4',             // Cyan - was Zone
+  'Stacked Wicks': '#84cc16',            // Lime - was Wicks
+  'Trend Momentum': '#ec4899',            // Pink - was Trend
+  'Volume Spike': '#f97316',           // Orange - was Volume
+  'Consolidation': '#6366f1',       // Indigo - was Inside Bar
 };
 
 const ACTION_COL: Record<string, string> = {
@@ -330,24 +330,24 @@ export default function PriceActionDashboard({ signals = [], macro, onSignalClic
       {/* ── Legend ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12, fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: PATTERN_COLORS['Kangaroo Tail'] }} />
-          <span>Kangaroo Tail: Pin bar reversal</span>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: PATTERN_COLORS['Long Wick Reversal'] }} />
+          <span>Long Wick Reversal: Extended shadow signaling rejection</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: PATTERN_COLORS['Wammie'] }} />
-          <span>Wammie: Double bottom</span>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: PATTERN_COLORS['Double Floor'] }} />
+          <span>Double Floor: Twin lows with bounce confirmation</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: PATTERN_COLORS['Big Shadow'] }} />
-          <span>Big Shadow: Engulfing candle</span>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: PATTERN_COLORS['Engulfing Bar'] }} />
+          <span>Engulfing Bar: Candle fully consuming previous</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: PATTERN_COLORS['Last Kiss'] }} />
-          <span>Last Kiss: Breakout retest</span>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: PATTERN_COLORS['Breakout Test'] }} />
+          <span>Breakout Test: Price returning to test breached level</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: PATTERN_COLORS['Zone'] }} />
-          <span>Zone: Room to the left</span>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: PATTERN_COLORS['Support Zone'] }} />
+          <span>Support Zone: Historical congestion area</span>
         </div>
       </div>
     </div>
