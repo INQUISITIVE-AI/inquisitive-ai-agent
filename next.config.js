@@ -44,6 +44,11 @@ const nextConfig = {
     config.resolve.alias = {
       ...config.resolve.alias,
       '@react-native-async-storage/async-storage': false,
+      // Resolve missing zksync modules
+      'viem/_esm/chains/definitions/zksyncLocalHyperchain': false,
+      'viem/_esm/chains/definitions/zksyncLocalHyperchainL1': false,
+      './definitions/zksyncLocalHyperchain': false,
+      './definitions/zksyncLocalHyperchainL1': false,
       // @wagmi/core resolved via npm overrides in package.json
     };
     return config;
