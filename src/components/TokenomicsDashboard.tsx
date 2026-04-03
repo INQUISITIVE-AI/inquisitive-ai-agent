@@ -303,54 +303,6 @@ export default function TokenomicsDashboard() {
           <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>Circulating</div>
         </div>
       </div>
-
-      {/* Vesting Schedule */}
-      <div style={{
-        background: 'rgba(255,255,255,0.03)',
-        borderRadius: 12,
-        padding: 24
-      }}>
-        <h3 style={{ fontSize: 16, fontWeight: 700, color: 'white', margin: '0 0 16px' }}>
-          Vesting Schedule
-        </h3>
-        
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {data.distribution.map((item, i) => (
-            <div key={i} style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '12px 16px',
-              background: 'rgba(255,255,255,0.03)',
-              borderRadius: 8
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{
-                  width: 12,
-                  height: 12,
-                  borderRadius: 6,
-                  background: COLORS[i % COLORS.length]
-                }} />
-                <span style={{ color: 'white', fontWeight: 600 }}>{item.name}</span>
-                {item.locked && (
-                  <span style={{
-                    fontSize: 11,
-                    padding: '2px 8px',
-                    background: 'rgba(245,158,11,0.3)',
-                    borderRadius: 4,
-                    color: '#f59e0b'
-                  }}>
-                    Locked
-                  </span>
-                )}
-              </div>
-              <span style={{ color: 'rgba(255,255,255,0.7)' }}>
-                {(item.value / 1000000).toFixed(1)}M INQAI ({(item.value / 1000000).toFixed(0)}%)
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }
