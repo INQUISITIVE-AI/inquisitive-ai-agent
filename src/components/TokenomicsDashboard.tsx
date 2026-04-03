@@ -194,7 +194,7 @@ export default function TokenomicsDashboard() {
                   borderRadius: 8,
                   color: 'white'
                 }}
-                formatter={(value: number) => `${(value / 1000000).toFixed(1)}M INQAI`}
+                formatter={(value) => value ? `${(Number(value) / 1000000).toFixed(1)}M INQAI` : ''}
               />
               <Legend
                 verticalAlign="bottom"

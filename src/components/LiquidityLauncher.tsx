@@ -56,7 +56,7 @@ export default function LiquidityLauncher() {
     }
     
     try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
+      const provider = new ethers.BrowserProvider(window.ethereum as any);
       const accounts = await provider.send('eth_requestAccounts', []);
       setAddress(accounts[0]);
       setConnected(true);
@@ -125,7 +125,7 @@ export default function LiquidityLauncher() {
     
     setLoading(true);
     try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
+      const provider = new ethers.BrowserProvider(window.ethereum as any);
       const signer = await provider.getSigner();
       const launcher = new ethers.Contract(LAUNCHER_CONTRACT, LAUNCHER_ABI, signer);
       
@@ -150,7 +150,7 @@ export default function LiquidityLauncher() {
     
     setLoading(true);
     try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
+      const provider = new ethers.BrowserProvider(window.ethereum as any);
       const signer = await provider.getSigner();
       const launcher = new ethers.Contract(LAUNCHER_CONTRACT, LAUNCHER_ABI, signer);
       

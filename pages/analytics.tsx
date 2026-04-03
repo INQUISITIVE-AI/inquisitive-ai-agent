@@ -467,7 +467,7 @@ export default function AnalyticsPage() {
               {(() => {
                 const tabs = isVaultOwner ? ['portfolio','ai','price-action','positions','execution','fees'] : ['portfolio','ai','price-action','positions','fees'];
                 return tabs.map(t => (
-                <button key={t} onClick={() => setTab(t)} style={{ padding:'10px 18px', fontSize:13, fontWeight:tab===t?700:500, cursor:'pointer', background:'none', border:'none', borderBottom:`2px solid ${tab===t?'#7c3aed':'transparent'}`, color:tab===t?'#a78bfa':'rgba(255,255,255,0.4)', transition:'all 0.15s', position:'relative' }}>
+                <button key={t} onClick={() => setTab(t as 'ai' | 'portfolio' | 'positions' | 'execution' | 'fees' | 'price-action')} style={{ padding:'10px 18px', fontSize:13, fontWeight:tab===t?700:500, cursor:'pointer', background:'none', border:'none', borderBottom:`2px solid ${tab===t?'#7c3aed':'transparent'}`, color:tab===t?'#a78bfa':'rgba(255,255,255,0.4)', transition:'all 0.15s', position:'relative' }}>
                   {{portfolio:'Portfolio',ai:'AI Activity','price-action':'Price Action',positions:`Positions (${positions.length})`,execution:'Execution',fees:'Fee Flow'}[t as string]}
                   {t==='execution'&&!automationOn&&<span style={{position:'absolute',top:6,right:6,width:6,height:6,borderRadius:'50%',background:'#f59e0b',display:'block'}}/>}
                 </button>
