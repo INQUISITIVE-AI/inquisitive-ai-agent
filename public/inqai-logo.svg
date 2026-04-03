@@ -1,44 +1,54 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="200" height="200">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
   <defs>
-    <radialGradient id="coinGrad" cx="30%" cy="30%" r="80%">
+    <radialGradient id="cb" cx="32%" cy="24%" r="90%">
       <stop offset="0%" stop-color="#A855F7"/>
-      <stop offset="40%" stop-color="#7C3AED"/>
-      <stop offset="80%" stop-color="#4C1D95"/>
-      <stop offset="100%" stop-color="#1E0A4A"/>
+      <stop offset="8%" stop-color="#7C3AED"/>
+      <stop offset="22%" stop-color="#4C1D95"/>
+      <stop offset="40%" stop-color="#1E0A4A"/>
+      <stop offset="60%" stop-color="#0A0225"/>
+      <stop offset="80%" stop-color="#050118"/>
+      <stop offset="100%" stop-color="#01000A"/>
     </radialGradient>
-    <linearGradient id="rimGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.9"/>
-      <stop offset="25%" stop-color="#A78BFA" stop-opacity="0.6"/>
-      <stop offset="50%" stop-color="#6D28D9" stop-opacity="0.3"/>
-      <stop offset="75%" stop-color="#A78BFA" stop-opacity="0.6"/>
-      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.9"/>
+    <linearGradient id="rim" x1="6%" y1="2%" x2="94%" y2="98%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="1"/>
+      <stop offset="20%" stop-color="#A78BFA" stop-opacity="0.65"/>
+      <stop offset="40%" stop-color="#6D28D9" stop-opacity="0.35"/>
+      <stop offset="60%" stop-color="#07011A" stop-opacity="0.06"/>
+      <stop offset="80%" stop-color="#A78BFA" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="1"/>
     </linearGradient>
-    <linearGradient id="letterGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+    <linearGradient id="sym" x1="0" y1="54" x2="0" y2="146">
       <stop offset="0%" stop-color="#FFFFFF"/>
-      <stop offset="50%" stop-color="#DDD6FE"/>
-      <stop offset="100%" stop-color="#A78BFA"/>
+      <stop offset="50%" stop-color="#C4B5FD"/>
+      <stop offset="100%" stop-color="#4C1D95"/>
     </linearGradient>
-    <radialGradient id="vignette" cx="50%" cy="50%" r="50%">
-      <stop offset="60%" stop-color="#000000" stop-opacity="0"/>
-      <stop offset="100%" stop-color="#000000" stop-opacity="0.5"/>
+    <radialGradient id="ndg" cx="38%" cy="32%" r="62%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#7C3AED" stop-opacity="0.55"/>
     </radialGradient>
-    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="2" result="blur"/>
-      <feMerge>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
+    <filter id="gw">
+      <feGaussianBlur stdDeviation="3.5"/>
     </filter>
   </defs>
-  <circle cx="52" cy="54" r="44" fill="#000000" opacity="0.3"/>
-  <circle cx="50" cy="50" r="46" fill="url(#coinGrad)"/>
-  <circle cx="50" cy="50" r="46" fill="url(#vignette)" opacity="0.4"/>
-  <circle cx="50" cy="50" r="46" fill="none" stroke="url(#rimGrad)" stroke-width="3"/>
-  <circle cx="50" cy="50" r="40" fill="none" stroke="#A78BFA" stroke-width="0.5" opacity="0.5"/>
-  <g filter="url(#glow)">
-    <rect x="45" y="28" width="10" height="44" rx="2" fill="url(#letterGrad)"/>
-    <rect x="38" y="28" width="24" height="6" rx="2" fill="url(#letterGrad)"/>
-    <rect x="38" y="66" width="24" height="6" rx="2" fill="url(#letterGrad)"/>
+  <circle cx="100" cy="100" r="96" fill="url(#cb)"/>
+  <circle cx="100" cy="100" r="97.5" fill="none" stroke="url(#rim)" stroke-width="7.5"/>
+  <g opacity="0.25">
+    <line x1="100" y1="68" x2="70" y2="85" stroke="#8B5CF6" stroke-width="3"/>
+    <line x1="100" y1="68" x2="130" y2="85" stroke="#8B5CF6" stroke-width="3"/>
+    <line x1="100" y1="100" x2="66" y2="100" stroke="#8B5CF6" stroke-width="3"/>
+    <line x1="100" y1="100" x2="134" y2="100" stroke="#8B5CF6" stroke-width="3"/>
+    <line x1="100" y1="132" x2="70" y2="115" stroke="#8B5CF6" stroke-width="3"/>
+    <line x1="100" y1="132" x2="130" y2="115" stroke="#8B5CF6" stroke-width="3"/>
   </g>
-  <ellipse cx="35" cy="30" rx="15" ry="10" fill="#FFFFFF" opacity="0.15" transform="rotate(-30 35 30)"/>
+  <g filter="url(#gw)"><circle cx="70" cy="85" r="5" fill="url(#ndg)"/></g>
+  <g filter="url(#gw)"><circle cx="130" cy="85" r="5" fill="url(#ndg)"/></g>
+  <g filter="url(#gw)"><circle cx="66" cy="100" r="5" fill="url(#ndg)"/></g>
+  <g filter="url(#gw)"><circle cx="134" cy="100" r="5" fill="url(#ndg)"/></g>
+  <g filter="url(#gw)"><circle cx="70" cy="115" r="5" fill="url(#ndg)"/></g>
+  <g filter="url(#gw)"><circle cx="130" cy="115" r="5" fill="url(#ndg)"/></g>
+  <g filter="url(#gw)">
+    <rect x="76" y="54" width="48" height="14" rx="7" fill="url(#sym)"/>
+    <rect x="93" y="61" width="14" height="78" rx="4" fill="url(#sym)"/>
+    <rect x="76" y="132" width="48" height="14" rx="7" fill="url(#sym)"/>
+  </g>
 </svg>
