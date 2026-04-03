@@ -73,38 +73,22 @@ export default function InqaiLogo({ size = 32, className = '' }: Props) {
         <line x1="100" y1="100" x2="134" y2="100" stroke="#8B5CF6" strokeWidth="3.5" />
         <line x1="100" y1="132" x2="70" y2="115" stroke="#8B5CF6" strokeWidth="3.5" />
         <line x1="100" y1="132" x2="130" y2="115" stroke="#8B5CF6" strokeWidth="3.5" />
-
-      {/* Drop shadow */}
-      <circle cx="52" cy="54" r="44" fill="#000000" opacity="0.3" />
-
-      {/* Coin body */}
-      <circle cx="50" cy="50" r="46" fill="url(#coinGrad)" />
-
-      {/* Vignette overlay */}
-      <circle cx="50" cy="50" r="46" fill="url(#vignette)" opacity="0.4" />
-      <radialGradient id="vignette" cx="50%" cy="50%" r="50%">
-        <stop offset="60%" stopColor="#000000" stopOpacity="0" />
-        <stop offset="100%" stopColor="#000000" stopOpacity="0.5" />
-      </radialGradient>
-
-      {/* Metallic rim */}
-      <circle cx="50" cy="50" r="46" fill="none" stroke="url(#rimGrad)" strokeWidth="3" />
-
-      {/* Inner ring */}
-      <circle cx="50" cy="50" r="40" fill="none" stroke="#A78BFA" strokeWidth="0.5" opacity="0.5" />
-
-      {/* Letter "I" */}
-      <g filter="url(#glow)">
-        {/* Vertical stem */}
-        <rect x="45" y="28" width="10" height="44" rx="2" fill="url(#letterGrad)" />
-        {/* Top serif */}
-        <rect x="38" y="28" width="24" height="6" rx="2" fill="url(#letterGrad)" />
-        {/* Bottom serif */}
-        <rect x="38" y="66" width="24" height="6" rx="2" fill="url(#letterGrad)" />
       </g>
-
-      {/* Subtle shine */}
-      <ellipse cx="35" cy="30" rx="15" ry="10" fill="#FFFFFF" opacity="0.15" transform="rotate(-30 35 30)" />
+      
+      {/* Outer nodes */}
+      <g><circle cx="70" cy="85" r="9" fill="#1A0446" opacity="0.55" /><circle cx="70" cy="85" r="5.5" fill="url(#ndg)" filter="url(#gw)" /></g>
+      <g><circle cx="130" cy="85" r="9" fill="#1A0446" opacity="0.55" /><circle cx="130" cy="85" r="5.5" fill="url(#ndg)" filter="url(#gw)" /></g>
+      <g><circle cx="66" cy="100" r="9" fill="#1A0446" opacity="0.55" /><circle cx="66" cy="100" r="5.5" fill="url(#ndg)" filter="url(#gw)" /></g>
+      <g><circle cx="134" cy="100" r="9" fill="#1A0446" opacity="0.55" /><circle cx="134" cy="100" r="5.5" fill="url(#ndg)" filter="url(#gw)" /></g>
+      <g><circle cx="70" cy="115" r="9" fill="#1A0446" opacity="0.55" /><circle cx="70" cy="115" r="5.5" fill="url(#ndg)" filter="url(#gw)" /></g>
+      <g><circle cx="130" cy="115" r="9" fill="#1A0446" opacity="0.55" /><circle cx="130" cy="115" r="5.5" fill="url(#ndg)" filter="url(#gw)" /></g>
+      
+      {/* Letter I */}
+      <g filter="url(#gw)">
+        <rect x="76" y="54" width="48" height="14" rx="7" fill="url(#sym)" />
+        <rect x="76" y="132" width="48" height="14" rx="7" fill="url(#sym)" />
+        <rect x="93" y="61" width="14" height="78" rx="4" fill="url(#sym)" />
+      </g>
     </svg>
   );
 }
