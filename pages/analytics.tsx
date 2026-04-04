@@ -1157,71 +1157,7 @@ export default function AnalyticsPage() {
                         </div>
                         <div style={{ fontSize:18, fontWeight:900, color:t.c, fontFamily:'monospace' }}>{t.v}</div>
                         <div style={{ fontSize:11, fontWeight:600, color:'rgba(255,255,255,0.6)', marginTop:3 }}>{t.l}</div>
-                        <div style={{ fontSize:10, color:'rgba(255,255,255,0.25)', marginTop:2 }}>{t.sub}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* ── VESTING STATUS CARD ── */}
-                <div style={{ gridColumn:'1 / -1', background:'rgba(13,13,32,0.85)', border:'1px solid rgba(245,158,11,0.2)', borderRadius:20, padding:'24px', backdropFilter:'blur(12px)', marginTop:8 }}>
-                  <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:16 }}>
-                    <Clock size={18} color={vesting?.color || '#f59e0b'} />
-                    <h3 style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.8)', margin:0 }}>Team Vesting Status</h3>
-                    <span style={{ marginLeft:'auto', fontSize:10, padding:'3px 10px', borderRadius:100, background:(vesting?.color||'#f59e0b')+'15', color:vesting?.color||'#f59e0b', border:'1px solid '+(vesting?.color||'#f59e0b')+'40', fontWeight:700 }}>
-                      {vesting?.statusLabel || 'Loading…'}
-                    </span>
-                  </div>
-
-                  <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, marginBottom:16 }}>
-                    <div style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:12, padding:'12px' }}>
-                      <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)', marginBottom:4 }}>Team Allocation</div>
-                      <div style={{ fontSize:15, fontWeight:800, color:'#a78bfa', fontFamily:'monospace' }}>{vesting?.team?.totalAllocation?.toLocaleString() || '20,000,000'} INQAI</div>
-                      <div style={{ fontSize:9, color:'rgba(255,255,255,0.25)', marginTop:2 }}>20% of total supply</div>
-                    </div>
-                    <div style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:12, padding:'12px' }}>
-                      <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)', marginBottom:4 }}>Vested So Far</div>
-                      <div style={{ fontSize:15, fontWeight:800, color:'#10b981', fontFamily:'monospace' }}>{vesting?.vested?.tokens?.toLocaleString() || '0'} INQAI</div>
-                      <div style={{ fontSize:9, color:'rgba(255,255,255,0.25)', marginTop:2 }}>{vesting?.vested?.pct?.toFixed(2) || '0.00'}% of allocation</div>
-                    </div>
-                    <div style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:12, padding:'12px' }}>
-                      <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)', marginBottom:4 }}>Locked</div>
-                      <div style={{ fontSize:15, fontWeight:800, color:'#f59e0b', fontFamily:'monospace' }}>{vesting?.vested?.locked?.toLocaleString() || '20,000,000'} INQAI</div>
-                      <div style={{ fontSize:9, color:'rgba(255,255,255,0.25)', marginTop:2 }}>{(100 - (vesting?.vested?.pct || 0)).toFixed(2)}% remaining</div>
-                    </div>
-                  </div>
-
-                  <div style={{ background:'rgba(251,191,36,0.05)', border:'1px solid rgba(251,191,36,0.15)', borderRadius:12, padding:'14px 16px' }}>
-                    <div style={{ fontSize:12, fontWeight:600, color:'#fbbf24', marginBottom:10 }}>Deployment Progress</div>
-                    <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-                      {(vesting?.deploymentSteps || [
-                        {step:1, done:true, title:'INQAI Token Deployed', detail:'Contract live at 0xB312…'},
-                        {step:2, done:false, title:'Vesting Contract Deployed', detail:'Pending deployment'},
-                        {step:3, done:false, title:'Vesting Contract Funded', detail:'Transfer 20M INQAI to vesting'},
-                        {step:4, done:false, title:'3-Month Cliff Reached', detail:'Linear vesting begins'}
-                      ]).map((s:any) => (
-                        <div key={s.step} style={{ display:'flex', gap:10, alignItems:'flex-start' }}>
-                          <div style={{ width:18, height:18, borderRadius:'50%', background:s.done?'#10b981':'rgba(255,255,255,0.1)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:10, fontWeight:800, color:s.done?'#fff':'rgba(255,255,255,0.3)' }}>
-                            {s.done ? '✓' : s.step}
-                          </div>
-                          <div style={{ flex:1 }}>
-                            <div style={{ fontSize:12, fontWeight:s.done?600:500, color:s.done?'#6ee7b7':'rgba(255,255,255,0.6)' }}>{s.title}</div>
-                            <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)', marginTop:1 }}>{s.detail}</div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {!vesting?.contract?.deployed && (
-                    <div style={{ marginTop:14, padding:'12px 14px', background:'rgba(124,58,237,0.06)', border:'1px solid rgba(124,58,237,0.2)', borderRadius:10, fontSize:11, color:'rgba(255,255,255,0.5)', lineHeight:1.7 }}>
-                      <strong style={{ color:'#a78bfa' }}>Next step:</strong> Deploy <code style={{color:'#fbbf24'}}>TeamVesting.sol</code> via Remix or Hardhat. Set beneficiary to team wallet. Transfer 20M INQAI to the vesting contract to start the 3-month cliff.
-                    </div>
-                  )}
-                </div>
-              </div>
             )}
-
           </div>
         </div>
       </div>
