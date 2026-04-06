@@ -1,8 +1,10 @@
 // ─── INQUISITIVE AI — Real 5-Engine Brain Scoring ─────────────────────────────
-// Exact TypeScript port of server/services/inquisitiveBrain.js
-// Used by assets.ts, dashboard.ts, api/dashboard.ts
+// Cryptoteacher + NakedForexNow trend-following methodology.
+// Targets 70-90% win rate through strict trend-alignment, pullback entries,
+// volume confirmation, and consensus scoring across all 4 engines.
+// Used by assets.ts, dashboard.ts, portfolio/nav.ts
 
-// ── Shared 66-asset registry (mirrors server/services/priceFeed.js ASSET_REGISTRY) ──
+// ── Shared 66-asset registry ─────────────────────────────────────────────────
 export interface RegistryEntry {
   symbol: string; cgId: string; name: string; category: string;
   stakeable: boolean; lendable: boolean; yieldable: boolean;
@@ -113,57 +115,98 @@ export function getRegime(btcChgPct: number, ethChgPct: number, btcChg7dPct = 0,
 
 // RSI proxy (0-100) derived from 7d momentum
 function rsiProxy(c7d: number): number { return Math.min(95, Math.max(5, 50 + c7d * 150)); }
-// MA proxy: >0 means price likely above key moving averages
+// Momentum composite: weighted blend of 7d (HTF) and 24h (LTF)
 function maProxy(c7d: number, c24h: number): number { return (c7d * 0.7 + c24h * 0.3); }
 
-// ── Pattern Engine: trend-following + RSI + volume breakout ──────────────────
+// ── Pattern Engine: Cryptoteacher + NakedForexNow trend-following ─────────────
+// Methodology: identify trend on higher timeframe (7d), enter on pullback or
+// volume-confirmed breakout. NEVER buy counter-trend. NEVER catch falling knives.
+// Best entries (in priority order):
+//   1. Pullback in confirmed uptrend — 7d up, 24h slight dip = accumulation zone
+//   2. Volume-confirmed breakout — 7d + 24h up with above-average turnover
+//   3. Oversold bounce in uptrend — RSI dip within established bull structure
+// Entries to AVOID:
+//   - RSI oversold in downtrend (falling knife)
+//   - Counter-trend bounce (dead-cat)
+//   - Buying near ATH (no runway / poor R:R)
 function patternEngine(a: AssetInput, regime: Regime): number {
   let q = 0.5;
 
   const rsi = rsiProxy(a.change7d);
-  const ma  = maProxy(a.change7d, a.change24h);
-  // RSI zones: oversold = buy, overbought = caution
-  if      (rsi < 25) q += 0.18;
-  else if (rsi < 35) q += 0.10;
-  else if (rsi > 75) q -= 0.10;
-  else if (rsi > 85) q -= 0.18;
-  // MA position: price above MAs = trend is up
-  if      (ma >  0.12) q += 0.12;
-  else if (ma >  0.04) q += 0.06;
-  else if (ma < -0.12) q -= 0.12;
-  else if (ma < -0.04) q -= 0.06;
-  // 24h momentum confirmation
-  if      (a.change24h >  0.05) q += 0.08;
-  else if (a.change24h >  0.02) q += 0.04;
-  else if (a.change24h < -0.05) q -= 0.08;
-  else if (a.change24h < -0.02) q -= 0.04;
 
-  // Volume-price confirmation: price up on high volume = strong signal
+  // ── TREND IDENTIFICATION (higher timeframe — 7d as HTF proxy) ──────────────
+  const strongUptrend   = a.change7d >  0.10; // +10% weekly = strong bull structure
+  const uptrend         = a.change7d >  0.04; // +4% weekly = confirmed uptrend
+  const downtrend       = a.change7d < -0.04; // -4% weekly = confirmed downtrend
+  const strongDowntrend = a.change7d < -0.10; // -10% weekly = strong bear structure
+
+  // ── HIGH-PROBABILITY SETUPS ────────────────────────────────────────────────
+  // #1 BEST: Pullback entry in confirmed uptrend (NakedForexNow bread-and-butter)
+  //    7d uptrend established, 24h slight pullback = retest of support = ideal entry
+  const pullbackInUptrend = uptrend && a.change24h >= -0.06 && a.change24h < -0.004;
+
+  // #2 GOOD: Momentum continuation — trend + 24h confirming, volume optional
+  const trendContinuation = uptrend && a.change24h >= 0.015;
+
+  // #3 SECONDARY: Oversold dip in established uptrend (Cryptoteacher RSI divergence)
+  const oversoldInUptrend = strongUptrend && rsi < 32;
+
+  // ── TRAPS TO AVOID ─────────────────────────────────────────────────────────
+  // Counter-trend bounce = dead cat = most common retail trap
+  const deadCatBounce  = downtrend && a.change24h >  0.025;
+  // Falling knife = RSI oversold in downtrend = never buy
+  const fallingKnife   = strongDowntrend && a.change24h <= 0;
+  // Downtrend continuation
+  const downContinuation = downtrend && a.change24h < -0.015;
+
+  if      (pullbackInUptrend)   q += 0.26; // Highest-probability setup
+  else if (trendContinuation)   q += 0.17;
+  else if (oversoldInUptrend)   q += 0.12;
+  else if (uptrend)             q += 0.07; // In uptrend but no clear pattern yet
+  else if (deadCatBounce)       q -= 0.18; // Counter-trend trap
+  else if (fallingKnife)        q -= 0.28; // Never catch falling knives
+  else if (downContinuation)    q -= 0.16;
+  else if (downtrend)           q -= 0.10;
+
+  // ── RSI CONFIRMATION (secondary — only meaningful within trend context) ─────
+  // RSI oversold is ONLY bullish when IN an uptrend — otherwise it's a warning
+  if      (rsi < 20 && uptrend)          q += 0.12; // Very oversold in uptrend = strong entry
+  else if (rsi < 30 && uptrend)          q += 0.07;
+  else if (rsi < 25 && !uptrend)         q -= 0.06; // Oversold in downtrend = falling knife
+  else if (rsi > 82 && uptrend)          q -= 0.05; // Slightly overbought — tighten stops
+  else if (rsi > 80 && !uptrend)         q -= 0.12; // Overbought without trend = distribution peak
+
+  // ── VOLUME CONFIRMATION (Cryptoteacher: volume validates every move) ────────
   if (a.volume24h > 0 && a.marketCap > 0) {
     const turnover = a.volume24h / a.marketCap;
-    if (turnover > 0.10) q += 0.08;
-    if (turnover > 0.25) q += 0.05;
-    // Volume confirms direction: up price + high volume = extra conviction
-    if (a.change24h > 0.02 && turnover > 0.08) q += 0.05;
-    // Down price on high volume = distribution, penalise more
-    if (a.change24h < -0.02 && turnover > 0.10) q -= 0.05;
+    // High volume + up price in uptrend = institutional breakout confirmation
+    if (uptrend && a.change24h > 0.02 && turnover > 0.08)  q += 0.11;
+    if (uptrend && a.change24h > 0.02 && turnover > 0.20)  q += 0.06;
+    // Volume on pullback in uptrend = healthy (accumulation, not distribution)
+    if (pullbackInUptrend && turnover > 0.10)               q += 0.04;
+    // High volume + down price in downtrend = confirmed distribution
+    if (downtrend && a.change24h < -0.02 && turnover > 0.08) q -= 0.11;
+    // Price spike without volume = not confirmed = fade it
+    if (a.change24h > 0.05 && turnover < 0.02)              q -= 0.09;
+    // Low liquidity assets: extra penalty for uncertainty
+    if (a.volume24h < 1_000_000)                            q -= 0.08;
   }
 
-  // Value zone: deep below ATH is contrarian accumulation opportunity
-  if      (a.athChange < -0.80) q += 0.10;
-  else if (a.athChange < -0.70) q += 0.07;
-  else if (a.athChange < -0.50) q += 0.04;
-  // Near ATH: momentum but also near resistance
-  else if (a.athChange > -0.05) q -= 0.03;
+  // ── KEY LEVELS / R:R CHECK (NakedForexNow: only trade with room to run) ─────
+  // ATH distance = available runway. Near ATH = near resistance = poor R:R.
+  if      (a.athChange < -0.80) q += 0.13; // Deep discount — maximum runway + value
+  else if (a.athChange < -0.60) q += 0.08;
+  else if (a.athChange < -0.35) q += 0.03;
+  else if (a.athChange > -0.10) q -= 0.13; // Near ATH = near resistance = avoid
 
-  // Trend-regime alignment bonus/penalty
-  if (regime === 'BULL') q += 0.08;
-  if (regime === 'BEAR') q -= 0.12;
+  // ── REGIME MULTIPLIER ────────────────────────────────────────────────────
+  if (regime === 'BULL') q += 0.07;
+  if (regime === 'BEAR') q -= 0.16; // Stronger bear penalty — macro headwind kills setups
 
   return Math.max(0, Math.min(1, q));
 }
 
-// ── Reasoning Engine: fundamentals + sentiment ─────────────────────────────────
+// ── Reasoning Engine: fundamentals + structure + market sentiment ──────────────
 const CAT_BONUS: Record<string, number> = {
   major: 0.10, defi: 0.08, ai: 0.12, l2: 0.07, rwa: 0.09,
   'liquid-stake': 0.10, stablecoin: 0.05, payment: 0.04,
@@ -181,33 +224,43 @@ function reasoningEngine(a: AssetInput, fg: FGIndex | null): { score: number; re
 
   score += CAT_BONUS[a.category] ?? 0.02;
 
-  // Market structure: HH+HL = bullish, LH+LL = bearish, pullback in uptrend = entry
-  const bullStruct     = a.change24h > 0     && a.change7d >  0.05;
-  const bearStruct     = a.change24h < 0     && a.change7d < -0.05;
-  const pullbackEntry  = a.change24h < -0.02 && a.change7d >  0.08;
-  const deadCatBounce  = a.change24h > 0.03  && a.change7d < -0.15;
-  if      (bullStruct)    { score += 0.09; reasons.push('Bullish structure — higher highs + higher lows confirmed'); }
-  else if (bearStruct)    { score -= 0.09; reasons.push('Bearish structure — lower highs + lower lows confirmed'); }
-  else if (pullbackEntry) { score += 0.07; reasons.push('Healthy pullback in uptrend — high-probability accumulation entry'); }
-  else if (deadCatBounce) { score -= 0.06; reasons.push('Relief bounce in downtrend — avoid fakeout'); }
+  // Market structure: HH+HL = bullish (buy pullbacks), LH+LL = bearish (sell rallies)
+  // Cryptoteacher: trade WITH structure, not against it
+  const bullStruct    = a.change7d >  0.05 && a.change24h >  0;
+  const bearStruct    = a.change7d < -0.05 && a.change24h <  0;
+  const pullbackEntry = a.change7d >  0.08 && a.change24h >= -0.06 && a.change24h < 0;
+  const deadCatBounce = a.change7d < -0.12 && a.change24h >  0.03;
+  const strongBear    = a.change7d < -0.18;
 
-  // Market cycle phase via ATH distance
-  if      (a.athChange < -0.85) { score += 0.08; reasons.push('Deep value zone — extreme discount from ATH'); }
-  else if (a.athChange < -0.65) { score += 0.05; reasons.push('Discount zone — potential DCA accumulation entry'); }
-  else if (a.athChange > -0.08) { score -= 0.05; reasons.push('Near ATH resistance — distribution risk, tighten stops'); }
+  if      (pullbackEntry) { score += 0.10; reasons.push('Pullback in uptrend — high-probability NakedForex accumulation entry'); }
+  else if (bullStruct)    { score += 0.08; reasons.push('Bullish structure — higher highs + higher lows confirmed'); }
+  else if (deadCatBounce) { score -= 0.12; reasons.push('Dead-cat bounce in downtrend — high failure rate, avoid'); }
+  else if (strongBear)    { score -= 0.14; reasons.push('Strong bear structure — capital preservation priority'); }
+  else if (bearStruct)    { score -= 0.08; reasons.push('Bearish structure — lower highs + lower lows confirmed'); }
 
-  // DCA zone: quality asset in oversold weekly condition with strong liquidity
+  // R:R Assessment via ATH distance (NakedForexNow: only trade with runway)
+  if      (a.athChange < -0.85) { score += 0.08; reasons.push('Deep value — extreme ATH discount = maximum reward potential'); }
+  else if (a.athChange < -0.65) { score += 0.05; reasons.push('Value zone — significant ATH discount = good risk:reward'); }
+  else if (a.athChange > -0.10) { score -= 0.08; reasons.push('Near ATH resistance — minimal runway, poor risk:reward'); }
+  else if (a.athChange > -0.05) { score -= 0.12; reasons.push('At ATH — distribution zone, very high failure rate for new entries'); }
+
+  // Quality DCA zone: major asset oversold on weekly with institutional depth
+  // Cryptoteacher: institutions accumulate at key levels with volume
   if ((a.category === 'major' || a.category === 'liquid-stake') &&
-      a.change7d < -0.10 && a.volume24h > 500_000_000) {
-    score += 0.06; reasons.push('DCA zone — quality asset in oversold condition with institutional liquidity');
+      a.change7d < -0.08 && a.change7d > -0.25 && a.volume24h > 300_000_000) {
+    score += 0.05; reasons.push('DCA zone — quality asset at support with institutional volume');
   }
 
+  // Fear & Greed: contrarian signal WITH trend context
   if (fg) {
     const v = fg.value;
-    if      (v < 15) { score += 0.12; reasons.push(`Extreme Fear (${v}) — historically strongest accumulation zone`); }
-    else if (v < 30) { score += 0.07; reasons.push(`Fear (${v}) — contrarian buy signal`); }
-    else if (v > 85) { score -= 0.10; reasons.push(`Extreme Greed (${v}) — reduce exposure, protect profits`); }
-    else if (v > 70) { score -= 0.05; reasons.push(`Greed (${v}) — tighten stops, watch for reversal`); }
+    const inUptrend = a.change7d > 0.03;
+    if      (v < 15 && inUptrend)  { score += 0.12; reasons.push(`Extreme Fear (${v}) in uptrend — historically strongest accumulation zone`); }
+    else if (v < 15)               { score += 0.04; reasons.push(`Extreme Fear (${v}) — market-wide fear, watch for trend reversal`); }
+    else if (v < 30 && inUptrend)  { score += 0.07; reasons.push(`Fear (${v}) — contrarian buy signal with trend support`); }
+    else if (v < 30)               { score += 0.02; reasons.push(`Fear (${v}) — caution: fear without trend confirmation`); }
+    else if (v > 85)               { score -= 0.12; reasons.push(`Extreme Greed (${v}) — reduce exposure, protect profits`); }
+    else if (v > 70)               { score -= 0.06; reasons.push(`Greed (${v}) — tighten stops, watch for reversal`); }
   }
 
   return { score: Math.max(0, Math.min(1, score)), reasons };
@@ -229,40 +282,51 @@ function portfolioEngine(a: AssetInput, all: AssetInput[]): number {
   return Math.max(0, Math.min(1, 0.5 + sharpe * 0.2 + diversBonus + capBonus));
 }
 
-// ── Learning Engine: trend consistency + volume quality + momentum alignment ──
+// ── Learning Engine: trend quality + momentum alignment + liquidity ─────────────
+// Cryptoteacher: trade only what has institutional backing and clean structure
 function learningEngine(a: AssetInput): number {
   let score = 0.5;
 
-  // Weekly trend strength
+  // ── Weekly trend strength (HTF confirmation) ──────────────────────────────
   if      (a.change7d >  0.20) score += 0.18;
-  else if (a.change7d >  0.10) score += 0.12;
-  else if (a.change7d >  0.05) score += 0.06;
-  else if (a.change7d < -0.20) score -= 0.18;
-  else if (a.change7d < -0.10) score -= 0.12;
-  else if (a.change7d < -0.05) score -= 0.06;
+  else if (a.change7d >  0.12) score += 0.13;
+  else if (a.change7d >  0.06) score += 0.07;
+  else if (a.change7d < -0.20) score -= 0.20; // Stronger downtrend penalty
+  else if (a.change7d < -0.12) score -= 0.14;
+  else if (a.change7d < -0.06) score -= 0.08;
 
-  // Trend confirmation: both 24h and 7d align = high-conviction signal
-  if (a.change24h > 0.01 && a.change7d > 0.05)  score += 0.07; // confirmed uptrend
-  if (a.change24h < -0.01 && a.change7d < -0.05) score -= 0.07; // confirmed downtrend
-  // Trend-following: ride strong momentum, don't fight it
-  if (a.change24h > 0.03 && a.change7d > 0.12) score += 0.05;  // strong momentum continuation
-  if (a.change24h < -0.03 && a.change7d < -0.12) score -= 0.05; // strong downtrend continuation
-  // Bullish divergence: 7d oversold but 24h starting to recover = early reversal signal
-  if (a.change24h > 0.02 && a.change7d < -0.12) score += 0.04;
-  // Death signal: fresh breakdown through weekly support
-  if (a.change24h < -0.04 && a.change7d < -0.08) score -= 0.05;
+  // ── Multi-timeframe alignment: 7d and 24h in same direction = high conviction ─
+  if  (a.change24h >  0.01 && a.change7d >  0.05) score += 0.08; // Both timeframes bullish
+  if  (a.change24h < -0.01 && a.change7d < -0.05) score -= 0.09; // Both timeframes bearish
 
-  // Volume breakout: price up + very high relative volume = confirmed breakout
-  if (a.volume24h > 0 && a.marketCap > 0) {
-    const relVol = a.volume24h / a.marketCap;
-    if (a.change24h > 0.04 && relVol > 0.12) { score += 0.08; } // volume-confirmed breakout
-    if (a.change24h < -0.04 && relVol > 0.12) { score -= 0.08; } // volume-confirmed breakdown
+  // ── PULLBACK QUALITY: slight 24h dip in strong 7d uptrend = ideal setup ────
+  if (a.change7d > 0.10 && a.change24h >= -0.06 && a.change24h < -0.004) {
+    score += 0.08; // Pullback in uptrend — learning engine confirms as best entry type
   }
 
-  // Liquidity quality: only trade assets with real institutional volume
-  if      (a.volume24h > 1_000_000_000) score += 0.10;
+  // ── Trend-following momentum ──────────────────────────────────────────────
+  if (a.change24h >  0.03 && a.change7d >  0.10) score += 0.06; // Strong momentum continuation
+  if (a.change24h < -0.03 && a.change7d < -0.10) score -= 0.07; // Strong downtrend continuation
+
+  // ── COUNTER-TREND TRAP DETECTION ─────────────────────────────────────────
+  // Bullish divergence in strong downtrend = dead-cat, NOT reversal yet
+  if (a.change24h > 0.03 && a.change7d < -0.15) score -= 0.08;
+  // Fresh breakdown through weekly support = accelerated selling
+  if (a.change24h < -0.04 && a.change7d < -0.08) score -= 0.06;
+
+  // ── Volume quality ────────────────────────────────────────────────────────
+  if (a.volume24h > 0 && a.marketCap > 0) {
+    const relVol = a.volume24h / a.marketCap;
+    if (a.change24h >  0.03 && relVol > 0.10) score += 0.09; // Volume-confirmed breakout
+    if (a.change24h < -0.03 && relVol > 0.10) score -= 0.09; // Volume-confirmed breakdown
+    if (a.change24h >  0.06 && relVol < 0.02) score -= 0.07; // Spike without volume = suspect
+  }
+
+  // ── Institutional liquidity requirement ──────────────────────────────────
+  if      (a.volume24h > 1_000_000_000) score += 0.10; // Deep institutional market
   else if (a.volume24h >   100_000_000) score += 0.05;
-  else if (a.volume24h <     1_000_000) score -= 0.10;
+  else if (a.volume24h <     5_000_000) score -= 0.12; // Insufficient liquidity for safe sizing
+  else if (a.volume24h <     1_000_000) score -= 0.18;
 
   return Math.max(0, Math.min(1, score));
 }
@@ -292,7 +356,12 @@ function riskGate(a: AssetInput, heat: number, dd: number): { pass: boolean; rea
   return { pass, reasons };
 }
 
-// ── Master scoring — mirrors inquisitiveBrain.js scoreAsset exactly ────────────
+// ── Master Scoring — High-probability trend-following signal engine ────────────
+// Targets 70-90% win rate via:
+//   1. Trend alignment gate (pattern engine primary score)
+//   2. Consensus requirement (all 4 engines must broadly agree)
+//   3. Higher execution thresholds (0.76 BULL/NEUTRAL, 0.78 BEAR)
+//   4. Counter-trend block (pattern engine < 0.48 = no active trade)
 export function scoreAsset(
   a:          AssetInput,
   regime:     Regime,
@@ -301,41 +370,52 @@ export function scoreAsset(
   heat = 0,
   dd   = 0,
 ) {
-  const pScore   = patternEngine(a, regime);
-  const rResult  = reasoningEngine(a, fg);
+  const pScore    = patternEngine(a, regime);
+  const rResult   = reasoningEngine(a, fg);
   const portScore = portfolioEngine(a, allAssets);
-  const lScore   = learningEngine(a);
-  const gate     = riskGate(a, heat, dd);
+  const lScore    = learningEngine(a);
+  const gate      = riskGate(a, heat, dd);
 
-  // Weighted ensemble (equal 25% each engine, as per inquisitiveBrain.js)
-  const rawScore   = (pScore + rResult.score + portScore + lScore) / 4;
-  const riskAdj    = gate.pass ? rawScore : rawScore * 0.3;
-  const finalScore = parseFloat(((riskAdj * 0.70) + (rawScore * 0.30)).toFixed(4));
+  // Weighted ensemble — pattern engine weighted heavier as primary trend filter
+  const rawScore   = (pScore * 0.35 + rResult.score * 0.25 + portScore * 0.20 + lScore * 0.20);
+  const riskAdj    = gate.pass ? rawScore : rawScore * 0.25;
+  const finalScore = parseFloat(((riskAdj * 0.72) + (rawScore * 0.28)).toFixed(4));
 
-  // Action thresholds — select best of 11 execution functions per asset properties + regime
-  const threshold = regime === 'BEAR' ? 0.65 : 0.70;
+  // ── Consensus check: all engines must broadly agree for active trades ──────
+  // This prevents one excited engine from overriding genuine weakness elsewhere
+  const minEngine    = Math.min(pScore, rResult.score, portScore, lScore);
+  const hasConsensus = minEngine >= 0.50;
+
+  // ── Pattern engine is the primary trend gate ──────────────────────────────
+  // If pattern engine signals counter-trend (< 0.48), block active buys
+  const patternGatePass = pScore >= 0.48;
+
+  // ── Action thresholds — raised from previous 0.65/0.70 ───────────────────
+  // BEAR: 0.78 (stricter — fewer setups work in bear markets)
+  // BULL/NEUTRAL: 0.76 (high bar — only best pullback/breakout setups)
+  const threshold = regime === 'BEAR' ? 0.78 : 0.76;
+
   let action = 'HOLD';
   if (gate.pass) {
-    if (finalScore <= 0.35) {
+    if (finalScore <= 0.33) {
       action = 'SELL';
-    } else if (finalScore <= 0.42) {
+    } else if (finalScore <= 0.40) {
       action = 'REDUCE';
-    } else if (finalScore >= threshold) {
-      // High-confidence active execution — full 11-function selection
+    } else if (finalScore >= threshold && hasConsensus && patternGatePass) {
+      // High-confidence active execution — all signals aligned
       if      (a.category === 'stablecoin')                                         action = 'LEND';
-      else if (a.category === 'liquid-stake')                                       action = finalScore >= 0.78 ? 'EARN' : 'REWARDS';
-      else if (finalScore >= 0.87 && a.yieldable && a.lendable)                    action = 'LOOP';
-      else if (finalScore >= 0.85 && a.category === 'major' && regime === 'BULL')  action = 'MULTIPLY';
-      else if (finalScore >= 0.82 && a.lendable && regime !== 'BULL')              action = 'BORROW';
-      else if (finalScore >= 0.80 && a.yieldable)                                  action = 'YIELD';
-      else if (finalScore >= 0.76 && a.stakeable && a.lendable)                    action = 'EARN';
-      else if (finalScore >= 0.72 && a.stakeable)                                  action = 'STAKE';
-      else if (finalScore >= 0.68 && a.lendable && regime !== 'BULL')              action = 'LEND';
-      else if (finalScore >= 0.65 && Math.abs(a.change7d ?? 0) > 0.08)            action = 'SWAP';
+      else if (a.category === 'liquid-stake')                                       action = finalScore >= 0.82 ? 'EARN' : 'REWARDS';
+      else if (finalScore >= 0.90 && a.yieldable && a.lendable)                    action = 'LOOP';
+      else if (finalScore >= 0.88 && a.category === 'major' && regime === 'BULL')  action = 'MULTIPLY';
+      else if (finalScore >= 0.85 && a.lendable && regime !== 'BULL')              action = 'BORROW';
+      else if (finalScore >= 0.83 && a.yieldable)                                  action = 'YIELD';
+      else if (finalScore >= 0.80 && a.stakeable && a.lendable)                    action = 'EARN';
+      else if (finalScore >= 0.78 && a.stakeable)                                  action = 'STAKE';
+      else if (finalScore >= 0.76 && a.lendable && regime !== 'BULL')              action = 'LEND';
+      else if (finalScore >= 0.76 && Math.abs(a.change7d ?? 0) > 0.10)            action = 'SWAP';
       else                                                                           action = 'BUY';
     } else {
-      // Steady-state operations (0.43–threshold): reflect what each asset IS doing in the portfolio.
-      // Every asset is deployed — stablecoins lent, staked assets staking, etc.
+      // Steady-state: every deployed asset is working — stablecoins lent, staked assets earning, etc.
       if      (a.category === 'stablecoin')                                         action = 'LEND';
       else if (a.category === 'liquid-stake')                                       action = 'REWARDS';
       else if (a.yieldable && a.stakeable && finalScore > 0.58)                    action = 'EARN';
@@ -351,7 +431,8 @@ export function scoreAsset(
 
   const chgPct    = (a.change24h * 100).toFixed(2);
   const fgStr     = fg ? ` F&G:${fg.value} (${fg.valueClassification}).` : '';
-  const rationale = `${action}: ${chgPct}% 24h. Weight ${a.weight}%.${fgStr} ${regime} regime. Risk-first gate ${gate.pass ? 'PASSED' : 'BLOCKED'}.`;
+  const trendStr  = a.change7d > 0.04 ? 'UPTREND' : a.change7d < -0.04 ? 'DOWNTREND' : 'RANGING';
+  const rationale = `${action}: ${chgPct}% 24h · ${(a.change7d*100).toFixed(1)}% 7d (${trendStr}). Weight ${a.weight}%.${fgStr} ${regime} regime. Gate ${gate.pass ? 'PASS' : 'BLOCK'} · Consensus ${hasConsensus ? 'YES' : 'NO'}.`;
 
   return {
     symbol:     a.symbol,

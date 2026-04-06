@@ -4,10 +4,24 @@ export default function Document() {
   return (
     <Html lang="en">
       <Head>
+        {/* Viewport for mobile */}
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+        
+        {/* Favicon */}
         <link rel="icon" type="image/svg+xml" href="/inqai-logo.svg" />
         <link rel="shortcut icon" href="/inqai-logo.svg" />
+        <link rel="apple-touch-icon" href="/inqai-logo.svg" />
+        
+        {/* PWA Manifest */}
+        <link rel="manifest" href="/site.webmanifest" />
+        
+        {/* Theme Color */}
         <meta name="theme-color" content="#0A041C" />
-
+        <meta name="msapplication-TileColor" content="#0A041C" />
+        
+        {/* Canonical URL */}
+        <link rel="canonical" href="https://getinqai.com" />
+        
         {/* Open Graph */}
         <meta property="og:type"        content="website" />
         <meta property="og:url"         content="https://getinqai.com" />

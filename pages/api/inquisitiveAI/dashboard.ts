@@ -73,7 +73,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const buys  = signals.filter(s => s.action === 'BUY').length;
     const sells = signals.filter(s => s.action === 'SELL' || s.action === 'REDUCE').length;
 
-    // ── Real portfolio performance from live weighted 65-asset basket ─────────
+    // ── Real portfolio performance from live weighted 66-asset basket ─────────────────
     const weightSum       = Object.values(PORTFOLIO_WEIGHTS).reduce((s, w) => s + w, 0) || 1;
     const assetsWithData  = allInputs.filter(inp => inp.priceUsd > 0);
     const return24h       = assetsWithData.reduce((s, inp) =>
@@ -84,9 +84,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const ethPriceIQ      = inputMap.get('ETH')?.priceUsd ?? 2000;
     const vaultValueIQ    = vaultEthIQ > 0 ? vaultEthIQ * ethPriceIQ : 0;
     const pnl24h          = vaultValueIQ > 0 ? vaultValueIQ * return24h : 0;
-    // Win rate: fraction of portfolio assets up in last 24 h
-    const winRate         = assetsWithData.length > 0
-      ? assetsWithData.filter(inp => inp.change24h > 0).length / assetsWithData.length : 0;
+    // Win rate: % of AI active-trade signals whose asset is up 24h (signal accuracy)
+    const ACTIVE_ACTIONS  = new Set(['BUY','STAKE','LEND','YIELD','BORROW','LOOP','MULTIPLY','EARN','REWARDS','SWAP']);
+    const activeSignals   = signals.filter(s => ACTIVE_ACTIONS.has(s.action));
+    const winRate         = activeSignals.length > 0
+      ? activeSignals.filter(s => (inputMap.get(s.symbol)?.change24h ?? 0) > 0).length / activeSignals.length
+      : 0;
     // Portfolio heat: weighted average of absolute 24h changes
     const portfolioHeat   = assetsWithData.reduce((s, inp) =>
       s + (PORTFOLIO_WEIGHTS[inp.symbol] || 0) * Math.abs(inp.change24h), 0) / weightSum;

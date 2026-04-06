@@ -1,0 +1,24 @@
+{
+  "name": "INQUISITIVE",
+  "short_name": "INQAI",
+  "description": "AI-powered 66-asset cryptocurrency portfolio platform",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#07071a",
+  "theme_color": "#0A041C",
+  "orientation": "portrait",
+  "scope": "/",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/inqai-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["finance", "investment", "cryptocurrency"],
+  "screenshots": [],
+  "related_applications": [],
+  "prefer_related_applications": false
+}

@@ -197,7 +197,7 @@ export default function Home() {
             <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16,marginBottom:16}}>
               {[
                 {Icon:Wallet,     title:'Asset-Backed Ownership',   desc:'Each INQAI token represents proportional ownership in a professionally managed portfolio of 65 digital assets. Real underlying assets. Transparent on-chain valuation.',col:'#a78bfa'},
-                {Icon:Bot,        title:'AI Portfolio Management',   desc:'Five intelligence engines execute eleven trading strategies continuously, optimizing portfolio composition and risk-adjusted returns across all 65 assets.',col:'#60a5fa'},
+                {Icon:Bot,        title:'AI Portfolio Management',   desc:'Five intelligence engines execute eleven trading strategies continuously, optimizing portfolio composition and risk-adjusted returns across all 66 assets.',col:'#60a5fa'},
                 {Icon:TrendingUp, title:'Value Accrual Mechanisms',  desc:'Portfolio performance, systematic buybacks representing 60% of protocol fees, permanent burns of 20% of fees, and compounding protocol revenue.',col:'#10b981'},
               ].map(c=>(
                 <div key={c.title} style={{background:'rgba(13,13,32,0.8)',border:'1px solid rgba(255,255,255,0.06)',borderRadius:20,padding:28,backdropFilter:'blur(12px)'}}>
@@ -269,7 +269,7 @@ export default function Home() {
             {[
               {label:'ERC-20 Standard', sub:'Ethereum Mainnet'},
               {label:'Non-Custodial',   sub:'Self-Custody Only'},
-              {label:'65 Live Assets',  sub:'Real-Time AI Management'},
+              {label:'66 Live Assets',  sub:'Real-Time AI Management'},
               {label:'Live Data',       sub:'CoinGecko · CryptoCompare'},
               {label:'0% Mgmt Fee',     sub:'Performance-Only Structure'},
               {label:'Circuit Breakers',sub:'15% Drawdown Protection'},
@@ -292,7 +292,7 @@ export default function Home() {
               <div>
                 <div className="anim-name-pulse" style={{fontWeight:900,fontSize:18,letterSpacing:'-0.5px',color:'#fff',marginBottom:8}}>INQUISITIVE</div>
                 <div style={{fontSize:11,color:'rgba(255,255,255,0.3)',lineHeight:1.8,maxWidth:360}}>
-                  INQAI is an ERC-20 token representing proportional ownership in a professionally managed portfolio of 65 digital assets. Proprietary AI systems execute portfolio management continuously. Fixed supply of 100,000,000 tokens.
+                  INQAI is an ERC-20 token representing proportional ownership in a professionally managed portfolio of 66 digital assets. Proprietary AI systems execute portfolio management continuously. Fixed supply of 100,000,000 tokens.
                 </div>
               </div>
               <div>
@@ -308,6 +308,15 @@ export default function Home() {
                 <div style={{fontSize:11,fontWeight:700,color:'rgba(255,255,255,0.4)',textTransform:'uppercase',letterSpacing:'1px',marginBottom:12}}>Data Sources</div>
                 {['CoinGecko (primary prices)','CryptoCompare (price fallback)','Alternative.me (Fear & Greed)','Chainlink (on-chain TWAP)'].map(s=>(
                   <div key={s} style={{fontSize:12,color:'rgba(255,255,255,0.3)',padding:'3px 0'}}>{s}</div>
+                ))}
+              </div>
+              <div>
+                <div style={{fontSize:11,fontWeight:700,color:'rgba(255,255,255,0.4)',textTransform:'uppercase',letterSpacing:'1px',marginBottom:12}}>Legal</div>
+                {[['Terms of Service','/terms'],['Privacy Policy','/privacy']].map(([l,p])=> (
+                  <div key={l} onClick={()=>router.push(p)} style={{fontSize:12,color:'rgba(255,255,255,0.35)',padding:'4px 0',cursor:'pointer',transition:'color 0.15s'}}
+                    onMouseOver={e=>(e.currentTarget.style.color='rgba(255,255,255,0.7)')}
+                    onMouseOut={e=>(e.currentTarget.style.color='rgba(255,255,255,0.35)')}
+                  >{l}</div>
                 ))}
               </div>
             </div>

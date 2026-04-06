@@ -53,7 +53,7 @@ async function getAssets() {
     } catch {}
   }
 
-  // Build AssetInput array for brain scoring (all 65 in registry order)
+  // Build AssetInput array for brain scoring (all 66 in registry order)
   const allInputs: AssetInput[] = ASSET_REGISTRY.map(meta => {
     const b = baseMap.get(meta.symbol);
     return {
@@ -77,7 +77,7 @@ async function getAssets() {
   const ethChgPct = (baseMap.get('ETH')?.change24h ?? 0) * 100;
   const regime    = getRegime(btcChgPct, ethChgPct);
 
-  // Run real 5-engine brain scoring on all 65 assets simultaneously
+  // Run real 5-engine brain scoring on all 66 assets simultaneously
   const scored = new Map(allInputs.map(inp => [inp.symbol, scoreAsset(inp, regime, fg, allInputs)]));
 
   // Merge base asset data with brain scores

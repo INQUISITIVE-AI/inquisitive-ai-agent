@@ -149,7 +149,7 @@ export default function TokenPage() {
 
   return (
     <>
-      <Head><title>Portfolio — 65 Backed Assets | INQUISITIVE</title></Head>
+      <Head><title>Portfolio — 66 Backed Assets | INQUISITIVE</title></Head>
       <div style={{minHeight:'100vh',background:'#07071a',color:'#fff',fontFamily:'-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif'}}>
         <div className="mesh-bg" />
 
@@ -170,7 +170,7 @@ export default function TokenPage() {
           <div style={{marginLeft:'auto',display:'flex',gap:8,alignItems:'center'}}>
             <span style={{fontSize:11,padding:'3px 10px',borderRadius:100,background:'rgba(16,185,129,0.08)',color:'#6ee7b7',border:'1px solid rgba(16,185,129,0.15)'}}>
               <span style={{width:5,height:5,borderRadius:'50%',background:'#10b981',display:'inline-block',marginRight:5}} className="anim-blink" />
-              {assets.length} / 65 live
+              {assets.length} / 66 live
             </span>
             <WalletButton label="Connect" />
           </div>
@@ -181,7 +181,7 @@ export default function TokenPage() {
           <div style={{maxWidth:1400,margin:'0 auto'}}>
             <div style={{display:'grid',gridTemplateColumns:'repeat(6,1fr)',gap:8,marginBottom:20}}>
               {[
-                {label:'Total Assets',    val:`${assets.length}/65`,  col:'#a78bfa'},
+                {label:'Total Assets',    val:`${assets.length}/66`,  col:'#a78bfa'},
                 {label:'Total MCap',      val:fmtUsd(totalMCap),     col:'#60a5fa'},
                 {label:'Avg 24h Change',  val:pct(avgChange),         col:grc(avgChange)},
                 {label:'AI Buy Positions', val:buys+' assets',         col:'#34d399'},
@@ -204,7 +204,7 @@ export default function TokenPage() {
           <div style={{width:320,flexShrink:0,borderRight:'1px solid rgba(255,255,255,0.05)',display:'flex',flexDirection:'column',background:'rgba(8,8,22,0.7)',height:'100%',overflow:'hidden'}}>
             {/* Filters */}
             <div style={{padding:'12px 14px',borderBottom:'1px solid rgba(255,255,255,0.05)',flexShrink:0}}>
-              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search 65 assets..."
+              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search 66 assets..."
                 style={{width:'100%',padding:'8px 12px',borderRadius:9,background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.08)',color:'#fff',fontSize:12,outline:'none',boxSizing:'border-box',marginBottom:8}} />
               <div style={{display:'flex',gap:4,overflowX:'auto',marginBottom:6}}>
                 {cats.slice(0,8).map(c=>(
@@ -265,7 +265,7 @@ export default function TokenPage() {
             {!selected ? (
               /* Portfolio Overview */
               <div style={{padding:24}}>
-                <h2 style={{fontSize:24,fontWeight:800,marginBottom:4}}>INQAI Portfolio — 65 Assets</h2>
+                <h2 style={{fontSize:24,fontWeight:800,marginBottom:4}}>INQAI Portfolio — 66 Assets</h2>
                 <p style={{color:'rgba(255,255,255,0.4)',fontSize:13,marginBottom:24}}>Select any asset from the left panel for detailed analysis</p>
 
                 {/* Category grid */}

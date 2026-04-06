@@ -6,8 +6,8 @@ import { getPrices } from '../_priceCache';
 import { getOnchain, VAULT_ADDR, INQAI_ADDR, DEPLOYER_ADDR } from '../_onchainCache';
 
 // ── INQAI NAV Engine ─────────────────────────────────────────────────────────
-// Computes live Net Asset Value of the INQAI token from the 65-asset basket.
-// Money deposited to buy INQAI is allocated to these 65 assets per PORTFOLIO_WEIGHTS.
+// Computes live Net Asset Value of the INQAI token from the 66-asset basket.
+// Money deposited to buy INQAI is allocated to these 66 assets per PORTFOLIO_WEIGHTS.
 // NAV = presale_price × (current_portfolio_index / 100)
 // Portfolio index = 100 × (1 + weighted_7d_return) — resets to 100 each Monday.
 
@@ -63,7 +63,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if ((fgRaw as any)?.data?.[0]) fgLive = { value: parseInt((fgRaw as any).data[0].value), valueClassification: (fgRaw as any).data[0].value_classification };
     } catch {}
 
-    // Run 5-engine brain on all 65 assets
+    // Run 5-engine brain on all 66 assets
     const signals = allInputs.map(inp => scoreAsset(inp, regime, fgLive, allInputs));
 
     // ── Portfolio NAV Computation ────────────────────────────────────────────
@@ -97,8 +97,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const buys  = signals.filter(s => s.action === 'BUY').length;
     const sells = signals.filter(s => s.action === 'SELL' || s.action === 'REDUCE').length;
-    const winRate = assetsLive.length > 0
-      ? assetsLive.filter(a => a.change24h > 0).length / assetsLive.length : 0;
+
+    // Win rate: % of AI active-trade signals whose underlying asset is up 24h.
+    // This reflects actual AI signal accuracy, not raw market % up.
+    const ACTIVE_ACTIONS = new Set(['BUY','STAKE','LEND','YIELD','BORROW','LOOP','MULTIPLY','EARN','REWARDS','SWAP']);
+    const activeSignals  = signals.filter(s => ACTIVE_ACTIONS.has(s.action));
+    const winRate = activeSignals.length > 0
+      ? activeSignals.filter(s => (inputs.get(s.symbol)?.change24h ?? 0) > 0).length / activeSignals.length
+      : 0;
 
     // ── Per-position data ─────────────────────────────────────────────────────
     // nativePrice    = actual live market price from CoinGecko (NEVER proxy)
@@ -200,7 +206,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         sells,
         riskScore:  regime === 'BULL' ? 0.35 : regime === 'BEAR' ? 0.72 : 0.5,
       },
-      // All 65 positions
+      // All 66 positions
       positions,
       timestamp: new Date().toISOString(),
     });

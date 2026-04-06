@@ -7,6 +7,30 @@ const TRX_ADDRESS = process.env.PAYMENT_TRX_ADDRESS || 'TDSkgbhuMAHChDw6kGCLJmM9
 // TTL: 30 minutes
 const TTL_MS = 30 * 60 * 1000;
 
+// Simple in-memory rate limiter (per IP) - 5 requests per minute
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+const RATE_LIMIT_MAX_REQUESTS = 5;
+
+function checkRateLimit(ip: string): { allowed: boolean; retryAfter?: number } {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  
+  if (!entry || now > entry.resetTime) {
+    // New window or expired window
+    rateLimitMap.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
+    return { allowed: true };
+  }
+  
+  if (entry.count >= RATE_LIMIT_MAX_REQUESTS) {
+    const retryAfter = Math.ceil((entry.resetTime - now) / 1000);
+    return { allowed: false, retryAfter };
+  }
+  
+  entry.count++;
+  return { allowed: true };
+}
+
 async function getLivePrice(coinId: string, fallback: number): Promise<number> {
   try {
     const r = await fetch(
@@ -21,6 +45,20 @@ async function getLivePrice(coinId: string, fallback: number): Promise<number> {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  // Rate limiting
+  const clientIp = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || 
+                   (req.headers['x-real-ip'] as string) || 
+                   'unknown';
+  
+  const rateCheck = checkRateLimit(clientIp);
+  if (!rateCheck.allowed) {
+    res.setHeader('Retry-After', rateCheck.retryAfter?.toString() || '60');
+    return res.status(429).json({ 
+      error: 'Rate limit exceeded', 
+      message: `Too many requests. Please try again in ${rateCheck.retryAfter} seconds.` 
+    });
+  }
 
   const { usdAmount, inqaiAmount, payToken, walletAddress } = req.body;
   if (!usdAmount || !payToken) return res.status(400).json({ error: 'Missing usdAmount or payToken' });

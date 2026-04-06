@@ -1,0 +1,23 @@
+User-agent: *
+Allow: /
+
+# Public pages
+Allow: /$
+Allow: /buy$
+Allow: /analytics$
+Allow: /token$
+Allow: /help$
+Allow: /api/og$
+
+# Disallow private/internal pages
+Disallow: /send$
+Disallow: /withdraw$
+Disallow: /api/payment/
+Disallow: /api/inquisitiveAI/execute/
+Disallow: /api/auth/
+
+# Crawl-delay for rate limiting
+Crawl-delay: 1
+
+# Sitemap location
+Sitemap: https://getinqai.com/sitemap.xml

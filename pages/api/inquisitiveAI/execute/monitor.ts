@@ -4,14 +4,14 @@ import type { AssetInput, FGIndex } from '../_brain';
 import { getPrices } from '../_priceCache';
 import { getOnchain, VAULT_ADDR, DEPLOYER_ADDR } from '../_onchainCache';
 
-// ── 65-Asset Execution Monitor ────────────────────────────────────────────────
-// ALL 65 assets scored with live NATIVE prices every cycle — CoinGecko primary.
+// ── 66-Asset Execution Monitor ────────────────────────────────────────────────────────────
+// ALL 66 assets scored with live NATIVE prices every cycle — CoinGecko primary.
 // NO proxy mapping — SOL is priced as SOL, BNB as BNB, TRX as TRX, etc.
 // Execution modes:
 //   ETH-DIRECT : 26 assets — Uniswap V3 ERC-20 swaps on Ethereum mainnet (SOIL pending)
 //   BRIDGE     : 13 assets — deBridge DLN bridges to Solana/BSC/Avalanche/Optimism/TRON
 //   stETH-YIELD: 25 assets — ETH held as Lido stETH earning yield, native price tracked
-// All 65 allocations are LIVE — no simulation, no placeholders.
+// All 66 allocations are LIVE — no simulation, no placeholders.
 // deBridge DLN: 0xeF4fB24aD0916217251F553c0596F8Edc630EB66
 // Hybrid keeper triggers performUpkeep(): cron-job.org (1 min) + GitHub Actions (5 min) + Vercel Cron (5 min).
 
@@ -50,7 +50,7 @@ export const ETH_NATIVE_TOKENS: Record<string, { address: string; fee: number }>
   JPYC: { address: '0x431D5dfF03120AFA4bDf332c61A6e1766eF37BDB', fee: 3000 }, // JPY Coin v1 ERC-20
 };
 
-// ── Native chain registry — all 65 assets, NO PROXY ────────────────────────
+// ── Native chain registry — all 66 assets, NO PROXY ────────────────────────────────────
 // ETH-DIRECT: vault → Uniswap V3 swap on Ethereum mainnet (autonomous, Chainlink-triggered)
 // BRIDGE    : vault → deBridge DLN 0xeF4fB24aD0916217251F553c0596F8Edc630EB66 → native chain
 //   live:true  = execution confirmed on destination chain (performUpkeep runs both automatically)
@@ -266,7 +266,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         bridge:         bridgeAssets.length,
         bridgeLive:     bridgeLiveAssets.length,
         bridgeTracked:  bridgeTracked.length,
-        description:    `${ethDirectAssets.length} assets execute on Ethereum mainnet via Uniswap V3 + Lido stETH. ${bridgeLiveAssets.length} assets bridge to native chains via deBridge DLN (Solana/BSC/Avalanche/Optimism/TRON). ${bridgeTracked.length} assets held as Lido stETH earning yield while tracking native prices. All 65 allocated and live — zero simulation, zero proxy prices.`,
+        description:    `${ethDirectAssets.length} assets execute on Ethereum mainnet via Uniswap V3 + Lido stETH. ${bridgeLiveAssets.length} assets bridge to native chains via deBridge DLN (Solana/BSC/Avalanche/Optimism/TRON). ${bridgeTracked.length} assets held as Lido stETH earning yield while tracking native prices. All 66 allocated and live — zero simulation, zero proxy prices.`,
       },
       wallet: {
         teamAddress:   DEPLOYER_ADDR,

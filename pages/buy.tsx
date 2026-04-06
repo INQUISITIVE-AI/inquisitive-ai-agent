@@ -232,7 +232,7 @@ export default function BuyPage() {
     <>
       <Head>
         <title>Acquire INQAI | INQUISITIVE</title>
-        <meta name="description" content={`Acquire INQAI — proportional ownership in a professionally managed portfolio of 65 digital assets. $${INQAI_TOKEN.presalePrice} presale price. ${Number(process.env.NEXT_PUBLIC_TOTAL_SUPPLY||100000000).toLocaleString()} fixed supply. Self-custody.`} />
+        <meta name="description" content={`Acquire INQAI — proportional ownership in a professionally managed portfolio of 66 digital assets. $${INQAI_TOKEN.presalePrice} presale price. ${Number(process.env.NEXT_PUBLIC_TOTAL_SUPPLY||100000000).toLocaleString()} fixed supply. Self-custody.`} />
       </Head>
 
       <div style={{ minHeight: '100vh', background: '#07071a', color: '#fff', fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif' }}>
@@ -567,7 +567,7 @@ export default function BuyPage() {
                   { label: 'Tokens Sold',    val: salesData?.token?.tokensSold > 0 ? salesData.token.tokensSold.toLocaleString('en-US', {maximumFractionDigits:0}) : (salesData ? '0' : '—'), col: salesData?.token?.tokensSold > 0 ? '#10b981' : '#6b7280' },
                   { label: 'Total Supply',   val: Number(process.env.NEXT_PUBLIC_TOTAL_SUPPLY||100000000).toLocaleString(), col: '#fff' },
                   { label: 'Token Standard', val: 'ERC-20',                                         col: '#60a5fa' },
-                  { label: 'Backing',        val: '65 Digital Assets',                              col: '#60a5fa' },
+                  { label: 'Backing',        val: '66 Digital Assets',                              col: '#60a5fa' },
                   { label: salesData?.marketCap?.circulatingUSD > 0 ? 'Market Cap' : 'Target MCap', val: salesData?.marketCap?.circulatingUSD > 0 ? (salesData.marketCap.circulatingUSD >= 1e9 ? '$' + (salesData.marketCap.circulatingUSD/1e9).toFixed(3) + 'B' : salesData.marketCap.circulatingUSD >= 1e6 ? '$' + (salesData.marketCap.circulatingUSD/1e6).toFixed(2) + 'M' : '$' + salesData.marketCap.circulatingUSD.toFixed(0)) : '$1.5B Target', col: '#f59e0b' },
                 ].map(r => (
                   <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>

@@ -23,7 +23,7 @@ const NAV_ITEMS = [
   {id:'roadmap',      Icon:Map,             label:'Roadmap'},
 ];
 
-const ASSETS_65 = [
+const ASSETS_66 = [
   {n:1, s:'BTC',     name:'Bitcoin',                              cat:'major'},
   {n:2, s:'ETH',     name:'Ethereum',                             cat:'major'},
   {n:3, s:'BNB',     name:'BNB',                                  cat:'major'},
@@ -130,7 +130,7 @@ export default function HelpPage() {
           <div style={{fontSize:11,letterSpacing:2,color:'#7c3aed',textTransform:'uppercase',marginBottom:8}}>Documentation</div>
           <h1 style={{fontSize:32,fontWeight:900,letterSpacing:'-0.5px',marginBottom:8}}>INQUISITIVE</h1>
           <p style={{fontSize:15,color:'rgba(255,255,255,0.5)',lineHeight:1.7,maxWidth:640}}>
-            INQAI represents proportional ownership in a professionally managed portfolio of 65 digital assets. Proprietary AI systems execute 11 trading strategies continuously, optimizing portfolio composition and risk-adjusted returns.
+            INQAI represents proportional ownership in a professionally managed portfolio of 66 digital assets. Proprietary AI systems execute 11 trading strategies continuously, optimizing portfolio composition and risk-adjusted returns.
           </p>
         </div>
 
@@ -195,7 +195,7 @@ export default function HelpPage() {
         <div style={{background:'rgba(251,191,36,0.05)',border:'1px solid rgba(251,191,36,0.15)',borderRadius:14,padding:18}}>
           <div style={{fontSize:13,fontWeight:700,color:'#fbbf24',marginBottom:8,display:'flex',alignItems:'center',gap:6}}><AlertTriangle size={16} color="#fbbf24" /> Risk Disclosure</div>
           <p style={{fontSize:12,color:'rgba(255,255,255,0.4)',lineHeight:1.7,margin:0}}>
-            INQAI is an ERC-20 token representing proportional ownership in a professionally managed portfolio of 65 digital assets. All trading functions execute autonomously based on AI signals. Past performance is not indicative of future results. Target APY of 18.5% is a projection based on strategy design, not a guarantee. Digital assets carry substantial risk including total loss of capital. This documentation is for informational purposes only and does not constitute financial advice.
+            INQAI is an ERC-20 token representing proportional ownership in a professionally managed portfolio of 66 digital assets. All trading functions execute autonomously based on AI signals. Past performance is not indicative of future results. Target APY of 18.5% is a projection based on strategy design, not a guarantee. Digital assets carry substantial risk including total loss of capital. This documentation is for informational purposes only and does not constitute financial advice.
           </p>
         </div>
       </div>
@@ -303,7 +303,7 @@ export default function HelpPage() {
         <h2 style={{fontSize:26,fontWeight:900,marginBottom:4}}>All 66 Assets</h2>
         <p style={{color:'rgba(255,255,255,0.4)',fontSize:13,marginBottom:20}}>Exact specification — real live prices from CoinGecko API · 30-second polling</p>
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))',gap:6}}>
-          {ASSETS_65.map(a=>(
+          {ASSETS_66.map(a=>(
             <div key={a.s} style={{background:'rgba(13,13,32,0.8)',border:`1px solid ${catColor(a.cat)}20`,borderRadius:10,padding:'10px 12px',backdropFilter:'blur(12px)'}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:4}}>
                 <span style={{fontSize:11,color:'rgba(255,255,255,0.25)'}}>{a.n}</span>
@@ -474,7 +474,7 @@ export default function HelpPage() {
             <h3 style={{fontSize:15,fontWeight:700,color:'#a78bfa',marginBottom:16}}>Token Specifications</h3>
             {[
               ['Name','INQUISITIVE'],['Symbol','INQAI'],['Standard','ERC-20'],
-              ['Backing','65-Asset Digital Portfolio'],['Network','Ethereum Mainnet'],
+              ['Backing','66-Asset Digital Portfolio'],['Network','Ethereum Mainnet'],
               ['Total Supply', `${Number(process.env.NEXT_PUBLIC_TOTAL_SUPPLY || 100000000).toLocaleString()} INQAI`],['Inflation','None — fixed supply'],
               ['Presale Price', `$${process.env.NEXT_PUBLIC_PRESALE_PRICE || '8'}/token`],['Target Price', `$${process.env.NEXT_PUBLIC_TARGET_PRICE || '15'}/token`],
               ['Target Market Cap','$1.5B (at $15/token)'],['Target APY', `${((parseFloat(process.env.NEXT_PUBLIC_TARGET_APY || '0.185')) * 100).toFixed(1)}%`],
@@ -516,8 +516,8 @@ export default function HelpPage() {
           <h3 style={{fontSize:15,fontWeight:700,color:'#34d399',marginBottom:16}}>Value Accrual Mechanisms</h3>
           <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12}}>
             {[
-              {icon:Gem,title:'Asset-Backed Ownership',desc:'Each INQAI token represents proportional ownership in a diversified portfolio of 65 digital assets, professionally managed by proprietary AI systems.'},
-              {icon:TrendingUp,title:'Portfolio Performance',desc:'Five intelligence engines optimize the 65-asset portfolio continuously across 11 trading strategies, compounding risk-adjusted returns into the underlying backing.'},
+              {icon:Gem,title:'Asset-Backed Ownership',desc:'Each INQAI token represents proportional ownership in a diversified portfolio of 66 digital assets, professionally managed by proprietary AI systems.'},
+              {icon:TrendingUp,title:'Portfolio Performance',desc:'Five intelligence engines optimize the 66-asset portfolio continuously across 11 trading strategies, compounding risk-adjusted returns into the underlying backing.'},
               {icon:Flame,title:'Systematic Buybacks + Burns',desc:'60% of all protocol fees are deployed for open-market INQAI buybacks. 20% is permanently burned. Sustained demand against a contracting circulating supply.'},
               {icon:Lock,title:'Staking Rewards',desc:'Token holders earn protocol yield through staking, generating additional returns on top of portfolio performance and fee-driven value accrual.'},
             ].map(v=>(
@@ -543,7 +543,7 @@ export default function HelpPage() {
             col:'#10b981',
             detail:'The entire AI brain, trading engine, price feed, macro data layer, REST API, WebSocket broadcaster, and Next.js frontend are fully operational.',
             items:[
-              '65-asset portfolio with real live prices via CoinGecko API (30-second polling)',
+              '66-asset portfolio with real live prices via CoinGecko API (30-second polling)',
               'AI Brain: 5 intelligence engines — Pattern, Reasoning, Portfolio, Learning, Risk',
               '11 trading functions — Buy, Sell, Swap, Lend, Yield, Borrow, Loop, Stake, Multiply, Earn, Rewards',
               'MacroData service: Alternative.me Fear & Greed + CoinGecko regime signals (BTC/ETH/SOL)',
