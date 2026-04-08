@@ -1,8 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Flame, TrendingUp, PiggyBank, Activity, ArrowUpRight } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useReadContract } from 'wagmi';
+import { erc20Abi, formatUnits } from 'viem';
+import { Flame, TrendingUp, PiggyBank, Activity, ArrowUpRight, ExternalLink } from 'lucide-react';
 
-// ── Buyback & Burn Tracker UI Component ─────────────────────────────────────
-// Real-time fee distribution tracking
+const INQAI_ADDR = '0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5' as `0x${string}`;
+const DEAD_ADDR  = '0x000000000000000000000000000000000000dEaD' as `0x${string}`;
+const DIST_CONTRACT = (process.env.NEXT_PUBLIC_DISTRIBUTOR_CONTRACT || '0x0000000000000000000000000000000000000000') as `0x${string}`;
+const DIST_LIVE = DIST_CONTRACT !== '0x0000000000000000000000000000000000000000';
 
 interface FeeData {
   fees: {
@@ -11,21 +15,9 @@ interface FeeData {
     distributionCount: number;
   };
   distribution: {
-    buybacks: {
-      eth: string;
-      percentage: number;
-      destination: string;
-    };
-    burns: {
-      eth: string;
-      percentage: number;
-      destination: string;
-    };
-    treasury: {
-      eth: string;
-      percentage: number;
-      destination: string;
-    };
+    buybacks: { eth: string; percentage: number; destination: string };
+    burns:    { eth: string; percentage: number; destination: string };
+    treasury: { eth: string; percentage: number; destination: string };
   };
   token: {
     totalSupply: string;
@@ -36,338 +28,155 @@ interface FeeData {
 }
 
 export default function BuybackBurnTracker() {
-  const [data, setData] = useState<FeeData | null>(null);
+  const [data,    setData]    = useState<FeeData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchFeeData = async () => {
+  // ── Live on-chain reads from INQAI token contract ──────────────────────────
+  const { data: totalSupplyRaw } = useReadContract({ address: INQAI_ADDR, abi: erc20Abi, functionName: 'totalSupply' });
+  const { data: burnedRaw       } = useReadContract({ address: INQAI_ADDR, abi: erc20Abi, functionName: 'balanceOf', args: [DEAD_ADDR] });
+
+  const totalSupplyLive  = totalSupplyRaw ? parseFloat(formatUnits(totalSupplyRaw as bigint, 18)) : 100_000_000;
+  const burnedLive       = burnedRaw      ? parseFloat(formatUnits(burnedRaw      as bigint, 18)) : 0;
+  const circulatingLive  = totalSupplyLive - burnedLive;
+  const burnPctLive      = totalSupplyLive > 0 ? (burnedLive / totalSupplyLive) * 100 : 0;
+
+  const fetchFeeData = useCallback(async () => {
     try {
       const res = await fetch('/api/inquisitiveAI/fees');
-      if (!res.ok) throw new Error('Failed to fetch');
-      const feeData = await res.json();
-      setData(feeData);
-    } catch (err) {
-      console.error('Failed to fetch fee data:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+      if (!res.ok) return;
+      setData(await res.json());
+    } catch {}
+    finally { setLoading(false); }
+  }, []);
 
   useEffect(() => {
     fetchFeeData();
-    const interval = setInterval(fetchFeeData, 60000);
-    return () => clearInterval(interval);
-  }, []);
-
-  if (loading) {
-    return (
-      <div style={{
-        background: 'rgba(13,13,32,0.8)',
-        border: '1px solid rgba(255,255,255,0.1)',
-        borderRadius: 24,
-        padding: 32,
-        textAlign: 'center'
-      }}>
-        <div style={{ color: 'rgba(255,255,255,0.6)' }}>Loading fee data...</div>
-      </div>
-    );
-  }
+    const t = setInterval(fetchFeeData, 60000);
+    return () => clearInterval(t);
+  }, [fetchFeeData]);
 
   return (
-    <div style={{
-      background: 'linear-gradient(135deg, rgba(13,13,32,0.95) 0%, rgba(48,24,24,0.9) 100%)',
-      border: '1px solid rgba(239,68,68,0.3)',
-      borderRadius: 24,
-      padding: 32,
-      backdropFilter: 'blur(20px)',
-      maxWidth: 900,
-      margin: '0 auto'
-    }}>
-      {/* Header */}
-      <div style={{ textAlign: 'center', marginBottom: 32 }}>
-        <div style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 12,
-          background: 'linear-gradient(135deg, #ef4444 0%, #f97316 100%)',
-          padding: '12px 24px',
-          borderRadius: 50,
-          marginBottom: 16
-        }}>
-          <Flame size={24} color="white" />
-          <span style={{ color: 'white', fontWeight: 700, fontSize: 16 }}>
-            Buyback & Burn Tracker
-          </span>
-        </div>
-        
-        <h2 style={{ fontSize: 28, fontWeight: 800, color: 'white', margin: '0 0 8px' }}>
-          Deflationary Value Accrual
-        </h2>
-        <p style={{ color: 'rgba(255,255,255,0.6)', margin: 0 }}>
-          60% buybacks for stakers • 20% permanently burned • 20% treasury
-        </p>
+    <div style={{ fontFamily: 'system-ui,-apple-system,sans-serif', color: '#fff' }}>
+
+      {/* ── Token Supply Stats (live on-chain) ────────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 1, marginBottom: 1, background: 'rgba(255,255,255,0.05)' }}>
+        {([
+          { l: 'Total Supply',   v: (totalSupplyLive / 1e6).toFixed(0) + 'M INQAI',                                          c: '#fff'    },
+          { l: 'Circulating',    v: circulatingLive.toLocaleString('en-US', { maximumFractionDigits: 0 }) + ' INQAI',         c: '#60a5fa' },
+          { l: 'INQAI Burned',   v: burnedLive.toLocaleString('en-US', { maximumFractionDigits: 0 }) + ' INQAI',              c: '#ef4444' },
+          { l: 'Supply Burned',  v: burnPctLive.toFixed(4) + '%',                                                              c: '#f97316' },
+        ] as const).map(s => (
+          <div key={s.l} style={{ background: 'rgba(13,13,32,0.97)', padding: '22px 24px' }}>
+            <div style={{ fontSize: 18, fontWeight: 800, color: s.c, fontFamily: 'monospace', letterSpacing: '-0.5px', marginBottom: 5 }}>{s.v}</div>
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>{s.l}</div>
+          </div>
+        ))}
       </div>
 
-      {/* Distribution Breakdown */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
-        gap: 16,
-        marginBottom: 32
-      }}>
-        {/* Buybacks */}
-        <div style={{
-          background: 'linear-gradient(135deg, rgba(16,185,129,0.2), rgba(52,211,153,0.1))',
-          border: '1px solid rgba(16,185,129,0.3)',
-          borderRadius: 16,
-          padding: 24,
-          textAlign: 'center'
-        }}>
-          <div style={{
-            width: 48,
-            height: 48,
-            borderRadius: 24,
-            background: 'rgba(16,185,129,0.3)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto 12px'
-          }}>
-            <TrendingUp size={24} color="#10b981" />
+      {/* ── Main Panel ─────────────────────────────────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: 'rgba(255,255,255,0.05)' }}>
+
+        {/* LEFT — Fee Distribution */}
+        <div style={{ background: 'rgba(13,13,32,0.97)', padding: '32px 32px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
+            <Activity size={15} color="#ef4444" />
+            <span style={{ fontSize: 11, fontWeight: 800, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Fee Distribution</span>
           </div>
-          <div style={{ fontSize: 32, fontWeight: 800, color: '#10b981' }}>
-            60%
-          </div>
-          <div style={{ fontSize: 14, fontWeight: 600, color: 'white', marginBottom: 4 }}>
-            Buybacks
-          </div>
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>
-            To Staking Rewards
-          </div>
-          <div style={{ fontSize: 16, fontWeight: 700, color: '#10b981', marginTop: 8 }}>
-            {parseFloat(data?.distribution.buybacks.eth || '0').toFixed(2)} ETH
+
+          {/* Distribution rows */}
+          {[
+            { label: 'Buybacks → Staking Rewards', pct: 60, color: '#10b981', ethVal: data?.distribution.buybacks.eth },
+            { label: 'Permanently Burned',          pct: 20, color: '#ef4444', ethVal: data?.distribution.burns.eth    },
+            { label: 'Treasury & Operations',       pct: 20, color: '#818cf8', ethVal: data?.distribution.treasury.eth },
+          ].map(r => (
+            <div key={r.label} style={{ marginBottom: 20 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ width: 3, height: 14, background: r.color, borderRadius: 2 }} />
+                  <span style={{ color: 'rgba(255,255,255,0.65)', fontWeight: 600 }}>{r.label}</span>
+                </div>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <span style={{ color: r.color, fontWeight: 800, fontFamily: 'monospace' }}>{r.pct}%</span>
+                  <span style={{ color: 'rgba(255,255,255,0.35)', fontFamily: 'monospace' }}>{parseFloat(r.ethVal || '0').toFixed(4)} ETH</span>
+                </div>
+              </div>
+              <div style={{ height: 6, background: 'rgba(255,255,255,0.06)', borderRadius: 3, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${r.pct}%`, background: r.color, borderRadius: 3, transition: 'width 1s ease' }} />
+              </div>
+            </div>
+          ))}
+
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 20, marginTop: 4 }}>
+            {[
+              { l: 'Total Fees Collected',  v: parseFloat(data?.fees.totalCollected  || '0').toFixed(4) + ' ETH' },
+              { l: 'Pending Distribution',  v: parseFloat(data?.fees.pendingDistribution || '0').toFixed(4) + ' ETH' },
+              { l: 'Distribution Events',   v: (data?.fees.distributionCount || 0).toLocaleString() },
+            ].map(r => (
+              <div key={r.l} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.04)', fontSize: 13 }}>
+                <span style={{ color: 'rgba(255,255,255,0.38)' }}>{r.l}</span>
+                <span style={{ color: '#fff', fontWeight: 700, fontFamily: 'monospace' }}>{r.v}</span>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Burns */}
-        <div style={{
-          background: 'linear-gradient(135deg, rgba(239,68,68,0.2), rgba(249,115,22,0.1))',
-          border: '1px solid rgba(239,68,68,0.3)',
-          borderRadius: 16,
-          padding: 24,
-          textAlign: 'center'
-        }}>
-          <div style={{
-            width: 48,
-            height: 48,
-            borderRadius: 24,
-            background: 'rgba(239,68,68,0.3)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto 12px'
-          }}>
-            <Flame size={24} color="#ef4444" />
+        {/* RIGHT — Token Supply */}
+        <div style={{ background: 'rgba(13,13,32,0.97)', padding: '32px 32px', borderLeft: '1px solid rgba(255,255,255,0.05)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
+            <Flame size={15} color="#ef4444" />
+            <span style={{ fontSize: 11, fontWeight: 800, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Token Supply — Live On-Chain</span>
           </div>
-          <div style={{ fontSize: 32, fontWeight: 800, color: '#ef4444' }}>
-            20%
-          </div>
-          <div style={{ fontSize: 14, fontWeight: 600, color: 'white', marginBottom: 4 }}>
-            Burned
-          </div>
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>
-            Permanently Removed
-          </div>
-          <div style={{ fontSize: 16, fontWeight: 700, color: '#ef4444', marginTop: 8 }}>
-            {parseFloat(data?.distribution.burns.eth || '0').toFixed(2)} ETH
-          </div>
-        </div>
 
-        {/* Treasury */}
-        <div style={{
-          background: 'linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.1))',
-          border: '1px solid rgba(99,102,241,0.3)',
-          borderRadius: 16,
-          padding: 24,
-          textAlign: 'center'
-        }}>
-          <div style={{
-            width: 48,
-            height: 48,
-            borderRadius: 24,
-            background: 'rgba(99,102,241,0.3)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto 12px'
-          }}>
-            <PiggyBank size={24} color="#818cf8" />
+          {/* Circulating vs Burned visual */}
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, fontSize: 12 }}>
+              <span style={{ color: 'rgba(255,255,255,0.4)' }}>Circulating supply</span>
+              <span style={{ color: '#60a5fa', fontFamily: 'monospace', fontWeight: 700 }}>{((circulatingLive / totalSupplyLive) * 100).toFixed(2)}%</span>
+            </div>
+            <div style={{ height: 20, background: 'rgba(255,255,255,0.06)', borderRadius: 4, overflow: 'hidden', position: 'relative' }}>
+              <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: `${(circulatingLive / totalSupplyLive) * 100}%`, background: 'linear-gradient(90deg,#3b82f6,#60a5fa)', borderRadius: 4 }} />
+              <div style={{ position: 'absolute', right: 0, top: 0, height: '100%', width: `${burnPctLive}%`, background: 'linear-gradient(90deg,#ef4444,#f97316)', borderRadius: 4 }} />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 11 }}>
+              <span style={{ color: '#60a5fa' }}>Circulating: {circulatingLive.toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>
+              <span style={{ color: '#ef4444' }}>Burned: {burnedLive.toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>
+            </div>
           </div>
-          <div style={{ fontSize: 32, fontWeight: 800, color: '#818cf8' }}>
-            20%
-          </div>
-          <div style={{ fontSize: 14, fontWeight: 600, color: 'white', marginBottom: 4 }}>
-            Treasury
-          </div>
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>
-            Operations
-          </div>
-          <div style={{ fontSize: 16, fontWeight: 700, color: '#818cf8', marginTop: 8 }}>
-            {parseFloat(data?.distribution.treasury.eth || '0').toFixed(2)} ETH
+
+          {[
+            { l: 'Total Supply',        v: totalSupplyLive.toLocaleString('en-US', { maximumFractionDigits: 0 }) + ' INQAI', c: '#fff'    },
+            { l: 'Circulating Supply',  v: circulatingLive.toLocaleString('en-US',  { maximumFractionDigits: 0 }) + ' INQAI', c: '#60a5fa' },
+            { l: 'Burned (dEaD addr)',  v: burnedLive.toLocaleString('en-US',       { maximumFractionDigits: 0 }) + ' INQAI', c: '#ef4444' },
+            { l: 'Burn %',              v: burnPctLive.toFixed(4) + '%',                                                       c: '#f97316' },
+          ].map(r => (
+            <div key={r.l} style={{ display: 'flex', justifyContent: 'space-between', padding: '9px 0', borderBottom: '1px solid rgba(255,255,255,0.04)', fontSize: 13 }}>
+              <span style={{ color: 'rgba(255,255,255,0.38)' }}>{r.l}</span>
+              <span style={{ color: r.c, fontWeight: 700, fontFamily: 'monospace' }}>{r.v}</span>
+            </div>
+          ))}
+
+          <div style={{ marginTop: 20 }}>
+            <a href={`https://etherscan.io/token/${INQAI_ADDR}`} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#60a5fa', textDecoration: 'none', fontWeight: 600 }}>
+              View INQAI on Etherscan <ExternalLink size={12} />
+            </a>
+            <a href={`https://etherscan.io/token/${INQAI_ADDR}?a=${DEAD_ADDR}`} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#ef4444', textDecoration: 'none', fontWeight: 600, marginTop: 8 }}>
+              View burn address <ExternalLink size={12} />
+            </a>
           </div>
         </div>
       </div>
 
-      {/* Stats Row */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(4, 1fr)',
-        gap: 16,
-        marginBottom: 32
-      }}>
-        <div style={{
-          background: 'rgba(255,255,255,0.05)',
-          padding: 20,
-          borderRadius: 12,
-          textAlign: 'center'
-        }}>
-          <Activity size={20} color="#ef4444" style={{ marginBottom: 8 }} />
-          <div style={{ fontSize: 20, fontWeight: 700, color: 'white' }}>
-            {parseFloat(data?.fees.totalCollected || '0').toFixed(2)} ETH
-          </div>
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>Total Fees</div>
+      {/* ── Footer ─────────────────────────────────────────────────────────── */}
+      <div style={{ background: 'rgba(13,13,32,0.97)', marginTop: 1, padding: '14px 32px', display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+          <div style={{ width: 5, height: 5, borderRadius: '50%', background: DIST_LIVE ? '#10b981' : '#f59e0b', boxShadow: `0 0 6px ${DIST_LIVE ? '#10b981' : '#f59e0b'}` }} />
+          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>Fee Distributor: {DIST_LIVE ? 'Live' : 'Pending deployment'}</span>
         </div>
-        
-        <div style={{
-          background: 'rgba(255,255,255,0.05)',
-          padding: 20,
-          borderRadius: 12,
-          textAlign: 'center'
-        }}>
-          <ArrowUpRight size={20} color="#f97316" style={{ marginBottom: 8 }} />
-          <div style={{ fontSize: 20, fontWeight: 700, color: 'white' }}>
-            {data?.fees.distributionCount || 0}
-          </div>
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>Distributions</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+          <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#10b981', boxShadow: '0 0 6px #10b981' }} />
+          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>Token supply reads: Live on-chain</span>
         </div>
-        
-        <div style={{
-          background: 'rgba(255,255,255,0.05)',
-          padding: 20,
-          borderRadius: 12,
-          textAlign: 'center'
-        }}>
-          <Flame size={20} color="#ef4444" style={{ marginBottom: 8 }} />
-          <div style={{ fontSize: 20, fontWeight: 700, color: '#ef4444' }}>
-            {parseFloat(data?.token.burned || '0').toLocaleString(undefined, {maximumFractionDigits: 0})}
-          </div>
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>INQAI Burned</div>
-        </div>
-        
-        <div style={{
-          background: 'rgba(255,255,255,0.05)',
-          padding: 20,
-          borderRadius: 12,
-          textAlign: 'center'
-        }}>
-          <TrendingUp size={20} color="#10b981" style={{ marginBottom: 8 }} />
-          <div style={{ fontSize: 20, fontWeight: 700, color: '#10b981' }}>
-            {data?.token.burnPercentage.toFixed(2) || '0'}%
-          </div>
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>Supply Burned</div>
-        </div>
-      </div>
-
-      {/* Progress Bars */}
-      <div style={{ marginBottom: 24 }}>
-        <h3 style={{ fontSize: 16, fontWeight: 700, color: 'white', margin: '0 0 16px' }}>
-          Fee Distribution Progress
-        </h3>
-        
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {/* Buybacks Bar */}
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: 12 }}>
-              <span style={{ color: '#10b981' }}>Buybacks to Stakers (60%)</span>
-              <span style={{ color: 'rgba(255,255,255,0.6)' }}>
-                {parseFloat(data?.distribution.buybacks.eth || '0').toFixed(2)} ETH
-              </span>
-            </div>
-            <div style={{
-              height: 8,
-              background: 'rgba(255,255,255,0.1)',
-              borderRadius: 4,
-              overflow: 'hidden'
-            }}>
-              <div style={{
-                height: '100%',
-                width: '60%',
-                background: '#10b981',
-                borderRadius: 4
-              }} />
-            </div>
-          </div>
-
-          {/* Burns Bar */}
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: 12 }}>
-              <span style={{ color: '#ef4444' }}>Permanently Burned (20%)</span>
-              <span style={{ color: 'rgba(255,255,255,0.6)' }}>
-                {parseFloat(data?.distribution.burns.eth || '0').toFixed(2)} ETH
-              </span>
-            </div>
-            <div style={{
-              height: 8,
-              background: 'rgba(255,255,255,0.1)',
-              borderRadius: 4,
-              overflow: 'hidden'
-            }}>
-              <div style={{
-                height: '100%',
-                width: '20%',
-                background: '#ef4444',
-                borderRadius: 4
-              }} />
-            </div>
-          </div>
-
-          {/* Treasury Bar */}
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: 12 }}>
-              <span style={{ color: '#818cf8' }}>Treasury (20%)</span>
-              <span style={{ color: 'rgba(255,255,255,0.6)' }}>
-                {parseFloat(data?.distribution.treasury.eth || '0').toFixed(2)} ETH
-              </span>
-            </div>
-            <div style={{
-              height: 8,
-              background: 'rgba(255,255,255,0.1)',
-              borderRadius: 4,
-              overflow: 'hidden'
-            }}>
-              <div style={{
-                height: '100%',
-                width: '20%',
-                background: '#818cf8',
-                borderRadius: 4
-              }} />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Info */}
-      <div style={{
-        background: 'rgba(239,68,68,0.1)',
-        border: '1px solid rgba(239,68,68,0.3)',
-        borderRadius: 12,
-        padding: 16
-      }}>
-        <p style={{ margin: 0, fontSize: 13, color: 'rgba(255,255,255,0.7)', lineHeight: 1.6 }}>
-          <strong style={{ color: '#ef4444' }}>Deflationary Mechanics:</strong><br />
-          Protocol fees are automatically distributed: 60% buys INQAI for staker rewards, 
-          20% is permanently burned (reducing supply forever), 20% funds ongoing operations. 
-          This creates sustained buy pressure while making INQAI increasingly scarce.
-        </p>
+        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.18)', marginLeft: 'auto' }}>15% performance fee · 60% buybacks · 20% burn · 20% treasury</span>
       </div>
     </div>
   );

@@ -7,10 +7,9 @@ import { parseEther, parseUnits, erc20Abi } from 'viem';
 import { mainnet } from 'wagmi/chains';
 import { INQAI_TOKEN } from '../src/config/wagmi';
 import { Lock, CheckCircle2, Loader, Shield, ExternalLink, AlertTriangle } from 'lucide-react';
-import InqaiLogo from '../src/components/InqaiLogo';
+import SiteNav from '../src/components/SiteNav';
 
 const OpenWalletButton = dynamic(() => import('../src/components/OpenWalletButton'), { ssr: false, loading: () => null });
-const WalletButton     = dynamic(() => import('../src/components/WalletButton'),     { ssr: false, loading: () => null });
 
 const fmtUsd = (n: number) => {
   if (!n) return '$0';
@@ -19,10 +18,6 @@ const fmtUsd = (n: number) => {
   return '$' + n.toFixed(2);
 };
 
-const NAV_LINKS = [
-  { l: 'Portfolio', p: '/analytics', accent: false },
-  { l: 'Docs',      p: '/help',      accent: false },
-];
 
 export default function BuyPage() {
   const router = useRouter();
@@ -239,24 +234,7 @@ export default function BuyPage() {
         <div className="mesh-bg" />
 
         {/* NAV */}
-        <nav style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(7,7,26,0.92)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.05)', height: 60, display: 'flex', alignItems: 'center', padding: '0 24px', gap: 8 }}>
-          <button onClick={() => router.push('/')} style={{ display: 'flex', alignItems: 'center', gap: 9, background: 'none', border: 'none', cursor: 'pointer', marginRight: 24, padding: 0 }}>
-            <InqaiLogo size={32} />
-            <div className="anim-name-pulse" style={{ fontWeight: 900, fontSize: 18, letterSpacing: '-0.5px', color: '#fff', lineHeight: 1 }}>INQUISITIVE</div>
-          </button>
-          <div style={{ display: 'flex', gap: 3, flex: 1 }}>
-            {NAV_LINKS.map(n => (
-              <button key={n.l} onClick={() => router.push(n.p)} style={{
-                padding: '6px 14px', borderRadius: 9, cursor: 'pointer', fontSize: 13, fontWeight: n.accent ? 700 : 500,
-                background: n.accent ? 'linear-gradient(135deg,#7c3aed,#4f46e5)' : 'transparent',
-                color: n.accent ? '#fff' : 'rgba(255,255,255,0.5)',
-                border: n.accent ? '1px solid rgba(255,255,255,0.1)' : '1px solid transparent',
-                boxShadow: n.accent ? '0 2px 12px rgba(124,58,237,0.35)' : 'none',
-              }}>{n.l}</button>
-            ))}
-          </div>
-          <WalletButton label="Connect" />
-        </nav>
+        <SiteNav />
 
         {/* PAGE CONTENT */}
         <div style={{ padding: '56px 24px 80px', position: 'relative', zIndex: 1 }}>

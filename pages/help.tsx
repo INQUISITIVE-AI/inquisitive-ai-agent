@@ -7,9 +7,7 @@ import {
   Shield, Plug, DollarSign, Map, Book, Brain, Lock, Layers, Gem, Gift, RotateCcw, Flame, Wallet, Bot, Scale, CheckCircle2, ArrowRight, TrendingUp, TrendingDown, ArrowLeftRight, Landmark, Leaf, AlertTriangle, Activity, Target, Infinity, X, BarChart3, Eye, Microscope, Key
 } from 'lucide-react';
 
-import InqaiLogo from '../src/components/InqaiLogo';
-
-const WalletButton = dynamic(() => import('../src/components/WalletButton'), { ssr: false });
+import SiteNav from '../src/components/SiteNav';
 
 const NAV_ITEMS = [
   {id:'overview',     Icon:LayoutDashboard, label:'Overview'},
@@ -653,20 +651,7 @@ export default function HelpPage() {
         <div className="mesh-bg" />
 
         {/* Nav */}
-        <nav style={{position:'sticky',top:0,zIndex:50,background:'rgba(7,7,26,0.92)',backdropFilter:'blur(20px)',borderBottom:'1px solid rgba(255,255,255,0.05)',height:52,display:'flex',alignItems:'center',padding:'0 20px',gap:10}}>
-          <button onClick={()=>router.push('/')} style={{display:'flex',alignItems:'center',gap:9,background:'none',border:'none',cursor:'pointer',marginRight:16,padding:0}}>
-            <InqaiLogo size={30} />
-            <div className="anim-name-pulse" style={{fontWeight:900,fontSize:16,letterSpacing:'-0.4px',color:'#fff',lineHeight:1}}>INQUISITIVE</div>
-          </button>
-          <div style={{display:'flex',gap:4,flex:1}}>
-            {[{l:'Portfolio',p:'/analytics',accent:false},{l:'Docs',p:'/help',accent:true}].map(n=>(
-              <button key={n.l} onClick={()=>router.push(n.p)} style={{padding:'5px 12px',borderRadius:7,background:n.accent?'linear-gradient(135deg,#7c3aed,#4f46e5)':'transparent',border:n.accent?'1px solid rgba(255,255,255,0.1)':'none',color:n.accent?'#fff':'rgba(255,255,255,0.45)',fontSize:12,fontWeight:n.accent?700:500,cursor:'pointer',boxShadow:n.accent?'0 2px 10px rgba(124,58,237,0.3)':'none'}}>{n.l}</button>
-            ))}
-          </div>
-          <div style={{marginLeft:'auto'}}>
-            <WalletButton label="Connect" />
-          </div>
-        </nav>
+        <SiteNav />
 
         <div style={{display:'flex',minHeight:'calc(100vh - 52px)',position:'relative',zIndex:1}}>
           {/* Sidebar */}

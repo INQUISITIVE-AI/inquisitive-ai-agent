@@ -3,9 +3,7 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';
 import { Lock, DollarSign, Wheat, Infinity, Gem } from 'lucide-react';
-import InqaiLogo from '../src/components/InqaiLogo';
-
-const WalletButton = dynamic(() => import('../src/components/WalletButton'), { ssr: false });
+import SiteNav from '../src/components/SiteNav';
 
 const fmtUsd = (n: number) => {
   if (!n || isNaN(n)) return '—';
@@ -154,27 +152,12 @@ export default function TokenPage() {
         <div className="mesh-bg" />
 
         {/* NAV */}
-        <nav style={{position:'sticky',top:0,zIndex:50,background:'rgba(7,7,26,0.92)',backdropFilter:'blur(20px)',borderBottom:'1px solid rgba(255,255,255,0.05)',height:52,display:'flex',alignItems:'center',padding:'0 20px',gap:12}}>
-          <button onClick={()=>router.push('/')} style={{display:'flex',alignItems:'center',gap:9,background:'none',border:'none',cursor:'pointer',marginRight:16,padding:0}}>
-            <InqaiLogo size={30} />
-            <div>
-              <div className="anim-name-pulse" style={{fontWeight:900,fontSize:16,letterSpacing:'-0.4px',color:'#fff',lineHeight:1}}>INQUISITIVE</div>
-              <div style={{fontSize:8,color:'rgba(255,255,255,0.35)',letterSpacing:'2px',textTransform:'uppercase',marginTop:2}}>INQAI</div>
-            </div>
-          </button>
-          <div style={{display:'flex',gap:4,flex:1}}>
-            {[{l:'Portfolio',p:'/analytics',accent:false},{l:'Token',p:'/token',accent:true},{l:'Docs',p:'/help',accent:false}].map(n=>(
-              <button key={n.l} onClick={()=>router.push(n.p)} style={{padding:'5px 12px',borderRadius:7,background:n.accent?'linear-gradient(135deg,#7c3aed,#4f46e5)':'transparent',border:n.accent?'1px solid rgba(255,255,255,0.1)':'none',color:n.accent?'#fff':'rgba(255,255,255,0.45)',fontSize:12,fontWeight:n.accent?700:500,cursor:'pointer',boxShadow:n.accent?'0 2px 10px rgba(124,58,237,0.3)':'none'}}>{n.l}</button>
-            ))}
-          </div>
-          <div style={{marginLeft:'auto',display:'flex',gap:8,alignItems:'center'}}>
-            <span style={{fontSize:11,padding:'3px 10px',borderRadius:100,background:'rgba(16,185,129,0.08)',color:'#6ee7b7',border:'1px solid rgba(16,185,129,0.15)'}}>
-              <span style={{width:5,height:5,borderRadius:'50%',background:'#10b981',display:'inline-block',marginRight:5}} className="anim-blink" />
-              {assets.length} / 66 live
-            </span>
-            <WalletButton label="Connect" />
-          </div>
-        </nav>
+        <SiteNav right={
+          <span style={{fontSize:11,padding:'3px 10px',borderRadius:100,background:'rgba(16,185,129,0.08)',color:'#6ee7b7',border:'1px solid rgba(16,185,129,0.15)',display:'flex',alignItems:'center',gap:5}}>
+            <span style={{width:5,height:5,borderRadius:'50%',background:'#10b981',display:'inline-block',flexShrink:0}} className="anim-blink" />
+            {assets.length} / 66 live
+          </span>
+        } />
 
         {/* HERO STATS */}
         <div style={{padding:'20px 20px 0',position:'relative',zIndex:1}}>

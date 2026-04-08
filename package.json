@@ -5,6 +5,7 @@
   "main": "server/index.js",
   "scripts": {
     "dev": "next dev",
+    "prebuild": "find . -name '._*' -not -path './node_modules/*' -delete 2>/dev/null; find . -name '.__*' -not -path './node_modules/*' -delete 2>/dev/null; true",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",

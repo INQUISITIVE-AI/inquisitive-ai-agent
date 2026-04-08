@@ -6,7 +6,9 @@ import { useAccount, useReadContract, useWriteContract, useWaitForTransactionRec
 import { mainnet } from "wagmi/chains";
 import { erc20Abi, isAddress, parseUnits, formatUnits } from "viem";
 import { INQAI_TOKEN } from "../src/config/wagmi";
-const WalletButton = dynamic(() => import("../src/components/WalletButton"), { ssr: false });
+import SiteNav from '../src/components/SiteNav';
+
+const WalletButton = dynamic(() => import('../src/components/WalletButton'), { ssr: false });
 
 export default function SendPage() {
   const router = useRouter();
@@ -51,13 +53,7 @@ export default function SendPage() {
     <>
       <Head><title>Send INQAI | INQUISITIVE</title></Head>
       <div style={{ minHeight:"100vh", background:"#07071a", color:"#fff", fontFamily:"system-ui,sans-serif" }}>
-        <nav style={{ position:"sticky", top:0, zIndex:100, background:"rgba(7,7,26,0.92)", backdropFilter:"blur(20px)", borderBottom:"1px solid rgba(255,255,255,0.06)", height:60, display:"flex", alignItems:"center", padding:"0 24px", gap:16 }}>
-          <button onClick={() => router.push("/")} style={{ fontWeight:900, fontSize:18, color:"#fff", background:"none", border:"none", cursor:"pointer" }}>INQUISITIVE</button>
-          <div style={{ flex:1 }} />
-          <button onClick={() => router.push("/analytics")} style={{ background:"none", border:"none", color:"rgba(255,255,255,0.5)", fontSize:13, cursor:"pointer" }}>Portfolio</button>
-          <button onClick={() => router.push("/help")} style={{ background:"none", border:"none", color:"rgba(255,255,255,0.5)", fontSize:13, cursor:"pointer" }}>Docs</button>
-          <WalletButton />
-        </nav>
+        <SiteNav />
         <div style={{ display:"flex", justifyContent:"center", padding:"60px 24px" }}>
           <div style={{ width:"100%", maxWidth:420 }}>
             <div style={{ textAlign:"center", marginBottom:28 }}>

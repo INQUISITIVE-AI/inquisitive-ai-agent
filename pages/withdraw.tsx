@@ -7,6 +7,8 @@ import { mainnet } from 'wagmi/chains';
 import { formatEther } from 'viem';
 import { Shield, Wallet, ArrowDown, CheckCircle2, AlertTriangle, ExternalLink } from 'lucide-react';
 
+import SiteNav from '../src/components/SiteNav';
+
 const OpenWalletButton = dynamic(() => import('../src/components/OpenWalletButton'), { ssr: false, loading: () => null });
 
 const VAULT_ADDR  = (process.env.NEXT_PUBLIC_VAULT_ADDRESS || '0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb') as `0x${string}`;
@@ -72,12 +74,7 @@ export default function WithdrawPage() {
         <div className="mesh-bg" />
 
         {/* NAV */}
-        <nav style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(7,7,26,0.92)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.06)', height: 60, display: 'flex', alignItems: 'center', padding: '0 24px', gap: 16 }}>
-          <button onClick={() => router.push('/')} style={{ fontWeight: 900, fontSize: 18, letterSpacing: '-0.5px', color: '#fff', background: 'none', border: 'none', cursor: 'pointer' }}>INQUISITIVE</button>
-          <div style={{ flex: 1 }} />
-          <button onClick={() => router.push('/analytics')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', fontSize: 13, cursor: 'pointer' }}>Portfolio</button>
-          <button onClick={() => router.push('/help')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', fontSize: 13, cursor: 'pointer' }}>Docs</button>
-        </nav>
+        <SiteNav />
 
         <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 24px', position: 'relative', zIndex: 1 }}>
           <div style={{ width: '100%', maxWidth: 520 }}>
