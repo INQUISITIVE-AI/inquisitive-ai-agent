@@ -1,6 +1,10 @@
+import { useId } from 'react';
+
 interface Props { size?: number; className?: string; }
 
 export default function InqaiLogo({ size = 32, className = '' }: Props) {
+  const uid = useId().replace(/:/g, '');
+  const id  = (s: string) => `${uid}${s}`;
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -12,7 +16,7 @@ export default function InqaiLogo({ size = 32, className = '' }: Props) {
       style={{ display: 'block', flexShrink: 0 }}
     >
       <defs>
-        <radialGradient id="cb" cx="32%" cy="24%" r="90%">
+        <radialGradient id={id('cb')} cx="32%" cy="24%" r="90%">
           <stop offset="0%" stopColor="#A855F7" />
           <stop offset="8%" stopColor="#7C3AED" />
           <stop offset="22%" stopColor="#4C1D95" />
@@ -21,7 +25,7 @@ export default function InqaiLogo({ size = 32, className = '' }: Props) {
           <stop offset="80%" stopColor="#050118" />
           <stop offset="100%" stopColor="#01000A" />
         </radialGradient>
-        <linearGradient id="rim" x1="6%" y1="2%" x2="94%" y2="98%">
+        <linearGradient id={id('rim')} x1="6%" y1="2%" x2="94%" y2="98%">
           <stop offset="0%" stopColor="#FFFFFF" stopOpacity="1" />
           <stop offset="4%" stopColor="#F5F0FF" stopOpacity="0.98" />
           <stop offset="10%" stopColor="#DDD6FE" stopOpacity="0.88" />
@@ -35,19 +39,19 @@ export default function InqaiLogo({ size = 32, className = '' }: Props) {
           <stop offset="95%" stopColor="#DDD6FE" stopOpacity="0.97" />
           <stop offset="100%" stopColor="#F5F3FF" stopOpacity="1" />
         </linearGradient>
-        <linearGradient id="sym" x1="0" y1="54" x2="0" y2="146" gradientUnits="userSpaceOnUse">
+        <linearGradient id={id('sym')} x1="0" y1="54" x2="0" y2="146" gradientUnits="userSpaceOnUse">
           <stop offset="0%" stopColor="#FFFFFF" />
           <stop offset="22%" stopColor="#F5F0FF" />
           <stop offset="50%" stopColor="#C4B5FD" />
           <stop offset="80%" stopColor="#7C3AED" />
           <stop offset="100%" stopColor="#4C1D95" />
         </linearGradient>
-        <radialGradient id="ndg" cx="38%" cy="32%" r="62%">
+        <radialGradient id={id('ndg')} cx="38%" cy="32%" r="62%">
           <stop offset="0%" stopColor="#FFFFFF" stopOpacity="1" />
           <stop offset="50%" stopColor="#DDD6FE" stopOpacity="0.95" />
           <stop offset="100%" stopColor="#7C3AED" stopOpacity="0.55" />
         </radialGradient>
-        <filter id="gw" x="-50%" y="-50%" width="200%" height="200%">
+        <filter id={id('gw')} x="-50%" y="-50%" width="200%" height="200%">
           <feGaussianBlur in="SourceGraphic" stdDeviation="3.5" result="b" />
           <feMerge>
             <feMergeNode in="b" />
@@ -55,18 +59,17 @@ export default function InqaiLogo({ size = 32, className = '' }: Props) {
             <feMergeNode in="SourceGraphic" />
           </feMerge>
         </filter>
-        <filter id="bl" x="-110%" y="-110%" width="320%" height="320%">
+        <filter id={id('bl')} x="-110%" y="-110%" width="320%" height="320%">
           <feGaussianBlur stdDeviation="13" />
         </filter>
       </defs>
-      
-      <circle cx="100" cy="108" r="86" fill="#06001E" opacity="0.72" filter="url(#bl)" />
-      <circle cx="100" cy="100" r="96" fill="url(#cb)" />
-      <circle cx="100" cy="100" r="97.5" fill="none" stroke="url(#rim)" strokeWidth="7.5" />
+
+      <circle cx="100" cy="108" r="86" fill="#06001E" opacity="0.72" filter={`url(#${id('bl')})`} />
+      <circle cx="100" cy="100" r="96" fill={`url(#${id('cb')})`} />
+      <circle cx="100" cy="100" r="97.5" fill="none" stroke={`url(#${id('rim')})`} strokeWidth="7.5" />
       <circle cx="100" cy="100" r="93.2" fill="none" stroke="#000" strokeWidth="2" opacity="0.92" />
-      
-      {/* Connection lines */}
-      <g opacity="0.22" filter="url(#bl)">
+
+      <g opacity="0.22" filter={`url(#${id('bl')})`}>
         <line x1="100" y1="68" x2="70" y2="85" stroke="#8B5CF6" strokeWidth="3.5" />
         <line x1="100" y1="68" x2="130" y2="85" stroke="#8B5CF6" strokeWidth="3.5" />
         <line x1="100" y1="100" x2="66" y2="100" stroke="#8B5CF6" strokeWidth="3.5" />
@@ -74,20 +77,18 @@ export default function InqaiLogo({ size = 32, className = '' }: Props) {
         <line x1="100" y1="132" x2="70" y2="115" stroke="#8B5CF6" strokeWidth="3.5" />
         <line x1="100" y1="132" x2="130" y2="115" stroke="#8B5CF6" strokeWidth="3.5" />
       </g>
-      
-      {/* Outer nodes */}
-      <g><circle cx="70" cy="85" r="9" fill="#1A0446" opacity="0.55" /><circle cx="70" cy="85" r="5.5" fill="url(#ndg)" filter="url(#gw)" /></g>
-      <g><circle cx="130" cy="85" r="9" fill="#1A0446" opacity="0.55" /><circle cx="130" cy="85" r="5.5" fill="url(#ndg)" filter="url(#gw)" /></g>
-      <g><circle cx="66" cy="100" r="9" fill="#1A0446" opacity="0.55" /><circle cx="66" cy="100" r="5.5" fill="url(#ndg)" filter="url(#gw)" /></g>
-      <g><circle cx="134" cy="100" r="9" fill="#1A0446" opacity="0.55" /><circle cx="134" cy="100" r="5.5" fill="url(#ndg)" filter="url(#gw)" /></g>
-      <g><circle cx="70" cy="115" r="9" fill="#1A0446" opacity="0.55" /><circle cx="70" cy="115" r="5.5" fill="url(#ndg)" filter="url(#gw)" /></g>
-      <g><circle cx="130" cy="115" r="9" fill="#1A0446" opacity="0.55" /><circle cx="130" cy="115" r="5.5" fill="url(#ndg)" filter="url(#gw)" /></g>
-      
-      {/* Letter I */}
-      <g filter="url(#gw)">
-        <rect x="76" y="54" width="48" height="14" rx="7" fill="url(#sym)" />
-        <rect x="76" y="132" width="48" height="14" rx="7" fill="url(#sym)" />
-        <rect x="93" y="61" width="14" height="78" rx="4" fill="url(#sym)" />
+
+      <g><circle cx="70"  cy="85"  r="9" fill="#1A0446" opacity="0.55" /><circle cx="70"  cy="85"  r="5.5" fill={`url(#${id('ndg')})`} filter={`url(#${id('gw')})`} /></g>
+      <g><circle cx="130" cy="85"  r="9" fill="#1A0446" opacity="0.55" /><circle cx="130" cy="85"  r="5.5" fill={`url(#${id('ndg')})`} filter={`url(#${id('gw')})`} /></g>
+      <g><circle cx="66"  cy="100" r="9" fill="#1A0446" opacity="0.55" /><circle cx="66"  cy="100" r="5.5" fill={`url(#${id('ndg')})`} filter={`url(#${id('gw')})`} /></g>
+      <g><circle cx="134" cy="100" r="9" fill="#1A0446" opacity="0.55" /><circle cx="134" cy="100" r="5.5" fill={`url(#${id('ndg')})`} filter={`url(#${id('gw')})`} /></g>
+      <g><circle cx="70"  cy="115" r="9" fill="#1A0446" opacity="0.55" /><circle cx="70"  cy="115" r="5.5" fill={`url(#${id('ndg')})`} filter={`url(#${id('gw')})`} /></g>
+      <g><circle cx="130" cy="115" r="9" fill="#1A0446" opacity="0.55" /><circle cx="130" cy="115" r="5.5" fill={`url(#${id('ndg')})`} filter={`url(#${id('gw')})`} /></g>
+
+      <g filter={`url(#${id('gw')})`}>
+        <rect x="76" y="54"  width="48" height="14" rx="7" fill={`url(#${id('sym')})`} />
+        <rect x="76" y="132" width="48" height="14" rx="7" fill={`url(#${id('sym')})`} />
+        <rect x="93" y="61"  width="14" height="78" rx="4" fill={`url(#${id('sym')})`} />
       </g>
     </svg>
   );

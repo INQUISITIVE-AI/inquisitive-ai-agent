@@ -78,7 +78,7 @@ export default function Home() {
     <>
       <Head>
         <title>INQUISITIVE — Institutional Digital Asset Management</title>
-        <meta name="description" content="INQUISITIVE provides institutional-grade digital asset management through the INQAI token, representing proportional ownership in a professionally managed portfolio of 65 digital assets. Advanced AI systems execute continuous portfolio management across 11 strategies. Fixed supply of 100,000,000 tokens." />
+        <meta name="description" content="INQUISITIVE provides institutional-grade digital asset management through the INQAI token, representing proportional ownership in a professionally managed portfolio of 66 digital assets. Advanced AI systems execute continuous portfolio management across 11 strategies. Fixed supply of 100,000,000 tokens." />
       </Head>
       <div className="min-h-screen" style={{background:'#07071a',color:'#fff',fontFamily:'-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif'}}>
         <div className="mesh-bg" />
@@ -97,7 +97,7 @@ export default function Home() {
               Institutional Digital Asset Management
             </div>
             <p style={{fontSize:15,color:'rgba(255,255,255,0.35)',maxWidth:600,margin:'0 auto 40px',lineHeight:1.8}}>
-              INQAI is an ERC-20 token representing proportional ownership in a professionally managed portfolio of 65 digital assets. Proprietary AI systems execute portfolio management continuously across 11 discrete strategies. Fixed supply of 100,000,000 tokens.
+              INQAI is an ERC-20 token representing proportional ownership in a professionally managed portfolio of 66 digital assets. Proprietary AI systems execute portfolio management continuously across 11 discrete strategies. Fixed supply of 100,000,000 tokens.
             </p>
             <div style={{display:'flex',justifyContent:'center',marginBottom:60}}>
               <button onClick={()=>router.push('/buy')} style={{padding:'14px 36px',borderRadius:12,background:'linear-gradient(135deg,#7c3aed,#4f46e5)',color:'#fff',fontSize:16,fontWeight:700,cursor:'pointer',border:'1px solid rgba(255,255,255,0.1)',boxShadow:'0 8px 30px rgba(124,58,237,0.4)',transition:'all 0.2s'}}>

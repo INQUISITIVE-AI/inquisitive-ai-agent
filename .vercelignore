@@ -3,3 +3,11 @@ node_modules
 ._*
 **/.DS_Store
 *.log
+deploy-ui
+test
+__tests__
+coverage
+broadcast
+cache
+artifacts
+*.old
