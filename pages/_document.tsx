@@ -7,10 +7,12 @@ export default function Document() {
         {/* Viewport for mobile */}
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
         
-        {/* Favicon */}
+        {/* Favicon — all browsers */}
         <link rel="icon" type="image/svg+xml" href="/inqai-logo.svg" />
+        <link rel="icon" type="image/x-icon" href="/inqai-logo.svg" />
         <link rel="shortcut icon" href="/inqai-logo.svg" />
-        <link rel="apple-touch-icon" href="/inqai-logo.svg" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/inqai-logo.svg" />
+        <link rel="mask-icon" href="/inqai-logo.svg" color="#7C3AED" />
         
         {/* PWA Manifest */}
         <link rel="manifest" href="/site.webmanifest" />

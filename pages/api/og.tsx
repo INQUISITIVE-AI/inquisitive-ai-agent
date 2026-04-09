@@ -51,30 +51,30 @@ export default function handler(_req: NextRequest) {
 
           {/* Coin + name row */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
-            {/* Coin */}
+            {/* Coin — matches InqaiLogo.tsx exactly */}
             <div style={{
-              width: 108, height: 108, borderRadius: '50%',
-              background: 'radial-gradient(circle at 32% 24%, #8B3CF7 0%, #3D1580 20%, #0D0430 45%, #040115 72%, #010008 100%)',
-              border: '3px solid rgba(167,139,250,0.35)',
+              width: 120, height: 120, borderRadius: '50%',
+              background: 'radial-gradient(circle at 32% 24%, #A855F7 0%, #7C3AED 8%, #4C1D95 22%, #1E0A4A 40%, #0A0225 60%, #050118 80%, #01000A 100%)',
+              border: '3.5px solid rgba(167,139,250,0.55)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 0 80px rgba(124,58,237,0.55), 0 8px 32px rgba(0,0,0,0.60)',
+              boxShadow: '0 0 90px rgba(124,58,237,0.65), 0 0 40px rgba(124,58,237,0.35), 0 10px 36px rgba(0,0,0,0.70)',
               position: 'relative',
-              overflow: 'hidden',
             }}>
-              {/* Specular ellipse */}
-              <div style={{
-                position: 'absolute', top: 4, left: 4,
-                width: 72, height: 56,
-                borderRadius: '50%',
-                background: 'radial-gradient(ellipse, rgba(255,255,255,0.60) 0%, rgba(224,216,255,0.25) 40%, transparent 100%)',
-                transform: 'rotate(-22deg)',
-                display: 'flex',
-              }} />
-              {/* Waveform symbol */}
-              <svg width="68" height="68" viewBox="0 0 200 200" style={{ position: 'absolute' }}>
-                <path d="M36,100 L66,100 L88,46 L112,154 L134,100 L164,100"
-                  stroke="white" strokeWidth="13" strokeLinecap="round" strokeLinejoin="round" fill="none"
-                  opacity="0.95"/>
+              {/* INQAI "I" letterform */}
+              <svg width="78" height="78" viewBox="0 0 200 200" style={{ position: 'absolute' }}>
+                {/* Top cap */}
+                <rect x="76" y="54" width="48" height="14" rx="7" fill="white" opacity="0.95"/>
+                {/* Bottom cap */}
+                <rect x="76" y="132" width="48" height="14" rx="7" fill="white" opacity="0.75"/>
+                {/* Stem */}
+                <rect x="93" y="61" width="14" height="78" rx="4" fill="white" opacity="0.85"/>
+                {/* Node dots */}
+                <circle cx="70" cy="85"  r="5" fill="white" opacity="0.55"/>
+                <circle cx="130" cy="85" r="5" fill="white" opacity="0.55"/>
+                <circle cx="66" cy="100" r="5" fill="white" opacity="0.55"/>
+                <circle cx="134" cy="100" r="5" fill="white" opacity="0.55"/>
+                <circle cx="70" cy="115" r="5" fill="white" opacity="0.55"/>
+                <circle cx="130" cy="115" r="5" fill="white" opacity="0.55"/>
               </svg>
             </div>
 
