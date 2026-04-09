@@ -1,14 +1,15 @@
 # INQUISITIVE Protocol — CLI Deployment Guide
 
-Deploy all missing contracts using Foundry + your hardware wallet. No private key exposure. Single owner setup — no multi-sig complexity.
+Deploy all missing contracts using Foundry + your **Trezor**. No private key exposure. Single owner setup — no multi-sig complexity.
 
 ---
 
 ## Prerequisites
 
 1. **Foundry installed**: `foundryup`
-2. **Hardware wallet** (Ledger/Trezor) connected OR MetaMask
-3. **Your team wallet** (`0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746`) has ETH for gas (0.05+ ETH recommended)
+2. **Trezor connected** via USB
+3. **Trezor Suite** or **Trezor Bridge** installed and running
+4. **Your team wallet** (`0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746`) has ETH for gas (0.05+ ETH recommended)
 
 ---
 
@@ -38,10 +39,12 @@ export ETHERSCAN_API_KEY="your_etherscan_api_key"  # For verification
 ```bash
 forge create contracts/INQAIStaking.sol:INQAIStaking \
   --rpc-url $MAINNET_RPC \
-  --ledger \
+  --trezor \
+  --hd-paths "m/44'/60'/0'/0/0" \
   --etherscan-api-key $ETHERSCAN_API_KEY \
   --verify
 ```
+**Note**: Confirm transaction on your Trezor screen when prompted
 
 **Save output address as `STAKING_ADDR`**
 
@@ -52,7 +55,8 @@ forge create contracts/INQAIStaking.sol:INQAIStaking \
 ```bash
 forge create contracts/FeeDistributor.sol:FeeDistributor \
   --rpc-url $MAINNET_RPC \
-  --ledger \
+  --trezor \
+  --hd-paths "m/44'/60'/0'/0/0" \
   --etherscan-api-key $ETHERSCAN_API_KEY \
   --verify
 ```
@@ -66,7 +70,8 @@ forge create contracts/FeeDistributor.sol:FeeDistributor \
 ```bash
 forge create contracts/ReferralTracker.sol:ReferralTracker \
   --rpc-url $MAINNET_RPC \
-  --ledger \
+  --trezor \
+  --hd-paths "m/44'/60'/0'/0/0" \
   --etherscan-api-key $ETHERSCAN_API_KEY \
   --verify
 ```
@@ -80,7 +85,8 @@ forge create contracts/ReferralTracker.sol:ReferralTracker \
 ```bash
 forge create contracts/LiquidityLauncher.sol:LiquidityLauncher \
   --rpc-url $MAINNET_RPC \
-  --ledger \
+  --trezor \
+  --hd-paths "m/44'/60'/0'/0/0" \
   --etherscan-api-key $ETHERSCAN_API_KEY \
   --verify
 ```
@@ -94,7 +100,8 @@ forge create contracts/LiquidityLauncher.sol:LiquidityLauncher \
 ```bash
 forge create contracts/INQAITimelock.sol:INQAITimelock \
   --rpc-url $MAINNET_RPC \
-  --ledger \
+  --trezor \
+  --hd-paths "m/44'/60'/0'/0/0" \
   --etherscan-api-key $ETHERSCAN_API_KEY \
   --verify
 ```
@@ -110,7 +117,8 @@ Owner = your deployer wallet automatically. 2-day delay on critical ops.
 ```bash
 forge create contracts/INQAIInsurance.sol:INQAIInsurance \
   --rpc-url $MAINNET_RPC \
-  --ledger \
+  --trezor \
+  --hd-paths "m/44'/60'/0'/0/0" \
   --etherscan-api-key $ETHERSCAN_API_KEY \
   --verify
 ```
@@ -127,12 +135,14 @@ forge create contracts/INQAIInsurance.sol:INQAIInsurance \
 # Set FeeDistributor on Staking
 forge cast $STAKING_ADDR "setFeeDistributor(address)" $FEE_DISTRIBUTOR_ADDR \
   --rpc-url $MAINNET_RPC \
-  --ledger
+  --trezor \
+  --hd-paths "m/44'/60'/0'/0/0"
 
 # Set Staking on FeeDistributor
 forge cast $FEE_DISTRIBUTOR_ADDR "setStakingContract(address)" $STAKING_ADDR \
   --rpc-url $MAINNET_RPC \
-  --ledger
+  --trezor \
+  --hd-paths "m/44'/60'/0'/0/0"
 ```
 
 ### Wire ReferralTracker ↔ LiquidityLauncher
@@ -141,12 +151,14 @@ forge cast $FEE_DISTRIBUTOR_ADDR "setStakingContract(address)" $STAKING_ADDR \
 # Set Launcher on ReferralTracker
 forge cast $REFERRAL_TRACKER_ADDR "setLauncherContract(address)" $LIQUIDITY_LAUNCHER_ADDR \
   --rpc-url $MAINNET_RPC \
-  --ledger
+  --trezor \
+  --hd-paths "m/44'/60'/0'/0/0"
 
 # Set ReferralTracker on LiquidityLauncher
 forge cast $LIQUIDITY_LAUNCHER_ADDR "setReferralTracker(address)" $REFERRAL_TRACKER_ADDR \
   --rpc-url $MAINNET_RPC \
-  --ledger
+  --trezor \
+  --hd-paths "m/44'/60'/0'/0/0"
 ```
 
 ### Fund Referral Bonus Pool
@@ -155,17 +167,20 @@ forge cast $LIQUIDITY_LAUNCHER_ADDR "setReferralTracker(address)" $REFERRAL_TRAC
 # Approve INQAI spending
 forge cast 0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5 "approve(address,uint256)" $REFERRAL_TRACKER_ADDR 1000000000000000000000 \
   --rpc-url $MAINNET_RPC \
-  --ledger
+  --trezor \
+  --hd-paths "m/44'/60'/0'/0/0"
 
 # Transfer and fund 1000 INQAI
 forge cast 0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5 "transfer(address,uint256)" $REFERRAL_TRACKER_ADDR 1000000000000000000000 \
   --rpc-url $MAINNET_RPC \
-  --ledger
+  --trezor \
+  --hd-paths "m/44'/60'/0'/0/0"
 
 # Fund the bonus pool
 forge cast $REFERRAL_TRACKER_ADDR "fundBonusPool(uint256)" 1000000000000000000000 \
   --rpc-url $MAINNET_RPC \
-  --ledger
+  --trezor \
+  --hd-paths "m/44'/60'/0'/0/0"
 ```
 
 ---
@@ -181,7 +196,8 @@ Send 0.1+ ETH to `FEE_DISTRIBUTOR_ADDR` — this funds the automatic INQAI buyba
 ```bash
 forge cast $STAKING_ADDR "setRewardRate(uint256)" 100 \
   --rpc-url $MAINNET_RPC \
-  --ledger
+  --trezor \
+  --hd-paths "m/44'/60'/0'/0/0"
 ```
 (Reward rate is in basis points, 100 = 1% per epoch — adjust as needed)
 
@@ -232,28 +248,38 @@ NEXT_PUBLIC_INSURANCE=0x...
 
 ---
 
+## Trezor Setup
+
+1. **Connect Trezor** via USB
+2. **Open Trezor Suite** or ensure **Trezor Bridge** is running
+3. **Unlock your Trezor** (enter PIN on device)
+4. **Use Ethereum path**: `m/44'/60'/0'/0/0` (standard first address)
+
+**Confirm each transaction on your Trezor screen** when prompted by Foundry.
+
 ## Security Notes
 
-- **No private keys in commands** — all signed via `--ledger` (hardware wallet)
+- **No private keys in commands** — all signed via `--trezor` (hardware wallet)
 - **Timelock**: Single owner (you), 2-day delay, cancel anytime
 - **Team wallet gets liquid tokens** — no vesting (as requested)
 - **All contracts owned by deployer** — can transfer to Timelock later if desired
 
 ---
 
-## One-Script Alternative
+## One-Script Alternative (RECOMMENDED)
 
-Run the full Foundry script (uses your Ledger for signing):
+Run the full Foundry script (uses your **Trezor** for signing):
 
 ```bash
 forge script script/DeployFullProtocol.s.sol \
   --rpc-url $MAINNET_RPC \
-  --ledger \
+  --trezor \
+  --hd-paths "m/44'/60'/0'/0/0" \
   --broadcast \
   --verify
 ```
 
-This deploys all 6 contracts + wires them together in one go.
+This deploys all 6 contracts + wires them together in one go. You'll confirm ~10 transactions on your Trezor screen.
 
 ---
 
