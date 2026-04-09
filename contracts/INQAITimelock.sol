@@ -2,14 +2,11 @@
 pragma solidity ^0.8.24;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// INQAI Timelock Controller — Multi-Signature Critical Function Protection
+// INQAI Timelock Controller — Single Owner Protection
 //
-// All critical protocol changes require:
-// - 2-of-3 multi-sig approval
-// - 48-hour timelock delay
-// - Final execution by governance
-//
+// All critical protocol changes require 48-hour timelock delay
 // Protects against: instant malicious upgrades, rug pulls, admin key abuse
+// Single developer operation — no multi-sig complexity
 // ─────────────────────────────────────────────────────────────────────────────
 
 contract INQAITimelock {
@@ -18,15 +15,9 @@ contract INQAITimelock {
     uint256 public constant MIN_DELAY = 2 days;
     uint256 public constant MAX_DELAY = 30 days;
     uint256 public constant GRACE_PERIOD = 14 days;
-    uint256 public constant REQUIRED_SIGNATURES = 2;
-    uint256 public constant TOTAL_SIGNERS = 3;
     
     // ── State ────────────────────────────────────────────────────────────────
-    address public owner; // Governance contract
-    
-    // Multi-sig signers
-    mapping(address => bool) public isSigner;
-    address[] public signers;
+    address public owner;
     
     // Queued transactions
     struct Transaction {
@@ -38,8 +29,6 @@ contract INQAITimelock {
         uint256 executeAfter;
         bool executed;
         bool canceled;
-        mapping(address => bool) signatures;
-        uint256 signatureCount;
     }
     
     mapping(bytes32 => Transaction) public transactions;
@@ -56,11 +45,8 @@ contract INQAITimelock {
         bytes data,
         uint256 executeAfter
     );
-    event TransactionSigned(bytes32 indexed id, address indexed signer);
     event TransactionExecuted(bytes32 indexed id);
     event TransactionCanceled(bytes32 indexed id);
-    event SignerAdded(address indexed signer);
-    event SignerRemoved(address indexed signer);
     event DelayChanged(uint256 newDelay);
     
     // ── Modifiers ────────────────────────────────────────────────────────────
@@ -69,30 +55,10 @@ contract INQAITimelock {
         _;
     }
     
-    modifier onlySigner() {
-        require(isSigner[msg.sender], "Not signer");
-        _;
-    }
-    
     // ── Constructor ─────────────────────────────────────────────────────────
-    constructor(
-        address _signer1,
-        address _signer2,
-        address _signer3
-    ) {
-        require(_signer1 != address(0) && _signer2 != address(0) && _signer3 != address(0), "Invalid signer");
-        require(_signer1 != _signer2 && _signer2 != _signer3 && _signer1 != _signer3, "Duplicate signers");
-        
+    constructor() {
         owner = msg.sender;
-        delay = MIN_DELAY;
-        
-        isSigner[_signer1] = true;
-        isSigner[_signer2] = true;
-        isSigner[_signer3] = true;
-        
-        signers.push(_signer1);
-        signers.push(_signer2);
-        signers.push(_signer3);
+        delay = MIN_DELAY; // 2 days default
     }
     
     // ── Schedule Transaction ────────────────────────────────────────────────
@@ -123,27 +89,10 @@ contract INQAITimelock {
         return id;
     }
     
-    // ── Sign Transaction ────────────────────────────────────────────────────
-    function sign(bytes32 id) external onlySigner {
-        Transaction storage txn = transactions[id];
-        
-        require(txn.scheduledTime > 0, "Not scheduled");
-        require(!txn.executed, "Already executed");
-        require(!txn.canceled, "Canceled");
-        require(!txn.signatures[msg.sender], "Already signed");
-        require(block.timestamp < txn.executeAfter + GRACE_PERIOD, "Expired");
-        
-        txn.signatures[msg.sender] = true;
-        txn.signatureCount++;
-        
-        emit TransactionSigned(id, msg.sender);
-    }
-    
     // ── Execute Transaction ─────────────────────────────────────────────────
-    function execute(bytes32 id) external {
+    function execute(bytes32 id) external onlyOwner {
         Transaction storage txn = transactions[id];
         
-        require(txn.signatureCount >= REQUIRED_SIGNATURES, "Not enough signatures");
         require(block.timestamp >= txn.executeAfter, "Timelock active");
         require(block.timestamp <= txn.executeAfter + GRACE_PERIOD, "Expired");
         require(!txn.executed, "Already executed");
@@ -159,13 +108,9 @@ contract INQAITimelock {
     }
     
     // ── Cancel Transaction ──────────────────────────────────────────────────
-    function cancel(bytes32 id) external {
+    function cancel(bytes32 id) external onlyOwner {
         Transaction storage txn = transactions[id];
         
-        require(
-            msg.sender == owner || isSigner[msg.sender],
-            "Not authorized"
-        );
         require(!txn.executed, "Already executed");
         
         txn.canceled = true;
@@ -181,6 +126,7 @@ contract INQAITimelock {
     }
     
     function transferOwnership(address newOwner) external onlyOwner {
+        require(newOwner != address(0), "Invalid new owner");
         owner = newOwner;
     }
     
@@ -192,8 +138,7 @@ contract INQAITimelock {
         uint256 scheduledTime,
         uint256 executeAfter,
         bool executed,
-        bool canceled,
-        uint256 signatureCount
+        bool canceled
     ) {
         Transaction storage t = transactions[id];
         return (
@@ -203,17 +148,8 @@ contract INQAITimelock {
             t.scheduledTime,
             t.executeAfter,
             t.executed,
-            t.canceled,
-            t.signatureCount
+            t.canceled
         );
-    }
-    
-    function hasSigned(bytes32 id, address signer) external view returns (bool) {
-        return transactions[id].signatures[signer];
-    }
-    
-    function getSigners() external view returns (address[] memory) {
-        return signers;
     }
     
     function getTransactionCount() external view returns (uint256) {
@@ -227,7 +163,6 @@ contract INQAITimelock {
     function canExecute(bytes32 id) external view returns (bool) {
         Transaction storage t = transactions[id];
         return (
-            t.signatureCount >= REQUIRED_SIGNATURES &&
             block.timestamp >= t.executeAfter &&
             block.timestamp <= t.executeAfter + GRACE_PERIOD &&
             !t.executed &&

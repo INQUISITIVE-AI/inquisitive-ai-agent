@@ -5,12 +5,9 @@ import "forge-std/Script.sol";
 import "../contracts/INQAIStaking.sol";
 import "../contracts/FeeDistributor.sol";
 import "../contracts/ReferralTracker.sol";
-import "../contracts/INQAIGovernance.sol";
-import "../contracts/INQAITimelock.sol";
 import "../contracts/LiquidityLauncher.sol";
-import "../contracts/SuccessOptimizedVesting.sol";
+import "../contracts/INQAITimelock.sol";
 import "../contracts/INQAIInsurance.sol";
-import "../contracts/AIStrategyManager.sol";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // INQUISITIVE PROTOCOL — FULL DEPLOYMENT SCRIPT
@@ -33,10 +30,8 @@ contract DeployFullProtocol is Script {
     address public staking;
     address public feeDistributor;
     address public referralTracker;
-    address public governance;
-    address public timelock;
     address public liquidityLauncher;
-    address public vesting;
+    address public timelock;
     address public insurance;
     
     function run() external {
@@ -93,42 +88,23 @@ contract DeployFullProtocol is Script {
         launcher.setReferralTracker(referralTracker);
         console.log("Wired successfully");
         
-        // 7. Deploy Timelock (2-day delay for governance)
-        console.log("Deploying INQAITimelock (2-day delay)...");
-        INQAITimelock timelockContract = new INQAITimelock(TEAM_WALLET, 2 days);
+        // 7. Deploy Timelock (2-day delay on critical operations — single owner, no multi-sig)
+        console.log("Deploying INQAITimelock (2-day delay, single owner)...");
+        INQAITimelock timelockContract = new INQAITimelock();
         timelock = address(timelockContract);
         console.log("INQAITimelock deployed at:", timelock);
+        console.log("NOTE: Timelock owned by deployer (you) — 2 day delay on admin ops, NO multi-sig");
         
-        // 8. Deploy Governance
-        console.log("Deploying INQAIGovernance...");
-        INQAIGovernance gov = new INQAIGovernance(INQAI_TOKEN, timelock);
-        governance = address(gov);
-        console.log("INQAIGovernance deployed at:", governance);
-        
-        // 9. Transfer Timelock ownership to Governance
-        console.log("Transferring Timelock ownership to Governance...");
-        timelockContract.transferOwnership(governance);
-        console.log("Ownership transferred");
-        
-        // 10. Deploy Insurance Fund
+        // 8. Deploy Insurance Fund
         console.log("Deploying INQAIInsurance...");
         INQAIInsurance ins = new INQAIInsurance(INQAI_TOKEN, VAULT);
         insurance = address(ins);
         console.log("INQAIInsurance deployed at:", insurance);
         
-        // 11. Deploy Team Vesting (4-year vesting)
-        console.log("Deploying SuccessOptimizedVesting (Team)...");
-        // 4 years = 1460 days, 6-month cliff = 180 days
-        SuccessOptimizedVesting teamVesting = new SuccessOptimizedVesting(
-            INQAI_TOKEN,
-            TEAM_WALLET,
-            1460 days, // 4 years
-            180 days   // 6 month cliff
-        );
-        vesting = address(teamVesting);
-        console.log("SuccessOptimizedVesting deployed at:", vesting);
+        // NOTE: Team wallet receives liquid tokens immediately — NO VESTING
+        // Vesting contracts reserved for advisors/investors only
         
-        // 12. Fund bonus pool for referrals (1000 INQAI)
+        // 9. Fund bonus pool for referrals (1000 INQAI)
         console.log("Funding referral bonus pool with 1000 INQAI...");
         IERC20(INQAI_TOKEN).transfer(referralTracker, 1000e18);
         refTracker.fundBonusPool(1000e18);
@@ -146,10 +122,10 @@ contract DeployFullProtocol is Script {
         console.log("  ReferralTracker:", referralTracker);
         console.log("  LiquidityLauncher:", liquidityLauncher);
         console.log("  INQAITimelock:", timelock);
-        console.log("  INQAIGovernance:", governance);
         console.log("  INQAIInsurance:", insurance);
-        console.log("  TeamVesting:", vesting);
         console.log("");
+        console.log("NOTE: Team wallet has NO vesting — liquid tokens immediately");
+        console.log("NOTE: Timelock delays admin actions 2 days (single owner, security buffer)");
         console.log("Integration Required:");
         console.log("  1. Fund FeeDistributor with ETH for buybacks");
         console.log("  2. Configure Staking reward rate");
@@ -173,9 +149,7 @@ contract DeployFullProtocol is Script {
             '    "ReferralTracker": "', vm.toString(referralTracker), '",\n',
             '    "LiquidityLauncher": "', vm.toString(liquidityLauncher), '",\n',
             '    "INQAITimelock": "', vm.toString(timelock), '",\n',
-            '    "INQAIGovernance": "', vm.toString(governance), '",\n',
-            '    "INQAIInsurance": "', vm.toString(insurance), '",\n',
-            '    "TeamVesting": "', vm.toString(vesting), '\n',
+            '    "INQAIInsurance": "', vm.toString(insurance), '\n',
             '  }\n',
             '}'
         );
