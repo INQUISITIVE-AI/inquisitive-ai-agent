@@ -90,7 +90,7 @@ interface IAutomationCompatible {
 }
 
 // ── InquisitiveVault — AI-managed portfolio execution ───────────────────────
-// Execution is KEYLESS: either via Gelato Relay (ERC-2771) or Chainlink Automation.
+// Execution is KEYLESS via Chainlink Automation — fully decentralized, zero private keys.
 // No private key is needed in any application code — institutional grade.
 contract InquisitiveVaultUpdated is IAutomationCompatible {
     // ── Protocol addresses ───────────────────────────────────────────────────
@@ -99,9 +99,7 @@ contract InquisitiveVaultUpdated is IAutomationCompatible {
     address public constant SWAP_ROUTER = 0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45; // Uniswap V3 SwapRouter02
     address public constant AAVE_POOL   = 0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2; // Aave V3 Pool
     address public constant LIDO        = 0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84; // Lido stETH
-    // Gelato Relay trusted forwarder — mainnet 1Balance relay
-    address public constant GELATO_RELAY = 0xaBcC9b596420A9E9172FD5938620E265a0f9Df92;
-    // Chainlink Automation registry — mainnet v2.1
+    // Chainlink Automation registry — mainnet v2.1 (sole keyless execution method)
     address public constant CHAINLINK_REGISTRY = 0x6593c7De001fC8542bB1703532EE1E5aA0D458fD;
     // deBridge DLN Source — Phase 2 native cross-chain execution (SOL, BNB, ADA, AVAX, etc.)
     address public constant DLN_SOURCE = 0xeF4fB24aD0916217251F553c0596F8Edc630EB66;
@@ -110,7 +108,7 @@ contract InquisitiveVaultUpdated is IAutomationCompatible {
 
     // ── State ────────────────────────────────────────────────────────────────
     address public owner;
-    address public aiExecutor;       // AI execution wallet (Gelato dedicatedMsgSender)
+    address public aiExecutor;       // AI execution wallet (reserved for future use)
     address public inqaiToken;
     address public strategy;
     uint256 public performanceFee = 1500; // 15% = 1500 basis points
@@ -135,12 +133,10 @@ contract InquisitiveVaultUpdated is IAutomationCompatible {
 
     // ── Modifiers ────────────────────────────────────────────────────────────
     modifier onlyOwner() { require(msg.sender == owner, "Not owner"); _; }
-    // Keyless execution: Gelato relay, Chainlink registry, AI executor, or owner
+    // Keyless execution: Chainlink Automation registry or owner only
     modifier onlyAI() {
         require(
-            msg.sender == aiExecutor          ||
-            msg.sender == owner               ||
-            msg.sender == GELATO_RELAY        ||
+            msg.sender == owner ||
             msg.sender == CHAINLINK_REGISTRY,
             "Not authorized executor"
         );
@@ -162,13 +158,6 @@ contract InquisitiveVaultUpdated is IAutomationCompatible {
     function setAIExecutor(address _executor) external onlyOwner {
         aiExecutor = _executor;
         emit AIExecutorSet(_executor);
-    }
-
-    /// @notice Set the Gelato dedicatedMsgSender as the AI executor (keyless setup)
-    /// @dev Get dedicatedMsgSender from Gelato Ops SDK after registering the task
-    function setGelatoDedicatedSender(address _sender) external onlyOwner {
-        aiExecutor = _sender;
-        emit AIExecutorSet(_sender);
     }
 
     function setAutomationEnabled(bool _enabled) external onlyOwner {
@@ -268,7 +257,7 @@ contract InquisitiveVaultUpdated is IAutomationCompatible {
     /// ETH-DIRECT (Uniswap V3, 27 ETH-mainnet) runs after on the remaining ETH.
     /// stETH YIELD (25 assets): remaining ETH stays in vault as Lido stETH.
     ///
-    /// Callable by ANYONE: Chainlink Automation, Gelato relay, community member, or owner.
+    /// Callable by ANYONE: Chainlink Automation nodes, or owner.
     /// Per Chainlink standard, performUpkeep must not restrict callers.
     /// Protected by: automationEnabled flag, portfolio configured, 60s cooldown, min ETH balance.
     function performUpkeep(bytes calldata) external override {

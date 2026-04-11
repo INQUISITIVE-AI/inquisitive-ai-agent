@@ -3,7 +3,6 @@ import { getPrices } from '../_priceCache';
 import { getOnchain, VAULT_ADDR, DEPLOYER_ADDR } from '../_onchainCache';
 
 // ── Execution Queue — Live state of all pending and completed trades ──────────
-// Combines monitor output with Gelato task tracking.
 // Read-only. No private key needed.
 
 const ETHERSCAN_KEY = process.env.ETHERSCAN_API_KEY || '';
