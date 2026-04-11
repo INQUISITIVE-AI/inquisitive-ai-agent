@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// INQUISITIVE VAULT — Fully Autonomous 65-Asset Portfolio
+// INQUISITIVE VAULT — Fully Autonomous 66-Asset Portfolio
 //
 // Execution is ZERO private key:
 //   27 ETH-mainnet tokens : performUpkeep() → Uniswap V3 swaps
@@ -106,7 +106,7 @@ contract InquisitiveVaultUpdated is IAutomationCompatible {
     // deBridge DLN Source — Phase 2 native cross-chain execution (SOL, BNB, ADA, AVAX, etc.)
     address public constant DLN_SOURCE = 0xeF4fB24aD0916217251F553c0596F8Edc630EB66;
     uint24  public constant DEFAULT_FEE  = 3000; // 0.3% Uniswap pool fee
-    uint256 public constant MIN_DEPLOY   = 0.005 ether; // minimum ETH to trigger rebalance
+    uint256 public constant MIN_DEPLOY   = 0.001 ether; // minimum ETH to trigger rebalance
 
     // ── State ────────────────────────────────────────────────────────────────
     address public owner;
@@ -277,7 +277,7 @@ contract InquisitiveVaultUpdated is IAutomationCompatible {
         require(block.timestamp >= lastDeployTime + MIN_REDEPLOY_GAP, "Cooldown active");
 
         uint256 ethBal = address(this).balance;
-        uint256 gasRes = 0.005 ether;
+        uint256 gasRes = 0.001 ether;
         require(ethBal > gasRes + MIN_DEPLOY, "Insufficient ETH");
         uint256 deployable = ethBal - gasRes;
 
