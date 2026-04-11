@@ -905,6 +905,43 @@ export default function AnalyticsPage() {
                   </div>
                   )}
 
+                  {/* MANUAL TRIGGER — Emergency execute first trade */}
+                  {vaultEthOnChain >= 0.010 && portfolioOnChain > 0 && automationOn && cyclesOnChain === 0 && (
+                  <div style={{ background:'rgba(245,158,11,0.08)', border:'2px solid rgba(245,158,11,0.4)', borderRadius:14, padding:'18px 20px', marginTop:16 }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12 }}>
+                      <Zap size={18} color="#f59e0b" />
+                      <div style={{ fontSize:14, fontWeight:800, color:'#f59e0b' }}>⚡ Execute First Trade NOW (Manual)</div>
+                    </div>
+                    <div style={{ fontSize:12, color:'rgba(255,255,255,0.7)', lineHeight:1.6, marginBottom:14 }}>
+                      Vault is ready but no trades executed yet. Click to manually trigger <code style={{color:'#fbbf24'}}>performUpkeep()</code> — 
+                      anyone can call this! Starts the autonomous cycle immediately without waiting for Chainlink.
+                    </div>
+                    <button
+                      onClick={triggerUpkeep}
+                      disabled={triggering}
+                      style={{
+                        width:'100%', padding:'14px', borderRadius:10, background:triggering?'rgba(255,255,255,0.1)':'#f59e0b',
+                        color:triggering?'rgba(255,255,255,0.5)':'#000', border:'none', fontSize:14, fontWeight:800,
+                        cursor:triggering?'not-allowed':'pointer', boxShadow:triggering?'none':'0 4px 20px rgba(245,158,11,0.4)'
+                      }}
+                    >
+                      {triggering ? 'Triggering...' : triggerConfirmed ? '✅ Trade Executed!' : '🚀 TRIGGER performUpkeep() NOW'}
+                    </button>
+                    {triggerErr && (
+                      <div style={{ marginTop:10, padding:'10px', background:'rgba(239,68,68,0.1)', borderRadius:8, fontSize:12, color:'#ef4444' }}>
+                        {triggerErr}
+                      </div>
+                    )}
+                    {triggerHash && !triggerConfirmed && (
+                      <div style={{ marginTop:10, fontSize:12 }}>
+                        <a href={`https://etherscan.io/tx/${triggerHash}`} target="_blank" rel="noopener noreferrer" style={{color:'#60a5fa'}}>
+                          View transaction ↗
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                  )}
+
                   <div style={{ fontSize:10, color:'rgba(255,255,255,0.3)', lineHeight:1.8, padding:'10px 14px', background:'rgba(255,255,255,0.03)', borderRadius:10 }}>
                     <strong style={{color:'rgba(255,255,255,0.4)'}}>Architecture:</strong> Chainlink nodes call <code style={{color:'#a78bfa'}}>performUpkeep()</code> when vault balance ≥ 0.005 ETH.
                     Zero private keys. ETH is split: 26 assets via Uniswap V3 · 13 cross-chain via deBridge DLN · 25 held as Lido stETH.
