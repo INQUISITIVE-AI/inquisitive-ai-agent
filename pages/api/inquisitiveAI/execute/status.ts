@@ -57,7 +57,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     DEPLOYED:           'Call setPortfolio() on Etherscan Write Contract (run scripts/activate.js for arrays)',
     PORTFOLIO_SET:      'Call setAutomationEnabled(true) on Etherscan Write Contract, then fund Chainlink Automation with LINK tokens — see vault setup instructions',
     AUTOMATION_ACTIVE:  'Fund Chainlink Automation — LINK tokens needed for execution. Then any ETH deposit will trigger autonomous deployment within 60 seconds',
-    FULLY_OPERATIONAL:  'System is live. 26 ETH-mainnet assets executing via Uniswap V3 + 13 cross-chain assets bridging via deBridge DLN — every Chainlink upkeep. 25 assets held as Lido stETH earning yield while tracking native prices. All 65 allocated and live. Chainlink Automation handles all executions.',    
+    FULLY_OPERATIONAL:  'System is live. 27 ETH-mainnet assets executing via Uniswap V3 + 13 cross-chain assets bridging via deBridge DLN — every Chainlink upkeep. 26 assets held as Lido stETH earning yield while tracking native prices. All 66 allocated and live. Chainlink Automation handles all executions.',    
   };
 
   // Deployment instructions

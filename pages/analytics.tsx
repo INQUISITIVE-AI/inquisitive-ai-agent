@@ -76,7 +76,7 @@ export default function AnalyticsPage() {
   const [sysStatus, setSysStatus]= useState<any>(null);
   const [loading,   setLoading]  = useState(true);
   const [refreshing,setRefreshing]= useState(false);
-  const [tab,       setTab]      = useState<'portfolio'|'ai'|'positions'|'execution'|'fees'>('portfolio');
+  const [tab,       setTab]      = useState<'portfolio'|'execution'|'fees'>('portfolio');
   const [posFilter, setPosFilter]= useState<string>('all');
   const [purchases, setPurchases]= useState<any[]>([]);
   const [vesting,   setVesting]  = useState<any>(null);
@@ -377,7 +377,7 @@ export default function AnalyticsPage() {
     <div>
       <Head>
         <title>Analytics | INQUISITIVE</title>
-        <meta name="description" content="INQAI AI-managed portfolio — live NAV, 65-asset backing, real-time AI signals." />
+        <meta name="description" content="INQAI AI-managed portfolio — live NAV, 66-asset backing, real-time AI signals." />
       </Head>
       <div style={{ minHeight:'100vh', background:'#07071a', color:'#fff' }}>
         <div className="mesh-bg" />
@@ -444,10 +444,10 @@ export default function AnalyticsPage() {
             {/* Tabs */}
             <div style={{ display:'flex', gap:2, marginBottom:20, borderBottom:'1px solid rgba(255,255,255,0.06)', flexWrap:'wrap' }}>
               {(() => {
-                const tabs = isVaultOwner ? ['portfolio','ai','positions','execution','fees'] : ['portfolio','ai','positions','fees'];
+                const tabs = isVaultOwner ? ['portfolio','execution','fees'] : ['portfolio','fees'];
                 return tabs.map(t => (
                 <button key={t} onClick={() => setTab(t as any)} style={{ padding:'10px 18px', fontSize:13, fontWeight:tab===t?700:500, cursor:'pointer', background:'none', border:'none', borderBottom:`2px solid ${tab===t?'#7c3aed':'transparent'}`, color:tab===t?'#a78bfa':'rgba(255,255,255,0.4)', transition:'all 0.15s', position:'relative' }}>
-                  {{portfolio:'Portfolio',ai:'AI Activity',positions:`Positions (${positions.length})`,execution:'Execution',fees:'Fee Flow'}[t as string]}
+                  {{portfolio:'Portfolio',execution:'Execution',fees:'Fee Flow'}[t as string]}
                   {t==='execution'&&!automationOn&&<span style={{position:'absolute',top:6,right:6,width:6,height:6,borderRadius:'50%',background:'#f59e0b',display:'block'}}/>}
                 </button>
               ));
@@ -623,7 +623,7 @@ export default function AnalyticsPage() {
                       </div>
                     ))}
                     <div style={{ marginTop:10, padding:'7px 10px', background:'rgba(124,58,237,0.07)', border:'1px solid rgba(124,58,237,0.18)', borderRadius:8, fontSize:10, color:'rgba(255,255,255,0.35)', lineHeight:1.7 }}>
-                      AI re-evaluates all 66 assets every 8 seconds. Showing top 12 by weight. View all in the Positions tab.
+                      AI re-evaluates all 66 assets every 8 seconds. Showing top 12 by weight.
                     </div>
                   </div>
                 </div>
@@ -978,7 +978,7 @@ export default function AnalyticsPage() {
                   </div>
                 )}
 
-                {/* Full 65-asset allocation plan */}
+                {/* Full 66-asset allocation plan */}
                 {monitor?.allocation?.plan && monitor.allocation.plan.length > 0 && (
                   <div style={{ background:'rgba(13,13,32,0.85)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:20, padding:'22px', backdropFilter:'blur(12px)' }}>
                     <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
@@ -1073,7 +1073,8 @@ export default function AnalyticsPage() {
                     15% performance fee is distributed:<br/>
                     <strong style={{color:'#10b981'}}>60%</strong> → Open-market INQAI buybacks (buy pressure)<br/>
                     <strong style={{color:'#ef4444'}}>20%</strong> → Permanent token burns (deflationary)<br/>
-                    <strong style={{color:'#f59e0b'}}>20%</strong> → Treasury (development &amp; security reserves)
+                    <strong style={{color:'#f59e0b'}}>15%</strong> → Treasury (development &amp; security reserves)<br/>
+                    <strong style={{color:'#6366f1'}}>5%</strong> → Chainlink Automation (keeps AI running)
                   </div>
                 </div>
                 <div style={{ background:'rgba(13,13,32,0.85)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:20, padding:'24px', backdropFilter:'blur(12px)' }}>
@@ -1081,9 +1082,10 @@ export default function AnalyticsPage() {
                   {(() => {
                     const totalFees = Math.max(0, hasHoldings ? totalPnL * 0.15 : 0);
                     return [
-                      { l:'Buybacks (60%)',  v:totalFees*0.6, p:60, c:'#10b981', d:'INQAI bought on open market → creates buy pressure' },
-                      { l:'Burns (20%)',     v:totalFees*0.2, p:20, c:'#ef4444', d:'INQAI permanently destroyed → reduces supply' },
-                      { l:'Treasury (20%)', v:totalFees*0.2, p:20, c:'#f59e0b', d:'Protocol reserves for development & security' },
+                      { l:'Buybacks (60%)',   v:totalFees*0.60, p:60, c:'#10b981', d:'INQAI bought on open market → creates buy pressure' },
+                      { l:'Burns (20%)',      v:totalFees*0.20, p:20, c:'#ef4444', d:'INQAI permanently destroyed → reduces supply' },
+                      { l:'Treasury (15%)',  v:totalFees*0.15, p:15, c:'#f59e0b', d:'Protocol reserves for development & security' },
+                      { l:'Chainlink (5%)',  v:totalFees*0.05, p:5,  c:'#6366f1', d:'Auto-funds Chainlink Automation — keeps AI running forever' },
                     ];
                   })().map(f => (
                     <div key={f.l} style={{ marginBottom:16 }}>

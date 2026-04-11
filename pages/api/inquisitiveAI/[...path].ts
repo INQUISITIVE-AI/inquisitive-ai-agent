@@ -98,8 +98,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           status:  'operational', 
           live: true,
           vaultAddress: process.env.INQUISITIVE_VAULT_ADDRESS || '0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb',
-          prices:  { assetCount: 65, source: 'CoinGecko + CryptoCompare', lastUpdate: new Date().toISOString() },
-          brain:   { cycleCount, signalCount: 65, enginesActive: 5 },
+          prices:  { assetCount: 66, source: 'CoinGecko + CryptoCompare', lastUpdate: new Date().toISOString() },
+          brain:   { cycleCount, signalCount: 66, enginesActive: 5 },
           macro:   { indicators: 4, source: 'alternative.me + CoinGecko' },
           trading: { functionsActive: 11, isLive: cycleCount > 0 },
         });
@@ -108,8 +108,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           status:  'operational', 
           live: true,
           vaultAddress: process.env.INQUISITIVE_VAULT_ADDRESS || '0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb',
-          prices:  { assetCount: 65, source: 'CoinGecko + CryptoCompare', lastUpdate: new Date().toISOString() },
-          brain:   { cycleCount: 0, signalCount: 65, enginesActive: 5 },
+          prices:  { assetCount: 66, source: 'CoinGecko + CryptoCompare', lastUpdate: new Date().toISOString() },
+          brain:   { cycleCount: 0, signalCount: 66, enginesActive: 5 },
           macro:   { indicators: 4, source: 'alternative.me + CoinGecko' },
           trading: { functionsActive: 11, isLive: false },
           error: 'Failed to read vault cycle count'
