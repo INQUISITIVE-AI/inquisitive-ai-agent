@@ -3,6 +3,12 @@
   "buildCommand": "npm run build",
   "devCommand": "npm run dev",
   "installCommand": "npm install --legacy-peer-deps",
+  "crons": [
+    {
+      "path": "/api/cron/keeper",
+      "schedule": "*/5 * * * *"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*\\.html|analytics|help|buy|)",
@@ -18,7 +24,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self' 'unsafe-eval' 'unsafe-inline' data: blob:; connect-src 'self' https://api.web3modal.org https://api.web3modal.com https://explorer-api.walletconnect.com https://rpc.walletconnect.org https://rpc.walletconnect.com https://relay.walletconnect.com https://pulse.walletconnect.org https://keys.walletconnect.com https://verify.walletconnect.org wss://relay.walletconnect.com wss://relay.walletconnect.org https://api.coingecko.com https://min-api.cryptocompare.com https://api.alternative.me https://eth.llamarpc.com https://rpc.ankr.com https://ethereum.publicnode.com https://mainnet.eth.cloudflare.com https://1rpc.io https://*.infura.io https://rpc.reown.com https://rpc.reown.org https://blockchain.googleapis.com https://*.walletconnect.org https://*.walletconnect.com wss://*.walletconnect.org wss://*.walletconnect.com https://connect.trezor.io https://relay.gelato.network https://api.gelato.network; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; frame-src https://connect.trezor.io;"
+          "value": "default-src 'self' 'unsafe-eval' 'unsafe-inline' data: blob:; connect-src 'self' https://api.web3modal.org https://api.web3modal.com https://explorer-api.walletconnect.com https://rpc.walletconnect.org https://rpc.walletconnect.com https://relay.walletconnect.com https://pulse.walletconnect.org https://keys.walletconnect.com https://verify.walletconnect.org wss://relay.walletconnect.com wss://relay.walletconnect.org https://api.coingecko.com https://min-api.cryptocompare.com https://api.alternative.me https://eth.llamarpc.com https://rpc.ankr.com https://ethereum.publicnode.com https://mainnet.eth.cloudflare.com https://1rpc.io https://*.infura.io https://rpc.reown.com https://rpc.reown.org https://blockchain.googleapis.com https://*.walletconnect.org https://*.walletconnect.com wss://*.walletconnect.org wss://*.walletconnect.com https://connect.trezor.io; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; frame-src https://connect.trezor.io;"
         }
       ]
     }
@@ -32,6 +38,9 @@
     },
     "pages/api/inquisitiveAI/execute/setup": {
       "maxDuration": 300
+    },
+    "pages/api/cron/keeper": {
+      "maxDuration": 55
     }
   }
 }
