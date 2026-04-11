@@ -69,23 +69,23 @@ const PORTFOLIO_TOKENS = [
 ] as `0x${string}`[];
 
 const PORTFOLIO_WEIGHTS = [
-  800, 1000, 600, 500, 400, 300,  // BTC, ETH, stETH, USDC, DAI, USDT
-  350, 300, 250, 250, 200, 200,   // AAVE, UNI, LDO, LINK, CRV, COMP
-  200, 150, 150, 150,             // MKR, BAL, REN, BAL
-  200, 200, 150,                  // OP, ILV, GEL
-  200, 200, 150,                  // RNDR, PEPE, ARKM
-  100, 100, 100, 100, 100,        // wSOL, wBNB, wAVAX, wADA, wDOT
-  100,                            // INQAI
+  800n, 1000n, 600n, 500n, 400n, 300n,  // BTC, ETH, stETH, USDC, DAI, USDT
+  350n, 300n, 250n, 250n, 200n, 200n,   // AAVE, UNI, LDO, LINK, CRV, COMP
+  200n, 150n, 150n, 150n,               // MKR, BAL, REN, BAL
+  200n, 200n, 150n,                     // OP, ILV, GEL
+  200n, 200n, 150n,                     // RNDR, PEPE, ARKM
+  100n, 100n, 100n, 100n, 100n,         // wSOL, wBNB, wAVAX, wADA, wDOT
+  100n,                                 // INQAI
 ];
 
 const PORTFOLIO_FEES = [
-  3000, 500, 500, 500, 500, 500,  // WBTC 0.3%, rest 0.05%
-  3000, 3000, 3000, 3000, 3000, 3000,
-  3000, 3000, 10000, 3000,
-  3000, 3000, 3000,
-  3000, 3000, 3000,
-  3000, 3000, 3000, 3000, 3000,
-  3000, // INQAI
+  3000n, 500n, 500n, 500n, 500n, 500n,  // WBTC 0.3%, rest 0.05%
+  3000n, 3000n, 3000n, 3000n, 3000n, 3000n,
+  3000n, 3000n, 10000n, 3000n,
+  3000n, 3000n, 3000n,
+  3000n, 3000n, 3000n,
+  3000n, 3000n, 3000n, 3000n, 3000n,
+  3000n, // INQAI
 ];
 
 export default function RescueComponent() {
@@ -188,7 +188,7 @@ export default function RescueComponent() {
     }
   };
   
-  const handleSetPortfolio = async () => {
+  const handleClearPortfolio = async () => {
     if (!isOwner) {
       setError('Only the vault owner can execute this');
       return;
@@ -196,6 +196,36 @@ export default function RescueComponent() {
     
     try {
       setError(null);
+      setSuccess('Clearing existing portfolio...');
+      const hash = await writeContractAsync({
+        address: VAULT_ADDR,
+        abi: VAULT_ABI,
+        functionName: 'setPortfolio',
+        args: [[], [], []], // Empty arrays to clear
+      });
+      setTxHash(hash);
+    } catch (err: any) {
+      console.error('Clear portfolio error:', err);
+      setError('Failed to clear portfolio: ' + (err.message || err));
+    }
+  };
+
+  const handleSetPortfolio = async () => {
+    if (!isOwner) {
+      setError('Only the vault owner can execute this');
+      return;
+    }
+    
+    // Check if portfolio already exists
+    if (vaultState?.portfolioLen > 0) {
+      setError(`Portfolio already has ${vaultState.portfolioLen} assets. Clear it first before setting new assets.`);
+      return;
+    }
+    
+    try {
+      setError(null);
+      setSuccess('Setting portfolio (27 assets)... This may take a moment.');
+      
       const hash = await writeContractAsync({
         address: VAULT_ADDR,
         abi: VAULT_ABI,
@@ -204,13 +234,26 @@ export default function RescueComponent() {
       });
       setTxHash(hash);
     } catch (err: any) {
-      setError(err.message || 'Transaction failed');
+      console.error('Set portfolio error:', err);
+      const errorMsg = err.message || '';
+      
+      if (errorMsg.includes('gas') || errorMsg.includes('Gas')) {
+        setError('Gas estimation failed. Try clearing portfolio first, or use Etherscan directly.');
+      } else if (errorMsg.includes('insufficient funds')) {
+        setError('Insufficient ETH for gas. Make sure your wallet has ETH.');
+      } else if (errorMsg.includes('revert')) {
+        setError('Transaction reverted. The portfolio may already be set or contract has restrictions.');
+      } else {
+        setError('Failed to set portfolio: ' + errorMsg);
+      }
     }
   };
   
   const handleTriggerTrade = async () => {
     try {
       setError(null);
+      setSuccess('Triggering performUpkeep...');
+      
       const hash = await writeContractAsync({
         address: VAULT_ADDR,
         abi: VAULT_ABI,
@@ -219,7 +262,20 @@ export default function RescueComponent() {
       });
       setTxHash(hash);
     } catch (err: any) {
-      setError(err.message || 'Transaction failed');
+      console.error('Trigger trade error:', err);
+      const errorMsg = err.message || '';
+      
+      if (errorMsg.includes('insufficient funds')) {
+        setError('Insufficient ETH in your wallet for gas fees.');
+      } else if (errorMsg.includes('upkeep not needed')) {
+        setError('Upkeep conditions not met. Check that checkUpkeep returns true.');
+      } else if (errorMsg.includes('cooldown') || errorMsg.includes('time')) {
+        setError('Cooldown period active. Wait 60 seconds between trades.');
+      } else if (errorMsg.includes('revert')) {
+        setError('Transaction reverted. Check that portfolio is configured and vault has ETH.');
+      } else {
+        setError('Failed to trigger trade: ' + errorMsg);
+      }
     }
   };
   
@@ -401,10 +457,32 @@ export default function RescueComponent() {
                 fontWeight: 700,
                 cursor: isOwner ? 'pointer' : 'not-allowed',
                 opacity: isOwner ? 1 : 0.5,
+                marginBottom: 10,
               }}
             >
               {isOwner ? 'Set Portfolio (27 Assets)' : 'Connect Owner Wallet'}
             </button>
+            
+            {vaultState?.portfolioLen > 0 && (
+              <button
+                onClick={handleClearPortfolio}
+                disabled={!isOwner || loading}
+                style={{
+                  width: '100%',
+                  padding: '10px 20px',
+                  borderRadius: 10,
+                  background: 'transparent',
+                  color: '#ef4444',
+                  border: '1px solid rgba(239,68,68,0.3)',
+                  fontWeight: 600,
+                  cursor: isOwner ? 'pointer' : 'not-allowed',
+                  opacity: isOwner ? 1 : 0.5,
+                  fontSize: 12,
+                }}
+              >
+                ⚠️ Clear Existing Portfolio ({vaultState.portfolioLen} assets)
+              </button>
+            )}
           </div>
           
           <div style={{ background: 'rgba(13,13,32,0.85)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: 25 }}>
@@ -468,7 +546,7 @@ export default function RescueComponent() {
           • Only the vault owner (0x4e7d...E746) can configure the portfolio<br/>
           • Anyone can trigger performUpkeep() once configured<br/>
           • Each trade costs ~0.003 ETH in gas<br/>
-          • The vault needs >0.01 ETH to execute trades
+          • The vault needs {'>'}0.01 ETH to execute trades
         </div>
       </div>
     </div>
