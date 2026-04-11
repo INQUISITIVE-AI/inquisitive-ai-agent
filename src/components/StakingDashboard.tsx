@@ -2,10 +2,25 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAccount } from 'wagmi';
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { useAppKit } from '@reown/appkit/react';
-import { erc20Abi, formatUnits, parseUnits } from 'viem';
+import { erc20Abi, formatUnits, parseUnits, getAddress } from 'viem';
 import { Lock, TrendingUp, Gift, Clock, Wallet, ExternalLink, CheckCircle, RefreshCw } from 'lucide-react';
 
-const STAKING_ADDR = (process.env.NEXT_PUBLIC_STAKING_CONTRACT || '0x0000000000000000000000000000000000000000') as `0x${string}`;
+// Validate and checksum addresses to prevent 'Address is invalid' errors
+function safeAddress(addr: string | undefined): `0x${string}` {
+  if (!addr || addr === '0x0000000000000000000000000000000000000000') return '0x0000000000000000000000000000000000000000';
+  try {
+    // Remove any quotes or whitespace
+    const clean = addr.replace(/["']/g, '').trim();
+    // Validate it's a proper Ethereum address and checksum it
+    return getAddress(clean.toLowerCase());
+  } catch {
+    console.error('Invalid staking address:', addr);
+    return '0x0000000000000000000000000000000000000000';
+  }
+}
+
+const STAKING_ADDR_RAW = process.env.NEXT_PUBLIC_STAKING_CONTRACT;
+const STAKING_ADDR = safeAddress(STAKING_ADDR_RAW);
 const INQAI_ADDR   = '0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5' as `0x${string}`;
 const CONTRACT_LIVE = STAKING_ADDR !== '0x0000000000000000000000000000000000000000';
 
