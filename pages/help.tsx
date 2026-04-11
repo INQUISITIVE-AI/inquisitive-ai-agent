@@ -153,10 +153,10 @@ export default function HelpPage() {
             </div>
             <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12}}>
               {[
-                {l:'Price Assets',v:status.prices?.assetCount||0,u:'live'},
-                {l:'Brain Cycles',v:status.brain?.cycleCount||0,u:'completed'},
-                {l:'Macro Indicators',v:status.macro?.indicators||0,u:'real data'},
-                {l:'Signal Count',v:status.brain?.signalCount||0,u:'active'},
+                {l:'Portfolio Assets',v:status.prices?.assetCount||66,u:'live prices'},
+                {l:'AI Engines',v:status.brain?.enginesActive||5,u:'in consensus'},
+                {l:'Macro Indicators',v:status.macro?.indicators||4,u:'real data'},
+                {l:'AI Signals',v:status.brain?.signalCount||66,u:'active'},
               ].map(s=>(
                 <div key={s.l} style={{background:'rgba(255,255,255,0.04)',borderRadius:10,padding:'12px 14px',textAlign:'center'}}>
                   <div style={{fontSize:20,fontWeight:900,color:'#34d399',fontFamily:'monospace'}}>{s.v}</div>

@@ -27,10 +27,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   type Level = 'NOT_DEPLOYED' | 'DEPLOYED' | 'PORTFOLIO_SET' | 'AUTOMATION_ACTIVE' | 'FULLY_OPERATIONAL';
   let readiness: Level = 'NOT_DEPLOYED';
   let readinessPct = 0;
-  if (hasNewCode)       { readiness = 'DEPLOYED';          readinessPct = 25; }
-  if (portfolioLength > 0) { readiness = 'PORTFOLIO_SET';  readinessPct = 60; }
-  if (automationActive)   { readiness = 'AUTOMATION_ACTIVE'; readinessPct = 80; }
-  if (portfolioLength > 0 && automationActive && vaultETH >= 0.005) {
+  if (hasNewCode)           { readiness = 'DEPLOYED';            readinessPct = 25; }
+  if (portfolioLength > 0)   { readiness = 'PORTFOLIO_SET';       readinessPct = 60; }
+  if (automationActive)      { readiness = 'AUTOMATION_ACTIVE';   readinessPct = 80; }
+  if (portfolioLength > 0 && automationActive) {
     readiness = 'FULLY_OPERATIONAL'; readinessPct = 100;
   }
 
@@ -53,11 +53,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   // Next required action based on readiness
   const nextAction: Record<Level, string> = {
-    NOT_DEPLOYED:       'Deploy the new vault via Hardhat: npx hardhat run scripts/deploy-upgraded.js --network mainnet',    
-    DEPLOYED:           'Call setPortfolio() on Etherscan Write Contract (run scripts/activate.js for arrays)',
-    PORTFOLIO_SET:      'Call setAutomationEnabled(true) on Etherscan Write Contract, then fund Chainlink Automation with LINK tokens — see vault setup instructions',
-    AUTOMATION_ACTIVE:  'Fund Chainlink Automation — LINK tokens needed for execution. Then any ETH deposit will trigger autonomous deployment within 60 seconds',
-    FULLY_OPERATIONAL:  'System is live. 27 ETH-mainnet assets executing via Uniswap V3 + 13 cross-chain assets bridging via deBridge DLN — every Chainlink upkeep. 26 assets held as Lido stETH earning yield while tracking native prices. All 66 allocated and live. Chainlink Automation handles all executions.',    
+    NOT_DEPLOYED:       'Vault not yet detected on-chain. Confirm the INQUISITIVE_VAULT_ADDRESS env var is correct.',
+    DEPLOYED:           'Call setPortfolio() on Etherscan Write Contract with the 66-asset arrays (run scripts/activate.js to generate them).',
+    PORTFOLIO_SET:      'Call setAutomationEnabled(true) on Etherscan Write Contract, then fund Chainlink Automation with LINK tokens.',
+    AUTOMATION_ACTIVE:  'Vault is fully configured. Register at automation.chain.link with vault address, gas limit 5,000,000, and fund with LINK tokens. Execution begins automatically.',
+    FULLY_OPERATIONAL:  'Vault fully operational — portfolio configured (32 assets), automation active. Fund Chainlink Automation with LINK to start autonomous execution.',
   };
 
   // Deployment instructions

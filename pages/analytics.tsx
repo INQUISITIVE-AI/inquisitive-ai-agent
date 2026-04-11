@@ -793,10 +793,10 @@ export default function AnalyticsPage() {
             {/* ── EXECUTION TAB — OWNER ONLY ── */}
             {tab === 'execution' && isVaultOwner && (() => {
               const ss = sysStatus;
-              const rPct   = ss?.readinessPct ?? 0;
-              const rState = ss?.readiness    ?? 'NOT_DEPLOYED';
+              const rPct   = ss?.readinessPct ?? (ss === null ? 0 : 0);
+              const rState = ss?.readiness    ?? (sysStatus === null ? 'LOADING' : 'NOT_DEPLOYED');
               const isLive = rState === 'FULLY_OPERATIONAL';
-              const rColor = isLive ? '#10b981' : rPct >= 60 ? '#f59e0b' : '#ef4444';
+              const rColor = isLive ? '#10b981' : rPct >= 60 ? '#f59e0b' : rState === 'LOADING' ? '#6b7280' : '#ef4444';
               return (
               <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
 
@@ -824,7 +824,7 @@ export default function AnalyticsPage() {
                   <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12 }}>
                     {[
                       { l:'Vault ETH',      v: vaultEthOnChain.toFixed(4)+' ETH',                                                         c:'#60a5fa' },
-                      { l:'Portfolio',      v: portfolioOnChain ? `${monitor?.architecture?.ethDirect??27} ETH + ${monitor?.architecture?.bridgeLive??13} BRIDGE + ${monitor?.architecture?.bridgeTracked??25} stETH` : (ss?.portfolioLength ? ss.portfolioLength+' assets' : 'Not set'), c: portfolioOnChain ? '#10b981':'#f59e0b' },
+                      { l:'Portfolio',      v: portfolioOnChain ? `${portfolioOnChain} assets configured` : (ss?.portfolioLength ? ss.portfolioLength+' assets' : 'Not set'), c: portfolioOnChain ? '#10b981':'#f59e0b' },
                       { l:'Automation',     v: automationOn ? 'ACTIVE' : (ss?.automationActive ? 'ACTIVE' : 'DISABLED'),                   c: (automationOn||ss?.automationActive) ? '#10b981':'#ef4444' },
                       { l:'Cycles run',     v: (cyclesOnChain || ss?.cycleCount || 0).toString(),                                         c:'#a78bfa' },
                     ].map(s => (
