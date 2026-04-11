@@ -14,6 +14,7 @@ const LINKS = [
   { l: 'Burns',     p: '/burns'             },
   { l: 'Docs',      p: '/help'              },
 ];
+const BUY_PATH = '/buy';
 
 interface SiteNavProps {
   position?: 'sticky' | 'fixed';
@@ -70,6 +71,31 @@ export default function SiteNav({ position = 'sticky', right }: SiteNavProps) {
       </div>
 
       {right && <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginRight: 8, flexShrink: 0 }}>{right}</div>}
+
+      <button
+        onClick={() => router.push(BUY_PATH)}
+        style={{
+          padding: '7px 16px',
+          borderRadius: 9,
+          cursor: 'pointer',
+          fontSize: 13,
+          fontWeight: 800,
+          background: router.pathname === BUY_PATH
+            ? 'linear-gradient(135deg,#6d28d9,#4338ca)'
+            : 'linear-gradient(135deg,#7c3aed,#4f46e5)',
+          color: '#fff',
+          border: '1px solid rgba(255,255,255,0.12)',
+          boxShadow: '0 2px 12px rgba(124,58,237,0.35)',
+          transition: 'all 0.15s',
+          marginRight: 6,
+          letterSpacing: '-0.2px',
+          flexShrink: 0,
+        }}
+        onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 4px 20px rgba(124,58,237,0.55)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+        onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 2px 12px rgba(124,58,237,0.35)'; e.currentTarget.style.transform = 'none'; }}
+      >
+        Acquire INQAI
+      </button>
 
       <WalletButton />
     </nav>

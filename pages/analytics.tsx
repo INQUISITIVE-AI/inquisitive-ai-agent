@@ -849,9 +849,9 @@ export default function AnalyticsPage() {
                   <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:20 }}>
                     {[
                       { title:'Vault Deployed', detail:`InquisitiveVaultUpdated · ${VAULT_ADDR.slice(0,10)}…${VAULT_ADDR.slice(-6)}`, done:true },
-                      { title:'setPortfolio()', detail:'26 ETH-mainnet ERC-20s configured · Uniswap V3 · on-chain', done:true },
+                      { title:'setPortfolio()', detail:`${portfolioOnChain||32} ETH-mainnet assets configured · Uniswap V3 · on-chain`, done:true },
                       { title:'setPhase2Registry()', detail:'13 cross-chain deBridge DLN targets configured · on-chain', done:true },
-                      { title:'setAutomationEnabled(true)', detail:'Vault will execute on every Chainlink keeper call · on-chain', done:true },
+                      { title:'setAutomationEnabled(true)', detail:automationOn?'Automation ACTIVE · Chainlink will call performUpkeep() when vault has ETH':'Call setAutomationEnabled(true) on Etherscan Write Contract', done:automationOn },
                     ].map((s, i) => (
                       <div key={i} style={{ display:'flex', gap:10, padding:'10px 12px', background:'rgba(16,185,129,0.05)', border:'1px solid rgba(16,185,129,0.18)', borderRadius:12 }}>
                         <div style={{ width:20, height:20, borderRadius:'50%', background:'#10b981', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:10, fontWeight:800, color:'#fff' }}>✓</div>
@@ -871,8 +871,8 @@ export default function AnalyticsPage() {
                       <div style={{ fontSize:13, fontWeight:800, color:'#fbbf24' }}>Only Step Remaining: Fund Chainlink Automation with LINK</div>
                     </div>
                     <div style={{ fontSize:11, color:'rgba(255,255,255,0.55)', lineHeight:1.8, marginBottom:14 }}>
-                      Chainlink Automation calls <code style={{color:'#a78bfa'}}>performUpkeep()</code> on-chain every 60 seconds — zero private keys, zero servers. 
-                      Costs ~1 LINK/month (~$15). Once funded, every ETH deposit is automatically deployed across all 66 assets.
+                      Chainlink Automation calls <code style={{color:'#a78bfa'}}>performUpkeep()</code> on-chain every 60 seconds — zero private keys, zero servers.
+                      Vault requires <strong style={{color:'#fbbf24'}}>&gt; 0.010 ETH</strong> to execute. Current balance: <strong style={{color:vaultEthOnChain>=0.010?'#10b981':'#fbbf24'}}>{vaultEthOnChain.toFixed(4)} ETH</strong>{vaultEthOnChain<0.010 ? ` — need ${(0.011-vaultEthOnChain).toFixed(4)} ETH more (~$${((0.011-vaultEthOnChain)*3200).toFixed(0)})` : ' — threshold met ✓'}.
                     </div>
                     <div style={{ display:'flex', flexDirection:'column', gap:6, marginBottom:14 }}>
                       {[
@@ -918,19 +918,12 @@ export default function AnalyticsPage() {
                     <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:14 }}>
                       <Zap size={16} color="#6366f1" />
                       <h3 style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.8)', margin:0 }}>Chainlink Automation</h3>
-                      <span style={{ marginLeft:'auto', fontSize:9, padding:'2px 7px', borderRadius:100, background:'rgba(99,102,241,0.12)', color:'#818cf8', border:'1px solid rgba(99,102,241,0.25)', fontWeight:700 }}>FULLY KEYLESS</span>
+                      <span style={{ marginLeft:'auto', fontSize:9, padding:'2px 7px', borderRadius:100, background:'rgba(99,102,241,0.12)', color:'#818cf8', border:'1px solid rgba(99,102,241,0.25)', fontWeight:700 }}>{automationOn?'ACTIVE':'SETUP'}</span>
                     </div>
                     <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)', lineHeight:1.8, marginBottom:14 }}>
-                      Chainlink nodes call <code style={{color:'#a78bfa'}}>performUpkeep()</code> on-chain every 60 seconds.
-                      <strong style={{color:'#fff'}}> Zero private keys anywhere</strong> — identical to Yearn, Compound, Aave keeper architecture.
-                      Costs ~1 LINK/month (~$15).
+                      Chainlink Automation is <strong style={{color:automationOn?'#34d399':'#f87171'}}>{automationOn?'ACTIVE':'DISABLED'}</strong>. Nodes call <code style={{color:'#a78bfa'}}>performUpkeep()</code> every 60s when vault has ETH.<br/>
+                      Current: <strong style={{color:vaultEthOnChain>=0.010?'#34d399':'#fbbf24'}}>{vaultEthOnChain.toFixed(4)} ETH</strong> {vaultEthOnChain<0.010?`— need ${(0.011-vaultEthOnChain).toFixed(4)} ETH more`:'✓ threshold met'}.
                     </div>
-                    {[['1','Go to automation.chain.link'],['2','Connect MetaMask (deployer wallet)'],['3','New Upkeep → Custom Logic'],['4','Paste vault address → Fund 1 LINK'],['5','Done — runs autonomously forever']].map(([n,t]) => (
-                      <div key={n} style={{ display:'flex', gap:8, alignItems:'flex-start', marginBottom:5 }}>
-                        <span style={{ fontSize:10, color:'#6366f1', fontWeight:800, minWidth:14 }}>{n}.</span>
-                        <span style={{ fontSize:11, color:'rgba(255,255,255,0.5)' }}>{t}</span>
-                      </div>
-                    ))}
                     <a href="https://automation.chain.link" target="_blank" rel="noopener noreferrer" style={{ display:'block', marginTop:14, padding:'9px 14px', borderRadius:10, background:'rgba(99,102,241,0.1)', border:'1px solid rgba(99,102,241,0.25)', color:'#818cf8', fontSize:12, fontWeight:700, textAlign:'center', textDecoration:'none' }}>
                       Register at automation.chain.link ↗
                     </a>
