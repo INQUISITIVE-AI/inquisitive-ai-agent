@@ -17,7 +17,6 @@ import SiteNav from '../src/components/SiteNav';
 const VAULT_ADDR = (process.env.NEXT_PUBLIC_VAULT_ADDRESS || '0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb') as `0x${string}`;
 const VAULT_ABI = [
   { name:'checkUpkeep',          type:'function', stateMutability:'view',      inputs:[{name:'',type:'bytes'}],        outputs:[{name:'upkeepNeeded',type:'bool'},{name:'performData',type:'bytes'}] },
-  { name:'performUpkeep',        type:'function', stateMutability:'nonpayable', inputs:[{name:'performData',type:'bytes'}], outputs:[] },
   { name:'getPortfolioLength',   type:'function', stateMutability:'view',      inputs:[],                             outputs:[{name:'',type:'uint256'}] },
   { name:'getETHBalance',        type:'function', stateMutability:'view',      inputs:[],                             outputs:[{name:'',type:'uint256'}] },
   { name:'automationEnabled',    type:'function', stateMutability:'view',      inputs:[],                             outputs:[{name:'',type:'bool'}] },
@@ -88,9 +87,6 @@ export default function AnalyticsPage() {
   const [runningSetup, setRunningSetup] = useState(false);
   const [setupStep,   setSetupStep]   = useState<string>('');
   const [autoStatus,  setAutoStatus]  = useState<any>(null);
-  const [triggerHash, setTriggerHash] = useState<`0x${string}` | undefined>();
-  const [triggerErr,  setTriggerErr]  = useState<string | null>(null);
-  const [triggering,  setTriggering]  = useState(false);
   const [withdrawHash, setWithdrawHash] = useState<`0x${string}` | undefined>();
   const [withdrawErr,  setWithdrawErr]  = useState<string | null>(null);
   const [withdrawing,  setWithdrawing]  = useState(false);
@@ -144,7 +140,6 @@ export default function AnalyticsPage() {
   const { writeContractAsync: writeAdminAsync } = useWriteContract();
   const [sendHash, setSendHash] = useState<`0x${string}` | undefined>();
   const { isSuccess: sendConfirmed } = useWaitForTransactionReceipt({ hash: sendHash });
-  const { isSuccess: triggerConfirmed } = useWaitForTransactionReceipt({ hash: triggerHash });
   const { isSuccess: withdrawConfirmed } = useWaitForTransactionReceipt({ hash: withdrawHash });
 
   const withdrawVault = async () => {
@@ -162,23 +157,6 @@ export default function AnalyticsPage() {
       setWithdrawErr(msg.toLowerCase().includes('rejected') || e.code === 4001 ? 'Rejected in wallet.' : (msg || 'Withdraw failed.'));
     } finally {
       setWithdrawing(false);
-    }
-  };
-
-  const triggerUpkeep = async () => {
-    setTriggerErr(null);
-    setTriggering(true);
-    try {
-      const h = await writeAdminAsync({
-        address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'performUpkeep',
-        args: ['0x'], chainId: 1,
-      });
-      setTriggerHash(h);
-    } catch (e: any) {
-      const msg: string = e.shortMessage || e.message || '';
-      setTriggerErr(msg.toLowerCase().includes('rejected') || e.code === 4001 ? 'Rejected.' : (msg || 'Trigger failed.'));
-    } finally {
-      setTriggering(false);
     }
   };
 
@@ -902,46 +880,6 @@ export default function AnalyticsPage() {
                         View Vault ↗
                       </a>
                     </div>
-                  </div>
-                  )}
-
-                  {/* MANUAL TRIGGER — Emergency execute first trade */}
-                  {vaultEthOnChain >= 0.010 && portfolioOnChain > 0 && automationOn && cyclesOnChain === 0 && (
-                  <div style={{ background:'rgba(245,158,11,0.08)', border:'2px solid rgba(245,158,11,0.4)', borderRadius:14, padding:'18px 20px', marginTop:16 }}>
-                    <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12 }}>
-                      <Zap size={18} color="#f59e0b" />
-                      <div style={{ fontSize:14, fontWeight:800, color:'#f59e0b' }}>⚡ Execute First Trade NOW (Manual)</div>
-                    </div>
-                    <div style={{ fontSize:12, color:'rgba(255,255,255,0.7)', lineHeight:1.6, marginBottom:14 }}>
-                      Vault is ready but no trades executed yet. Click to manually trigger <code style={{color:'#fbbf24'}}>performUpkeep()</code> — 
-                      anyone can call this! Starts the autonomous cycle immediately without waiting for Chainlink.
-                    </div>
-                    <button
-                      onClick={triggerUpkeep}
-                      disabled={triggering}
-                      style={{
-                        width:'100%', padding:'14px', borderRadius:10, 
-                        background: triggering ? 'rgba(255,255,255,0.1)' : '#f59e0b',
-                        color: triggering ? 'rgba(255,255,255,0.5)' : '#000', 
-                        border:'none', fontSize:14, fontWeight:800,
-                        cursor: triggering ? 'not-allowed' : 'pointer', 
-                        boxShadow: triggering ? 'none' : '0 4px 20px rgba(245,158,11,0.4)'
-                      }}
-                    >
-                      {triggering ? 'Triggering...' : triggerConfirmed ? '✅ Trade Executed!' : '🚀 TRIGGER performUpkeep() NOW'}
-                    </button>
-                    {triggerErr && (
-                      <div style={{ marginTop:10, padding:'10px', background:'rgba(239,68,68,0.1)', borderRadius:8, fontSize:12, color:'#ef4444' }}>
-                        {triggerErr}
-                      </div>
-                    )}
-                    {triggerHash && !triggerConfirmed && (
-                      <div style={{ marginTop:10, fontSize:12 }}>
-                        <a href={`https://etherscan.io/tx/${triggerHash}`} target="_blank" rel="noopener noreferrer" style={{color:'#60a5fa'}}>
-                          View transaction ↗
-                        </a>
-                      </div>
-                    )}
                   </div>
                   )}
 
