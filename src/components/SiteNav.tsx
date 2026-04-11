@@ -7,6 +7,7 @@ const WalletButton = dynamic(() => import('./WalletButton'), { ssr: false });
 
 const LINKS = [
   { l: 'Portfolio', p: '/analytics'         },
+  { l: 'Token',     p: '/token'             },
   { l: 'Staking',   p: '/staking'           },
   { l: 'Referral',  p: '/referral'          },
   { l: 'Reserves',  p: '/proof-of-reserves' },

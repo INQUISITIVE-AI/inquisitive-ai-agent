@@ -100,9 +100,14 @@ export default function Home() {
               INQAI is an ERC-20 token representing proportional ownership in a professionally managed portfolio of 66 digital assets. Proprietary AI systems execute portfolio management continuously across 11 discrete strategies. Fixed supply of 100,000,000 tokens.
             </p>
             <div style={{display:'flex',justifyContent:'center',marginBottom:60}}>
-              <button onClick={()=>router.push('/buy')} style={{padding:'14px 36px',borderRadius:12,background:'linear-gradient(135deg,#7c3aed,#4f46e5)',color:'#fff',fontSize:16,fontWeight:700,cursor:'pointer',border:'1px solid rgba(255,255,255,0.1)',boxShadow:'0 8px 30px rgba(124,58,237,0.4)',transition:'all 0.2s'}}>
-                Acquire INQAI
-              </button>
+              <div style={{display:'flex',gap:12,justifyContent:'center',flexWrap:'wrap'}}>
+                <button onClick={()=>router.push('/analytics')} style={{padding:'14px 36px',borderRadius:12,background:'linear-gradient(135deg,#7c3aed,#4f46e5)',color:'#fff',fontSize:16,fontWeight:700,cursor:'pointer',border:'1px solid rgba(255,255,255,0.1)',boxShadow:'0 8px 30px rgba(124,58,237,0.4)',transition:'all 0.2s'}}>
+                  View Portfolio
+                </button>
+                <button onClick={()=>router.push('/token')} style={{padding:'14px 36px',borderRadius:12,background:'rgba(255,255,255,0.06)',color:'#fff',fontSize:16,fontWeight:700,cursor:'pointer',border:'1px solid rgba(255,255,255,0.12)',transition:'all 0.2s'}}>
+                  INQAI Token
+                </button>
+              </div>
             </div>
             <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,maxWidth:800,margin:'0 auto'}}>
               {[
@@ -172,14 +177,14 @@ export default function Home() {
               <div style={{fontSize:11,letterSpacing:2,color:'#7c3aed',textTransform:'uppercase',marginBottom:10}}>Token Design</div>
               <h2 style={{fontSize:30,fontWeight:800,letterSpacing:'-0.5px'}}>Proportional Ownership. Continuous Management.</h2>
               <p style={{fontSize:14,color:'rgba(255,255,255,0.35)',marginTop:8,maxWidth:520,margin:'8px auto 0'}}>
-                INQAI provides diversified exposure to 65 digital assets through a single ERC-20 token, with AI-managed rebalancing and systematic fee-driven value accrual.
+                INQAI provides diversified exposure to 66 digital assets through a single ERC-20 token, with AI-managed rebalancing and systematic fee-driven value accrual.
               </p>
             </div>
             <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16,marginBottom:16}}>
               {[
-                {Icon:Wallet,     title:'Asset-Backed Ownership',   desc:'Each INQAI token represents proportional ownership in a professionally managed portfolio of 65 digital assets. Real underlying assets. Transparent on-chain valuation.',col:'#a78bfa'},
+                {Icon:Wallet,     title:'Asset-Backed Ownership',   desc:'Each INQAI token represents proportional ownership in a professionally managed portfolio of 66 digital assets. Real underlying assets. Transparent on-chain valuation.',col:'#a78bfa'},
                 {Icon:Bot,        title:'AI Portfolio Management',   desc:'Five intelligence engines execute eleven trading strategies continuously, optimizing portfolio composition and risk-adjusted returns across all 66 assets.',col:'#60a5fa'},
-                {Icon:TrendingUp, title:'Value Accrual Mechanisms',  desc:'Portfolio performance, systematic buybacks representing 60% of protocol fees, permanent burns of 20% of fees, and compounding protocol revenue.',col:'#10b981'},
+                {Icon:TrendingUp, title:'Value Accrual Mechanisms',  desc:'Portfolio performance, systematic buybacks representing 60% of protocol fees, permanent burns of 20% of fees, 15% to treasury, and 5% auto-funds Chainlink Automation to keep the AI running.',col:'#10b981'},
               ].map(c=>(
                 <div key={c.title} style={{background:'rgba(13,13,32,0.8)',border:'1px solid rgba(255,255,255,0.06)',borderRadius:20,padding:28,backdropFilter:'blur(12px)'}}>
                   <div style={{marginBottom:16,width:48,height:48,borderRadius:14,background:`rgba(255,255,255,0.05)`,display:'flex',alignItems:'center',justifyContent:'center'}}><c.Icon size={24} color={c.col} strokeWidth={1.8} /></div>
@@ -190,7 +195,7 @@ export default function Home() {
             </div>
             <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16}}>
               {[
-                {Icon:Flame,     title:'Systematic Buybacks and Burns', desc:'60% of all protocol fees are deployed for open-market INQAI buybacks. 20% is permanently burned, reducing circulating supply over time.',col:'#f59e0b'},
+                {Icon:Flame,     title:'Systematic Buybacks and Burns', desc:'60% of all protocol fees fund open-market INQAI buybacks. 20% is permanently burned. 15% goes to treasury. 5% auto-funds Chainlink Automation to keep the AI running indefinitely.',col:'#f59e0b'},
                 {Icon:Shield,    title:'Non-Custodial Architecture',     desc:'INQAI tokens are delivered directly to your self-custody wallet. No exchange custody, no counterparty exposure, no intermediary.',col:'#34d399'},
                 {Icon:BarChart3, title:'Full Operational Transparency',   desc:'The Analytics dashboard provides real-time access to every AI trade decision, position, portfolio composition, and live risk metric.',col:'#f97316'},
               ].map(c=>(
@@ -230,7 +235,7 @@ export default function Home() {
             </div>
             <div style={{background:'rgba(124,58,237,0.07)',border:'1px solid rgba(124,58,237,0.2)',borderRadius:16,padding:'20px 28px',display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:24}}>
               {[
-                {label:'Fee Distribution',val:'60 / 20 / 20',note:'Buybacks · Burns · Treasury'},
+                {label:'Fee Distribution',val:'60 / 20 / 15 / 5',note:'Buybacks · Burns · Treasury · Chainlink'},
                 {label:'Fee Trigger',      val:'Yield Only',  note:'No fee until protocol generates yield'},
                 {label:'vs Hedge Fund Standard', val:'25pp Lower', note:'15% performance fee versus the 20% industry standard'},
               ].map(s=>(
@@ -278,7 +283,7 @@ export default function Home() {
               </div>
               <div>
                 <div style={{fontSize:11,fontWeight:700,color:'rgba(255,255,255,0.4)',textTransform:'uppercase',letterSpacing:'1px',marginBottom:12}}>Platform</div>
-                {[['Acquire INQAI','/buy'],['Portfolio','/analytics'],['Documentation','/help']].map(([l,p])=>(
+                {[['INQAI Token','/token'],['Portfolio','/analytics'],['Documentation','/help']].map(([l,p])=>(
                   <div key={l} onClick={()=>router.push(p)} style={{fontSize:12,color:'rgba(255,255,255,0.35)',padding:'4px 0',cursor:'pointer',transition:'color 0.15s'}}
                     onMouseOver={e=>(e.currentTarget.style.color='rgba(255,255,255,0.7)')}
                     onMouseOut={e=>(e.currentTarget.style.color='rgba(255,255,255,0.35)')}

@@ -300,7 +300,7 @@ export default function AnalyticsPage() {
 
   const localHolding     = purchases.reduce((s, p) => s + (p.amount    || 0), 0);
   const totalUsdInvested = purchases.reduce((s, p) => s + (p.usdAmount || 0), 0);
-  // Presale: use localStorage. Delivered on-chain: fall back to onChainBalance (but never for deployer — deployer balance is 100M)
+  // Show actual on-chain balance for all wallets including vault owner (team allocation)
   const totalInqai       = localHolding > 0 ? localHolding : onChainBalance;
   const effInvested      = totalUsdInvested > 0 ? totalUsdInvested : 0; // only real purchases — no synthetic cost basis
   const currentValue     = totalInqai * navPerToken;
@@ -502,9 +502,9 @@ export default function AnalyticsPage() {
                           ))}
                         </div>
                         <div style={{ padding:'10px 12px', background:'rgba(96,165,250,0.06)', border:'1px solid rgba(96,165,250,0.2)', borderRadius:10, fontSize:11, color:'rgba(255,255,255,0.5)', lineHeight:1.6, marginBottom:12 }}>
-                          You are the vault owner. Your ETH is in the portfolio vault and managed by the AI system across all 66 assets. INQAI token holdings reflect presale purchases — buy below to get a tokenized position.
+                          You are the vault owner. ETH deposits are managed by the AI system across 66 assets. Your team allocation is shown below — vested tokens are locked in the Timelock contract.
                         </div>
-                        <button onClick={() => router.push('/buy')} style={{ width:'100%', padding:'10px', borderRadius:10, background:'linear-gradient(135deg,#7c3aed,#4f46e5)', color:'#fff', border:'none', cursor:'pointer', fontSize:13, fontWeight:700 }}>Buy INQAI at $8</button>
+                        <button onClick={() => router.push('/token')} style={{ width:'100%', padding:'10px', borderRadius:10, background:'linear-gradient(135deg,#7c3aed,#4f46e5)', color:'#fff', border:'none', cursor:'pointer', fontSize:13, fontWeight:700 }}>View INQAI Token →</button>
                       </div>
                     ) : !hasHoldings ? (
                       <div style={{ textAlign:'center', padding:'20px 0' }}>
