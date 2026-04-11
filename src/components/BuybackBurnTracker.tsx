@@ -5,7 +5,7 @@ import { Flame, TrendingUp, PiggyBank, Activity, ArrowUpRight, ExternalLink } fr
 
 const INQAI_ADDR = '0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5' as `0x${string}`;
 const DEAD_ADDR  = '0x000000000000000000000000000000000000dEaD' as `0x${string}`;
-const DIST_CONTRACT = (process.env.NEXT_PUBLIC_DISTRIBUTOR_CONTRACT || '0x0000000000000000000000000000000000000000') as `0x${string}`;
+const DIST_CONTRACT = (process.env.NEXT_PUBLIC_FEE_DISTRIBUTOR || '0x0000000000000000000000000000000000000000') as `0x${string}`;
 const DIST_LIVE = DIST_CONTRACT !== '0x0000000000000000000000000000000000000000';
 
 interface FeeData {
@@ -87,7 +87,8 @@ export default function BuybackBurnTracker() {
           {[
             { label: 'Buybacks → Staking Rewards', pct: 60, color: '#10b981', ethVal: data?.distribution.buybacks.eth },
             { label: 'Permanently Burned',          pct: 20, color: '#ef4444', ethVal: data?.distribution.burns.eth    },
-            { label: 'Treasury & Operations',       pct: 20, color: '#818cf8', ethVal: data?.distribution.treasury.eth },
+            { label: 'Treasury & Operations',       pct: 15, color: '#818cf8', ethVal: data?.distribution.treasury.eth },
+            { label: 'Chainlink Automation',        pct: 5,  color: '#f59e0b', ethVal: '0' },
           ].map(r => (
             <div key={r.label} style={{ marginBottom: 20 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 12 }}>
@@ -176,7 +177,7 @@ export default function BuybackBurnTracker() {
           <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#10b981', boxShadow: '0 0 6px #10b981' }} />
           <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>Token supply reads: Live on-chain</span>
         </div>
-        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.18)', marginLeft: 'auto' }}>15% performance fee · 60% buybacks · 20% burn · 20% treasury</span>
+        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.18)', marginLeft: 'auto' }}>15% performance fee · 60% buybacks · 20% burn · 15% treasury · 5% Chainlink</span>
       </div>
     </div>
   );

@@ -3,7 +3,7 @@ import { useAccount } from 'wagmi';
 import { useAppKit } from '@reown/appkit/react';
 import { Users, Share2, Gift, Copy, CheckCircle, TrendingUp, ExternalLink, Wallet } from 'lucide-react';
 
-const REFERRAL_CONTRACT = (process.env.NEXT_PUBLIC_REFERRAL_CONTRACT || '0x0000000000000000000000000000000000000000') as `0x${string}`;
+const REFERRAL_CONTRACT = (process.env.NEXT_PUBLIC_REFERRAL_TRACKER || '0x0000000000000000000000000000000000000000') as `0x${string}`;
 const CONTRACT_LIVE = REFERRAL_CONTRACT !== '0x0000000000000000000000000000000000000000';
 
 interface GlobalStats {
