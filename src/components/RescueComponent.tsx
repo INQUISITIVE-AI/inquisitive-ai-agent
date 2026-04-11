@@ -3,7 +3,25 @@ import { useAccount, useWriteContract, useWaitForTransactionReceipt, usePublicCl
 import { useAppKit } from '@reown/appkit/react';
 import { parseAbi, formatEther } from 'viem';
 import { AlertTriangle, CheckCircle, ExternalLink, RefreshCw, Zap } from 'lucide-react';
-import { SiteNav } from './SiteNav';
+
+// Simple header instead of SiteNav to avoid import issues
+const SimpleHeader = () => (
+  <div style={{ 
+    background: 'rgba(13,13,32,0.97)', 
+    borderBottom: '1px solid rgba(255,255,255,0.1)',
+    padding: '16px 24px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between'
+  }}>
+    <div style={{ fontWeight: 800, fontSize: 20 }}>
+      <span style={{ color: '#6366f1' }}>INQ</span>UISTIVE
+    </div>
+    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>
+      Emergency Rescue
+    </div>
+  </div>
+);
 
 const VAULT_ADDR = '0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb' as `0x${string}`;
 const OWNER_ADDR = '0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746' as `0x${string}`;
@@ -207,7 +225,7 @@ export default function RescueComponent() {
   
   return (
     <div style={{ minHeight: '100vh', background: '#0a0a1a', color: '#fff', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-      <SiteNav />
+      <SimpleHeader />
       
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '40px 20px' }}>
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
