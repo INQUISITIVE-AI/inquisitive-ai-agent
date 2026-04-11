@@ -184,7 +184,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
       // Portfolio summary
       portfolio: {
-        assetCount:    assetsLive.length,
+        assetCount:    ASSET_REGISTRY.length,
         totalAssets:   ASSET_REGISTRY.length,
         weightSum,
         liveWeightSum,
