@@ -3,12 +3,6 @@
   "buildCommand": "npm run build",
   "devCommand": "npm run dev",
   "installCommand": "npm install --legacy-peer-deps",
-  "crons": [
-    {
-      "path": "/api/cron/keeper",
-      "schedule": "0 0 * * *"
-    }
-  ],
   "headers": [
     {
       "source": "/(.*\\.html|analytics|help|buy|)",
@@ -38,9 +32,6 @@
     },
     "pages/api/inquisitiveAI/execute/setup": {
       "maxDuration": 300
-    },
-    "pages/api/cron/keeper": {
-      "maxDuration": 55
     }
   }
 }

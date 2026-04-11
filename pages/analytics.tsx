@@ -91,26 +91,6 @@ export default function AnalyticsPage() {
   const [triggerHash, setTriggerHash] = useState<`0x${string}` | undefined>();
   const [triggerErr,  setTriggerErr]  = useState<string | null>(null);
   const [triggering,  setTriggering]  = useState(false);
-  const [gasPrice, setGasPrice] = useState<number | null>(null); // in gwei
-  
-  // Fetch current gas price
-  useEffect(() => {
-    const fetchGas = async () => {
-      try {
-        const res = await fetch('https://api.etherscan.io/api?module=gastracker&action=gasoracle');
-        const data = await res.json();
-        if (data.result?.ProposeGasPrice) {
-          setGasPrice(parseFloat(data.result.ProposeGasPrice));
-        }
-      } catch (e) {
-        // Fallback: assume high gas
-        setGasPrice(50);
-      }
-    };
-    fetchGas();
-    const interval = setInterval(fetchGas, 60000); // refresh every minute
-    return () => clearInterval(interval);
-  }, []);
   const [withdrawHash, setWithdrawHash] = useState<`0x${string}` | undefined>();
   const [withdrawErr,  setWithdrawErr]  = useState<string | null>(null);
   const [withdrawing,  setWithdrawing]  = useState(false);
@@ -932,44 +912,23 @@ export default function AnalyticsPage() {
                       <Zap size={18} color="#f59e0b" />
                       <div style={{ fontSize:14, fontWeight:800, color:'#f59e0b' }}>⚡ Execute First Trade NOW (Manual)</div>
                     </div>
-                    
-                    {/* Gas Price Warning */}
-                    <div style={{ 
-                      background: gasPrice && gasPrice < 25 ? 'rgba(34,197,94,0.1)' : gasPrice && gasPrice < 40 ? 'rgba(251,191,36,0.1)' : 'rgba(239,68,68,0.1)', 
-                      border: `1px solid ${gasPrice && gasPrice < 25 ? 'rgba(34,197,94,0.3)' : gasPrice && gasPrice < 40 ? 'rgba(251,191,36,0.3)' : 'rgba(239,68,68,0.3)'}`,
-                      borderRadius: 10, 
-                      padding: 12, 
-                      marginBottom: 14 
-                    }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: gasPrice && gasPrice < 25 ? '#22c55e' : gasPrice && gasPrice < 40 ? '#fbbf24' : '#ef4444' }}>
-                        ⛽ Gas Price: {gasPrice ? `${gasPrice} gwei` : 'Loading...'}
-                        {gasPrice && gasPrice < 25 ? ' ✅ CHEAP — Good time to trade!' : gasPrice && gasPrice < 40 ? ' ⚠️ MODERATE — Consider waiting' : ' ❌ EXPENSIVE — Wait for <25 gwei'}
-                      </div>
-                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 4 }}>
-                        Trading 32 assets costs ~2-4M gas. At {gasPrice || 50} gwei = ~{((2.5 * (gasPrice || 50)) / 1000).toFixed(3)} ETH (${((2.5 * (gasPrice || 50) * 3200) / 1000).toFixed(0)})
-                      </div>
-                      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginTop: 6 }}>
-                        💡 Best times: Weekends 2-6 AM UTC (usually {'<'}20 gwei). Check <a href="https://etherscan.io/gastracker" target="_blank" rel="noreferrer" style={{color:'#818cf8'}}>etherscan.io/gastracker</a>
-                      </div>
-                    </div>
-                    
                     <div style={{ fontSize:12, color:'rgba(255,255,255,0.7)', lineHeight:1.6, marginBottom:14 }}>
                       Vault is ready but no trades executed yet. Click to manually trigger <code style={{color:'#fbbf24'}}>performUpkeep()</code> — 
                       anyone can call this! Starts the autonomous cycle immediately without waiting for Chainlink.
                     </div>
                     <button
                       onClick={triggerUpkeep}
-                      disabled={triggering || !gasPrice || gasPrice > 60}
+                      disabled={triggering}
                       style={{
                         width:'100%', padding:'14px', borderRadius:10, 
-                        background: triggering || !gasPrice || gasPrice > 60 ? 'rgba(255,255,255,0.1)' : '#f59e0b',
-                        color: triggering || !gasPrice || gasPrice > 60 ? 'rgba(255,255,255,0.5)' : '#000', 
+                        background: triggering ? 'rgba(255,255,255,0.1)' : '#f59e0b',
+                        color: triggering ? 'rgba(255,255,255,0.5)' : '#000', 
                         border:'none', fontSize:14, fontWeight:800,
-                        cursor: triggering || !gasPrice || gasPrice > 60 ? 'not-allowed' : 'pointer', 
-                        boxShadow: triggering || !gasPrice || gasPrice > 60 ? 'none' : '0 4px 20px rgba(245,158,11,0.4)'
+                        cursor: triggering ? 'not-allowed' : 'pointer', 
+                        boxShadow: triggering ? 'none' : '0 4px 20px rgba(245,158,11,0.4)'
                       }}
                     >
-                      {triggering ? 'Triggering...' : triggerConfirmed ? '✅ Trade Executed!' : gasPrice && gasPrice > 60 ? '⛽ Gas Too Expensive — Wait' : '🚀 TRIGGER performUpkeep() NOW'}
+                      {triggering ? 'Triggering...' : triggerConfirmed ? '✅ Trade Executed!' : '🚀 TRIGGER performUpkeep() NOW'}
                     </button>
                     {triggerErr && (
                       <div style={{ marginTop:10, padding:'10px', background:'rgba(239,68,68,0.1)', borderRadius:8, fontSize:12, color:'#ef4444' }}>
