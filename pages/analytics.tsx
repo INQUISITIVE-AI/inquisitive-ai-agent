@@ -16,7 +16,6 @@ import SiteNav from '../src/components/SiteNav';
 
 const VAULT_ADDR = (process.env.NEXT_PUBLIC_VAULT_ADDRESS || '0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb') as `0x${string}`;
 const VAULT_ABI = [
-  { name:'checkUpkeep',          type:'function', stateMutability:'view',      inputs:[{name:'',type:'bytes'}],        outputs:[{name:'upkeepNeeded',type:'bool'},{name:'performData',type:'bytes'}] },
   { name:'getPortfolioLength',   type:'function', stateMutability:'view',      inputs:[],                             outputs:[{name:'',type:'uint256'}] },
   { name:'getETHBalance',        type:'function', stateMutability:'view',      inputs:[],                             outputs:[{name:'',type:'uint256'}] },
   { name:'automationEnabled',    type:'function', stateMutability:'view',      inputs:[],                             outputs:[{name:'',type:'bool'}] },
@@ -75,96 +74,19 @@ export default function AnalyticsPage() {
   const [sysStatus, setSysStatus]= useState<any>(null);
   const [loading,   setLoading]  = useState(true);
   const [refreshing,setRefreshing]= useState(false);
-  const [tab,       setTab]      = useState<'portfolio'|'execution'|'fees'>('portfolio');
-  const [posFilter, setPosFilter]= useState<string>('all');
+  const [tab,       setTab]      = useState<'portfolio'|'fees'>('portfolio');
   const [purchases, setPurchases]= useState<any[]>([]);
   const [vesting,   setVesting]  = useState<any>(null);
   const [sendOpen,  setSendOpen] = useState(false);
   const [sendTo,    setSendTo]   = useState('');
   const [sendAmt,   setSendAmt]  = useState('');
   const [sendError, setSendError]= useState<string | null>(null);
-  const [setupStatus, setSetupStatus] = useState<any>(null);
-  const [runningSetup, setRunningSetup] = useState(false);
-  const [setupStep,   setSetupStep]   = useState<string>('');
-  const [autoStatus,  setAutoStatus]  = useState<any>(null);
-  const [withdrawHash, setWithdrawHash] = useState<`0x${string}` | undefined>();
-  const [withdrawErr,  setWithdrawErr]  = useState<string | null>(null);
-  const [withdrawing,  setWithdrawing]  = useState(false);
-
-  const runSetup = async () => {
-    setRunningSetup(true);
-    setSetupStep('');
-    try {
-      const r = await fetch('/api/inquisitiveAI/execute/setup', { method: 'GET' });
-      const d = await r.json();
-      setSetupStatus(d);
-      if (d.status === 'SETUP_COMPLETE') load(true);
-    } catch (e: any) {
-      setSetupStatus({ status: 'ERROR', error: e.message });
-    } finally {
-      setRunningSetup(false);
-    }
-  };
-
-  const setupFromWallet = async () => {
-    setRunningSetup(true);
-    setSetupStep('Confirm setPortfolio() in MetaMask…');
-    try {
-      const h1 = await writeAdminAsync({
-        address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'setPortfolio',
-        args: [PHASE1_TOKENS, PHASE1_WEIGHTS, PHASE1_FEES], chainId: 1,
-      });
-      setSetupStep('setPortfolio broadcast — waiting for on-chain confirmation…');
-      await waitForTransactionReceipt(wagmiConfig, { hash: h1 });
-      setSetupStep('Confirm setAutomationEnabled(true) in MetaMask…');
-      const h2 = await writeAdminAsync({
-        address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'setAutomationEnabled',
-        args: [true], chainId: 1,
-      });
-      setSetupStep('setAutomationEnabled broadcast — confirming…');
-      await waitForTransactionReceipt(wagmiConfig, { hash: h2 });
-      setSetupStep('Done! Portfolio configured on-chain. Reloading…');
-      setSetupStatus({ status: 'SETUP_COMPLETE', message: `setPortfolio tx: ${h1} · setAutomationEnabled tx: ${h2}` });
-      load(true);
-    } catch (e: any) {
-      const msg: string = e.shortMessage || e.message || '';
-      const isRejected = msg.toLowerCase().includes('rejected') || e.code === 4001;
-      setSetupStep('');
-      setSetupStatus({ status: 'ERROR', message: isRejected ? 'Transaction rejected.' : msg });
-    } finally {
-      setRunningSetup(false);
-    }
-  };
 
   const { writeContractAsync: writeSendAsync, isPending: isSending } = useWriteContract();
-  const { writeContractAsync: writeAdminAsync } = useWriteContract();
   const [sendHash, setSendHash] = useState<`0x${string}` | undefined>();
   const { isSuccess: sendConfirmed } = useWaitForTransactionReceipt({ hash: sendHash });
-  const { isSuccess: withdrawConfirmed } = useWaitForTransactionReceipt({ hash: withdrawHash });
-
-  const withdrawVault = async () => {
-    if (!vaultEthBal || vaultEthBal === 0n) return;
-    setWithdrawErr(null);
-    setWithdrawing(true);
-    try {
-      const h = await writeAdminAsync({
-        address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'collectFees',
-        args: ['0x0000000000000000000000000000000000000000', vaultEthBal], chainId: 1,
-      });
-      setWithdrawHash(h);
-    } catch (e: any) {
-      const msg: string = e.shortMessage || e.message || '';
-      setWithdrawErr(msg.toLowerCase().includes('rejected') || e.code === 4001 ? 'Rejected in wallet.' : (msg || 'Withdraw failed.'));
-    } finally {
-      setWithdrawing(false);
-    }
-  };
 
   // ── Vault on-chain state (live reads, no private key) ─────────────────────
-  const { data: checkUpkeepData } = useReadContract({
-    address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'checkUpkeep',
-    args: ['0x'], chainId: 1, query: { refetchInterval: 30000 },
-  });
   const { data: vaultPortfolioLen } = useReadContract({
     address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'getPortfolioLength',
     chainId: 1, query: { refetchInterval: 30000 },
@@ -181,12 +103,6 @@ export default function AnalyticsPage() {
     address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'cycleCount',
     chainId: 1, query: { refetchInterval: 30000 },
   });
-  const { data: vaultOwnerAddr } = useReadContract({
-    address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'owner',
-    chainId: 1, query: { refetchInterval: 60000 },
-  });
-  const isVaultOwner = !!(address && vaultOwnerAddr && address.toLowerCase() === (vaultOwnerAddr as string).toLowerCase());
-
   const vaultEthOnChain = vaultEthBal ? Number(vaultEthBal) / 1e18 : 0;
   const portfolioOnChain= vaultPortfolioLen ? Number(vaultPortfolioLen) : 0;
   const automationOn    = automationEnabledData === true;
@@ -233,8 +149,6 @@ export default function AnalyticsPage() {
                        .then(d => { if (d) setQueue(d); });
     const monitorP = safe(`/api/inquisitiveAI/execute/monitor${t}`)
                        .then(d => { if (d) setMonitor(d); });
-    const autoP    = safe(`/api/inquisitiveAI/execute/auto${t}`)
-                       .then(d => { if (d) setAutoStatus(d); });
     const statusP  = safe(`/api/inquisitiveAI/execute/status${t}`)
                        .then(d => { if (d) setSysStatus(d); });
     const vestingP = safe(`/api/inquisitiveAI/token/vesting${t}`)
@@ -244,7 +158,7 @@ export default function AnalyticsPage() {
     navP.then(() => setLoading(false));
 
     // setRefreshing(false) once all complete
-    Promise.allSettled([navP, chartP, catP, queueP, monitorP, statusP, autoP, vestingP])
+    Promise.allSettled([navP, chartP, catP, queueP, monitorP, statusP, vestingP])
       .then(() => setRefreshing(false));
   }, []);
   useEffect(() => { load(); const t = setInterval(() => load(), 60000); return () => clearInterval(t); }, [load]);
@@ -344,12 +258,6 @@ export default function AnalyticsPage() {
   const ACTIVE_SIGS = ['BUY','STAKE','LEND','YIELD','BORROW','LOOP','MULTIPLY','EARN','REWARDS','SWAP'];
   const topSignals  = positions.filter(p => ACTIVE_SIGS.includes(p.action)).slice(0, 8);
   const dispValue   = hasHoldings ? currentValue : navPerToken;
-  const filteredPos = useMemo(() => {
-    if (posFilter === 'all')  return positions;
-    if (posFilter === 'buy')  return positions.filter(p => ACTIVE_SIGS.includes(p.action));
-    if (posFilter === 'sell') return positions.filter(p => p.action === 'SELL' || p.action === 'REDUCE');
-    return positions.filter(p => p.category === posFilter);
-  }, [positions, posFilter]);
 
   return (
     <div>
@@ -421,15 +329,11 @@ export default function AnalyticsPage() {
 
             {/* Tabs */}
             <div style={{ display:'flex', gap:2, marginBottom:20, borderBottom:'1px solid rgba(255,255,255,0.06)', flexWrap:'wrap' }}>
-              {(() => {
-                const tabs = isVaultOwner ? ['portfolio','execution','fees'] : ['portfolio','fees'];
-                return tabs.map(t => (
-                <button key={t} onClick={() => setTab(t as any)} style={{ padding:'10px 18px', fontSize:13, fontWeight:tab===t?700:500, cursor:'pointer', background:'none', border:'none', borderBottom:`2px solid ${tab===t?'#7c3aed':'transparent'}`, color:tab===t?'#a78bfa':'rgba(255,255,255,0.4)', transition:'all 0.15s', position:'relative' }}>
-                  {{portfolio:'Portfolio',execution:'Execution',fees:'Fee Flow'}[t as string]}
-                  {t==='execution'&&!automationOn&&<span style={{position:'absolute',top:6,right:6,width:6,height:6,borderRadius:'50%',background:'#f59e0b',display:'block'}}/>}
+              {['portfolio','fees'].map(t => (
+                <button key={t} onClick={() => setTab(t as any)} style={{ padding:'10px 18px', fontSize:13, fontWeight:tab===t?700:500, cursor:'pointer', background:'none', border:'none', borderBottom:`2px solid ${tab===t?'#7c3aed':'transparent'}`, color:tab===t?'#a78bfa':'rgba(255,255,255,0.4)', transition:'all 0.15s' }}>
+                  {t==='portfolio'?'Portfolio':'Fee Flow'}
                 </button>
-              ));
-              })()}
+              ))}
             </div>
 
             {/* ── PORTFOLIO TAB ── */}
@@ -465,26 +369,7 @@ export default function AnalyticsPage() {
                       {onChainBalance > 0 && localHolding > 0 && onChainBalance <= localHolding * 2 + 5 && <span style={{ fontSize:9, padding:'2px 7px', borderRadius:100, background:'rgba(16,185,129,0.15)', color:'#34d399', border:'1px solid rgba(16,185,129,0.25)' }}>ON-CHAIN</span>}
                       {purchases.length > 0 && onChainBalance === 0 && <span style={{ fontSize:9, padding:'2px 7px', borderRadius:100, background:'rgba(124,58,237,0.15)', color:'#a78bfa', border:'1px solid rgba(124,58,237,0.25)' }}>PRESALE</span>}
                     </div>
-                    {!hasHoldings && isVaultOwner && vaultEthOnChain > 0 ? (
-                      <div style={{ padding:'4px 0' }}>
-                        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10, marginBottom:12 }}>
-                          {[
-                            { l:'Vault ETH',     v:vaultEthOnChain.toFixed(4)+' ETH', c:'#60a5fa' },
-                            { l:'Vault Value',   v:fmtUsd(vaultEthOnChain*(nav?.treasury?.ethPrice??2000)), c:'#10b981' },
-                            { l:'7D Portfolio',  v:pct(return7d), c:grc(return7d) },
-                          ].map(s => (
-                            <div key={s.l} style={{ background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:10, padding:'10px 12px' }}>
-                              <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)', marginBottom:3 }}>{s.l}</div>
-                              <div style={{ fontSize:14, fontWeight:800, color:s.c, fontFamily:'monospace' }}>{s.v}</div>
-                            </div>
-                          ))}
-                        </div>
-                        <div style={{ padding:'10px 12px', background:'rgba(96,165,250,0.06)', border:'1px solid rgba(96,165,250,0.2)', borderRadius:10, fontSize:11, color:'rgba(255,255,255,0.5)', lineHeight:1.6, marginBottom:12 }}>
-                          You are the vault owner. ETH deposits are managed by the AI system across 66 assets. Your team allocation is shown below — vested tokens are locked in the Timelock contract.
-                        </div>
-                        <button onClick={() => router.push('/token')} style={{ width:'100%', padding:'10px', borderRadius:10, background:'linear-gradient(135deg,#7c3aed,#4f46e5)', color:'#fff', border:'none', cursor:'pointer', fontSize:13, fontWeight:700 }}>View INQAI Token →</button>
-                      </div>
-                    ) : !hasHoldings ? (
+                    {!hasHoldings ? (
                       <div style={{ textAlign:'center', padding:'20px 0' }}>
                         <div style={{ fontSize:13, color:'rgba(255,255,255,0.35)', marginBottom:12 }}>{address?'No INQAI holdings detected — connect to a wallet that holds INQAI, or buy below.':'Connect wallet to view your holdings.'}</div>
                         <div style={{ textAlign:'center', marginTop:16 }}>
@@ -655,379 +540,6 @@ export default function AnalyticsPage() {
                 </div>
               </div>
             )}
-
-            {/* ── AI ACTIVITY TAB ── */}
-            {tab === 'ai' && (
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
-                <div style={{ background:'rgba(13,13,32,0.85)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:20, padding:'24px', backdropFilter:'blur(12px)' }}>
-                  <h3 style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.8)', marginBottom:18 }}>AI Agent Live Metrics</h3>
-                  <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10 }}>
-                    {([
-                      { l:'Brain Cycles', v:cyclesOnChain.toLocaleString(), c:'#a78bfa', i:'brain' },
-                      { l:'Buy Actions',  v:buys,   c:'#10b981', i:'up' },
-                      { l:'Sell Actions', v:sells,  c:'#ef4444', i:'down' },
-                      { l:'Regime',       v:regime, c:regimeCol, i:regime==='BULL'?'up':regime==='BEAR'?'down':'scale' },
-                      { l:'Fear & Greed', v:fg,     c:typeof fg==='number'&&fg<30?'#ef4444':typeof fg==='number'&&fg>70?'#10b981':'#f59e0b', i:'brain' },
-                      { l:'Assets Live',  v:nav?.portfolio?.assetCount??66, c:'#60a5fa', i:'target' },
-                    ] as any[]).map(m => (
-                      <div key={m.l} style={{ textAlign:'center', padding:'14px 10px', background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.05)', borderRadius:12 }}>
-                        <div style={{ marginBottom:5, display:'flex', justifyContent:'center' }}>
-                          {m.i==='brain' &&<Brain      size={20} color={m.c} />}
-                          {m.i==='up'    &&<TrendingUp size={20} color={m.c} />}
-                          {m.i==='down'  &&<TrendingDown size={20} color={m.c} />}
-                          {m.i==='scale' &&<Scale      size={20} color={m.c} />}
-                          {m.i==='target'&&<Target     size={20} color={m.c} />}
-                        </div>
-                        <div style={{ fontSize:18, fontWeight:900, color:m.c, fontFamily:'monospace' }}>{m.v}</div>
-                        <div style={{ fontSize:10, color:'rgba(255,255,255,0.3)', marginTop:3 }}>{m.l}</div>
-                      </div>
-                    ))}
-                  </div>
-                  {fgLabel && <div style={{ marginTop:14, padding:'8px 14px', background:'rgba(251,191,36,0.06)', border:'1px solid rgba(251,191,36,0.15)', borderRadius:10, fontSize:12, color:'#fbbf24', textAlign:'center' }}>Market Sentiment: <strong>{fgLabel}</strong></div>}
-                </div>
-                <div style={{ background:'rgba(13,13,32,0.85)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:20, padding:'24px', backdropFilter:'blur(12px)' }}>
-                  <h3 style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.8)', marginBottom:18 }}>Intelligence Engine Confidence</h3>
-                  <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:20, placeItems:'center' }}>
-                    {(() => {
-                      const c = topSignals[0]?.components || {};
-                      return [
-                        { l:'Pattern',   v:c.patternEngine  ||0, c:'#3b82f6' },
-                        { l:'Reasoning', v:c.reasoningEngine||0, c:'#10b981' },
-                        { l:'Portfolio', v:c.portfolioEngine||0, c:'#ef4444' },
-                        { l:'Learning',  v:c.learningEngine ||0, c:'#f97316' },
-                      ];
-                    })().map(m => (
-                      <div key={m.l} style={{ textAlign:'center' }}>
-                        <ConfidenceRing value={m.v} color={m.c} label={m.l} size={80} />
-                      </div>
-                    ))}
-                  </div>
-                  <div style={{ marginTop:18, padding:'10px 14px', background:'rgba(251,191,36,0.07)', border:'1px solid rgba(251,191,36,0.18)', borderRadius:10, fontSize:11, color:'rgba(251,191,36,0.8)', textAlign:'center' }}>
-                    70% minimum confidence required to execute · BEAR regime raises to 75%
-                  </div>
-                </div>
-                <div style={{ background:'rgba(13,13,32,0.85)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:20, padding:'24px', backdropFilter:'blur(12px)', gridColumn:'1 / -1' }}>
-                  <h3 style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.8)', marginBottom:14 }}>Top AI Signals — Cycle #{cyclesOnChain.toLocaleString()}</h3>
-                  {topSignals.length > 0 ? (
-                    <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10 }}>
-                      {topSignals.map((s:any) => (
-                        <div key={s.symbol} style={{ padding:'12px 14px', background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.05)', borderRadius:12 }}>
-                          <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
-                            <span style={{ fontWeight:800, fontSize:14 }}>{s.symbol}</span>
-                            <span style={{ fontSize:9, padding:'2px 7px', borderRadius:100, background:`${ACTION_COL[s.action]||'#7c3aed'}20`, color:ACTION_COL[s.action]||'#7c3aed', border:`1px solid ${ACTION_COL[s.action]||'#7c3aed'}40`, fontWeight:700 }}>{s.action}</span>
-                          </div>
-                          <div style={{ fontFamily:'monospace', fontSize:16, fontWeight:900, color:'#a78bfa' }}>{(s.confidence*100).toFixed(0)}%</div>
-                          <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)', marginTop:2 }}>AI confidence · {fmtPrice(s.priceUsd)}</div>
-                          <div style={{ fontSize:10, color:grc(s.change24h), marginTop:2, fontFamily:'monospace' }}>{pct(s.change24h)} 24h</div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div style={{ textAlign:'center', padding:'30px', color:'rgba(255,255,255,0.3)', fontSize:13 }}>Loading AI signals…</div>
-                  )}
-                </div>
-              </div>
-            )}
-
-
-            {/* ── POSITIONS TAB ── */}
-            {tab === 'positions' && (
-              <div>
-                <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
-                  {['all','buy','sell','major','defi','ai','l2','stablecoin','rwa','liquid-stake'].map(f => (
-                    <button key={f} onClick={() => setPosFilter(f)} style={{ padding:'5px 12px', borderRadius:8, fontSize:11, fontWeight:600, cursor:'pointer', border:`1px solid ${posFilter===f?'rgba(124,58,237,0.5)':'rgba(255,255,255,0.1)'}`, background:posFilter===f?'rgba(124,58,237,0.15)':'rgba(255,255,255,0.03)', color:posFilter===f?'#a78bfa':'rgba(255,255,255,0.5)' }}>
-                      {f.toUpperCase()}
-                    </button>
-                  ))}
-                  <div style={{ marginLeft:'auto', fontSize:12, color:'rgba(255,255,255,0.35)', alignSelf:'center' }}>{filteredPos.length} assets</div>
-                </div>
-                <div style={{ background:'rgba(13,13,32,0.85)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:20, overflow:'hidden', backdropFilter:'blur(12px)' }}>
-                  <div style={{ display:'grid', gridTemplateColumns:'60px 1fr 70px 70px 70px 75px 80px 80px 70px', gap:8, padding:'12px 16px', borderBottom:'1px solid rgba(255,255,255,0.06)', fontSize:10, color:'rgba(255,255,255,0.35)', fontWeight:700, textTransform:'uppercase' }}>
-                    <span>Symbol</span><span>Name</span><span style={{textAlign:'right'}}>Price</span><span style={{textAlign:'right'}}>24H</span><span style={{textAlign:'right'}}>7D</span><span style={{textAlign:'right'}}>Weight</span><span style={{textAlign:'right'}}>$/Token</span><span style={{textAlign:'right'}}>Confidence</span><span style={{textAlign:'right'}}>Signal</span>
-                  </div>
-                  {filteredPos.map((p:any, i:number) => (
-                    <div key={p.symbol} style={{ display:'grid', gridTemplateColumns:'60px 1fr 70px 70px 70px 75px 80px 80px 70px', gap:8, padding:'10px 16px', borderBottom:'1px solid rgba(255,255,255,0.04)', background:i%2===0?'transparent':'rgba(255,255,255,0.01)', alignItems:'center' }}>
-                      <span style={{ fontWeight:800, fontSize:12 }}>{p.symbol}</span>
-                      <span style={{ fontSize:11, color:'rgba(255,255,255,0.55)' }}>{p.name}</span>
-                      <span style={{ textAlign:'right', fontSize:11, fontFamily:'monospace' }}>{fmtPrice(p.priceUsd)}</span>
-                      <span style={{ textAlign:'right', fontSize:11, fontFamily:'monospace', color:grc(p.change24h) }}>{pct(p.change24h)}</span>
-                      <span style={{ textAlign:'right', fontSize:11, fontFamily:'monospace', color:grc(p.change7d) }}>{pct(p.change7d)}</span>
-                      <span style={{ textAlign:'right', fontSize:11, fontFamily:'monospace', color:'rgba(255,255,255,0.6)' }}>{p.weight}%</span>
-                      <span style={{ textAlign:'right', fontSize:11, fontFamily:'monospace', color:'#10b981' }}>{fmtUsd(p.baseAllocUsd)}</span>
-                      <div style={{ display:'flex', justifyContent:'flex-end' }}>
-                        <div style={{ height:4, width:60, background:'rgba(255,255,255,0.06)', borderRadius:2, overflow:'hidden' }}>
-                          <div style={{ height:'100%', width:`${(p.confidence||0)*100}%`, background:`${ACTION_COL[p.action]||'#7c3aed'}`, borderRadius:2 }} />
-                        </div>
-                      </div>
-                      <div style={{ display:'flex', justifyContent:'flex-end' }}>
-                        <span style={{ fontSize:9, padding:'2px 6px', borderRadius:100, background:`${ACTION_COL[p.action]||'#7c3aed'}20`, color:ACTION_COL[p.action]||'#7c3aed', border:`1px solid ${ACTION_COL[p.action]||'#7c3aed'}40`, fontWeight:700 }}>{p.action}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* ── EXECUTION TAB — OWNER ONLY ── */}
-            {tab === 'execution' && isVaultOwner && (() => {
-              const ss = sysStatus;
-              const rPct   = ss?.readinessPct ?? (ss === null ? 0 : 0);
-              const rState = ss?.readiness    ?? (sysStatus === null ? 'LOADING' : 'NOT_DEPLOYED');
-              const isLive = rState === 'FULLY_OPERATIONAL';
-              const rColor = isLive ? '#10b981' : rPct >= 60 ? '#f59e0b' : rState === 'LOADING' ? '#6b7280' : '#ef4444';
-              return (
-              <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
-
-                
-                
-                {/* System status header */}
-                <div style={{ background: isLive?'rgba(16,185,129,0.06)':'rgba(13,13,32,0.85)', border:`1px solid ${rColor}30`, borderRadius:20, padding:'24px', backdropFilter:'blur(12px)' }}>
-                  <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:18 }}>
-                    <Activity size={22} color={rColor} />
-                    <div>
-                      <h3 style={{ fontSize:16, fontWeight:800, color:'#fff', margin:0 }}>Autonomous Execution Engine — 66 Assets</h3>
-                      <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)', marginTop:2 }}>Zero private keys · Chainlink Automation every 60s · Uniswap V3 + deBridge DLN · No human intervention</div>
-                    </div>
-                    <div style={{ marginLeft:'auto', textAlign:'right' }}>
-                      <div style={{ fontSize:11, padding:'4px 12px', borderRadius:100, background:`${rColor}18`, color:rColor, border:`1px solid ${rColor}40`, fontWeight:800, display:'inline-block' }}>
-                        {rState.replace(/_/g,' ')}
-                      </div>
-                      <div style={{ fontSize:10, color:'rgba(255,255,255,0.3)', marginTop:4 }}>{rPct}% ready</div>
-                    </div>
-                  </div>
-                  {/* Progress bar */}
-                  <div style={{ background:'rgba(255,255,255,0.06)', borderRadius:100, height:6, marginBottom:18 }}>
-                    <div style={{ width:`${rPct}%`, height:'100%', borderRadius:100, background:`linear-gradient(90deg, ${rColor}, ${rColor}90)`, transition:'width 0.6s ease' }} />
-                  </div>
-                  <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12 }}>
-                    {[
-                      { l:'Vault ETH',      v: vaultEthOnChain.toFixed(4)+' ETH',                                                         c:'#60a5fa' },
-                      { l:'Portfolio',      v: portfolioOnChain ? `${portfolioOnChain} assets configured` : (ss?.portfolioLength ? ss.portfolioLength+' assets' : 'Not set'), c: portfolioOnChain ? '#10b981':'#f59e0b' },
-                      { l:'Automation',     v: automationOn ? 'ACTIVE' : (ss?.automationActive ? 'ACTIVE' : 'DISABLED'),                   c: (automationOn||ss?.automationActive) ? '#10b981':'#ef4444' },
-                      { l:'Cycles run',     v: (cyclesOnChain || ss?.cycleCount || 0).toString(),                                         c:'#a78bfa' },
-                    ].map(s => (
-                      <div key={s.l} style={{ background:'rgba(255,255,255,0.04)', borderRadius:12, padding:'12px' }}>
-                        <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)', marginBottom:3 }}>{s.l}</div>
-                        <div style={{ fontSize:14, fontWeight:800, color:s.c, fontFamily:'monospace' }}>{s.v}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-
-                {/* ── VAULT ON-CHAIN STATUS — vault is fully configured per documentation ── */}
-                <div style={{ background:'rgba(13,13,32,0.85)', border:'1px solid rgba(99,102,241,0.25)', borderRadius:20, padding:'24px', backdropFilter:'blur(12px)' }}>
-                  <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:18 }}>
-                    <Zap size={18} color="#818cf8" />
-                    <h3 style={{ fontSize:14, fontWeight:800, color:'#fff', margin:0 }}>Vault Configuration Status</h3>
-                    <span style={{ marginLeft:'auto', fontSize:9, padding:'2px 8px', borderRadius:100, background:'rgba(16,185,129,0.12)', color:'#34d399', border:'1px solid rgba(16,185,129,0.3)', fontWeight:700 }}>FULLY CONFIGURED ON-CHAIN</span>
-                  </div>
-
-                  {/* 4 configuration steps — all already done per docs */}
-                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:20 }}>
-                    {[
-                      { title:'Vault Deployed', detail:`InquisitiveVaultUpdated · ${VAULT_ADDR.slice(0,10)}…${VAULT_ADDR.slice(-6)}`, done:true },
-                      { title:'setPortfolio()', detail:`${portfolioOnChain||32} ETH-mainnet assets configured · Uniswap V3 · on-chain`, done:true },
-                      { title:'setPhase2Registry()', detail:'13 cross-chain deBridge DLN targets configured · on-chain', done:true },
-                      { title:'setAutomationEnabled(true)', detail:automationOn?'Automation ACTIVE · Chainlink will call performUpkeep() when vault has ETH':'Call setAutomationEnabled(true) on Etherscan Write Contract', done:automationOn },
-                    ].map((s, i) => (
-                      <div key={i} style={{ display:'flex', gap:10, padding:'10px 12px', background:'rgba(16,185,129,0.05)', border:'1px solid rgba(16,185,129,0.18)', borderRadius:12 }}>
-                        <div style={{ width:20, height:20, borderRadius:'50%', background:'#10b981', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:10, fontWeight:800, color:'#fff' }}>✓</div>
-                        <div>
-                          <div style={{ fontSize:12, fontWeight:700, color:'#6ee7b7', marginBottom:2 }}>{s.title}</div>
-                          <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)', lineHeight:1.5 }}>{s.detail}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* THE ONE MISSING STEP — fund Chainlink Automation with LINK */}
-                  {isVaultOwner && (
-                  <div style={{ background:'rgba(251,191,36,0.06)', border:'2px solid rgba(251,191,36,0.3)', borderRadius:14, padding:'18px 20px', marginBottom:16 }}>
-                    <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12 }}>
-                      <AlertTriangle size={16} color="#fbbf24" />
-                      <div style={{ fontSize:13, fontWeight:800, color:'#fbbf24' }}>Only Step Remaining: Fund Chainlink Automation with LINK</div>
-                    </div>
-                    <div style={{ fontSize:11, color:'rgba(255,255,255,0.55)', lineHeight:1.8, marginBottom:14 }}>
-                      Chainlink Automation calls <code style={{color:'#a78bfa'}}>performUpkeep()</code> on-chain every 60 seconds — zero private keys, zero servers.
-                      Vault requires <strong style={{color:'#fbbf24'}}>&gt; 0.010 ETH</strong> to execute. Current balance: <strong style={{color:vaultEthOnChain>=0.010?'#10b981':'#fbbf24'}}>{vaultEthOnChain.toFixed(4)} ETH</strong>{vaultEthOnChain<0.010 ? ` — need ${(0.011-vaultEthOnChain).toFixed(4)} ETH more (~$${((0.011-vaultEthOnChain)*3200).toFixed(0)})` : ' — threshold met ✓'}.
-                    </div>
-                    <div style={{ display:'flex', flexDirection:'column', gap:6, marginBottom:14 }}>
-                      {[
-                        ['1', 'Go to', 'https://automation.chain.link', 'automation.chain.link'],
-                        ['2', 'Connect MetaMask (team wallet)', null, null],
-                        ['3', 'Register New Upkeep → Custom Logic', null, null],
-                        ['4', `Contract address: ${VAULT_ADDR}`, null, null],
-                        ['5', 'Gas limit: 5,000,000', null, null],
-                        ['6', 'Fund with LINK tokens (minimum 1 LINK)', null, null],
-                        ['7', 'Confirm in MetaMask — execution begins automatically', null, null],
-                      ].map(([n, text, href, linkLabel]) => (
-                        <div key={n} style={{ display:'flex', gap:8, alignItems:'flex-start' }}>
-                          <span style={{ fontSize:11, color:'#fbbf24', fontWeight:800, minWidth:16, flexShrink:0 }}>{n}.</span>
-                          <span style={{ fontSize:11, color:'rgba(255,255,255,0.6)' }}>
-                            {text}{href && <> <a href={href} target="_blank" rel="noopener noreferrer" style={{color:'#818cf8', textDecoration:'underline'}}>{linkLabel}</a></>}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                    <div style={{ display:'flex', gap:10 }}>
-                      <a href="https://automation.chain.link" target="_blank" rel="noopener noreferrer"
-                        style={{ flex:1, display:'block', padding:'11px', borderRadius:12, background:'linear-gradient(135deg,#6366f1,#4f46e5)', color:'#fff', border:'1px solid rgba(255,255,255,0.1)', fontSize:13, fontWeight:800, textAlign:'center', textDecoration:'none', boxShadow:'0 4px 16px rgba(99,102,241,0.4)' }}>
-                        Register at automation.chain.link →
-                      </a>
-                      <a href={`https://etherscan.io/address/${VAULT_ADDR}`} target="_blank" rel="noopener noreferrer"
-                        style={{ padding:'11px 16px', borderRadius:12, background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', color:'rgba(255,255,255,0.6)', fontSize:12, fontWeight:600, textDecoration:'none', display:'flex', alignItems:'center', whiteSpace:'nowrap' }}>
-                        View Vault ↗
-                      </a>
-                    </div>
-                  </div>
-                  )}
-
-                  <div style={{ fontSize:10, color:'rgba(255,255,255,0.3)', lineHeight:1.8, padding:'10px 14px', background:'rgba(255,255,255,0.03)', borderRadius:10 }}>
-                    <strong style={{color:'rgba(255,255,255,0.4)'}}>Architecture:</strong> Chainlink nodes call <code style={{color:'#a78bfa'}}>performUpkeep()</code> when vault balance ≥ 0.005 ETH.
-                    Zero private keys. ETH is split: 26 assets via Uniswap V3 · 13 cross-chain via deBridge DLN · 25 held as Lido stETH.
-                    Identical to Yearn, Compound, and Aave keeper architecture.
-                  </div>
-                </div>
-
-                {/* Architecture explanation + Chainlink CTA */}
-                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
-                  <div style={{ background:'rgba(13,13,32,0.85)', border:'1px solid rgba(99,102,241,0.2)', borderRadius:20, padding:'22px', backdropFilter:'blur(12px)' }}>
-                    <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:14 }}>
-                      <Zap size={16} color="#6366f1" />
-                      <h3 style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.8)', margin:0 }}>Chainlink Automation</h3>
-                      <span style={{ marginLeft:'auto', fontSize:9, padding:'2px 7px', borderRadius:100, background:'rgba(99,102,241,0.12)', color:'#818cf8', border:'1px solid rgba(99,102,241,0.25)', fontWeight:700 }}>{automationOn?'ACTIVE':'SETUP'}</span>
-                    </div>
-                    <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)', lineHeight:1.8, marginBottom:14 }}>
-                      Chainlink Automation is <strong style={{color:automationOn?'#34d399':'#f87171'}}>{automationOn?'ACTIVE':'DISABLED'}</strong>. Nodes call <code style={{color:'#a78bfa'}}>performUpkeep()</code> every 60s when vault has ETH.<br/>
-                      Current: <strong style={{color:vaultEthOnChain>=0.010?'#34d399':'#fbbf24'}}>{vaultEthOnChain.toFixed(4)} ETH</strong> {vaultEthOnChain<0.010?`— need ${(0.011-vaultEthOnChain).toFixed(4)} ETH more`:'✓ threshold met'}.
-                    </div>
-                    <a href="https://automation.chain.link" target="_blank" rel="noopener noreferrer" style={{ display:'block', marginTop:14, padding:'9px 14px', borderRadius:10, background:'rgba(99,102,241,0.1)', border:'1px solid rgba(99,102,241,0.25)', color:'#818cf8', fontSize:12, fontWeight:700, textAlign:'center', textDecoration:'none' }}>
-                      Register at automation.chain.link ↗
-                    </a>
-                  </div>
-
-                  <div style={{ background:'rgba(13,13,32,0.85)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:20, padding:'22px', backdropFilter:'blur(12px)' }}>
-                    <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:14 }}>
-                      <Activity size={16} color="#10b981" />
-                      <h3 style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.8)', margin:0 }}>Recent Executions</h3>
-                    </div>
-                    {ss?.recentTrades?.length > 0 ? (
-                      ss.recentTrades.map((t: any, i: number) => (
-                        <div key={i} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'8px 0', borderBottom:'1px solid rgba(255,255,255,0.04)' }}>
-                          <div>
-                            <div style={{ fontSize:11, fontWeight:700, color:'#10b981' }}>Cycle #{t.cycle}</div>
-                            <div style={{ fontSize:10, color:'rgba(255,255,255,0.3)' }}>Block {t.block}</div>
-                          </div>
-                          <a href={`https://etherscan.io/tx/${t.txHash}`} target="_blank" rel="noopener noreferrer" style={{ fontSize:10, color:'#60a5fa', textDecoration:'none' }}>Etherscan ↗</a>
-                        </div>
-                      ))
-                    ) : (
-                      <div style={{ textAlign:'center', padding:'24px 0' }}>
-                        <div style={{ fontSize:13, color:'rgba(255,255,255,0.3)', marginBottom:6 }}>No executions yet</div>
-                        <div style={{ fontSize:10, color:'rgba(255,255,255,0.18)', lineHeight:1.8 }}>
-                          Once vault is deployed + Chainlink registered,<br/>every ETH deposit is autonomously allocated<br/>across all 66 assets — {monitor?.architecture?.ethDirect??27} via Uniswap V3,<br/>{monitor?.architecture?.bridgeLive??13} via deBridge DLN (Solana/BSC/Avalanche/Optimism/TRON),<br/>{monitor?.architecture?.bridgeTracked??25} held as Lido stETH earning yield.
-                        </div>
-                      </div>
-                    )}
-                    {ss?.lastDeployIso && (
-                      <div style={{ marginTop:12, padding:'8px', background:'rgba(16,185,129,0.06)', borderRadius:8, fontSize:10, color:'rgba(255,255,255,0.4)' }}>
-                        Last deploy: {new Date(ss.lastDeployIso).toLocaleString()}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Next action callout */}
-                {ss?.nextAction && !isLive && (
-                  <div style={{ background:'rgba(251,191,36,0.06)', border:'1px solid rgba(251,191,36,0.2)', borderRadius:16, padding:'16px 20px', display:'flex', alignItems:'center', gap:12 }}>
-                    <AlertTriangle size={16} color="#fbbf24" style={{ flexShrink:0 }} />
-                    <div>
-                      <div style={{ fontSize:12, fontWeight:700, color:'#fbbf24', marginBottom:3 }}>Next Required Step</div>
-                      <div style={{ fontSize:11, color:'rgba(255,255,255,0.5)', lineHeight:1.6 }}>{ss.nextAction}</div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Full 66-asset allocation plan */}
-                {monitor?.allocation?.plan && monitor.allocation.plan.length > 0 && (
-                  <div style={{ background:'rgba(13,13,32,0.85)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:20, padding:'22px', backdropFilter:'blur(12px)' }}>
-                    <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
-                      <BarChart3 size={16} color="#a78bfa" />
-                      <h3 style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.8)', margin:0 }}>
-                        Full 66-Asset Allocation — Live AI Signals
-                      </h3>
-                      <span style={{ marginLeft:'auto', fontSize:10, color:'rgba(255,255,255,0.35)' }}>
-                        {monitor.allocation.plan.length} assets · {monitor.allocation.plan.filter((t:any) => t.executionMode === 'ETH-DIRECT').length} ETH-direct · {monitor.allocation.plan.filter((t:any) => t.executionMode === 'BRIDGE').length} bridge
-                      </span>
-                    </div>
-                    {/* Architecture summary chips */}
-                    <div style={{ display:'flex', gap:8, marginBottom:14, flexWrap:'wrap' }}>
-                      {[
-                        { label:'ETH-DIRECT',  n: monitor?.architecture?.ethDirect    ?? 27, c:'#10b981', bg:'rgba(16,185,129,0.08)', border:'rgba(16,185,129,0.25)', desc:'Uniswap V3 swaps · ETH-mainnet' },
-                        { label:'BRIDGE LIVE', n: monitor?.architecture?.bridgeLive   ?? 13, c:'#6366f1', bg:'rgba(99,102,241,0.08)', border:'rgba(99,102,241,0.25)', desc:'deBridge DLN · 5 chains' },
-                        { label:'stETH YIELD', n: monitor?.architecture?.bridgeTracked ?? 25, c:'#f59e0b', bg:'rgba(245,158,11,0.06)', border:'rgba(245,158,11,0.2)',  desc:'Lido stETH · native price' },
-                      ].map(chip => (
-                        <div key={chip.label} style={{ display:'flex', alignItems:'center', gap:6, padding:'4px 10px', borderRadius:100, background:chip.bg, border:`1px solid ${chip.border}` }}>
-                          <span style={{ fontSize:10, fontWeight:800, color:chip.c }}>{chip.n} {chip.label}</span>
-                          <span style={{ fontSize:9, color:'rgba(255,255,255,0.35)' }}>{chip.desc}</span>
-                        </div>
-                      ))}
-                    </div>
-                    {/* Column headers */}
-                    <div style={{ display:'grid', gridTemplateColumns:'58px 1fr 70px 60px 64px 64px 70px', gap:4, padding:'6px 0', borderBottom:'1px solid rgba(255,255,255,0.06)', fontSize:9, color:'rgba(255,255,255,0.3)', fontWeight:700, textTransform:'uppercase' }}>
-                      <span>Asset</span>
-                      <span>Name / Execution</span>
-                      <span style={{textAlign:'center'}}>Mode</span>
-                      <span style={{textAlign:'right'}}>Wt%</span>
-                      <span style={{textAlign:'right'}}>Signal</span>
-                      <span style={{textAlign:'right'}}>Score</span>
-                      <span style={{textAlign:'right'}}>Chain</span>
-                    </div>
-                    {monitor.allocation.plan.map((t: any) => {
-                      const isEthDirect  = t.executionMode === 'ETH-DIRECT';
-                      const isBridgeLive = !isEthDirect && t.bridgeLive;
-                      const chainLabel   = (t.nativeChain || 'Unknown').replace('Ethereum','ETH').replace('BNB Chain','BSC').replace('Bitcoin Cash','BCH');
-                      const badgeColor   = isEthDirect ? '#34d399' : isBridgeLive ? '#818cf8' : '#f59e0b';
-                      const badgeBg      = isEthDirect ? 'rgba(16,185,129,0.12)' : isBridgeLive ? 'rgba(99,102,241,0.1)' : 'rgba(245,158,11,0.08)';
-                      const badgeBorder  = isEthDirect ? 'rgba(16,185,129,0.3)'  : isBridgeLive ? 'rgba(99,102,241,0.25)' : 'rgba(245,158,11,0.2)';
-                      const badgeLabel   = isEthDirect ? 'ETH' : isBridgeLive ? 'BRIDGE' : 'TRACKED';
-                      return (
-                        <div key={t.symbol} style={{ display:'grid', gridTemplateColumns:'58px 1fr 70px 60px 64px 64px 70px', gap:4, padding:'6px 0', borderBottom:'1px solid rgba(255,255,255,0.025)', alignItems:'center' }}>
-                          <span style={{ fontWeight:800, fontSize:12, color:'#fff' }}>{t.symbol}</span>
-                          <div>
-                            <div style={{ fontSize:10, color:'rgba(255,255,255,0.5)', lineHeight:1.3 }}>{t.name}</div>
-                            <div style={{ fontSize:8, color: isEthDirect ? 'rgba(16,185,129,0.6)' : isBridgeLive ? 'rgba(99,102,241,0.6)' : 'rgba(245,158,11,0.5)', lineHeight:1.2, marginTop:1 }}>{t.bridgeProtocol}</div>
-                          </div>
-                          <div style={{ display:'flex', justifyContent:'center' }}>
-                            <span style={{ fontSize:8, padding:'1px 5px', borderRadius:100, fontWeight:800,
-                              background: badgeBg, color: badgeColor, border: `1px solid ${badgeBorder}` }}>
-                              {badgeLabel}
-                            </span>
-                          </div>
-                          <span style={{ textAlign:'right', fontSize:10, fontFamily:'monospace', color:'rgba(255,255,255,0.45)' }}>{t.allocPct?.toFixed(2)}%</span>
-                          <div style={{ display:'flex', justifyContent:'flex-end' }}>
-                            <span style={{ fontSize:8, padding:'1px 5px', borderRadius:100,
-                              background:`${ACTION_COL[t.aiAction]||'#7c3aed'}18`,
-                              color: ACTION_COL[t.aiAction]||'#a78bfa',
-                              border:`1px solid ${ACTION_COL[t.aiAction]||'#7c3aed'}35`, fontWeight:700 }}>
-                              {t.aiAction}
-                            </span>
-                          </div>
-                          <span style={{ textAlign:'right', fontSize:10, fontFamily:'monospace', color: (t.confidence??0)>=0.7?'#10b981':(t.confidence??0)>=0.5?'#f59e0b':'rgba(255,255,255,0.35)' }}>
-                            {((t.confidence??0)*100).toFixed(0)}%
-                          </span>
-                          <span style={{ textAlign:'right', fontSize:9, color: isEthDirect ? '#34d399' : '#818cf8', fontFamily:'monospace' }}>
-                            {chainLabel}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-              );
-            })()}
 
             {/* ── FEES TAB ── */}
             {tab === 'fees' && (
