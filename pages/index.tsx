@@ -53,11 +53,11 @@ export default function Home() {
   const fgColor   = fg ? (fg.value<25?'#ef4444':fg.value<45?'#f97316':fg.value<55?'#f59e0b':fg.value<75?'#84cc16':'#10b981') : '#6b7280';
 
   const ARCH = [
-    {Icon:Brain,    name:'The Brain',       sub:'AI Scoring Engine',   desc:'Five-engine consensus: Pattern, Reasoning, Portfolio, Learning, and Risk. Minimum 70% agreement required to execute.', color:'#7c3aed'},
-    {Icon:Zap,      name:'The Executioner', sub:'Execution Engine',     desc:'Eleven discrete trading functions — BUY, SELL, SWAP, LEND, YIELD, BORROW, LOOP, STAKE, MULTIPLY, EARN, REWARDS.', color:'#2563eb'},
-    {Icon:BarChart3, name:'The X-Ray',      sub:'Performance Monitor',  desc:'Real-time P&L attribution, risk metrics, drawdown tracking, and full AI decision transparency.', color:'#0891b2'},
-    {Icon:Shield,   name:'The Guardian',    sub:'Security Layer',       desc:'48-hour timelocks on all critical operations. AI circuit breakers. 15% drawdown emergency halt.', color:'#dc2626'},
-    {Icon:Eye,      name:'The Oracle',      sub:'Price Intelligence',   desc:'Primary: CoinGecko with 30-second polling. Fallback: CryptoCompare. Macro: Alternative.me Fear & Greed + BTC/ETH regime signals.', color:'#7c3aed'},
+    {Icon:Brain,    name:'Quantitative AI Engine',  sub:'Five-Engine Decision System',   desc:'Five independent scoring models — Pattern, Reasoning, Portfolio, Learning, and Risk — reach consensus before any position is taken. 70% threshold enforced.', color:'#7c3aed'},
+    {Icon:Zap,      name:'Autonomous Execution',    sub:'DeFi Execution Layer',           desc:'Eleven institutional-grade execution strategies deployed autonomously: yield, lending, staking, leveraged exposure, liquidity provision, and more.', color:'#2563eb'},
+    {Icon:BarChart3, name:'Performance Analytics',  sub:'Real-Time Risk Attribution',     desc:'Live P&L attribution, Sharpe ratio, drawdown tracking, portfolio heat, and full decision-level transparency across all 66 positions.', color:'#0891b2'},
+    {Icon:Shield,   name:'Risk Management System',  sub:'Capital Preservation Layer',     desc:'Hard-coded risk limits: 2% maximum exposure per trade, 6% portfolio heat ceiling, 15% drawdown circuit breaker with automatic halt and emergency pause.', color:'#dc2626'},
+    {Icon:Eye,      name:'Market Intelligence',     sub:'Multi-Source Data Infrastructure', desc:'Primary: CoinGecko live API with 30-second refresh across all 66 assets. Macro overlay: Fear & Greed Index, BTC/ETH/SOL regime signals, cross-asset correlation.', color:'#7c3aed'},
   ];
 
   const TRADES: {Icon: any; name: string; col: string; desc: string}[] = [
@@ -94,18 +94,18 @@ export default function Home() {
               <span className="grad-text">INQUISITIVE</span>
             </h1>
             <div style={{fontSize:'clamp(16px,2.5vw,22px)',color:'rgba(255,255,255,0.5)',fontWeight:500,marginBottom:12}}>
-              Institutional Digital Asset Management
+              Autonomous Digital Asset Management
             </div>
             <p style={{fontSize:15,color:'rgba(255,255,255,0.35)',maxWidth:600,margin:'0 auto 40px',lineHeight:1.8}}>
-              INQAI is an ERC-20 token representing proportional ownership in a professionally managed portfolio of 66 digital assets. Proprietary AI systems execute portfolio management continuously across 11 discrete strategies. Fixed supply of 100,000,000 tokens.
+              INQAI is the first open, on-chain AI fund — delivering professionally managed exposure to 66 digital assets through a single ERC-20 token. Proprietary AI executes 11 capital deployment strategies around the clock, with every decision verifiable on-chain.
             </p>
             <div style={{display:'flex',justifyContent:'center',marginBottom:60}}>
               <div style={{display:'flex',gap:12,justifyContent:'center',flexWrap:'wrap'}}>
                 <button onClick={()=>router.push('/analytics')} style={{padding:'14px 36px',borderRadius:12,background:'linear-gradient(135deg,#7c3aed,#4f46e5)',color:'#fff',fontSize:16,fontWeight:700,cursor:'pointer',border:'1px solid rgba(255,255,255,0.1)',boxShadow:'0 8px 30px rgba(124,58,237,0.4)',transition:'all 0.2s'}}>
-                  View Portfolio
+                  View Live Dashboard
                 </button>
                 <button onClick={()=>router.push('/token')} style={{padding:'14px 36px',borderRadius:12,background:'rgba(255,255,255,0.06)',color:'#fff',fontSize:16,fontWeight:700,cursor:'pointer',border:'1px solid rgba(255,255,255,0.12)',transition:'all 0.2s'}}>
-                  INQAI Token
+                  Token Overview
                 </button>
               </div>
             </div>
@@ -129,9 +129,9 @@ export default function Home() {
         <section style={{padding:'60px 24px',position:'relative',zIndex:1,borderTop:'1px solid rgba(255,255,255,0.04)'}}>
           <div style={{maxWidth:1200,margin:'0 auto'}}>
             <div style={{textAlign:'center',marginBottom:44}}>
-              <div style={{fontSize:11,letterSpacing:2,color:'#7c3aed',textTransform:'uppercase',marginBottom:10}}>How It Works</div>
-              <h2 style={{fontSize:30,fontWeight:800,letterSpacing:'-0.5px'}}>Five-Component Architecture</h2>
-              <p style={{color:'rgba(255,255,255,0.4)',marginTop:8,fontSize:14}}>Each component operates independently. No single point of failure.</p>
+              <div style={{fontSize:11,letterSpacing:2,color:'#7c3aed',textTransform:'uppercase',marginBottom:10}}>System Architecture</div>
+              <h2 style={{fontSize:30,fontWeight:800,letterSpacing:'-0.5px'}}>Five-Layer Quantitative System</h2>
+              <p style={{color:'rgba(255,255,255,0.4)',marginTop:8,fontSize:14}}>Each layer operates independently with dedicated oversight. Designed for institutional-grade reliability.</p>
             </div>
             <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:12}}>
               {ARCH.map(c=>(
@@ -152,9 +152,9 @@ export default function Home() {
         <section style={{padding:'40px 24px 64px',position:'relative',zIndex:1,borderTop:'1px solid rgba(255,255,255,0.04)'}}>
           <div style={{maxWidth:1200,margin:'0 auto'}}>
             <div style={{textAlign:'center',marginBottom:40}}>
-              <div style={{fontSize:11,letterSpacing:2,color:'#7c3aed',textTransform:'uppercase',marginBottom:10}}>Execution Engine</div>
-              <h2 style={{fontSize:30,fontWeight:800}}>11 Execution Functions</h2>
-              <p style={{color:'rgba(255,255,255,0.4)',marginTop:8,fontSize:14}}>Eleven discrete DeFi execution functions — the AI agent executes these on your behalf 24/7. You hold the token, the AI does the rest.</p>
+              <div style={{fontSize:11,letterSpacing:2,color:'#7c3aed',textTransform:'uppercase',marginBottom:10}}>Execution Strategies</div>
+              <h2 style={{fontSize:30,fontWeight:800}}>11 Institutional Execution Strategies</h2>
+              <p style={{color:'rgba(255,255,255,0.4)',marginTop:8,fontSize:14}}>Eleven capital deployment strategies executed autonomously across DeFi. Token holders gain diversified yield exposure without active management.</p>
             </div>
             <div style={{display:'grid',gridTemplateColumns:'repeat(6,1fr)',gap:10}}>
               {TRADES.map(f=>(
@@ -174,17 +174,17 @@ export default function Home() {
         <section style={{padding:'40px 24px 64px',position:'relative',zIndex:1,borderTop:'1px solid rgba(255,255,255,0.04)'}}>
           <div style={{maxWidth:1200,margin:'0 auto'}}>
             <div style={{textAlign:'center',marginBottom:44}}>
-              <div style={{fontSize:11,letterSpacing:2,color:'#7c3aed',textTransform:'uppercase',marginBottom:10}}>Token Design</div>
-              <h2 style={{fontSize:30,fontWeight:800,letterSpacing:'-0.5px'}}>Proportional Ownership. Continuous Management.</h2>
+              <div style={{fontSize:11,letterSpacing:2,color:'#7c3aed',textTransform:'uppercase',marginBottom:10}}>Fund Structure</div>
+              <h2 style={{fontSize:30,fontWeight:800,letterSpacing:'-0.5px'}}>Institutional Exposure. Zero Operational Overhead.</h2>
               <p style={{fontSize:14,color:'rgba(255,255,255,0.35)',marginTop:8,maxWidth:520,margin:'8px auto 0'}}>
-                INQAI provides diversified exposure to 66 digital assets through a single ERC-20 token, with AI-managed rebalancing and systematic fee-driven value accrual.
+                INQAI delivers diversified exposure across 66 digital assets through a single ERC-20 token — with AI-driven portfolio management, systematic fee-driven value accrual, and full on-chain transparency.
               </p>
             </div>
             <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16,marginBottom:16}}>
               {[
-                {Icon:Wallet,     title:'Asset-Backed Ownership',   desc:'Each INQAI token represents proportional ownership in a professionally managed portfolio of 66 digital assets. Real underlying assets. Transparent on-chain valuation.',col:'#a78bfa'},
-                {Icon:Bot,        title:'AI Portfolio Management',   desc:'Five intelligence engines execute eleven trading strategies continuously, optimizing portfolio composition and risk-adjusted returns across all 66 assets.',col:'#60a5fa'},
-                {Icon:TrendingUp, title:'Value Accrual Mechanisms',  desc:'Portfolio performance, systematic buybacks representing 60% of protocol fees, permanent burns of 20% of fees, 15% to treasury, and 5% auto-funds Chainlink Automation to keep the AI running.',col:'#10b981'},
+                {Icon:Wallet,     title:'On-Chain Asset Backing',    desc:'Each INQAI token represents verified, proportional ownership in a 66-asset digital portfolio. Underlying valuations are transparent, real-time, and independently verifiable on-chain.',col:'#a78bfa'},
+                {Icon:Bot,        title:'Autonomous AI Management',  desc:'Five independent AI models execute eleven capital deployment strategies simultaneously, optimizing risk-adjusted returns across the full 66-asset portfolio without human intervention.',col:'#60a5fa'},
+                {Icon:TrendingUp, title:'Structural Value Accrual',   desc:'60% of all protocol fees fund open-market buybacks. 20% is permanently burned. Every fee cycle reduces circulating supply while increasing demand — systematic, not speculative.',col:'#10b981'},
               ].map(c=>(
                 <div key={c.title} style={{background:'rgba(13,13,32,0.8)',border:'1px solid rgba(255,255,255,0.06)',borderRadius:20,padding:28,backdropFilter:'blur(12px)'}}>
                   <div style={{marginBottom:16,width:48,height:48,borderRadius:14,background:`rgba(255,255,255,0.05)`,display:'flex',alignItems:'center',justifyContent:'center'}}><c.Icon size={24} color={c.col} strokeWidth={1.8} /></div>
@@ -195,9 +195,9 @@ export default function Home() {
             </div>
             <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16}}>
               {[
-                {Icon:Flame,     title:'Systematic Buybacks and Burns', desc:'60% of all protocol fees fund open-market INQAI buybacks. 20% is permanently burned. 15% goes to treasury. 5% auto-funds Chainlink Automation to keep the AI running indefinitely.',col:'#f59e0b'},
-                {Icon:Shield,    title:'Non-Custodial Architecture',     desc:'INQAI tokens are delivered directly to your self-custody wallet. No exchange custody, no counterparty exposure, no intermediary.',col:'#34d399'},
-                {Icon:BarChart3, title:'Full Operational Transparency',   desc:'The Analytics dashboard provides real-time access to every AI trade decision, position, portfolio composition, and live risk metric.',col:'#f97316'},
+                {Icon:Flame,     title:'Deflationary Fee Design',       desc:'Protocol fees drive a continuous burn-and-buyback cycle: 60% to open-market INQAI purchases, 20% permanently removed from supply. Designed for long-term supply contraction.',col:'#f59e0b'},
+                {Icon:Shield,    title:'Non-Custodial by Design',        desc:'INQAI tokens are delivered directly to your self-custody wallet at the point of purchase. No third-party custody, no counterparty risk, no permission required to withdraw.',col:'#34d399'},
+                {Icon:BarChart3, title:'Complete Decision Transparency',  desc:'Every AI signal, position, allocation weight, and risk metric is published in real time on the Analytics dashboard. No black box. No selective disclosure.',col:'#f97316'},
               ].map(c=>(
                 <div key={c.title} style={{background:'rgba(13,13,32,0.8)',border:'1px solid rgba(255,255,255,0.06)',borderRadius:20,padding:28,backdropFilter:'blur(12px)'}}>
                   <div style={{marginBottom:16,width:48,height:48,borderRadius:14,background:`rgba(255,255,255,0.05)`,display:'flex',alignItems:'center',justifyContent:'center'}}><c.Icon size={24} color={c.col} strokeWidth={1.8} /></div>
@@ -214,8 +214,8 @@ export default function Home() {
           <div style={{maxWidth:900,margin:'0 auto'}}>
             <div style={{textAlign:'center',marginBottom:40,paddingTop:60}}>
               <div style={{fontSize:11,letterSpacing:2,color:'#7c3aed',textTransform:'uppercase',marginBottom:10}}>Fee Structure</div>
-              <h2 style={{fontSize:30,fontWeight:800,letterSpacing:'-0.5px'}}>Transparent Fee Structure</h2>
-              <p style={{color:'rgba(255,255,255,0.4)',marginTop:8,fontSize:14}}>15% performance fee on yield. Zero management fee. No entry or exit costs.</p>
+              <h2 style={{fontSize:30,fontWeight:800,letterSpacing:'-0.5px'}}>Performance-Only. No Management Fee.</h2>
+              <p style={{color:'rgba(255,255,255,0.4)',marginTop:8,fontSize:14}}>15% on yield generated. Zero AUM fee. No lock-ups, no entry costs, no exit penalties.</p>
             </div>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:16,marginBottom:28}}>
               {[
@@ -253,12 +253,12 @@ export default function Home() {
         <section style={{padding:'0 24px 0',position:'relative',zIndex:1,borderTop:'1px solid rgba(255,255,255,0.04)'}}>
           <div style={{maxWidth:1200,margin:'0 auto',padding:'24px 0',display:'flex',gap:32,alignItems:'center',justifyContent:'center',flexWrap:'wrap'}}>
             {[
-              {label:'ERC-20 Standard', sub:'Ethereum Mainnet'},
-              {label:'Non-Custodial',   sub:'Self-Custody Only'},
-              {label:'66 Live Assets',  sub:'Real-Time AI Management'},
-              {label:'Live Data',       sub:'CoinGecko · CryptoCompare'},
-              {label:'0% Mgmt Fee',     sub:'Performance-Only Structure'},
-              {label:'Circuit Breakers',sub:'15% Drawdown Protection'},
+              {label:'ERC-20 · Ethereum Mainnet', sub:'Verified on-chain'},
+              {label:'Non-Custodial',              sub:'Self-custody delivery'},
+              {label:'66 Assets Under Management', sub:'Live AI signals'},
+              {label:'0% Management Fee',          sub:'Performance-only structure'},
+              {label:'15% Drawdown Circuit Breaker',sub:'Automated capital protection'},
+              {label:'Open Source',                sub:'Auditable codebase'},
             ].map(t=>(
               <div key={t.label} style={{display:'flex',alignItems:'center',gap:8}}>
                 <span style={{width:5,height:5,borderRadius:'50%',background:'#10b981',display:'inline-block',flexShrink:0}} />
@@ -278,7 +278,7 @@ export default function Home() {
               <div>
                 <div className="anim-name-pulse" style={{fontWeight:900,fontSize:18,letterSpacing:'-0.5px',color:'#fff',marginBottom:8}}>INQUISITIVE</div>
                 <div style={{fontSize:11,color:'rgba(255,255,255,0.3)',lineHeight:1.8,maxWidth:360}}>
-                  INQAI is an ERC-20 token representing proportional ownership in a professionally managed portfolio of 66 digital assets. Proprietary AI systems execute portfolio management continuously. Fixed supply of 100,000,000 tokens.
+                  INQUISITIVE is an autonomous, on-chain AI fund. The INQAI token delivers institutional-grade exposure to a 66-asset digital portfolio — managed by proprietary AI, verified on-chain, and accessible to anyone.
                 </div>
               </div>
               <div>

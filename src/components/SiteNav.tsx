@@ -6,13 +6,12 @@ import InqaiLogo from './InqaiLogo';
 const WalletButton = dynamic(() => import('./WalletButton'), { ssr: false });
 
 const LINKS = [
-  { l: 'Portfolio', p: '/analytics'         },
-  { l: 'Token',     p: '/token'             },
-  { l: 'Staking',   p: '/staking'           },
-  { l: 'Referral',  p: '/referral'          },
-  { l: 'Reserves',  p: '/proof-of-reserves' },
-  { l: 'Burns',     p: '/burns'             },
-  { l: 'Docs',      p: '/help'              },
+  { l: 'Dashboard',  p: '/analytics'         },
+  { l: 'INQAI Token',p: '/token'             },
+  { l: 'Staking',    p: '/staking'           },
+  { l: 'Reserves',   p: '/proof-of-reserves' },
+  { l: 'Burns',      p: '/burns'             },
+  { l: 'Documentation', p: '/help'           },
 ];
 const BUY_PATH = '/buy';
 
