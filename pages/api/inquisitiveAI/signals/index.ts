@@ -1,5 +1,9 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { brainScoreAll, ASSET_REGISTRY } from '../_brain';
+import { ASSET_REGISTRY, PORTFOLIO_WEIGHTS, scoreAsset, getRegime } from '../_brain';
+import type { AssetInput, FGIndex } from '../_brain';
+import { getPrices } from '../_priceCache';
+
+export const config = { maxDuration: 30 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -7,95 +11,125 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // Get live price data (simplified - in production fetch from CoinGecko)
-    const assetsWithPrices = await fetchLivePrices();
-    
-    // Generate scores using brain
-    const scored = brainScoreAll(assetsWithPrices);
-    
-    // Convert to trading signals
-    // BUY = score > 0.7, SELL = score < 0.3, HOLD = 0.3-0.7
-    const signals = scored.map((asset: any) => {
-      let signal: 'BUY' | 'SELL' | 'HOLD' = 'HOLD';
-      let signalCode = 0; // 0=HOLD, 1=BUY, 2=SELL
-      
-      if (asset.score > 0.7) {
-        signal = 'BUY';
-        signalCode = 1;
-      } else if (asset.score < 0.3) {
-        signal = 'SELL';
-        signalCode = 2;
-      }
-      
+    // Fetch live prices + Fear & Greed in parallel
+    const [priceResult, fgRaw] = await Promise.all([
+      getPrices(),
+      fetch('https://api.alternative.me/fng/?limit=1', { signal: AbortSignal.timeout(6000) })
+        .then(r => r.ok ? r.json() : null).catch(() => null),
+    ]);
+
+    let fg: FGIndex | null = null;
+    if (fgRaw?.data?.[0]) {
+      fg = { value: parseInt(fgRaw.data[0].value), valueClassification: fgRaw.data[0].value_classification };
+    }
+
+    // Build full input map from live price data
+    const allInputs: AssetInput[] = ASSET_REGISTRY.map(meta => {
+      const p = priceResult.map.get(meta.symbol);
       return {
-        symbol: asset.symbol,
-        address: asset.address,
-        signal,
-        signalCode,
-        score: asset.score,
-        reasons: asset.reasons,
-        priceUsd: asset.priceUsd,
-        change24h: asset.change24h,
-        confidence: asset.confidence
+        symbol:    meta.symbol,
+        category:  meta.category,
+        weight:    PORTFOLIO_WEIGHTS[meta.symbol] ?? 0,
+        stakeable: meta.stakeable,
+        lendable:  meta.lendable,
+        yieldable: meta.yieldable,
+        priceUsd:  p?.priceUsd  ?? 0,
+        change24h: p?.change24h ?? 0,
+        change7d:  p?.change7d  ?? 0,
+        volume24h: p?.volume24h ?? 0,
+        marketCap: p?.marketCap ?? 0,
+        athChange: p?.athChange ?? 0,
       };
     });
 
-    // Only return assets with non-HOLD signals
-    const activeSignals = signals.filter((s: any) => s.signal !== 'HOLD');
+    // Determine market regime from BTC + ETH
+    const btcIn = allInputs.find(a => a.symbol === 'BTC');
+    const ethIn = allInputs.find(a => a.symbol === 'ETH');
+    const regime = getRegime(
+      (btcIn?.change24h ?? 0) * 100,
+      (ethIn?.change24h ?? 0) * 100,
+      (btcIn?.change7d  ?? 0) * 100,
+      (ethIn?.change7d  ?? 0) * 100,
+    );
 
+    // Score every asset with the real 5-engine brain
+    const scored = allInputs.map(inp => scoreAsset(inp, regime, fg, allInputs));
+
+    // Map to signal response
+    const signals = scored.map(s => ({
+      symbol:     s.symbol,
+      address:    getAssetAddress(s.symbol),
+      signal:     s.action,
+      signalCode: s.action === 'BUY' ? 1 : s.action === 'SELL' || s.action === 'REDUCE' ? 2 : 0,
+      score:      parseFloat(s.finalScore.toFixed(4)),
+      action:     s.action,
+      confidence: parseFloat(s.finalScore.toFixed(4)),
+      reasons:    s.reasons ?? [],
+      priceUsd:   allInputs.find(a => a.symbol === s.symbol)?.priceUsd ?? 0,
+      change24h:  allInputs.find(a => a.symbol === s.symbol)?.change24h ?? 0,
+      change7d:   allInputs.find(a => a.symbol === s.symbol)?.change7d ?? 0,
+    }));
+
+    const activeSignals = signals.filter(s => s.signal !== 'HOLD' && s.signal !== 'SKIP');
+    const buys  = signals.filter(s => s.signal === 'BUY').length;
+    const sells = signals.filter(s => s.signal === 'SELL' || s.signal === 'REDUCE').length;
+
+    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
     res.status(200).json({
-      timestamp: new Date().toISOString(),
-      regime: scored[0]?.regime || 'NEUTRAL',
-      totalAssets: signals.length,
+      timestamp:     new Date().toISOString(),
+      regime,
+      fearGreed:     fg,
+      totalAssets:   signals.length,
       activeSignals: activeSignals.length,
-      signals: activeSignals
+      buys,
+      sells,
+      signals:       activeSignals,
+      allSignals:    signals,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Signals API error:', error);
-    res.status(500).json({ error: 'Failed to generate signals' });
+    res.status(500).json({ error: 'Failed to generate signals', details: error.message });
   }
 }
 
-// Helper to fetch live prices and map to addresses
-async function fetchLivePrices() {
-  // In production: fetch from CoinGecko API
-  // For now, return registry with placeholder data
-  // This would be integrated with your existing price feeds
-  
-  return ASSET_REGISTRY.slice(0, 32).map(asset => ({
-    ...asset,
-    priceUsd: 100, // Placeholder - use real price feed
-    change24h: 0,
-    change7d: 0,
-    volume24h: 1000000,
-    marketCap: 100000000,
-    athChange: -0.5,
-    address: getAssetAddress(asset.symbol)
-  }));
-}
-
-// Map symbols to on-chain addresses
+// Map symbols to their primary Ethereum mainnet ERC-20 addresses
 function getAssetAddress(symbol: string): string {
   const addresses: Record<string, string> = {
-    'BTC': '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
-    'ETH': '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
-    'SOL': '', // Cross-chain only
-    'BNB': '', // Cross-chain only
-    'XRP': '', // Cross-chain only
-    'ADA': '', // Cross-chain only
-    'AVAX': '', // Cross-chain only
-    'AAVE': '0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9',
-    'UNI': '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984',
-    'LINK': '0x514910771AF9Ca656af840dff83E8264EcF986CA',
-    'ARB': '0xB50721BCf8d664c30412Cfbc6cf7a15145234ad1',
-    'OP': '0x4200000000000000000000000000000000000042',
-    'LDO': '0x5A98FcBEA516Cf06857215779Fd802CA3FEdeF3D7',
-    'GRT': '0x1f573d6Fb3F13d689FF844B4cE37794d79a7FF1C',
-    'CRV': '0xD533a949740bb3306d119CC777fa900bA034cd52',
-    'SNX': '0xD417144312DbF50465b1C641d016962017Ef6240',
-    'USDC': '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-    'USDT': '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-    'DAI': '0x6B175474E89094C44Da98b954EedeAC495271d0F',
+    BTC:    '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599', // WBTC
+    ETH:    '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', // WETH
+    BNB:    '0xB8c77482e45F1F44dE1745F52C74426C631bDD52',
+    USDC:   '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+    LINK:   '0x514910771AF9Ca656af840dff83E8264EcF986CA',
+    UNI:    '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984',
+    AAVE:   '0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9',
+    LDO:    '0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32',
+    MATIC:  '0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0',
+    POL:    '0x455e53CBB86018Ac2B8092FdCd39d8444aFFC3F6',
+    ENA:    '0x57e114B691Db790C35207b2e685D4A43181e6061',
+    PAXG:   '0x45804880De22913dAFE09f4980848ECE6EcbAf78',
+    FET:    '0xaea46A60368A7bD060eec7DF8CBa43b7EF41Ad85',
+    RNDR:   '0x6De037ef9aD2725EB40118Bb1702EBb27e4Aeb24',
+    GRT:    '0xc944E90C64B2c07662A292be6244BDf05Cda44a7',
+    FIL:    '0x0D8775F648430679A709E98d2b0Cb6250d2887EF',
+    TAO:    '',
+    NEAR:   '',
+    SOL:    '',
+    ADA:    '',
+    XRP:    '',
+    TRX:    '',
+    DOT:    '',
+    ATOM:   '',
+    AVAX:   '',
+    SUI:    '',
+    ICP:    '',
+    HBAR:   '',
+    XLM:    '',
+    LTC:    '',
+    BCH:    '',
+    ETC:    '',
+    XMR:    '',
+    ZEC:    '',
+    ALGO:   '',
   };
-  return addresses[symbol] || '';
+  return addresses[symbol] ?? '';
 }
