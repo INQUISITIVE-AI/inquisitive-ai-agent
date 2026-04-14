@@ -1,10 +1,52 @@
 # INQUISITIVE AI (INQAI)
 
-> AI-Managed Crypto Trading — 66 assets, signal-based execution, security-audited.
+> **Institutional-grade AI portfolio management should not be a privilege — it should be a public right.**
+> INQUISITIVE is the first open, on-chain AI agent that manages a 66-asset crypto portfolio autonomously, transparently, and without gatekeepers.
 
-**Live platform:** [getinqai.com](https://getinqai.com)
+**Live platform:** [getinqai.com](https://getinqai.com) · **Token:** `0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5`
 
-**⚠️ Audit Status:** Only 5 contracts deployed. 6 additional contracts pending deployment.
+---
+
+## Why INQUISITIVE Exists
+
+Wall Street has had algorithmic trading since the 1980s. Crypto gave everyone access to the market — but not to the tools. INQAI closes that gap: a 5-engine AI brain running 24/7, managing a diversified portfolio of 66 assets across 11 strategies, fully on-chain and fully transparent.
+
+No hedge fund fees. No black box. Every signal, every weight, every decision — verifiable on-chain.
+
+---
+
+## Token Distribution (Transparent)
+
+**Total Supply: 100,000,000 INQAI — Fixed. No inflation. No minting.**
+
+| Allocation | % | Amount | Vesting |
+|---|---|---|---|
+| Ecosystem Growth | 35% | 35M | 36-month linear |
+| Team & Advisors | 20% | 20M | 3-month cliff · 36-month linear |
+| Foundation | 15% | 15M | 36-month linear |
+| Liquidity | 15% | 15M | Locked — DEX provisioning |
+| Community | 10% | 10M | 36-month linear |
+| Strategic Reserve | 5% | 5M | 36-month linear |
+
+> No premine for insiders. No hidden allocations. No surprise unlocks.
+> Presale price: **$8/INQAI** · Target: **$15/INQAI** · All vesting enforced on-chain.
+
+---
+
+## Current Status (Honest)
+
+| Component | Status |
+|---|---|
+| AI Brain (5 engines, 66 assets) | ✅ Live |
+| Platform frontend (getinqai.com) | ✅ Live |
+| INQAI Token (ERC-20) | ✅ Deployed |
+| Legacy Vault + Strategy contracts | ✅ Deployed (5 total) |
+| VaultV2 (signal-based execution) | ⏳ Pending deployment |
+| FeeDistributor, Staking, Referral | ⏳ Pending deployment |
+| Chainlink Automation (live trading) | ⏳ Pending |
+| DEX Liquidity + CEX listings | ⏳ Pending VaultV2 |
+
+**⚠️ Audit finding:** 6 contracts pending. See [ROADMAP.md](ROADMAP.md) for deployment plan.
 
 ---
 
@@ -12,7 +54,7 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  Next.js Frontend (Vercel / Netlify)                            │
+│  Next.js Frontend (Vercel)                                      │
 │  pages/ · components/ · styles/                                 │
 └──────────────────────────┬──────────────────────────────────────┘
                            │ REST + WebSocket
@@ -157,6 +199,35 @@ Target: **70–90% win rate** via strict trend alignment and pullback entries on
 - No private keys in codebase — all execution is keyless via Chainlink Automation
 
 **Report vulnerabilities** by opening a GitHub issue marked `[SECURITY]`.
+
+Interested in a community audit? See [Code4rena](https://code4rena.com) and [Sherlock](https://www.sherlock.xyz) — we are open to contest-based audits. Bug bounty details coming via Immunefi.
+
+---
+
+## Community & Get Involved
+
+INQUISITIVE is built in public. We believe open development compounds faster than closed development.
+
+- **[ROADMAP.md](ROADMAP.md)** — Where we're going and what needs building
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** — How to jump in (good first issues labeled)
+- **GitHub Issues** — Feature requests, bug reports, contract proposals
+- **Weekly dev updates** — Follow commits for progress (we show up every week)
+
+### Free Infrastructure Used
+
+| Service | Purpose |
+|---|---|
+| Vercel | Frontend hosting + edge functions |
+| GitHub Actions | CI/CD — lint, audit, Foundry tests, Slither |
+| CoinGecko API | Live price feeds (66 assets) |
+| Chainlink | Automation + price oracles (planned) |
+
+### Ways to Contribute Without Code
+
+- Test the platform and file issues
+- Peer review the Solidity contracts (see `contracts/`)
+- Translate documentation
+- Spread the mission: AI democratization is worth fighting for
 
 ---
 
