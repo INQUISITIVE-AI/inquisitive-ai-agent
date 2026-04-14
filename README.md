@@ -1,23 +1,143 @@
 # INQUISITIVE AI (INQAI)
 
-> **Institutional-grade AI portfolio management should not be a privilege — it should be a public right.**
-> INQUISITIVE is the first open, on-chain AI fund that manages a 66-asset crypto portfolio autonomously, transparently, and without gatekeepers.
+**The First Open, On-Chain AI Fund.**
 
-**Live platform:** [getinqai.com](https://getinqai.com) · **Token:** `0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5`
-
----
-
-## Why INQUISITIVE Exists
-
-Wall Street has had algorithmic trading since the 1980s. Crypto gave everyone access to the market — but not to the tools. INQAI closes that gap: a 5-engine AI brain running 24/7, managing a diversified portfolio of 66 assets across 11 strategies, fully on-chain and fully transparent.
+Wall Street has had algorithmic trading since the 1980s. Crypto gave everyone access to the market — but not to the tools. INQUISITIVE closes that gap: a five-engine AI brain running 24/7, managing a diversified portfolio of 66 assets across 11 strategies, fully on-chain and fully transparent.
 
 No hedge fund fees. No black box. Every signal, every weight, every decision — verifiable on-chain.
 
+🌐 **Live platform:** [getinqai.com](https://getinqai.com)  
+🪙 **Token:** `0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5`
+
 ---
 
-## Token Distribution (Transparent)
+## What INQUISITIVE Does
 
-**Total Supply: 100,000,000 INQAI — Fixed. No inflation. No minting.**
+| Feature | Details |
+|---|---|
+| **Portfolio** | 66 assets across 11 categories (Major, DeFi, L2, AI, RWA, Privacy, Stablecoin…) |
+| **AI Engines** | Pattern · Reasoning · Portfolio · Risk · Learning |
+| **Execution** | 11 strategies: BUY, SELL, STAKE, LEND, YIELD, BORROW, LOOP, MULTIPLY, EARN, REWARDS, SWAP |
+| **Fees** | 15% performance-only. Zero AUM. Zero entry/exit. |
+| **Tokenomics** | 100M fixed supply. 60% of fees → buybacks. 20% → permanent burn. |
+| **Transparency** | Every signal published on-chain via Chainlink Automation |
+
+---
+
+## Deployed Contracts (Ethereum Mainnet)
+
+| Contract | Address | Role |
+|---|---|---|
+| **INQAIToken** | `0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5` | ERC-20, 100M fixed supply |
+| **InquisitiveVaultV2** | `0xb99dc519c4373e5017222bbd46f42a4e12a0ec25` | Active vault — signal-based, UUPS upgradeable |
+| **INQAIStaking** | `0x46625868a36c11310fb988a69100e87519558e59` | Token staking + yield distribution |
+| **FeeDistributor** | `0x0d6aed33e80bc541904906d73ba4bfe18c730a09` | Fee collection, buyback, burn |
+| **ReferralTracker** | `0xa9a851b9659de281bfad8c5c81fe0b55aa23727a` | Referral rewards |
+| **LiquidityLauncher** | `0x617664c7dab0462c50780564f9554413c729830d` | Presale + DEX liquidity provisioning |
+| **INQAITimelock** | `0x972b7f40d1837f0b8bf003d7147de7b9fcfc601e` | 2-day governance delay |
+| **INQAIInsurance** | `0xa0486fc0b9e4a282eca0435bae141be6982e502e` | Protocol insurance reserve |
+| **AIStrategyManager** | `0x8431173FA9594B43E226D907E26EF68cD6B6542D` | Strategy coordination |
+| **InquisitiveStrategy** | `0xa2589adA4D647a9977e8e46Db5849883F2e66B3e` | Trading strategy execution |
+| **InquisitiveProfitMaximizer** | `0x23a033c08e3562786068cB163967626234A45E37` | Yield optimization |
+| **InquisitiveVault (legacy)** | `0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb` | Legacy — funds migrated Apr 14 2026 |
+
+All contracts verified on [Etherscan](https://etherscan.io).
+
+---
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  Next.js Frontend (Vercel)                              │
+│  pages/ · src/components/ · styles/                     │
+└───────────────────┬─────────────────────────────────────┘
+                    │ REST API (Next.js API routes)
+┌───────────────────▼─────────────────────────────────────┐
+│  API Routes (pages/api/inquisitiveAI/)                  │
+│  dashboard · assets · signals · token/sales             │
+│  portfolio/nav · portfolio/positions · portfolio/treasury│
+│  staking · fees · referral · proof-of-reserves          │
+└────────┬───────────────────────────────────┬────────────┘
+         │ CoinGecko / Fear & Greed           │ Ethereum RPC
+┌────────▼───────────────────────────────────▼────────────┐
+│  Ethereum Mainnet — 12 deployed contracts               │
+│  INQAIToken · InquisitiveVaultV2 · INQAIStaking         │
+│  FeeDistributor · ReferralTracker · LiquidityLauncher   │
+│  INQAITimelock · INQAIInsurance · AIStrategyManager     │
+└─────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Quick Start
+
+### Prerequisites
+
+| Tool | Version |
+|---|---|
+| Node.js | 20+ |
+| npm | 10+ |
+| Foundry | latest (for contract tests) |
+
+### Local Setup
+
+```bash
+# 1. Clone
+git clone https://github.com/INQUISITIVE-AI/inquisitive-ai-agent
+cd inquisitive-ai-agent
+
+# 2. Install
+npm install --legacy-peer-deps
+
+# 3. Configure environment
+cp .env.example .env
+# Fill in your API keys and RPC URL (see Environment Variables below)
+
+# 4. Run frontend
+npm run dev          # http://localhost:3000
+```
+
+### Environment Variables
+
+The minimum required to get real data:
+
+| Variable | Where to get it |
+|---|---|
+| `MAINNET_RPC_URL` | [Infura](https://infura.io) or [Alchemy](https://alchemy.com) — free tier works |
+| `COINGECKO_API_KEY` | [coingecko.com/en/api](https://www.coingecko.com/en/api/pricing) — free Demo key |
+| `ETHERSCAN_API_KEY` | [etherscan.io/apis](https://etherscan.io/apis) — free |
+| `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | [cloud.walletconnect.com](https://cloud.walletconnect.com) — free |
+
+All contract addresses are pre-filled with defaults in the code. You do NOT need to deploy anything.
+
+### Docker (optional)
+
+```bash
+docker build -t inqai-backend .
+docker compose up -d
+docker compose logs -f backend
+```
+
+---
+
+## AI Brain — 5 Engines
+
+| Engine | Role |
+|---|---|
+| **Pattern Engine** | Cryptoteacher + NakedForexNow trend-following methodology |
+| **Reasoning Engine** | Fundamental & narrative scoring |
+| **Portfolio Engine** | Weight-based allocation optimization |
+| **Risk Engine** | Drawdown, portfolio heat, regime gate |
+| **Learning Engine** | Momentum & signal confidence adjustment |
+
+**Target:** 70–90% win rate via strict trend alignment and pullback entries only.
+
+**Execution threshold:** All 5 engines must reach 70% consensus before any action is taken.
+
+---
+
+## Token Distribution
 
 | Allocation | % | Amount | Vesting |
 |---|---|---|---|
@@ -28,157 +148,7 @@ No hedge fund fees. No black box. Every signal, every weight, every decision —
 | Community | 10% | 10M | 36-month linear |
 | Strategic Reserve | 5% | 5M | 36-month linear |
 
-> No premine for insiders. No hidden allocations. No surprise unlocks.
-> Presale price: **$8/INQAI** · Target: **$15/INQAI** · All vesting enforced on-chain.
-
----
-
-## Current Status
-
-| Component | Status |
-|---|---|
-| AI Brain (5 engines, 66 assets) | ✅ Live |
-| Platform frontend (getinqai.com) | ✅ Live |
-| INQAI Token (ERC-20) | ✅ Deployed · `0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5` |
-| InquisitiveVaultV2 (active vault) | ✅ Deployed · `0xb99dc519c4373e5017222bbd46f42a4e12a0ec25` |
-| INQAIStaking | ✅ Deployed · `0x46625868a36c11310fb988a69100e87519558e59` |
-| FeeDistributor | ✅ Deployed · `0x0d6aed33e80bc541904906d73ba4bfe18c730a09` |
-| ReferralTracker | ✅ Deployed · `0xa9a851b9659de281bfad8c5c81fe0b55aa23727a` |
-| LiquidityLauncher | ✅ Deployed · `0x617664c7dab0462c50780564f9554413c729830d` |
-| INQAITimelock | ✅ Deployed · `0x972b7f40d1837f0b8bf003d7147de7b9fcfc601e` |
-| INQAIInsurance | ✅ Deployed · `0xa0486fc0b9e4a282eca0435bae141be6982e502e` |
-| Contract wiring (3 TXs) | ✅ Complete |
-| Fund migration (legacy → VaultV2) | ✅ Complete |
-| Chainlink Automation | ⏳ Registration pending — [automation.chain.link](https://automation.chain.link) |
-| DEX Liquidity + CEX listings | ⏳ Pending Chainlink Automation go-live |
-
----
-
-## Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  Next.js Frontend (Vercel)                                      │
-│  pages/ · components/ · styles/                                 │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │ REST + WebSocket
-┌──────────────────────────▼──────────────────────────────────────┐
-│  Express + WebSocket Backend  (server/)                         │
-│  priceFeed · macroData · inquisitiveBrain · tradingEngine       │
-└────────┬──────────────────────────────────────────┬────────────┘
-         │ CoinGecko / Yahoo Finance                │ Ethereum RPC
-┌────────▼──────────────────────────────────────────▼────────────┐
-│  Smart Contracts (Ethereum Mainnet) — 12 deployed              │
-│  INQAIToken · InquisitiveVaultV2 (active) · AIStrategyManager  │
-│  INQAIStaking · FeeDistributor · ReferralTracker               │
-│  LiquidityLauncher · INQAITimelock · INQAIInsurance            │
-└────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## Prerequisites
-
-| Tool | Version |
-|------|---------|
-| Node.js | 20+ |
-| npm | 10+ |
-| Foundry | latest |
-| Docker | 24+ (optional) |
-
----
-
-## Local Setup
-
-```bash
-# 1. Clone
-git clone https://github.com/INQUISITIVE-AI/inquisitive-ai-agent
-cd inquisitive-ai-agent
-
-# 2. Install dependencies
-npm install
-
-# 3. Configure environment
-cp .env.example .env
-# Fill in all YOUR_*_HERE placeholders in .env
-
-# 4. Run the Next.js frontend
-npm run dev          # http://localhost:3000
-
-# 5. Run the Express backend (separate terminal)
-node server/index.js # http://localhost:3002
-```
-
----
-
-## Docker (Backend)
-
-```bash
-# Build image
-docker build -t inqai-backend .
-
-# Run with env file
-docker compose up -d
-
-# View logs
-docker compose logs -f backend
-```
-
----
-
-## Smart Contracts
-
-**Deployed:** Ethereum Mainnet — 12 contracts, fully wired
-
-| Contract | Address | Role |
-|----------|---------|------|
-| `INQAIToken` | `0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5` | ERC-20 token (100M fixed supply) |
-| `InquisitiveVaultV2` | `0xb99dc519c4373e5017222bbd46f42a4e12a0ec25` | **Active vault** — signal-based, UUPS upgradeable |
-| `INQAIStaking` | `0x46625868a36c11310fb988a69100e87519558e59` | Token staking rewards |
-| `FeeDistributor` | `0x0d6aed33e80bc541904906d73ba4bfe18c730a09` | Fee collection and buyback distribution |
-| `ReferralTracker` | `0xa9a851b9659de281bfad8c5c81fe0b55aa23727a` | Referral bonus tracking |
-| `LiquidityLauncher` | `0x617664c7dab0462c50780564f9554413c729830d` | Presale and liquidity provisioning |
-| `INQAITimelock` | `0x972b7f40d1837f0b8bf003d7147de7b9fcfc601e` | 2-day governance delay |
-| `INQAIInsurance` | `0xa0486fc0b9e4a282eca0435bae141be6982e502e` | Protocol insurance reserve |
-| `AIStrategyManager` | `0x8431173FA9594B43E226D907E26EF68cD6B6542D` | Strategy coordination layer |
-| `InquisitiveStrategy` | `0xa2589adA4D647a9977e8e46Db5849883F2e66B3e` | Trading strategy execution |
-| `InquisitiveProfitMaximizer` | `0x23a033c08e3562786068cB163967626234A45E37` | Yield optimization |
-| `InquisitiveVault` *(legacy)* | `0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb` | Legacy vault — funds migrated out Apr 14 2026 |
-
-### Run Tests
-
-```bash
-forge test -vv
-```
-
----
-
-## Environment Variables
-
-See `.env.example` for the full list. Required in production:
-
-| Variable | Description |
-|----------|-------------|
-| `NODE_ENV` | `production` |
-| `WS_API_KEY` | WebSocket auth key — generate with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
-| `COINGECKO_API_KEY` | CoinGecko Demo API key |
-| `MAINNET_RPC_URL` | Ethereum mainnet RPC (Infura/Alchemy) |
-| `NEXT_PUBLIC_VAULT_ADDRESS` | Deployed vault proxy address |
-| `NEXT_PUBLIC_INQAI_TOKEN_ADDRESS` | INQAI token address |
-
----
-
-## AI Brain — 5 Engines
-
-| Engine | Role |
-|--------|------|
-| **Pattern Engine** | Cryptoteacher + NakedForexNow trend-following methodology |
-| **Reasoning Engine** | Fundamental & narrative scoring |
-| **Portfolio Engine** | Weight-based allocation optimization |
-| **Risk Engine** | Drawdown, portfolio heat, regime gate |
-| **Learning Engine** | Momentum & signal confidence adjustment |
-
-Target: **70–90% win rate** via strict trend alignment and pullback entries only.
+Presale price: **$8/INQAI** · Target: **$15/INQAI** · All vesting enforced on-chain.
 
 ---
 
@@ -186,48 +156,54 @@ Target: **70–90% win rate** via strict trend alignment and pullback entries on
 
 - `performUpkeep()` restricted to Chainlink Registry, Gelato Relay, AI oracle, and owner
 - Emergency `pause()` / `emergencyWithdraw()` on both vault contracts
-- WebSocket authentication via `?apiKey=` parameter
+- WebSocket auth via `?apiKey=` parameter
 - CORS restricted to `getinqai.com`
-- JSON body limit: 100kb
-- Tiered rate limiting: 500 / 60 / 20 req per 15 min by endpoint class
+- Tiered rate limiting: 500 / 60 / 20 req per 15 min
 - No private keys in codebase — all execution is keyless via Chainlink Automation
+- 2-day governance timelock on all parameter changes
 
-**Report vulnerabilities** by opening a GitHub issue marked `[SECURITY]`.
-
-Interested in a community audit? See [Code4rena](https://code4rena.com) and [Sherlock](https://www.sherlock.xyz) — we are open to contest-based audits. Bug bounty details coming via Immunefi.
+Vulnerabilities: open a GitHub issue marked `[SECURITY]`.  
+Community audit interest: [Code4rena](https://code4rena.com) / [Sherlock](https://sherlock.xyz) — we are open to contest-based audits.
 
 ---
 
-## Community & Get Involved
+## Run Tests
 
-INQUISITIVE is built in public. We believe open development compounds faster than closed development.
+```bash
+# Smart contract tests (Foundry)
+forge test -vv
 
-- **[ROADMAP.md](ROADMAP.md)** — Where we're going and what needs building
-- **[CONTRIBUTING.md](CONTRIBUTING.md)** — How to jump in (good first issues labeled)
-- **GitHub Issues** — Feature requests, bug reports, contract proposals
-- **Weekly dev updates** — Follow commits for progress (we show up every week)
+# Frontend linting
+npm run lint
 
-### Free Infrastructure Used
-
-| Service | Purpose |
-|---|---|
-| Vercel | Frontend hosting + edge functions |
-| GitHub Actions | CI/CD — lint, audit, Foundry tests, Slither |
-| CoinGecko API | Live price feeds (66 assets) |
-| Chainlink | Automation + price oracles (planned) |
-
-### Ways to Contribute Without Code
-
-- Test the platform and file issues
-- Peer review the Solidity contracts (see `contracts/`)
-- Translate documentation
-- Spread the mission: AI democratization is worth fighting for
+# Type check
+npm run build
+```
 
 ---
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md). Good first issues are labeled.  
+See [ROADMAP.md](ROADMAP.md) for what's being built next.
+
+**Ways to help without code:**
+- Test the platform and file issues
+- Peer review Solidity contracts (see `contracts/`)
+- Translate documentation
+- Spread the mission: AI democratization is worth fighting for
+
+---
+
+## Free Infrastructure
+
+| Service | Purpose |
+|---|---|
+| Vercel | Frontend hosting + API routes |
+| GitHub Actions | CI/CD — lint, Foundry tests, Slither |
+| CoinGecko API | Live price feeds (66 assets) |
+| eth.llamarpc.com | Fallback public Ethereum RPC |
+| Chainlink | Automation + price oracles |
 
 ---
 
