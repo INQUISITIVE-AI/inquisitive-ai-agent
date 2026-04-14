@@ -2,17 +2,20 @@
   "network": "mainnet",
   "deployer": "0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746",
   "timestamp": "2026-04-10T00:00:00.000Z",
+  "auditStatus": "5 contracts deployed, 6 pending",
   "contracts": {
     "INQAI": "0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5",
     "InquisitiveVault": "0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb",
     "InquisitiveStrategy": "0xa2589adA4D647a9977e8e46Db5849883F2e66B3e",
     "AIStrategyManager": "0x8431173FA9594B43E226D907E26EF68cD6B6542D",
-    "InquisitiveProfitMaximizer": "0x23a033c08e3562786068cB163967626234A45E37",
-    "INQAIStaking": "0x46625868a36c11310fb988a69100e87519558e59",
-    "FeeDistributor": "0x0d6aed33e80bc541904906d73ba4bfe18c730a09",
-    "ReferralTracker": "0xa9a851b9659de281bfad8c5c81fe0b55aa23727a",
-    "LiquidityLauncher": "0x617664c7dab0462c50780564f9554413c729830d",
-    "INQAITimelock": "0x972b7f40d1837f0b8bf003d7147de7b9fcfc601e",
-    "INQAIInsurance": "0xa0486fc0b9e4a282eca0435bae141be6982e502e"
-  }
+    "InquisitiveProfitMaximizer": "0x23a033c08e3562786068cB163967626234A45E37"
+  },
+  "pendingDeployment": [
+    "InquisitiveVaultV2",
+    "FeeDistributor",
+    "INQAIStaking",
+    "ReferralTracker",
+    "LiquidityLauncher",
+    "INQAITimelock"
+  ]
 }

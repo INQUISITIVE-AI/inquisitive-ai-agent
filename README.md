@@ -1,8 +1,10 @@
 # INQUISITIVE AI (INQAI)
 
-> The World's Most Advanced AI Crypto Trading Agent — 66 assets, 5 AI engines, zero private keys.
+> AI-Managed Crypto Trading — 66 assets, signal-based execution, security-audited.
 
 **Live platform:** [getinqai.com](https://getinqai.com)
+
+**⚠️ Audit Status:** Only 5 contracts deployed. 6 additional contracts pending deployment.
 
 ---
 
@@ -21,8 +23,9 @@
          │ CoinGecko / Yahoo Finance                │ Ethereum RPC
 ┌────────▼──────────────────────────────────────────▼────────────┐
 │  Smart Contracts (Ethereum Mainnet)                             │
-│  InquisitiveVaultV2 (UUPS proxy) · INQAIToken · FeeDistributor │
-│  Chainlink Automation → performUpkeep()                        │
+│  INQAIToken · InquisitiveVault (legacy) · AIStrategyManager    │
+│  InquisitiveStrategy · InquisitiveProfitMaximizer              │
+│  ⏳ VaultV2, FeeDistributor, Staking — pending deployment        │
 └────────────────────────────────────────────────────────────────┘
 ```
 
@@ -79,28 +82,31 @@ docker compose logs -f backend
 
 ## Smart Contracts
 
-**Deployed:** Ethereum Mainnet
+**Deployed:** Ethereum Mainnet (5 contracts)
 
-| Contract | Role |
-|----------|------|
-| `InquisitiveVaultV2` | Signal-based AI trading vault (UUPS upgradeable) |
-| `InquisitiveVaultUpdated` | Legacy bulk-rebalance vault |
-| `INQAIToken` | ERC-20 governance/utility token |
-| `FeeDistributor` | 15% performance fee collection |
-| `INQAIStaking` | Token staking + rewards |
-| `INQAIAirdrop` | Community airdrop distribution |
+| Contract | Address | Role |
+|----------|---------|------|
+| `INQAIToken` | 0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5 | ERC-20 token (100M fixed supply) |
+| `InquisitiveVault` | 0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb | Legacy vault (verified) |
+| `AIStrategyManager` | 0x8431173FA9594B43E226D907E26EF68cD6B6542D | Strategy coordination |
+| `InquisitiveStrategy` | 0xa2589adA4D647a9977e8e46Db5849883F2e66B3e | Trading strategy execution |
+| `InquisitiveProfitMaximizer` | 0x23a033c08e3562786068cB163967626234A45E37 | Yield optimization |
+
+**Pending Deployment:**
+- `InquisitiveVaultV2` — Signal-based AI vault (UUPS upgradeable)
+- `FeeDistributor` — Fee collection and distribution
+- `INQAIStaking` — Token staking rewards
+- `ReferralTracker` — Referral bonus system
+- `LiquidityLauncher` — Presale launcher
+- `INQAITimelock` — 2-day governance delay
 
 ### Deploy Vault V2
 
 ```bash
-# Via Foundry (requires Trezor or hardware wallet)
+# Via Foundry (requires hardware wallet or encrypted keystore)
 forge script script/Deploy.s.sol \
   --rpc-url $MAINNET_RPC_URL \
-  --trezor \
   --broadcast
-
-# Or via MetaMask UI
-open inqai-deployer/deploy.html
 ```
 
 ### Run Tests
