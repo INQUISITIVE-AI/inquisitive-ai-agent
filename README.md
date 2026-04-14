@@ -1,7 +1,7 @@
 # INQUISITIVE AI (INQAI)
 
 > **Institutional-grade AI portfolio management should not be a privilege — it should be a public right.**
-> INQUISITIVE is the first open, on-chain AI agent that manages a 66-asset crypto portfolio autonomously, transparently, and without gatekeepers.
+> INQUISITIVE is the first open, on-chain AI fund that manages a 66-asset crypto portfolio autonomously, transparently, and without gatekeepers.
 
 **Live platform:** [getinqai.com](https://getinqai.com) · **Token:** `0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5`
 
@@ -33,20 +33,24 @@ No hedge fund fees. No black box. Every signal, every weight, every decision —
 
 ---
 
-## Current Status (Honest)
+## Current Status
 
 | Component | Status |
 |---|---|
 | AI Brain (5 engines, 66 assets) | ✅ Live |
 | Platform frontend (getinqai.com) | ✅ Live |
-| INQAI Token (ERC-20) | ✅ Deployed |
-| Legacy Vault + Strategy contracts | ✅ Deployed (5 total) |
-| VaultV2 (signal-based execution) | ⏳ Pending deployment |
-| FeeDistributor, Staking, Referral | ⏳ Pending deployment |
-| Chainlink Automation (live trading) | ⏳ Pending |
-| DEX Liquidity + CEX listings | ⏳ Pending VaultV2 |
-
-**⚠️ Audit finding:** 6 contracts pending. See [ROADMAP.md](ROADMAP.md) for deployment plan.
+| INQAI Token (ERC-20) | ✅ Deployed · `0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5` |
+| InquisitiveVaultV2 (active vault) | ✅ Deployed · `0xb99dc519c4373e5017222bbd46f42a4e12a0ec25` |
+| INQAIStaking | ✅ Deployed · `0x46625868a36c11310fb988a69100e87519558e59` |
+| FeeDistributor | ✅ Deployed · `0x0d6aed33e80bc541904906d73ba4bfe18c730a09` |
+| ReferralTracker | ✅ Deployed · `0xa9a851b9659de281bfad8c5c81fe0b55aa23727a` |
+| LiquidityLauncher | ✅ Deployed · `0x617664c7dab0462c50780564f9554413c729830d` |
+| INQAITimelock | ✅ Deployed · `0x972b7f40d1837f0b8bf003d7147de7b9fcfc601e` |
+| INQAIInsurance | ✅ Deployed · `0xa0486fc0b9e4a282eca0435bae141be6982e502e` |
+| Contract wiring (3 TXs) | ✅ Complete |
+| Fund migration (legacy → VaultV2) | ✅ Complete |
+| Chainlink Automation | ⏳ Registration pending — [automation.chain.link](https://automation.chain.link) |
+| DEX Liquidity + CEX listings | ⏳ Pending Chainlink Automation go-live |
 
 ---
 
@@ -64,10 +68,10 @@ No hedge fund fees. No black box. Every signal, every weight, every decision —
 └────────┬──────────────────────────────────────────┬────────────┘
          │ CoinGecko / Yahoo Finance                │ Ethereum RPC
 ┌────────▼──────────────────────────────────────────▼────────────┐
-│  Smart Contracts (Ethereum Mainnet)                             │
-│  INQAIToken · InquisitiveVault (legacy) · AIStrategyManager    │
-│  InquisitiveStrategy · InquisitiveProfitMaximizer              │
-│  ⏳ VaultV2, FeeDistributor, Staking — pending deployment        │
+│  Smart Contracts (Ethereum Mainnet) — 12 deployed              │
+│  INQAIToken · InquisitiveVaultV2 (active) · AIStrategyManager  │
+│  INQAIStaking · FeeDistributor · ReferralTracker               │
+│  LiquidityLauncher · INQAITimelock · INQAIInsurance            │
 └────────────────────────────────────────────────────────────────┘
 ```
 
@@ -124,32 +128,22 @@ docker compose logs -f backend
 
 ## Smart Contracts
 
-**Deployed:** Ethereum Mainnet (5 contracts)
+**Deployed:** Ethereum Mainnet — 12 contracts, fully wired
 
 | Contract | Address | Role |
 |----------|---------|------|
-| `INQAIToken` | 0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5 | ERC-20 token (100M fixed supply) |
-| `InquisitiveVault` | 0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb | Legacy vault (verified) |
-| `AIStrategyManager` | 0x8431173FA9594B43E226D907E26EF68cD6B6542D | Strategy coordination |
-| `InquisitiveStrategy` | 0xa2589adA4D647a9977e8e46Db5849883F2e66B3e | Trading strategy execution |
-| `InquisitiveProfitMaximizer` | 0x23a033c08e3562786068cB163967626234A45E37 | Yield optimization |
-
-**Pending Deployment:**
-- `InquisitiveVaultV2` — Signal-based AI vault (UUPS upgradeable)
-- `FeeDistributor` — Fee collection and distribution
-- `INQAIStaking` — Token staking rewards
-- `ReferralTracker` — Referral bonus system
-- `LiquidityLauncher` — Presale launcher
-- `INQAITimelock` — 2-day governance delay
-
-### Deploy Vault V2
-
-```bash
-# Via Foundry (requires hardware wallet or encrypted keystore)
-forge script script/Deploy.s.sol \
-  --rpc-url $MAINNET_RPC_URL \
-  --broadcast
-```
+| `INQAIToken` | `0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5` | ERC-20 token (100M fixed supply) |
+| `InquisitiveVaultV2` | `0xb99dc519c4373e5017222bbd46f42a4e12a0ec25` | **Active vault** — signal-based, UUPS upgradeable |
+| `INQAIStaking` | `0x46625868a36c11310fb988a69100e87519558e59` | Token staking rewards |
+| `FeeDistributor` | `0x0d6aed33e80bc541904906d73ba4bfe18c730a09` | Fee collection and buyback distribution |
+| `ReferralTracker` | `0xa9a851b9659de281bfad8c5c81fe0b55aa23727a` | Referral bonus tracking |
+| `LiquidityLauncher` | `0x617664c7dab0462c50780564f9554413c729830d` | Presale and liquidity provisioning |
+| `INQAITimelock` | `0x972b7f40d1837f0b8bf003d7147de7b9fcfc601e` | 2-day governance delay |
+| `INQAIInsurance` | `0xa0486fc0b9e4a282eca0435bae141be6982e502e` | Protocol insurance reserve |
+| `AIStrategyManager` | `0x8431173FA9594B43E226D907E26EF68cD6B6542D` | Strategy coordination layer |
+| `InquisitiveStrategy` | `0xa2589adA4D647a9977e8e46Db5849883F2e66B3e` | Trading strategy execution |
+| `InquisitiveProfitMaximizer` | `0x23a033c08e3562786068cB163967626234A45E37` | Yield optimization |
+| `InquisitiveVault` *(legacy)* | `0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb` | Legacy vault — funds migrated out Apr 14 2026 |
 
 ### Run Tests
 

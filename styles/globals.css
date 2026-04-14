@@ -22,8 +22,10 @@ html { scroll-behavior: smooth; }
 body {
   background: var(--bg-primary);
   color: #fff;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'cv11', 'ss01';
 }
 
 /* ── Scrollbar ─── */
@@ -107,8 +109,8 @@ body {
   50%      { opacity: 0.3; }
 }
 @keyframes name-pulse {
-  0%,100% { opacity: 1; text-shadow: 0 0 0px transparent; }
-  50%      { opacity: 0.82; text-shadow: 0 0 18px rgba(124,58,237,0.7), 0 0 32px rgba(79,70,229,0.35); }
+  0%,100% { opacity: 1; }
+  50%      { opacity: 0.75; }
 }
 
 .anim-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }

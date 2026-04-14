@@ -14,7 +14,7 @@ import { INQAI_TOKEN, wagmiConfig } from '../src/config/wagmi';
 import SiteNav from '../src/components/SiteNav';
 
 
-const VAULT_ADDR = (process.env.NEXT_PUBLIC_VAULT_ADDRESS || '0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb') as `0x${string}`;
+const VAULT_ADDR = (process.env.NEXT_PUBLIC_VAULT_ADDRESS || '0xb99dc519c4373e5017222bbd46f42a4e12a0ec25') as `0x${string}`;
 const VAULT_ABI = [
   { name:'performUpkeep',        type:'function', stateMutability:'nonpayable', inputs:[{name:'performData',type:'bytes'}], outputs:[] },
   { name:'getPortfolioLength',   type:'function', stateMutability:'view',      inputs:[],                             outputs:[{name:'',type:'uint256'}] },

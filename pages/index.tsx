@@ -80,7 +80,7 @@ export default function Home() {
         <title>INQUISITIVE — Institutional Digital Asset Management</title>
         <meta name="description" content="INQUISITIVE provides institutional-grade digital asset management through the INQAI token, representing proportional ownership in a professionally managed portfolio of 66 digital assets. Advanced AI systems execute continuous portfolio management across 11 strategies. Fixed supply of 100,000,000 tokens." />
       </Head>
-      <div className="min-h-screen" style={{background:'#07071a',color:'#fff',fontFamily:'-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif'}}>
+      <div className="min-h-screen" style={{background:'#07071a',color:'#fff',fontFamily:'Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif'}}>
         <div className="mesh-bg" />
 
         {/* NAV */}
@@ -93,11 +93,11 @@ export default function Home() {
             <h1 style={{fontSize:'clamp(42px,8vw,80px)',fontWeight:900,letterSpacing:'-2px',lineHeight:1.05,marginBottom:20}}>
               <span className="grad-text">INQUISITIVE</span>
             </h1>
-            <div style={{fontSize:'clamp(16px,2.5vw,22px)',color:'rgba(255,255,255,0.5)',fontWeight:500,marginBottom:12}}>
-              Autonomous Digital Asset Management
+            <div style={{fontSize:'clamp(16px,2.5vw,20px)',color:'rgba(255,255,255,0.55)',fontWeight:600,marginBottom:12,letterSpacing:'-0.2px'}}>
+              The First Open, On-Chain AI Fund
             </div>
-            <p style={{fontSize:15,color:'rgba(255,255,255,0.35)',maxWidth:600,margin:'0 auto 40px',lineHeight:1.8}}>
-              INQAI is the first open, on-chain AI fund — delivering professionally managed exposure to 66 digital assets through a single ERC-20 token. Proprietary AI executes 11 capital deployment strategies around the clock, with every decision verifiable on-chain.
+            <p style={{fontSize:15,color:'rgba(255,255,255,0.4)',maxWidth:580,margin:'0 auto 40px',lineHeight:1.85,fontWeight:400}}>
+              INQAI delivers proportional ownership in a professionally managed 66-asset digital portfolio through a single ERC-20 token. Five independent AI engines execute 11 institutional-grade capital deployment strategies around the clock — every signal, weight, and decision published on-chain in real time.
             </p>
             <div style={{display:'flex',justifyContent:'center',marginBottom:60}}>
               <div style={{display:'flex',gap:12,justifyContent:'center',flexWrap:'wrap'}}>
@@ -276,7 +276,7 @@ export default function Home() {
           <div style={{maxWidth:1200,margin:'0 auto'}}>
             <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr',gap:40,marginBottom:32}}>
               <div>
-                <div className="anim-name-pulse" style={{fontWeight:900,fontSize:18,letterSpacing:'-0.5px',color:'#fff',marginBottom:8}}>INQUISITIVE</div>
+                <div style={{fontWeight:900,fontSize:18,letterSpacing:'-0.5px',color:'#fff',marginBottom:8}}>INQUISITIVE</div>
                 <div style={{fontSize:11,color:'rgba(255,255,255,0.3)',lineHeight:1.8,maxWidth:360}}>
                   INQUISITIVE is an autonomous, on-chain AI fund. The INQAI token delivers institutional-grade exposure to a 66-asset digital portfolio — managed by proprietary AI, verified on-chain, and accessible to anyone.
                 </div>
@@ -307,7 +307,7 @@ export default function Home() {
               </div>
             </div>
             <div style={{borderTop:'1px solid rgba(255,255,255,0.04)',paddingTop:20,fontSize:10,color:'rgba(255,255,255,0.15)',lineHeight:1.8,textAlign:'center'}}>
-              &copy; {new Date().getFullYear()} INQUISITIVE · INQAI token address: 0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5<br/>
+              &copy; {new Date().getFullYear()} INQUISITIVE · INQAI: 0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5 · Vault: 0xb99dc519c4373e5017222bbd46f42a4e12a0ec25<br/>
               <strong style={{color:'rgba(255,255,255,0.2)'}}>Risk Disclosure:</strong> Digital assets carry substantial risk including total loss of capital. INQAI is not a guaranteed investment. Past performance is not indicative of future results. Target APY of 18.5% is a projection, not a guarantee. This is not financial advice. Conduct your own due diligence before investing.
             </div>
           </div>

@@ -36,6 +36,7 @@ const priceFeed     = require('./services/priceFeed');
 const macroData     = require('./services/macroData');
 const brain         = require('./services/inquisitiveBrain');
 const tradingEngine = require('./services/tradingEngine');
+const vaultOracle   = require('./services/vaultOracle');
 const inquisitiveAI = require('./routes/inquisitiveAI');
 
 const app  = express();
@@ -211,6 +212,9 @@ async function bootstrap() {
 
   console.log('🧠 [Boot] Starting AI Brain (8-second decision cycles)…');
   await brain.initialize();
+
+  console.log('🔗 [Boot] Starting Vault Oracle (AI → on-chain bridge)…');
+  vaultOracle.start();
 
   server.listen(PORT, () => {
     console.log('');

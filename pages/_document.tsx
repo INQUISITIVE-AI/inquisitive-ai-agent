@@ -21,6 +21,11 @@ export default function Document() {
         <meta name="theme-color" content="#0A041C" />
         <meta name="msapplication-TileColor" content="#0A041C" />
         
+        {/* Inter font — institutional-grade typography */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
         {/* Canonical URL */}
         <link rel="canonical" href="https://getinqai.com" />
         
