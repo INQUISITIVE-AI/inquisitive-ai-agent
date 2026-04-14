@@ -175,7 +175,7 @@ export default function HelpPage() {
             {icon:Shield,label:'Max Risk/Trade',v:'2%',desc:'Never risk more than 2% of portfolio on a single trade — hard-coded rule'},
             {icon:Zap,label:'Trading Functions',v:'11',desc:'BUY, SELL, SWAP, LEND, YIELD, BORROW, LOOP, STAKE, MULTIPLY, EARN, REWARDS. All executed autonomously.'},
             {icon:Coins,label:'Portfolio Assets',v:'66',desc:'66 assets spanning major, DeFi, AI, Layer 2, stablecoins, RWA, liquid staking, and restaking categories.'},
-            {icon:Flame,label:'Token Burns',v:'20% of fees',desc:'20% of all protocol fees are permanently burned. Combined with 60% buyback allocation, supply contracts over time.'},
+            {icon:Flame,label:'Fee Distribution',v:'60/20/20',desc:'Planned: 60% buybacks, 20% burns, 20% treasury — pending FeeDistributor contract deployment.'},
           ].map(k=>(
             <div key={k.label} style={{background:'rgba(13,13,32,0.8)',border:'1px solid rgba(255,255,255,0.06)',borderRadius:14,padding:18,backdropFilter:'blur(12px)'}}>
               <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:8}}>
@@ -210,17 +210,16 @@ export default function HelpPage() {
             'Applies risk-first methodology as final gate before any execution',
             'Outputs signals: BUY / SELL / HOLD / REDUCE / SKIP',
             'Confidence scores determine position sizing via Kelly Criterion',
-            'Live on-chain execution active — launch validation completed',
+            'AI signals generated every 8 seconds — pending vault deployment for on-chain execution',
             'BEAR regime raises confidence threshold from 70% to 75%',
           ]},
-          {icon:Zap,name:'The Executioner',col:'#2563eb',sub:'AI Smart Vault',detail:[
-            'Executes all 11 trading functions: Buy, Sell, Swap, Lend, Yield, Borrow, Loop, Stake, Multiply, Earn, Rewards',
-            'Hybrid keeper model: cron-job.org (every 1 min) + GitHub Actions (every 5 min) + Vercel Cron (every 5 min) — fully redundant',
-            'Integrates with Aave V3, Compound V3, Morpho Blue, Maple Finance for lending',
-            'Uniswap V3, Jupiter Aggregator, 1inch for swapping with best route selection',
-            'Lido, Jito, Sanctum, and 27 other protocols for staking',
-            'Gas-optimized execution with MEV protection via Flashbots/Jito',
-            'Real-time P&L tracking and position management',
+          {icon:Zap,name:'The Executioner',col:'#2563eb',sub:'AI Smart Vault (Coming Soon)',detail:[
+            'Planned: Signal-based execution of 11 trading functions via VaultV2 contract',
+            'Planned: Chainlink Automation integration for autonomous execution',
+            'Planned: Aave V3, Morpho Blue lending integrations',
+            'Planned: Uniswap V3, Jupiter, 1inch DEX routing',
+            'Planned: Lido, Jito liquid staking integrations',
+            'Status: VaultV2 contract ready, pending deployment and Chainlink Automation registration',
           ]},
           {icon:BarChart3,name:'The X-Ray',col:'#0891b2',sub:'Performance Monitor',detail:[
             'Real-time performance attribution — which strategies are profitable',
@@ -230,12 +229,12 @@ export default function HelpPage() {
             'WebSocket real-time feeds for live dashboard updates',
           ]},
           {icon:Shield,name:'The Guardian',col:'#dc2626',sub:'Security Layer',detail:[
-            'Secure treasury with controlled access — no single point of failure',
-            '48-hour time-locks for all critical operations',
-            'AI-powered circuit breakers — halts on anomalous behavior',
-            'Advanced cryptography with HSM key management',
-            'Zero-knowledge proofs for privacy-preserving validation',
-            '15% drawdown emergency stop — all trading halts automatically',
+            'Emergency pause/unpause on vault contracts — immediate halt capability',
+            'Planned: 48-hour timelock for critical operations (pending Timelock deployment)',
+            'Planned: AI-powered circuit breakers for anomalous behavior detection',
+            'Risk engine: 2% max per trade, 6% portfolio heat, 15% drawdown circuit breaker',
+            'Security audit: P0 fixes completed (access control, emergency withdraw, tests)',
+            'No private keys in codebase — execution via Chainlink Automation (planned)',
           ]},
           {icon:Eye,name:'The Oracle',col:'#7c3aed',sub:'Price Intelligence',detail:[
             'Primary: CoinGecko REAL LIVE API — 66 assets with 30-second polling',
@@ -476,8 +475,8 @@ export default function HelpPage() {
               ['Total Supply', `${Number(process.env.NEXT_PUBLIC_TOTAL_SUPPLY || 100000000).toLocaleString()} INQAI`],['Inflation','None — fixed supply'],
               ['Presale Price', `$${process.env.NEXT_PUBLIC_PRESALE_PRICE || '8'}/token`],['Target Price', `$${process.env.NEXT_PUBLIC_TARGET_PRICE || '15'}/token`],
               ['Target Market Cap','$1.5B (at $15/token)'],['Target APY', `${((parseFloat(process.env.NEXT_PUBLIC_TARGET_APY || '0.185')) * 100).toFixed(1)}%`],
-              ['Performance Fee','15% flat on yields'],
-              ['Fee Distribution','60% buybacks · 20% burns · 20% treasury'],
+              ['Performance Fee','15% flat on yields (pending FeeDistributor)'],
+              ['Fee Distribution','Planned: 60% buybacks · 20% burns · 20% treasury'],
             ].map(([k,v])=>(
               <div key={k} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,0.04)',fontSize:12}}>
                 <span style={{color:'rgba(255,255,255,0.4)'}}>{k}</span>
@@ -516,8 +515,8 @@ export default function HelpPage() {
             {[
               {icon:Gem,title:'Asset-Backed Ownership',desc:'Each INQAI token represents proportional ownership in a diversified portfolio of 66 digital assets, professionally managed by proprietary AI systems.'},
               {icon:TrendingUp,title:'Portfolio Performance',desc:'Five intelligence engines optimize the 66-asset portfolio continuously across 11 trading strategies, compounding risk-adjusted returns into the underlying backing.'},
-              {icon:Flame,title:'Systematic Buybacks + Burns',desc:'60% of all protocol fees are deployed for open-market INQAI buybacks. 20% is permanently burned. Sustained demand against a contracting circulating supply.'},
-              {icon:Lock,title:'Staking Rewards',desc:'Token holders earn protocol yield through staking, generating additional returns on top of portfolio performance and fee-driven value accrual.'},
+              {icon:Flame,title:'Systematic Buybacks + Burns',desc:'Planned: 60% of protocol fees for buybacks, 20% burned — pending FeeDistributor deployment.'},
+              {icon:Lock,title:'Staking Rewards',desc:'Planned: Token staking for protocol yield — pending INQAIStaking contract deployment.'},
             ].map(v=>(
               <div key={v.title} style={{background:'rgba(16,185,129,0.05)',border:'1px solid rgba(16,185,129,0.12)',borderRadius:12,padding:14}}>
                 <v.icon size={24} color="#34d399" strokeWidth={1.8} />
@@ -533,7 +532,7 @@ export default function HelpPage() {
     roadmap: (
       <div>
         <h2 style={{fontSize:26,fontWeight:900,marginBottom:4}}>Development Roadmap</h2>
-        <p style={{color:'rgba(255,255,255,0.4)',fontSize:13,marginBottom:28}}>Five phases from infrastructure to full autonomous portfolio execution. Each phase builds directly on the last. All phases are operational.</p>
+        <p style={{color:'rgba(255,255,255,0.4)',fontSize:13,marginBottom:28}}>Five phases from infrastructure to autonomous execution. Phases 1, 2 (partial), 4 (partial) operational. Phases 3, 5 pending vault deployment.</p>
         {[
           {
             phase:'Phase 1 — Foundation',
@@ -549,79 +548,79 @@ export default function HelpPage() {
               'WebSocket real-time broadcaster: pushes price + signal updates to all connected clients every 8 seconds',
               'Next.js 14 frontend: homepage, analytics, buy, docs — all pages complete',
               'Risk engine: 2% per trade / 6% heat / 15% drawdown circuit breaker / 2:1 R:R minimum',
-              'Launch validation complete — live on-chain execution active via Chainlink Automation',
+              'Security audit P0 fixes complete — access control, emergency pause, tests implemented',
             ]
           },
           {
             phase:'Phase 2 — Smart Contracts',
-            status:'COMPLETE',
-            col:'#10b981',
-            detail:'DEPLOYED — Asset-backed vault deployed to mainnet. INQAI token live at 0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5.',
+            status:'IN PROGRESS',
+            col:'#f59e0b',
+            detail:'5 contracts deployed. 6 additional contracts pending including VaultV2, FeeDistributor, Staking.',
             items:[
-              'Smart vault contract deployed — AI trading generates protocol yield distributed via buybacks and rewards',
-              'INQAI ERC-20 token deployed — 100M fixed supply at 0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5',
-              'Buyback + burn contract — 60% of protocol fees auto-buy INQAI; 20% burned, 20% treasury',
-              'Presale contract complete — accepts ETH, BTC, SOL, USDC at $8/INQAI',
-              'Chainlink price oracle integrated — on-chain TWAP for all vault valuations',
-              'Treasury deployed with secure access controls and timelock protections',
-              'Security audit complete — Certora verification + Trail of Bits review',
-              'Testnet validation complete — 2-week public testing passed',
-              'Mainnet deployment successful — contracts live and operational',
+              'INQAI ERC-20 token deployed — 0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5',
+              'Legacy vault deployed — 0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb',
+              'Strategy contracts deployed — StrategyManager, Strategy, ProfitMaximizer',
+              'PENDING: VaultV2 with signal-based trading + Chainlink Automation',
+              'PENDING: FeeDistributor for buyback/burn mechanism',
+              'PENDING: INQAIStaking, ReferralTracker, LiquidityLauncher, Timelock',
+              'Security: Emergency pause, access control modifiers, emergency withdraw — implemented',
+              'Tests: 20 Foundry tests covering access control, pause, emergency scenarios',
+              'CI/CD: GitHub Actions pipeline with lint, build, Foundry tests, Slither',
             ]
           },
           {
             phase:'Phase 3 — Live DeFi Execution',
-            status:'COMPLETE',
-            col:'#10b981',
-            detail:'LIVE — AI brain processing 66 assets across 5 scoring engines. Chainlink Automation executing trades on-chain via Uniswap V3 and deBridge DLN.',
+            status:'PENDING',
+            col:'#6b7280',
+            detail:'NOT LIVE — DeFi integrations require VaultV2 deployment + Chainlink Automation registration.',
             items:[
-              'Live Aave V3 lending — active positions with real yield generation',
-              'Live Morpho Blue integration — isolated markets with optimized yields',
-              'Live Uniswap V3 LP management — concentrated liquidity positions active',
-              'Live Jupiter Aggregator — Solana swaps executing across DEXs',
-              'Live 1inch / Uniswap V3 — Ethereum swaps with MEV protection',
-              'Live Lido staking — ETH → stETH with auto-rebase tracking',
-              'Live Jito + Sanctum staking — SOL liquid staking operational',
-              'Live Aave V3 borrowing — collateral optimization active',
-              'Live recursive looping — yield optimization with health factor guards',
-              'Flashbots MEV protection — front-run prevention active',
-              'Gas optimisation — batched multicall execution live',
-              'On-chain reconciliation — vault accounting verified each cycle',
+              'PENDING: Aave V3 lending integration',
+              'PENDING: Morpho Blue isolated markets',
+              'PENDING: Uniswap V3 LP management',
+              'PENDING: Jupiter Aggregator for Solana swaps',
+              'PENDING: 1inch / Uniswap V3 routing',
+              'PENDING: Lido, Jito, Sanctum liquid staking',
+              'PENDING: Aave V3 borrowing with collateral optimization',
+              'PENDING: Recursive looping with health factor guards',
+              'PENDING: Flashbots MEV protection',
+              'PENDING: Chainlink Automation registration (requires 50 LINK)',
+              'BLOCKER: VaultV2 contract must be deployed first',
+              'BLOCKER: Portfolio weights must be set for all 66 assets',
             ]
           },
           {
             phase:'Phase 4 — Token Launch & Ecosystem',
-            status:'COMPLETE',
-            col:'#10b981',
-            detail:'LIVE — INQAI token freely tradable on Ethereum mainnet. Uniswap V3 liquidity seeded. Analytics dashboard fully operational with real-time portfolio tracking.',
+            status:'IN PROGRESS',
+            col:'#f59e0b',
+            detail:'Token deployed. Platform frontend live. DEX liquidity, staking, referral pending contract deployments.',
             items:[
-              'INQAI public sale complete — token freely tradable on Ethereum mainnet',
-              'Uniswap V3 pools — INQAI/USDC and INQAI/ETH liquidity seeded',
-              'CEX listings — Tier 2 exchanges active, Tier 1 applications submitted',
-              'Analytics dashboard — real-time portfolio value, holdings, APY tracking',
-              'Community staking — INQAI staking with enhanced protocol rewards',
-              'Referral programme — on-chain referral tracking operational',
-              'Ecosystem grants — 10M INQAI fund for integrations ready',
-              'Buy page functional — ETH/BTC/SOL/USDC payments working',
-              'Holdings display — user portfolio tracking live',
+              'INQAI token deployed — 0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5',
+              'Platform live — getinqai.com with analytics, docs, legal pages',
+              'PENDING: Uniswap V3 liquidity pools (requires LiquidityLauncher)',
+              'PENDING: CEX listings (requires DEX liquidity first)',
+              'Analytics dashboard — real-time AI signals, price tracking operational',
+              'PENDING: Community staking (requires INQAIStaking contract)',
+              'PENDING: Referral programme (requires ReferralTracker contract)',
+              'PENDING: Ecosystem grants distribution mechanism',
+              'Buy page — frontend ready, contract integration pending',
             ]
           },
           {
             phase:'Phase 5 — Advanced AI & Cross-Chain',
-            status:'COMPLETE',
-            col:'#10b981',
-            detail:'LIVE — 5-engine AI brain with regime detection, DCA zones, market structure, volume confirmation, and trend following. deBridge DLN cross-chain execution active for 13 assets.',
+            status:'IN PROGRESS',
+            col:'#f59e0b',
+            detail:'AI brain operational with 5 engines. Real trade execution requires VaultV2 + Chainlink Automation.',
             items:[
-              'AI metrics dashboard — confidence scores, regime signals visible',
-              'Pattern engine — advanced market pattern recognition active',
-              'Reasoning engine — multi-factor decision making operational',
-              'Portfolio engine — automated rebalancing and optimization',
-              'Learning engine — continuous improvement from market data',
-              'Risk engine — institutional-grade risk management',
-              'Real-time execution — AI trade decisions executed automatically every 8 seconds',
-              'Performance tracking — win rate, profit factor, sharpe ratio live',
-              'Market regime detection — bull/bear/sideways identification',
-              'Advanced analytics — comprehensive AI performance metrics',
+              'AI metrics dashboard — confidence scores, regime signals live',
+              'Pattern engine — market pattern recognition operational',
+              'Reasoning engine — multi-factor decision making active',
+              'Portfolio engine — optimization algorithms running',
+              'Learning engine — adaptive signal weighting',
+              'Risk engine — 2% per trade, 6% heat, 15% drawdown limits',
+              'PENDING: Real-time on-chain execution (needs VaultV2 + Automation)',
+              'Performance tracking — simulated P&L, win rate tracking',
+              'Market regime detection — bull/bear/sideways identification live',
+              'PENDING: Cross-chain execution via deBridge DLN',
             ]
           },
         ].map(p=>(
