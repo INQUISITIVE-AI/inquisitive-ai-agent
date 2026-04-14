@@ -19,24 +19,24 @@ By accessing or using the Platform, you consent to the collection and use of inf
       id: 'collect',
       icon: Database,
       title: '2. Information We Collect',
-      content: `We collect minimal information to provide and improve our services:
+      content: `We are designed to collect as little as possible. We do not collect or store IP addresses, browser type, operating system, or individual page visit timestamps.
 
 Blockchain Data:
 • Public wallet addresses (Ethereum and other chains)
 • On-chain transaction history related to INQAI token and vault interactions
 • Smart contract interaction data
 
-Technical Data:
-• IP address (for rate limiting and security)
-• Browser type and version
-• Operating system
-• Page visit timestamps
+Rate Limiting (Privacy-Preserving):
+• To prevent abuse, incoming requests are rate-limited by a one-way SHA-256 hash of the request origin. The hash is held in memory only for the duration of the rate-limit window (15 minutes) and is then discarded. The original IP address is never stored, logged, or transmitted.
 
 Voluntary Information:
 • Email address (only if provided for support inquiries)
 • Support ticket content
 
 We do NOT collect:
+• IP addresses or browser fingerprints
+• Browser type, version, or operating system
+• Individual page visit timestamps
 • Private keys or seed phrases
 • Passwords
 • Financial account information (bank accounts, credit cards)
@@ -91,14 +91,17 @@ You can disable cookies through your browser settings, though this may affect Pl
       id: 'security',
       icon: Lock,
       title: '6. Data Security',
-      content: `We implement appropriate technical and organizational measures to protect information:
+      content: `We implement privacy-first technical measures to protect against abuse while minimising data collection:
 
 • All API communications use HTTPS/TLS encryption
 • No private keys or sensitive credentials are stored on our servers
-• Rate limiting to prevent abuse
-• Regular security assessments
+• Rate limiting uses hashed, ephemeral identifiers — no raw IP addresses are ever stored
+• CORS restricted to getinqai.com — no cross-origin access
+• WebSocket connections require authenticated API key
+• JSON body size capped at 100kb to prevent payload abuse
+• Regular security assessments and open-source code review
 
-However, no method of transmission over the internet or electronic storage is 100% secure. While we strive to use commercially acceptable means to protect your information, we cannot guarantee absolute security.`
+No method of transmission over the internet is 100% secure. We cannot guarantee absolute security, but we minimise risk by minimising what we hold.`
     },
     {
       id: 'third-party',
@@ -122,13 +125,13 @@ These third parties have their own privacy policies. We are not responsible for 
       id: 'retention',
       icon: Database,
       title: '8. Data Retention',
-      content: `We retain information for as long as necessary to fulfill the purposes outlined in this Privacy Policy:
+      content: `We retain the minimum data needed to operate:
 
-• IP addresses and request logs: 30 days
+• Rate-limit hashes: held in-memory only, discarded after 15-minute window expires
 • Support emails: 1 year (or as legally required)
-• Blockchain data: Indefinitely (as it is publicly available)
+• Blockchain data: Indefinitely (as it is publicly available on-chain and outside our control)
 
-After these periods, data is automatically deleted or anonymized.`
+We do not maintain request logs, IP logs, or session logs. There is no user tracking database.`
     },
     {
       id: 'rights',

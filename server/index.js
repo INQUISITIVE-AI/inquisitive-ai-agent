@@ -24,8 +24,13 @@ const cors        = require('cors');
 const helmet      = require('helmet');
 const compression = require('compression');
 const rateLimit   = require('express-rate-limit');
+const crypto      = require('crypto');
 const { createServer } = require('http');
 const { WebSocketServer } = require('ws');
+
+// Hash IP before use as rate-limit key — never store or log raw IPs
+const RATE_SALT = process.env.RATE_LIMIT_SALT || crypto.randomBytes(16).toString('hex');
+const hashIp = (req) => crypto.createHash('sha256').update((req.ip || '') + RATE_SALT).digest('hex');
 
 const priceFeed     = require('./services/priceFeed');
 const macroData     = require('./services/macroData');
@@ -48,9 +53,9 @@ app.use(helmet({
     },
   },
 }));
-const publicLimiter  = rateLimit({ windowMs: 15 * 60 * 1000, max: 500, standardHeaders: true, legacyHeaders: false });
-const signalLimiter  = rateLimit({ windowMs: 15 * 60 * 1000, max: 60,  standardHeaders: true, legacyHeaders: false });
-const tradeLimiter   = rateLimit({ windowMs: 15 * 60 * 1000, max: 20,  standardHeaders: true, legacyHeaders: false });
+const publicLimiter  = rateLimit({ windowMs: 15 * 60 * 1000, max: 500, standardHeaders: true, legacyHeaders: false, keyGenerator: hashIp });
+const signalLimiter  = rateLimit({ windowMs: 15 * 60 * 1000, max: 60,  standardHeaders: true, legacyHeaders: false, keyGenerator: hashIp });
+const tradeLimiter   = rateLimit({ windowMs: 15 * 60 * 1000, max: 20,  standardHeaders: true, legacyHeaders: false, keyGenerator: hashIp });
 
 app.use(cors({
   origin: process.env.NODE_ENV === 'production'
