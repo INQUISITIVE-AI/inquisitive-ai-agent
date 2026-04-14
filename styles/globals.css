@@ -258,3 +258,104 @@ body {
   border: 1px solid rgba(255,255,255,0.1) !important;
   border-radius: 8px !important;
 }
+
+
+/* ── Mobile Responsive ─── */
+@media (max-width: 768px) {
+  .responsive-grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
+  .responsive-grid-3 { grid-template-columns: repeat(1, 1fr) !important; }
+  .responsive-grid-5 { grid-template-columns: repeat(2, 1fr) !important; }
+  .responsive-grid-6 { grid-template-columns: repeat(2, 1fr) !important; }
+}
+@media (max-width: 480px) {
+  .responsive-grid-4 { grid-template-columns: repeat(1, 1fr) !important; }
+  .responsive-grid-5 { grid-template-columns: repeat(1, 1fr) !important; }
+  .responsive-grid-6 { grid-template-columns: repeat(2, 1fr) !important; }
+}
+
+/* ── Typography refinements ─── */
+h1, h2, h3 { font-feature-settings: 'cv11', 'ss01'; -webkit-font-smoothing: antialiased; }
+
+/* ── Focus visible ─── */
+button:focus-visible, a:focus-visible {
+  outline: 2px solid rgba(124,58,237,0.7);
+  outline-offset: 2px;
+}
+button { font-family: inherit; }
+
+/* ── Skeleton loader ─── */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+/* ── Better number rendering ─── */
+.monospace { font-family: 'JetBrains Mono', 'Fira Code', 'Menlo', monospace; }
+
+/* ── Stat card ─── */
+.stat-card {
+  background: rgba(13,13,32,0.8);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 14px;
+  padding: 18px 20px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: border-color 0.2s ease;
+}
+.stat-card:hover { border-color: rgba(124,58,237,0.25); }
+
+/* ── Live indicator ─── */
+.live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 2px rgba(16,185,129,0.2);
+  animation: blink-dot 1.5s ease-in-out infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* ── Tag/badge refinements ─── */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+/* ── Divider ─── */
+.divider { height: 1px; background: rgba(255,255,255,0.05); margin: 0; border: none; }
+
+/* ── Tooltip ─── */
+[data-tooltip] { position: relative; cursor: help; }
+[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(13,13,32,0.98);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.8);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 5px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  z-index: 200;
+}
+[data-tooltip]:hover::after { opacity: 1; }
