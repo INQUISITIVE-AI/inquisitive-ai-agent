@@ -298,7 +298,7 @@ export default function Home() {
               </div>
               <div>
                 <div style={{fontSize:11,fontWeight:700,color:'rgba(255,255,255,0.4)',textTransform:'uppercase',letterSpacing:'1px',marginBottom:12}}>Legal</div>
-                {[['Terms of Service','/terms'],['Privacy Policy','/privacy']].map(([l,p])=> (
+                {[['Terms of Service','/terms'],['Privacy Policy','/privacy'],['Risk Disclosure','/risk']].map(([l,p])=> (
                   <div key={l} onClick={()=>router.push(p)} style={{fontSize:12,color:'rgba(255,255,255,0.35)',padding:'4px 0',cursor:'pointer',transition:'color 0.15s'}}
                     onMouseOver={e=>(e.currentTarget.style.color='rgba(255,255,255,0.7)')}
                     onMouseOut={e=>(e.currentTarget.style.color='rgba(255,255,255,0.35)')}

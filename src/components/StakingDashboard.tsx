@@ -27,7 +27,7 @@ const CONTRACT_LIVE = STAKING_ADDR !== '0x00000000000000000000000000000000000000
 const STAKING_ABI = [
   { name: 'stake',         type: 'function', stateMutability: 'nonpayable', inputs: [{ name: 'amount', type: 'uint256' }], outputs: [] },
   { name: 'unstake',       type: 'function', stateMutability: 'nonpayable', inputs: [], outputs: [] },
-  { name: 'claimRewards',  type: 'function', stateMutability: 'nonpayable', inputs: [], outputs: [] },
+  // claimRewards removed - rewards auto-distributed via FeeDistributor
   { name: 'getStakeInfo',  type: 'function', stateMutability: 'view',
     inputs:  [{ name: 'user', type: 'address' }],
     outputs: [
@@ -72,7 +72,7 @@ export default function StakingDashboard() {
   const [globalStats,   setGlobalStats]   = useState<GlobalStats | null>(null);
   const [stakeAmount,   setStakeAmount]   = useState('');
   const [statsLoading,  setStatsLoading]  = useState(true);
-  const [txStep,        setTxStep]        = useState<'idle' | 'approving' | 'staking' | 'unstaking' | 'claiming'>('idle');
+  const [txStep,        setTxStep]        = useState<'idle' | 'approving' | 'staking' | 'unstaking'>('idle');
   const [txError,       setTxError]       = useState<string | null>(null);
   const [txSuccess,     setTxSuccess]     = useState<string | null>(null);
   const [confirmedHash, setConfirmedHash] = useState<`0x${string}` | undefined>();
@@ -132,7 +132,7 @@ export default function StakingDashboard() {
   const { writeContractAsync: writeApprove } = useWriteContract();
   const { writeContractAsync: writeStake   } = useWriteContract();
   const { writeContractAsync: writeUnstake } = useWriteContract();
-  const { writeContractAsync: writeClaim   } = useWriteContract();
+  // Rewards auto-distributed via FeeDistributor - no manual claiming needed
 
   const { isSuccess: txConfirmed } = useWaitForTransactionReceipt({ hash: confirmedHash });
 
@@ -177,7 +177,7 @@ export default function StakingDashboard() {
   const handleApprove = () => runTx('approving', () => writeApprove({ address: INQAI_ADDR, abi: erc20Abi, functionName: 'approve', args: [STAKING_ADDR, stakeAmtBig] }));
   const handleStake   = () => runTx('staking',   () => writeStake({ address: STAKING_ADDR, abi: STAKING_ABI, functionName: 'stake',  args: [stakeAmtBig] }));
   const handleUnstake = () => runTx('unstaking', () => writeUnstake({ address: STAKING_ADDR, abi: STAKING_ABI, functionName: 'unstake', args: [] }));
-  const handleClaim   = () => runTx('claiming',  () => writeClaim({ address: STAKING_ADDR, abi: STAKING_ABI, functionName: 'claimRewards', args: [] }));
+  // handleClaim removed - rewards auto-distributed via FeeDistributor
 
   const calcRow = (factor: number) => {
     if (!globalStats?.apy || !stakeAmount || !parseFloat(stakeAmount)) return '—';
@@ -296,11 +296,11 @@ export default function StakingDashboard() {
               </div>
               <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 18 }}>
                 {[
-                  { l: 'Reward mechanism',  v: 'Open-market INQAI buybacks'     },
+                  { l: 'Reward mechanism',  v: 'FeeDistributor auto-buybacks'    },
                   { l: 'Distribution',      v: 'Proportional to stake size'      },
-                  { l: 'Compounding',       v: 'Automatic — no claiming needed'  },
+                  { l: 'Automation',        v: 'Chainlink Automation — zero key' },
                   { l: 'Lock period',       v: '30 days from stake date'         },
-                  { l: 'Performance fee',   v: '15% of vault gains'              },
+                  { l: 'Performance fee',   v: '15% of vault gains (60%→stakers)' },
                 ].map(r => (
                   <div key={r.l} style={{ display: 'flex', justifyContent: 'space-between', padding: '9px 0', borderBottom: '1px solid rgba(255,255,255,0.04)', fontSize: 13 }}>
                     <span style={{ color: 'rgba(255,255,255,0.38)' }}>{r.l}</span>
@@ -318,9 +318,9 @@ export default function StakingDashboard() {
                   <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>INQAI</div>
                 </div>
                 <div style={{ padding: '16px', background: 'rgba(167,139,250,0.06)', border: '1px solid rgba(167,139,250,0.12)', borderRadius: 8 }}>
-                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 5 }}>Pending Rewards</div>
+                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 5 }}>Lifetime Rewards</div>
                   <div style={{ fontSize: 22, fontWeight: 900, color: '#a78bfa', fontFamily: 'monospace' }}>{parseFloat(pendingReward).toLocaleString('en-US', { maximumFractionDigits: 4 })}</div>
-                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>INQAI</div>
+                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>INQAI auto-received</div>
                 </div>
               </div>
 
@@ -332,13 +332,12 @@ export default function StakingDashboard() {
                 <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', fontFamily: 'monospace' }}>{formatCountdown(msUntilUnlock)}</span>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <button onClick={handleUnstake} disabled={!canUnstake || isTxPending} style={{ padding: '12px', borderRadius: 8, cursor: (!canUnstake || isTxPending) ? 'not-allowed' : 'pointer', background: (!canUnstake || isTxPending) ? 'rgba(239,68,68,0.18)' : '#ef4444', border: 'none', color: '#fff', fontSize: 13, fontWeight: 700 }}>
-                  {txStep === 'unstaking' ? '⏳ Unstaking…' : 'Unstake All'}
-                </button>
-                <button onClick={handleClaim} disabled={parseFloat(pendingReward) <= 0 || isTxPending} style={{ padding: '12px', borderRadius: 8, cursor: (parseFloat(pendingReward) <= 0 || isTxPending) ? 'not-allowed' : 'pointer', background: (parseFloat(pendingReward) <= 0 || isTxPending) ? 'rgba(167,139,250,0.18)' : 'linear-gradient(135deg,#7c3aed,#a78bfa)', border: 'none', color: '#fff', fontSize: 13, fontWeight: 700 }}>
-                  {txStep === 'claiming' ? '⏳ Claiming…' : <><Gift size={13} style={{ verticalAlign: 'middle', marginRight: 5 }} />Claim Rewards</>}
-                </button>
+              {/* Autonomous model: rewards auto-distributed via FeeDistributor buybacks */}
+              <button onClick={handleUnstake} disabled={!canUnstake || isTxPending} style={{ width: '100%', padding: '12px', borderRadius: 8, cursor: (!canUnstake || isTxPending) ? 'not-allowed' : 'pointer', background: (!canUnstake || isTxPending) ? 'rgba(239,68,68,0.18)' : '#ef4444', border: 'none', color: '#fff', fontSize: 13, fontWeight: 700 }}>
+                {txStep === 'unstaking' ? '⏳ Unstaking…' : 'Unstake All'}
+              </button>
+              <div style={{ marginTop: 10, padding: '10px 14px', background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.12)', borderRadius: 6, fontSize: 11, color: '#10b981', textAlign: 'center' }}>
+                ✓ Rewards auto-distributed via FeeDistributor buybacks
               </div>
 
               {txError   && <div style={{ marginTop: 10, padding: '10px 14px', background: 'rgba(239,68,68,0.07)', border: '1px solid rgba(239,68,68,0.18)', borderRadius: 6, fontSize: 12, color: '#f87171' }}>{txError}</div>}

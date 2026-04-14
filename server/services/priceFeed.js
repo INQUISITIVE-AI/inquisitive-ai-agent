@@ -87,6 +87,18 @@ const PORTFOLIO_WEIGHTS = {
   USDC: 3, PAXG: 1.5, ONDO: 1, XLM: 0.5, LTC: 0.5, BCH: 0.5, HBAR: 0.5, ZEC: 0.25, XMR: 0.25, ETC: 0.5, XTZ: 0.25, CHZ: 0.25, HNT: 0.25, VET: 0.25, QNT: 0.25, ALGO: 0.25, FIL: 0.25, AR: 0.25, XDC: 0.1, STX: 0.1, ZRO: 0.25, ATOM: 0.25, DBR: 0.1, ACH: 0.1, EOS: 0.1, HONEY: 0.1, XSGD: 0.1, SOIL: 0.1, BRZ: 0.1, JPYC: 0.1, CNGN: 0.1, JITOSOL: 0.5, JUPSOL: 0.5, mSOL: 0.5, CC: 0.1, PYTH: 0.1,
 };
 
+/**
+ * PriceFeedService — real-time price aggregator for all 66 portfolio assets.
+ *
+ * Primary source:  CoinGecko /coins/markets (batched, 30s poll)
+ * Secondary source: CryptoCompare pricemultifull (fallback for missing assets)
+ * Tertiary source:  CoinMarketCap (fallback on 3+ consecutive errors)
+ *
+ * Emits:
+ *   'update' — fired after each successful poll with a symbol→priceObject map
+ *
+ * @extends EventEmitter
+ */
 class PriceFeedService extends EventEmitter {
   constructor() {
     super();
@@ -101,9 +113,13 @@ class PriceFeedService extends EventEmitter {
     this.weights    = PORTFOLIO_WEIGHTS;
   }
 
-  // ── Public: initialize and start polling ──────────────────
+  /**
+   * Initialize the price feed: fetch initial prices then start the 30s poll loop.
+   * Applies a 5s startup delay to avoid thundering herd on rapid restarts.
+   * @returns {Promise<PriceFeedService>} this instance
+   */
   async initialize() {
-    console.log('📊 [PriceFeed] Initializing with 65 real assets…');
+    console.log('📊 [PriceFeed] Initializing with 66 real assets…');
     // Startup delay to avoid hammering CoinGecko on rapid nodemon restarts
     await new Promise(r => setTimeout(r, 5000));
     await this._fetchAll();
@@ -111,7 +127,11 @@ class PriceFeedService extends EventEmitter {
     return this;
   }
 
-  // ── Fetch all 65 assets in two batches to avoid URL-length limits ──
+  /**
+   * Fetch prices for all 66 assets. Splits into two sequential batches to respect
+   * CoinGecko free-tier rate limits. Falls back to CryptoCompare for any gaps.
+   * @returns {Promise<void>}
+   */
   async _fetchAll() {
     if (this.updating) return;
     this.updating = true;
@@ -156,7 +176,14 @@ class PriceFeedService extends EventEmitter {
     }
   }
 
-  // ── Single batch via /coins/markets (with 429 retry) ────
+  /**
+   * Fetch a single batch of assets from CoinGecko /coins/markets.
+   * Retries up to 2 times with 15s/30s exponential backoff on HTTP 429.
+   * @param {Array} batch - subset of ASSET_REGISTRY entries
+   * @param {Object} headers - request headers (may contain API key)
+   * @param {number} [attempt=0] - current retry attempt
+   * @returns {Promise<number>} count of assets successfully fetched
+   */
   async _fetchBatch(batch, headers, attempt = 0) {
     const ids  = batch.map(a => a.cgId).join(',');
     try {
@@ -192,7 +219,12 @@ class PriceFeedService extends EventEmitter {
     }
   }
 
-  // ── Fallback: CryptoCompare public API (no key, no geo-restrictions) ──────
+  /**
+   * Fallback price fetch via CryptoCompare pricemultifull API.
+   * Used for assets that CoinGecko fails to return (unlisted, delisted, or rate-limited).
+   * @param {Array} missing - ASSET_REGISTRY entries not yet in this.prices
+   * @returns {Promise<void>}
+   */
   async _fetchFromBinance(missing) {
     // Assets genuinely not listed on any major exchange
     const NO_PRICE = new Set(['CC', 'JUPSOL']);
@@ -240,7 +272,13 @@ class PriceFeedService extends EventEmitter {
     // Assets not found on any exchange simply have no price entry
   }
 
-  // ── Build a full price entry from /coins/markets data ────
+  /**
+   * Build a normalized price entry object from CoinGecko /coins/markets response.
+   * All percentage fields are stored as decimals (0.05 = 5%) for consistent brain scoring.
+   * @param {Object} meta - ASSET_REGISTRY entry
+   * @param {Object} coin - raw CoinGecko coin object
+   * @returns {Object} normalized price entry
+   */
   _buildEntry(meta, coin) {
     return {
       symbol:            meta.symbol,
@@ -268,7 +306,11 @@ class PriceFeedService extends EventEmitter {
     };
   }
 
-  // ── Fallback: CoinMarketCap ───────────────────────────────
+  /**
+   * Tertiary fallback: CoinMarketCap Pro API.
+   * Only called after 3+ consecutive CoinGecko failures and when CMC_KEY is set.
+   * @returns {Promise<void>}
+   */
   async _fetchFromCMC() {
     if (!this.CMC_KEY) return;
     const syms = this.assets.map(a => a.symbol).join(',');
@@ -306,17 +348,37 @@ class PriceFeedService extends EventEmitter {
     }
   }
 
-  // ── Polling interval ─────────────────────────────────────
+  /**
+   * Start the 30-second polling interval. Calls _fetchAll() on each tick.
+   */
   _startPolling() {
     setInterval(() => this._fetchAll(), this.POLL_MS);
     console.log(`🔄 [PriceFeed] Polling every ${this.POLL_MS / 1000}s`);
   }
 
-  // ── Public accessors ─────────────────────────────────────
+  /**
+   * Get the price entry for a specific asset.
+   * @param {string} symbol - uppercase ticker (e.g. 'BTC')
+   * @returns {Object|null} price entry or null
+   */
   getPrice(symbol) { return this.prices.get(symbol.toUpperCase()) || null; }
+
+  /**
+   * Get all price entries as an array.
+   * @returns {Object[]} all price entries
+   */
   getAll()         { return Array.from(this.prices.values()); }
+
+  /**
+   * Get all price entries as a symbol→priceEntry map.
+   * @returns {Object} symbol→priceEntry map
+   */
   getAllMap()       { return Object.fromEntries(this.prices); }
 
+  /**
+   * Get a snapshot of the current portfolio.
+   * @returns {Object} portfolio snapshot
+   */
   getPortfolioSnapshot() {
     const assets = this.getAll();
     let totalMarketCap = 0;

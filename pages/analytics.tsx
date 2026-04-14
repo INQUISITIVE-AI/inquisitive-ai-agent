@@ -16,14 +16,12 @@ import SiteNav from '../src/components/SiteNav';
 
 const VAULT_ADDR = (process.env.NEXT_PUBLIC_VAULT_ADDRESS || '0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb') as `0x${string}`;
 const VAULT_ABI = [
+  { name:'performUpkeep',        type:'function', stateMutability:'nonpayable', inputs:[{name:'performData',type:'bytes'}], outputs:[] },
   { name:'getPortfolioLength',   type:'function', stateMutability:'view',      inputs:[],                             outputs:[{name:'',type:'uint256'}] },
   { name:'getETHBalance',        type:'function', stateMutability:'view',      inputs:[],                             outputs:[{name:'',type:'uint256'}] },
   { name:'automationEnabled',    type:'function', stateMutability:'view',      inputs:[],                             outputs:[{name:'',type:'bool'}] },
   { name:'cycleCount',           type:'function', stateMutability:'view',      inputs:[],                             outputs:[{name:'',type:'uint256'}] },
   { name:'owner',                type:'function', stateMutability:'view',      inputs:[],                             outputs:[{name:'',type:'address'}] },
-  { name:'setPortfolio',         type:'function', stateMutability:'nonpayable', inputs:[{name:'_tokens',type:'address[]'},{name:'_weights',type:'uint256[]'},{name:'_fees',type:'uint24[]'}], outputs:[] },
-  { name:'setAutomationEnabled', type:'function', stateMutability:'nonpayable', inputs:[{name:'_enabled',type:'bool'}], outputs:[] },
-  { name:'collectFees',          type:'function', stateMutability:'nonpayable', inputs:[{name:'token',type:'address'},{name:'amount',type:'uint256'}], outputs:[] },
 ] as const;
 
 // PHASE1: 32 ETH-mainnet ERC-20s — per CMC watchlist
@@ -83,8 +81,12 @@ export default function AnalyticsPage() {
   const [sendError, setSendError]= useState<string | null>(null);
 
   const { writeContractAsync: writeSendAsync, isPending: isSending } = useWriteContract();
+  const { writeContractAsync: writeAdminAsync } = useWriteContract();
   const [sendHash, setSendHash] = useState<`0x${string}` | undefined>();
   const { isSuccess: sendConfirmed } = useWaitForTransactionReceipt({ hash: sendHash });
+  const [triggerHash, setTriggerHash] = useState<`0x${string}` | undefined>();
+  const { isSuccess: triggerConfirmed } = useWaitForTransactionReceipt({ hash: triggerHash });
+  const [triggering, setTriggering] = useState(false);
 
   // ── Vault on-chain state (live reads, no private key) ─────────────────────
   const { data: vaultPortfolioLen } = useReadContract({
@@ -103,7 +105,12 @@ export default function AnalyticsPage() {
     address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'cycleCount',
     chainId: 1, query: { refetchInterval: 30000 },
   });
+  const { data: vaultOwnerAddr } = useReadContract({
+    address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'owner',
+    chainId: 1, query: { refetchInterval: 60000 },
+  });
   const vaultEthOnChain = vaultEthBal ? Number(vaultEthBal) / 1e18 : 0;
+  const isVaultOwner = !!(address && vaultOwnerAddr && address.toLowerCase() === (vaultOwnerAddr as string).toLowerCase());
   const portfolioOnChain= vaultPortfolioLen ? Number(vaultPortfolioLen) : 0;
   const automationOn    = automationEnabledData === true;
   const cyclesOnChain   = vaultCycleCount ? Number(vaultCycleCount) : 0;
@@ -258,6 +265,23 @@ export default function AnalyticsPage() {
   const ACTIVE_SIGS = ['BUY','STAKE','LEND','YIELD','BORROW','LOOP','MULTIPLY','EARN','REWARDS','SWAP'];
   const topSignals  = positions.filter(p => ACTIVE_SIGS.includes(p.action)).slice(0, 8);
   const dispValue   = hasHoldings ? currentValue : navPerToken;
+
+  // Manual trigger for first trade - owner only
+  const triggerUpkeep = async () => {
+    if (!isVaultOwner) return;
+    setTriggering(true);
+    try {
+      const h = await writeAdminAsync({
+        address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'performUpkeep',
+        args: ['0x'], chainId: 1,
+      });
+      setTriggerHash(h);
+    } catch (e: any) {
+      console.error('Trigger failed:', e);
+    } finally {
+      setTriggering(false);
+    }
+  };
 
   return (
     <div>

@@ -5,6 +5,20 @@
 // ============================================================
 require('dotenv').config();
 
+// ── Startup: fail-fast on missing required env vars ──────────
+const REQUIRED_ENV = ['NODE_ENV'];
+const missing = REQUIRED_ENV.filter(k => !process.env[k]);
+if (missing.length > 0) {
+  console.error(`❌ Missing required environment variables: ${missing.join(', ')}`);
+  process.exit(1);
+}
+
+const WS_API_KEY = process.env.WS_API_KEY || '';
+if (process.env.NODE_ENV === 'production' && !WS_API_KEY) {
+  console.error('❌ WS_API_KEY must be set in production for WebSocket authentication');
+  process.exit(1);
+}
+
 const express     = require('express');
 const cors        = require('cors');
 const helmet      = require('helmet');
@@ -27,26 +41,29 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc:   ["'self'", "'unsafe-inline'"],
+      styleSrc:   ["'self'"],
       scriptSrc:  ["'self'"],
       imgSrc:     ["'self'", 'data:', 'https:'],
       connectSrc: ["'self'", 'ws:', 'wss:'],
     },
   },
 }));
-app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 200 }));
+const publicLimiter  = rateLimit({ windowMs: 15 * 60 * 1000, max: 500, standardHeaders: true, legacyHeaders: false });
+const signalLimiter  = rateLimit({ windowMs: 15 * 60 * 1000, max: 60,  standardHeaders: true, legacyHeaders: false });
+const tradeLimiter   = rateLimit({ windowMs: 15 * 60 * 1000, max: 20,  standardHeaders: true, legacyHeaders: false });
+
 app.use(cors({
   origin: process.env.NODE_ENV === 'production'
-    ? ['https://inquisitive.ai', 'https://www.inquisitive.ai']
+    ? ['https://getinqai.com', 'https://www.getinqai.com']
     : ['http://localhost:3000', 'http://localhost:3001'],
   credentials: true,
 }));
 app.use(compression());
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '100kb' }));
+app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 
 // ── Health check ─────────────────────────────────────────
-app.get('/health', (req, res) => {
+app.get('/health', publicLimiter, (req, res) => {
   res.json({
     status:    'healthy',
     service:   'INQUISITIVE · INQAI',
@@ -61,10 +78,13 @@ app.get('/health', (req, res) => {
 });
 
 // ── API Routes ────────────────────────────────────────────
-app.use('/api/inquisitiveAI', inquisitiveAI);
+app.use('/api/inquisitiveAI/signals',  signalLimiter);
+app.use('/api/inquisitiveAI/trade',    tradeLimiter);
+app.use('/api/inquisitiveAI/trading',  tradeLimiter);
+app.use('/api/inquisitiveAI',          publicLimiter, inquisitiveAI);
 
 // ── Root ──────────────────────────────────────────────────
-app.get('/', (req, res) => {
+app.get('/', publicLimiter, (req, res) => {
   res.json({
     name:    'INQUISITIVE Agent API',
     ticker:  'INQAI',
@@ -107,12 +127,25 @@ const server = createServer(app);
 const wss    = new WebSocketServer({ server });
 
 wss.on('connection', (ws, req) => {
+  const url    = new URL(req.url, 'ws://localhost');
+  const token  = url.searchParams.get('apiKey') || '';
+  const authed = !WS_API_KEY || token === WS_API_KEY;
+
+  if (!authed) {
+    ws.send(JSON.stringify({ type: 'error', message: 'Unauthorized: invalid or missing apiKey', timestamp: new Date().toISOString() }));
+    ws.close(4401, 'Unauthorized');
+    console.warn('🔒 [WS] Rejected unauthenticated connection');
+    return;
+  }
+
   console.log('🔌 [WS] Client connected');
   ws.send(JSON.stringify({ type: 'connected', message: 'INQUISITIVE WebSocket — REAL LIVE DATA', timestamp: new Date().toISOString() }));
 
   ws.on('message', (raw) => {
+    if (raw.length > 4096) { ws.close(4400, 'Message too large'); return; }
     try {
       const msg = JSON.parse(raw);
+      if (typeof msg.type !== 'string') return;
       if (msg.type === 'ping') ws.send(JSON.stringify({ type: 'pong', timestamp: new Date().toISOString() }));
     } catch {}
   });
@@ -161,7 +194,7 @@ async function bootstrap() {
   console.log('');
   console.log('🧠 Engines: Pattern | Reasoning | Portfolio | Learning | Risk');
   console.log('🛡️ Risk Engine: Risk-first execution gate');
-  console.log('📈 65 Assets: Full portfolio automated management');
+  console.log('📈 66 Assets: Full portfolio automated management');
   console.log('⚡ Functions: Buy | Sell | Swap | Lend | Yield | Borrow | Loop | Stake | Multiply | Earn | Rewards');
   console.log('');
 
@@ -177,7 +210,7 @@ async function bootstrap() {
   server.listen(PORT, () => {
     console.log('');
     console.log(`✅ INQUISITIVE backend running on http://localhost:${PORT}`);
-    console.log(`🔌 WebSocket: ws://localhost:${PORT}`);
+    console.log(`🔌 WebSocket: ws://localhost:${PORT}  (auth: ${WS_API_KEY ? 'ENABLED ✅' : 'DISABLED ⚠️'})`);
     console.log(`🏥 Health: http://localhost:${PORT}/health`);
     console.log(`📡 API: http://localhost:${PORT}/api/inquisitiveAI/status`);
     console.log('');

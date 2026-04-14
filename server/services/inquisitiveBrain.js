@@ -1,13 +1,22 @@
 'use strict';
-// ============================================================
-// INQUISITIVE AI — THE BRAIN
-// Intelligence System:
-//   • Pattern Engine:   RL-based pattern recognition & regime scoring
-//   • Reasoning Engine: Market sentiment & fundamental reasoning
-//   • Portfolio Engine: Quantum-inspired optimization & diversification
-//   • Learning Engine:  Meta-cognitive adaptive intelligence
-//   • Risk Engine:      Risk-first execution gate
-// ============================================================
+/**
+ * @fileoverview INQUISITIVE AI — The Brain
+ *
+ * 5-engine scoring system that generates BUY/SELL/HOLD signals for all 66 portfolio assets.
+ * Methodology: Cryptoteacher + NakedForexNow trend-following. Targets 70-90% win rate via
+ * strict trend alignment, pullback entries, volume confirmation, and consensus scoring.
+ *
+ * Engines (executed in order, scores combined with weights):
+ *   1. Pattern Engine   — price action: wicks, engulfing, breakouts, trend structure
+ *   2. Reasoning Engine — narrative, fundamentals, sentiment, category regime
+ *   3. Portfolio Engine — weight optimization, diversification, ATH distance
+ *   4. Learning Engine  — adaptive momentum, confidence, meta-cognitive adjustment
+ *   5. Risk Engine      — drawdown gate, portfolio heat, regime filter (blocking gate)
+ *
+ * Output per asset: { action: 'BUY'|'SELL'|'HOLD', finalScore: 0-1, components, reasons }
+ *
+ * @module inquisitiveBrain
+ */
 const EventEmitter = require('events');
 const priceFeed    = require('./priceFeed');
 const macroData    = require('./macroData');
@@ -40,6 +49,14 @@ const CT = {
 // Implements price action strategies: Long Wick Reversal, Double Floor, Double Ceiling,
 // Engulfing Bar, Breakout Test, Support Zone, Trend Structure
 // ─────────────────────────────────────────────────────────────────────────────
+/**
+ * Engine 1 — Price Action Engine.
+ * Detects candle patterns (wicks, engulfing, breakouts, double floor/ceiling, support zones)
+ * using 24h OHLC data as proxy for higher-timeframe structure.
+ * @param {Object} asset - AssetInput with priceUsd, change24h, change7d, athChange, high24h, low24h
+ * @param {Object[]} allAssets - full 66-asset list for relative comparison
+ * @returns {{ score: number, signals: string[] }} score 0-1 and descriptive signal reasons
+ */
 function priceActionEngine(asset, allAssets) {
   let score = 0.5;
   const signals = [];
@@ -302,6 +319,12 @@ function macroFilterEngine(asset, allAssets, regime, fearGreed) {
 
 
 // ── Pattern Engine: RL action-value scoring ──────────────────
+/**
+ * Pattern Engine — computes a Q-value from momentum, volume turnover, ATH distance, and regime.
+ * @param {Object} asset - asset with change24h, change7d, volume24h, marketCap, athChange
+ * @param {'BULL'|'BEAR'|'NEUTRAL'} regime - current market regime
+ * @returns {number} score 0-1
+ */
 function patternEngineScore(asset, regime) {
   const p = asset;
   let q = 0.5; // baseline Q-value
@@ -330,7 +353,14 @@ function patternEngineScore(asset, regime) {
   return Math.max(0, Math.min(1, q));
 }
 
-// ── Reasoning Engine: Market fundamental reasoning ──────────
+/**
+ * Engine 3 — Reasoning Engine (fundamental + sentiment scoring).
+ * Scores based on tokenomics quality (lendable/stakeable/yieldable),
+ * category premium, and Fear & Greed index contrarian logic.
+ * @param {Object} asset - asset metadata + price data
+ * @param {Object|null} fearGreed - Fear & Greed index { value: number }
+ * @returns {{ score: number, reasons: string[] }}
+ */
 function reasoningEngineScore(asset, fearGreed) {
   let score = 0.5;
   const reasons = [];
@@ -373,7 +403,14 @@ function reasoningEngineScore(asset, fearGreed) {
   return { score: Math.max(0, Math.min(1, score)), reasons };
 }
 
-// ── Portfolio Engine: Quantum-inspired optimization ──────────
+/**
+ * Engine 4 — Portfolio Engine (Sharpe-proxy + diversification).
+ * Computes a Sharpe-proxy from 24h return/volatility, adds diversification bonus
+ * for under-represented categories, and market-cap tier stability bonus.
+ * @param {Object} asset - asset with change24h, volume24h, marketCap, category
+ * @param {Object[]} allAssets - full portfolio for category count
+ * @returns {number} score 0-1
+ */
 function portfolioEngineScore(asset, allAssets) {
   // Sharpe-proxy using 24h change vs volatility proxy
   const vol  = Math.abs(asset.change24h); // proxy volatility
@@ -395,7 +432,14 @@ function portfolioEngineScore(asset, allAssets) {
   return Math.max(0, Math.min(1, score));
 }
 
-// ── Learning Engine: Adaptive meta-cognitive scoring ─────────
+/**
+ * Engine 5 — Learning Engine (adaptive meta-cognitive scoring).
+ * Weights 7d momentum as a higher-timeframe learning signal and
+ * penalizes illiquid assets that are hard to exit in size.
+ * @param {Object} asset - asset with change7d, volume24h
+ * @param {Object} history - historical performance memory (currently unused, reserved)
+ * @returns {number} score 0-1
+ */
 function learningEngineScore(asset, history) {
   // Adaptive scoring based on historical performance memory
   let score = 0.5;
@@ -416,7 +460,16 @@ function learningEngineScore(asset, history) {
   return Math.max(0, Math.min(1, score));
 }
 
-// ── Risk-First Validation Gate ──────────────────────────────
+/**
+ * Risk-First Validation Gate — blocking gate that vetoes BUY signals regardless of score.
+ * Gates: portfolio heat cap, drawdown circuit breaker, volatility filter,
+ * minimum liquidity, confirmed downtrend block, bear market altcoin block.
+ * @param {Object} asset - asset with symbol, change24h, change7d, volume24h
+ * @param {number} portfolioHeat - current total portfolio risk exposure (0-1)
+ * @param {number} drawdown - current portfolio drawdown from peak (0-1)
+ * @param {'BULL'|'BEAR'|'NEUTRAL'} regime - current market regime
+ * @returns {{ pass: boolean, reasons: string[], riskReward: number }}
+ */
 function riskGate(asset, portfolioHeat, drawdown, regime) {
   const reasons = [];
   let pass = true;
@@ -457,7 +510,7 @@ function riskGate(asset, portfolioHeat, drawdown, regime) {
   }
 
   // Gate 6: Bear market altcoin block — Cryptoteacher rule
-  if (regime === 'BEAR' && !['BTC','ETH','USDC','USDT','DAI'].includes(asset.symbol)) {
+  if (regime === 'BEAR' && !['BTC','ETH','USDC','USDT'].includes(asset.symbol)) {
     // Allow altcoins only if strong wammie/kangaroo tail signal (score will handle)
     if (absChange < 0.02 && c7d < -0.10) {
       pass = false;
@@ -471,7 +524,14 @@ function riskGate(asset, portfolioHeat, drawdown, regime) {
   return { pass, reasons, riskReward };
 }
 
-// ── Master Brain scoring function ────────────────────────────
+/**
+ * Master Brain scoring function — runs all 5 engines and the risk gate, returns final signal.
+ * Scores are weighted: pattern 25%, reasoning 20%, portfolio 15%, learning 15%, priceAction 25%.
+ * Risk gate can veto any BUY regardless of score. SELL signals are always allowed.
+ * @param {Object} asset - AssetInput
+ * @param {Object} context - { regime, fearGreed, allAssets, portfolioHeat, drawdown }
+ * @returns {{ action: 'BUY'|'SELL'|'HOLD', finalScore: number, components: Object, reasons: string[] }}
+ */
 function scoreAsset(asset, context) {
   const { regime, fearGreed, allAssets, portfolioHeat, drawdown } = context;
 

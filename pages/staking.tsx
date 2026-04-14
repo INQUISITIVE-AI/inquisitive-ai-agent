@@ -21,7 +21,7 @@ export default function StakingPage() {
         <div style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '20px 28px', position: 'relative', zIndex: 1 }}>
           <div style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', alignItems: 'baseline', gap: 12 }}>
             <h1 style={{ fontSize: 22, fontWeight: 900, color: '#fff', margin: 0, letterSpacing: '-0.3px' }}>Stake INQAI</h1>
-            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)' }}>Earn 60% of protocol performance fees · 30-day lock · Auto-compounded</span>
+            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)' }}>Earn 60% of protocol fees · 30-day lock · Auto-distributed via FeeDistributor</span>
           </div>
         </div>
 

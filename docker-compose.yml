@@ -1,0 +1,28 @@
+version: '3.9'
+
+services:
+  backend:
+    build: .
+    container_name: inqai-backend
+    restart: unless-stopped
+    ports:
+      - '3002:3002'
+    environment:
+      - NODE_ENV=production
+      - PORT=3002
+      - WS_API_KEY=${WS_API_KEY}
+      - COINGECKO_API_KEY=${COINGECKO_API_KEY}
+      - MAINNET_RPC_URL=${MAINNET_RPC_URL}
+      - INQUISITIVE_VAULT_ADDRESS=${INQUISITIVE_VAULT_ADDRESS}
+      - INQAI_TOKEN_ADDRESS=${INQAI_TOKEN_ADDRESS}
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:3002/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'

@@ -124,6 +124,7 @@ Vault Contract: ${process.env.NEXT_PUBLIC_VAULT_ADDRESS || '0x721b0c1fcf28646d6e
           </button>
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
             <span onClick={() => router.push('/privacy')} style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: '8px 12px' }}>Privacy</span>
+            <span onClick={() => router.push('/risk')} style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: '8px 12px' }}>Risk</span>
           </div>
         </nav>
 
@@ -135,7 +136,7 @@ Vault Contract: ${process.env.NEXT_PUBLIC_VAULT_ADDRESS || '0x721b0c1fcf28646d6e
               <Scale size={40} color="#7c3aed" />
             </div>
             <h1 style={{ fontSize: 32, fontWeight: 900, letterSpacing: '-0.5px', marginBottom: 8 }}>Terms of Service</h1>
-            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>Last Updated: April 4, 2025</p>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>Last Updated: April 14, 2026</p>
           </div>
 
           {/* Alert */}

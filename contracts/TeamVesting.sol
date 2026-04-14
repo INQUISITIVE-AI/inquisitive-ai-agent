@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/finance/VestingWallet.sol";
 
 contract TeamVesting is VestingWallet {
     IERC20 public immutable token;
+    address public immutable beneficiaryAddress;
     
     event TokensReleased(uint256 amount);
     event VestingStarted(uint256 timestamp);
@@ -17,13 +18,14 @@ contract TeamVesting is VestingWallet {
         uint64 durationSeconds
     ) VestingWallet(beneficiary, startTimestamp, durationSeconds) {
         token = IERC20(tokenAddress);
+        beneficiaryAddress = beneficiary;
         emit VestingStarted(startTimestamp);
     }
     
     function release() public override {
         uint256 releasable = vestedAmount(block.timestamp, 0);
         if (releasable > 0) {
-            token.transfer(beneficiary(), releasable);
+            token.transfer(beneficiaryAddress, releasable);
             emit TokensReleased(releasable);
         }
     }

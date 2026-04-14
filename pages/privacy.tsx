@@ -172,8 +172,9 @@ Email: privacy@getinqai.com
 
 Mailing Address:
 INQUISITIVE
-PO Box [REDACTED]
-Wyoming, USA`
+Wyoming, USA
+
+For blockchain-related privacy questions, reference the on-chain INQAI contract.`
     }
   ];
 
@@ -196,6 +197,7 @@ Wyoming, USA`
           </button>
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
             <span onClick={() => router.push('/terms')} style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: '8px 12px' }}>Terms</span>
+            <span onClick={() => router.push('/risk')} style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: '8px 12px' }}>Risk</span>
           </div>
         </nav>
 
@@ -207,7 +209,7 @@ Wyoming, USA`
               <Shield size={40} color="#34d399" />
             </div>
             <h1 style={{ fontSize: 32, fontWeight: 900, letterSpacing: '-0.5px', marginBottom: 8 }}>Privacy Policy</h1>
-            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>Last Updated: April 4, 2025</p>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>Last Updated: April 14, 2026</p>
           </div>
 
           {/* Intro */}
