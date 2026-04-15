@@ -1,14 +1,14 @@
 import React from 'react';
-import { ArrowRight, Shield, Zap, Globe, TrendingUp, Lock } from 'lucide-react';
+import { Shield, Lock, Globe, TrendingUp } from 'lucide-react';
 
-// ── Landing Page Hero Component ─────────────────────────────────────────────
-// First impression — the "why" of INQUISITIVE
+// ── Landing Page Hero ────────────────────────────────────────────────────────
+// Text-first, no gradient headline, single solid CTA hierarchy
 
 export default function LandingHero() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #0d0d20 0%, #1a0f2e 50%, #0d1f0d 100%)',
+      background: '#0a0a0b',
       position: 'relative',
       overflow: 'hidden',
       display: 'flex',
@@ -17,193 +17,166 @@ export default function LandingHero() {
       justifyContent: 'center',
       padding: '0 24px'
     }}>
-      {/* Background Effects */}
+      {/* Single subtle radial glow — accent color only */}
       <div style={{
         position: 'absolute',
-        top: '20%',
-        left: '10%',
-        width: '400px',
-        height: '400px',
-        background: 'radial-gradient(circle, rgba(124,58,237,0.15) 0%, transparent 70%)',
-        borderRadius: '50%',
-        filter: 'blur(60px)'
-      }} />
-      <div style={{
-        position: 'absolute',
-        bottom: '20%',
-        right: '10%',
-        width: '300px',
-        height: '300px',
-        background: 'radial-gradient(circle, rgba(16,185,129,0.15) 0%, transparent 70%)',
-        borderRadius: '50%',
-        filter: 'blur(60px)'
+        width: '600px',
+        height: '600px',
+        background: 'radial-gradient(circle, rgba(59,130,246,0.07) 0%, transparent 70%)',
+        top: '-200px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        pointerEvents: 'none',
       }} />
 
       {/* Content */}
       <div style={{
-        maxWidth: 1200,
+        maxWidth: 960,
         width: '100%',
         textAlign: 'center',
-        zIndex: 1
+        zIndex: 1,
       }}>
-        {/* Badge */}
+
+        {/* Label badge */}
         <div style={{
           display: 'inline-flex',
           alignItems: 'center',
           gap: 8,
-          padding: '8px 16px',
-          background: 'rgba(124,58,237,0.2)',
-          border: '1px solid rgba(124,58,237,0.4)',
-          borderRadius: 50,
+          padding: '6px 14px',
+          background: 'rgba(59,130,246,0.08)',
+          border: '1px solid rgba(59,130,246,0.2)',
+          borderRadius: 6,
           marginBottom: 32,
-          fontSize: 13,
-          fontWeight: 600,
-          color: '#a78bfa'
+          fontSize: 12,
+          fontWeight: 500,
+          color: '#93c5fd',
+          letterSpacing: '0.3px',
         }}>
-          <Zap size={16} />
-          AI-Managed Asset-Backed Token
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#3b82f6', display: 'inline-block' }} />
+          AI-MANAGED ON-CHAIN FUND
         </div>
 
-        {/* Main Headline */}
+        {/* Headline — plain white, no gradient */}
         <h1 style={{
-          fontSize: 72,
-          fontWeight: 900,
-          color: 'white',
-          margin: '0 0 24px',
-          lineHeight: 1.1,
-          letterSpacing: '-0.02em'
+          fontSize: 'clamp(2.8rem, 7vw, 4.5rem)',
+          fontWeight: 700,
+          color: '#f4f4f5',
+          margin: '0 0 20px',
+          lineHeight: 1.05,
+          letterSpacing: '-0.03em',
         }}>
-          Own 66 Assets.<br />
-          <span style={{
-            background: 'linear-gradient(135deg, #7c3aed, #10b981)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent'
-          }}>
-            Hold One Token.
-          </span>
+          Own 66 Assets.<br />Hold One Token.
         </h1>
 
         {/* Subheadline */}
         <p style={{
-          fontSize: 20,
-          color: 'rgba(255,255,255,0.6)',
-          maxWidth: 600,
+          fontSize: 'clamp(15px, 2vw, 18px)',
+          color: '#71717a',
+          maxWidth: 560,
           margin: '0 auto 48px',
-          lineHeight: 1.6
+          lineHeight: 1.7,
+          fontWeight: 400,
         }}>
-          INQAI represents proportional ownership in a professionally managed portfolio 
-          of 66 digital assets, continuously optimized by proprietary AI systems 24/7.
+          INQAI delivers proportional ownership in a professionally managed 66-asset 
+          digital portfolio. Five independent AI engines execute 11 strategies around 
+          the clock — every decision published on-chain in real time.
         </p>
 
-        {/* CTA Buttons */}
-        <div style={{
-          display: 'flex',
-          gap: 16,
-          justifyContent: 'center',
-          marginBottom: 64
-        }}>
-          <a
-            href="/buy"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              padding: '16px 32px',
-              background: 'linear-gradient(135deg, #7c3aed, #a855f7)',
-              borderRadius: 12,
-              color: 'white',
-              fontSize: 16,
-              fontWeight: 700,
-              textDecoration: 'none',
-              transition: 'transform 0.2s',
-              cursor: 'pointer'
-            }}
-          >
-            Get INQAI
-            <ArrowRight size={20} />
-          </a>
+        {/* CTA — clear hierarchy: primary + ghost */}
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 80 }}>
           <a
             href="/analytics"
             style={{
-              display: 'flex',
+              display: 'inline-flex',
               alignItems: 'center',
-              gap: 12,
-              padding: '16px 32px',
-              background: 'rgba(255,255,255,0.1)',
-              border: '1px solid rgba(255,255,255,0.2)',
-              borderRadius: 12,
-              color: 'white',
-              fontSize: 16,
-              fontWeight: 700,
+              gap: 8,
+              padding: '12px 28px',
+              background: '#3b82f6',
+              borderRadius: 8,
+              color: '#fff',
+              fontSize: 15,
+              fontWeight: 500,
               textDecoration: 'none',
-              cursor: 'pointer'
+              transition: 'opacity 0.2s',
             }}
+            onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.opacity = '0.85'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.opacity = '1'; }}
           >
-            View Portfolio
+            View Live Dashboard
+          </a>
+          <a
+            href="/help"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              padding: '12px 28px',
+              background: 'transparent',
+              border: '1px solid rgba(255,255,255,0.12)',
+              borderRadius: 8,
+              color: '#f4f4f5',
+              fontSize: 15,
+              fontWeight: 500,
+              textDecoration: 'none',
+              transition: 'border-color 0.2s',
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(255,255,255,0.3)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(255,255,255,0.12)'; }}
+          >
+            Read the Docs
           </a>
         </div>
 
-        {/* Key Stats */}
+        {/* Stats row */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
-          gap: 24,
-          maxWidth: 800,
-          margin: '0 auto'
+          gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+          gap: 16,
+          maxWidth: 720,
+          margin: '0 auto',
         }}>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 36, fontWeight: 800, color: 'white', marginBottom: 4 }}>
-              66
+          {[
+            { value: '66',   label: 'Assets Managed',  color: '#f4f4f5' },
+            { value: '24/7', label: 'AI Trading',       color: '#10b981' },
+            { value: '100M', label: 'Fixed Supply',     color: '#f4f4f5' },
+            { value: '0%',   label: 'Management Fee',   color: '#f4f4f5' },
+          ].map(s => (
+            <div key={s.label} style={{
+              background: '#111113',
+              border: '1px solid rgba(255,255,255,0.06)',
+              borderRadius: 10,
+              padding: '20px 16px',
+              textAlign: 'center',
+            }}>
+              <div style={{ fontSize: 28, fontWeight: 700, color: s.color, marginBottom: 4, letterSpacing: '-0.02em' }}>{s.value}</div>
+              <div style={{ fontSize: 12, color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{s.label}</div>
             </div>
-            <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)' }}>Assets Managed</div>
-          </div>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 36, fontWeight: 800, color: '#10b981', marginBottom: 4 }}>
-              24/7
-            </div>
-            <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)' }}>AI Trading</div>
-          </div>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 36, fontWeight: 800, color: '#a855f7', marginBottom: 4 }}>
-              100M
-            </div>
-            <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)' }}>Fixed Supply</div>
-          </div>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 36, fontWeight: 800, color: '#ef4444', marginBottom: 4 }}>
-              20%
-            </div>
-            <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)' }}>APY Target</div>
-          </div>
+          ))}
         </div>
       </div>
 
-      {/* Trust Indicators */}
+      {/* Trust bar */}
       <div style={{
         position: 'absolute',
-        bottom: 40,
+        bottom: 36,
         left: '50%',
         transform: 'translateX(-50%)',
         display: 'flex',
-        gap: 32,
-        alignItems: 'center'
+        gap: 28,
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>
-          <Shield size={16} />
-          <span>Audited Contracts</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>
-          <Lock size={16} />
-          <span>Zero Private Keys</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>
-          <Globe size={16} />
-          <span>Fully Autonomous</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>
-          <TrendingUp size={16} />
-          <span>Chainlink Automation</span>
-        </div>
+        {[
+          { Icon: Shield, text: 'Audited Contracts' },
+          { Icon: Lock,   text: 'Non-Custodial' },
+          { Icon: Globe,  text: 'Fully On-Chain' },
+          { Icon: TrendingUp, text: 'Chainlink Automation' },
+        ].map(({ Icon, text }) => (
+          <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 7, color: '#52525b', fontSize: 12 }}>
+            <Icon size={14} />
+            <span>{text}</span>
+          </div>
+        ))}
       </div>
     </div>
   );

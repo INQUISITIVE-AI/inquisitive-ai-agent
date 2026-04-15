@@ -1,4 +1,5 @@
 import type { AppProps } from 'next/app';
+import { useEffect } from 'react';
 import { WagmiProvider } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createAppKit } from '@reown/appkit/react';
@@ -15,9 +16,9 @@ if (typeof window !== 'undefined') {
     allWallets:     'SHOW',
     metadata: {
       name:        'INQUISITIVE',
-      description: 'AI-powered cryptocurrency portfolio platform',
+      description: 'The first open, on-chain AI fund',
       url:         'https://getinqai.com',
-      icons:       ['https://getinqai.com/logo.png'],
+      icons:       ['https://getinqai.com/inqai-logo.svg'],
     },
     features: {
       analytics: false,
@@ -26,7 +27,6 @@ if (typeof window !== 'undefined') {
       onramp:    false,
       swaps:     false,
     },
-    // Ensure WalletConnect session uses reliable RPC URLs
     customRpcUrls: {
       'eip155:1': [
         { url: 'https://eth.llamarpc.com' },
@@ -40,11 +40,37 @@ if (typeof window !== 'undefined') {
 
 const queryClient = new QueryClient();
 
+// Scroll-reveal — the only animation pattern we keep
+function useScrollReveal() {
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      },
+      { threshold: 0.12 }
+    );
+    const elements = document.querySelectorAll('.fade-up');
+    elements.forEach(el => observer.observe(el));
+    return () => observer.disconnect();
+  });
+}
+
+function ScrollRevealProvider({ children }: { children: React.ReactNode }) {
+  useScrollReveal();
+  return <>{children}</>;
+}
+
 export default function App({ Component, pageProps }: AppProps) {
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
-        <Component {...pageProps} />
+        <ScrollRevealProvider>
+          <Component {...pageProps} />
+        </ScrollRevealProvider>
       </QueryClientProvider>
     </WagmiProvider>
   );
