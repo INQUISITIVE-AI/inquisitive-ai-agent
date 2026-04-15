@@ -270,9 +270,6 @@ export default function Home() {
               <button onClick={() => router.push('/buy')} className="btn-primary" style={{ fontSize: 15, padding: '13px 32px' }}>
                 Acquire INQAI
               </button>
-              <button onClick={() => router.push('/analytics')} className="btn-secondary" style={{ fontSize: 15, padding: '13px 32px' }}>
-                Live Dashboard
-              </button>
             </div>
 
             <div style={{ display: 'flex', gap: 0, justifyContent: 'center', flexWrap: 'wrap', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 32 }}>

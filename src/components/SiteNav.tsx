@@ -5,9 +5,8 @@ import InqaiLogo from './InqaiLogo';
 
 const WalletButton = dynamic(() => import('./WalletButton'), { ssr: false });
 
-// 4 nav items max — clean, credible, not a token sale page
 const LINKS = [
-  { l: 'Dashboard',     p: '/analytics'         },
+  { l: 'Analytics',     p: '/analytics'         },
   { l: 'Docs',          p: '/help'              },
   { l: 'Reserves',      p: '/proof-of-reserves' },
   { l: 'Burns',         p: '/burns'             },
@@ -77,6 +76,29 @@ export default function SiteNav({ position = 'sticky', right }: SiteNavProps) {
       </div>
 
       {right && <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginRight: 8, flexShrink: 0 }}>{right}</div>}
+
+      {/* Launch App CTA */}
+      <button
+        onClick={() => router.push('/analytics')}
+        style={{
+          padding: '7px 16px',
+          borderRadius: 8,
+          cursor: 'pointer',
+          fontSize: 13,
+          fontWeight: 500,
+          background: 'transparent',
+          color: '#f4f4f5',
+          border: '1px solid rgba(255,255,255,0.12)',
+          transition: 'border-color 0.2s',
+          marginRight: 8,
+          flexShrink: 0,
+          whiteSpace: 'nowrap',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)'; }}
+        onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; }}
+      >
+        Launch App
+      </button>
 
       <WalletButton />
     </nav>

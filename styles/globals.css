@@ -3,16 +3,19 @@
 @tailwind utilities;
 
 :root {
-  --bg-primary: #0a0a0b;
-  --bg-card: #111113;
-  --bg-hover: #18181b;
-  --border: rgba(255,255,255,0.06);
-  --accent: #3b82f6;
-  --green: #10b981;
-  --red: #ef4444;
-  --text-primary: #f4f4f5;
-  --text-secondary: #71717a;
-  --text-muted: #52525b;
+  --bg-primary:    #0a0a0b;
+  --bg-card:       #1a1a1f;
+  --bg-surface:    #111114;
+  --bg-hover:      #222228;
+  --border:        rgba(255,255,255,0.06);
+  --border-subtle: rgba(255,255,255,0.04);
+  --accent:        #3b82f6;
+  --green:         #10b981;
+  --red:           #ef4444;
+  --text-primary:  #f4f4f5;
+  --text-body:     #a1a1aa;
+  --text-secondary:#71717a;
+  --text-muted:    #52525b;
 }
 
 * { box-sizing: border-box; }
@@ -26,13 +29,15 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-feature-settings: 'cv11', 'ss01';
+  font-size: 1.125rem;
+  line-height: 1.7;
 }
 
 /* ── Typography ─── */
 h1 { font-size: clamp(2.5rem, 6vw, 3.5rem); font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; }
 h2 { font-size: clamp(1.6rem, 3vw, 2.25rem); font-weight: 600; letter-spacing: -0.02em; line-height: 1.2; }
 h3 { font-size: 1.25rem; font-weight: 600; line-height: 1.4; }
-p  { font-size: 1rem; font-weight: 400; line-height: 1.7; color: var(--text-secondary); }
+p  { font-size: 1rem; font-weight: 400; line-height: 1.7; color: var(--text-body); }
 
 /* ── Scrollbar ─── */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -57,15 +62,15 @@ p  { font-size: 1rem; font-weight: 400; line-height: 1.7; color: var(--text-seco
 
 /* ── Glass card ─── */
 .glass {
-  background: rgba(17,17,19,0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(26,26,31,0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255,255,255,0.06);
 }
 .glass-bright {
-  background: rgba(24,24,27,0.9);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(30,30,36,0.92);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.09);
 }
 
 /* ── Animations — only essentials ─── */
@@ -272,10 +277,10 @@ button { font-family: inherit; }
 
 /* ── Stat card ─── */
 .stat-card {
-  background: #111113;
+  background: #1a1a1f;
   border: 1px solid rgba(255,255,255,0.06);
   border-radius: 12px;
-  padding: 20px 24px;
+  padding: 24px 28px;
   transition: border-color 0.2s ease;
 }
 .stat-card:hover { border-color: rgba(59,130,246,0.2); }
@@ -328,9 +333,10 @@ button { font-family: inherit; }
 }
 [data-tooltip]:hover::after { opacity: 1; }
 
-/* ── Section spacing — generous whitespace signals premium ─── */
-.section { padding: 120px 24px; }
-.section-sm { padding: 80px 24px; }
+/* ── Section spacing — 120px is the professional standard ─── */
+.section    { padding: 120px 24px; }
+.section-sm { padding:  80px 24px; }
+.section-xs { padding:  60px 24px; }
 
 /* ── Container ─── */
 .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
