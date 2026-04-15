@@ -14,7 +14,7 @@ export default function Custom500() {
         <meta name="robots" content="noindex, nofollow" />
       </Head>
       
-      <div style={{ minHeight: '100vh', background: '#07071a', color: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif' }}>
+      <div style={{ minHeight: '100vh', background: '#0a0a0b', color: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: 'Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif' }}>
         <div className="mesh-bg" />
         
         <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', maxWidth: 480 }}>
@@ -64,7 +64,7 @@ export default function Custom500() {
                 gap: 8,
                 padding: '12px 24px',
                 borderRadius: 10,
-                background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
+                background: '#3b82f6',
                 color: '#fff',
                 border: 'none',
                 cursor: 'pointer',

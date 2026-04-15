@@ -189,7 +189,7 @@ For blockchain-related privacy questions, reference the on-chain INQAI contract.
         <meta name="robots" content="index, follow" />
       </Head>
 
-      <div style={{ minHeight: '100vh', background: '#07071a', color: '#fff', fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif' }}>
+      <div style={{ minHeight: '100vh', background: '#0a0a0b', color: '#fff', fontFamily: 'Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif' }}>
         <div className="mesh-bg" />
         
         {/* Header */}

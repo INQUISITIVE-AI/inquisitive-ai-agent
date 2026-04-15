@@ -56,7 +56,7 @@ const grc  = (n: number) => n >= 0 ? '#10b981' : '#ef4444';
 const ACTION_COL: Record<string, string> = {
   BUY: '#10b981', SELL: '#ef4444', REDUCE: '#f87171',
   STAKE: '#38bdf8', LEND: '#fbbf24', YIELD: '#a3e635',
-  BORROW: '#22d3ee', SWAP: '#60a5fa', EARN: '#a78bfa',
+  BORROW: '#22d3ee', SWAP: '#60a5fa', EARN: '#93c5fd',
   LOOP: '#fb923c', MULTIPLY: '#f472b6', REWARDS: '#facc15',
   HOLD: '#6b7280', SKIP: '#4b5563',
 };
@@ -289,13 +289,13 @@ export default function AnalyticsPage() {
         <title>Analytics | INQUISITIVE</title>
         <meta name="description" content="INQAI AI-managed portfolio — live NAV, 66-asset backing, real-time AI signals." />
       </Head>
-      <div style={{ minHeight:'100vh', background:'#07071a', color:'#fff' }}>
+      <div style={{ minHeight:'100vh', background:'#0a0a0b', color:'#fff' }}>
         <div className="mesh-bg" />
 
         {/* NAV */}
         <SiteNav right={<>
           <div style={{ display:'flex', gap:14, alignItems:'center' }}>
-            <div style={{ textAlign:'right' }}><div style={{ fontSize:10, color:'rgba(255,255,255,0.3)' }}>INQAI NAV</div><div style={{ fontSize:13, fontWeight:800, color:'#a78bfa', fontFamily:'monospace' }}>${navPerToken.toFixed(4)}</div></div>
+            <div style={{ textAlign:'right' }}><div style={{ fontSize:10, color:'rgba(255,255,255,0.3)' }}>INQAI NAV</div><div style={{ fontSize:13, fontWeight:800, color:'#93c5fd', fontFamily:'monospace' }}>${navPerToken.toFixed(4)}</div></div>
             <div style={{ textAlign:'right' }}><div style={{ fontSize:10, color:'rgba(255,255,255,0.3)' }}>7D</div><div style={{ fontSize:13, fontWeight:700, color:grc(return7d), fontFamily:'monospace' }}>{pct(return7d)}</div></div>
             <div style={{ width:1, height:28, background:'rgba(255,255,255,0.08)', flexShrink:0 }} />
           </div>
@@ -335,7 +335,7 @@ export default function AnalyticsPage() {
                 { label:'Portfolio Index', val: nav?.token?.portfolioIndex ? nav.token.portfolioIndex.toFixed(2) : '—', sub:'Base 100 · 7-day basket performance', col: nav?.token?.portfolioIndex ? (nav.token.portfolioIndex >= 100 ? '#10b981' : '#ef4444') : '#6b7280', icon:'flame' },
                 { label:'AI Regime',   val:regime,            sub:`Risk ${(riskScore*100).toFixed(0)}% · F&G ${fg}`,col:regimeCol,   icon:'bot'    },
               ] as any[]).map(m => (
-                <div key={m.label} style={{ background:'rgba(13,13,32,0.85)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:16, padding:'16px 14px', backdropFilter:'blur(12px)', textAlign:'center' }}>
+                <div key={m.label} style={{ background:'rgba(17,17,19,0.85)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:16, padding:'16px 14px', backdropFilter:'blur(12px)', textAlign:'center' }}>
                   <div style={{ marginBottom:6, display:'flex', justifyContent:'center' }}>
                     {m.icon==='dollar'&&<DollarSign  size={20} color={m.col} />}
                     {m.icon==='target'&&<Target       size={20} color={m.col} />}
@@ -354,7 +354,7 @@ export default function AnalyticsPage() {
             {/* Tabs */}
             <div style={{ display:'flex', gap:2, marginBottom:20, borderBottom:'1px solid rgba(255,255,255,0.06)', flexWrap:'wrap' }}>
               {['portfolio','fees'].map(t => (
-                <button key={t} onClick={() => setTab(t as any)} style={{ padding:'10px 18px', fontSize:13, fontWeight:tab===t?700:500, cursor:'pointer', background:'none', border:'none', borderBottom:`2px solid ${tab===t?'#7c3aed':'transparent'}`, color:tab===t?'#a78bfa':'rgba(255,255,255,0.4)', transition:'all 0.15s' }}>
+                <button key={t} onClick={() => setTab(t as any)} style={{ padding:'10px 18px', fontSize:13, fontWeight:tab===t?700:500, cursor:'pointer', background:'none', border:'none', borderBottom:`2px solid ${tab===t?'#3b82f6':'transparent'}`, color:tab===t?'#93c5fd':'rgba(255,255,255,0.4)', transition:'all 0.15s' }}>
                   {t==='portfolio'?'Portfolio':'Fee Flow'}
                 </button>
               ))}
@@ -366,7 +366,7 @@ export default function AnalyticsPage() {
                 <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
 
                   {/* Equity chart */}
-                  <div style={{ background:'rgba(13,13,32,0.85)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:20, padding:'22px', backdropFilter:'blur(12px)' }}>
+                  <div style={{ background:'rgba(17,17,19,0.85)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:20, padding:'22px', backdropFilter:'blur(12px)' }}>
                     <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
                       <div>
                         <h3 style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.8)', margin:0 }}>Portfolio Performance</h3>
@@ -380,31 +380,31 @@ export default function AnalyticsPage() {
                     <PortfolioChart data={chartData} height={200} />
                     <div style={{ display:'flex', justifyContent:'space-between', marginTop:10, fontSize:11, color:'rgba(255,255,255,0.3)' }}>
                       <span>24H: <span style={{ color:grc(return24h), fontWeight:700 }}>{pct(return24h)}</span></span>
-                      <span>NAV: <span style={{ color:'#a78bfa', fontWeight:700 }}>${navPerToken.toFixed(4)}</span></span>
+                      <span>NAV: <span style={{ color:'#93c5fd', fontWeight:700 }}>${navPerToken.toFixed(4)}</span></span>
                       <span>Target: <span style={{ color:'#10b981', fontWeight:700 }}>${INQAI_TOKEN.targetPrice}</span></span>
                     </div>
                   </div>
 
                   {/* Holdings */}
-                  <div style={{ background:'rgba(13,13,32,0.85)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:20, padding:'22px', backdropFilter:'blur(12px)' }}>
+                  <div style={{ background:'rgba(17,17,19,0.85)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:20, padding:'22px', backdropFilter:'blur(12px)' }}>
                     <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:14 }}>
-                      <Wallet size={16} color="#a78bfa" />
+                      <Wallet size={16} color="#93c5fd" />
                       <h3 style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.8)', margin:0 }}>Your INQAI Holdings</h3>
                       {onChainBalance > 0 && localHolding > 0 && onChainBalance <= localHolding * 2 + 5 && <span style={{ fontSize:9, padding:'2px 7px', borderRadius:100, background:'rgba(16,185,129,0.15)', color:'#34d399', border:'1px solid rgba(16,185,129,0.25)' }}>ON-CHAIN</span>}
-                      {purchases.length > 0 && onChainBalance === 0 && <span style={{ fontSize:9, padding:'2px 7px', borderRadius:100, background:'rgba(124,58,237,0.15)', color:'#a78bfa', border:'1px solid rgba(124,58,237,0.25)' }}>PRESALE</span>}
+                      {purchases.length > 0 && onChainBalance === 0 && <span style={{ fontSize:9, padding:'2px 7px', borderRadius:100, background:'rgba(59,130,246,0.15)', color:'#93c5fd', border:'1px solid rgba(59,130,246,0.25)' }}>PRESALE</span>}
                     </div>
                     {!hasHoldings ? (
                       <div style={{ textAlign:'center', padding:'20px 0' }}>
                         <div style={{ fontSize:13, color:'rgba(255,255,255,0.35)', marginBottom:12 }}>{address?'No INQAI holdings detected — connect to a wallet that holds INQAI, or buy below.':'Connect wallet to view your holdings.'}</div>
                         <div style={{ textAlign:'center', marginTop:16 }}>
-                          <button onClick={() => router.push('/buy')} style={{ padding:'10px 20px', borderRadius:10, background:'linear-gradient(135deg,#7c3aed,#4f46e5)', color:'#fff', border:'none', cursor:'pointer', fontSize:13, fontWeight:700 }}>Buy INQAI at $8</button>
+                          <button onClick={() => router.push('/buy')} style={{ padding:'10px 20px', borderRadius:10, background:'#3b82f6', color:'#fff', border:'none', cursor:'pointer', fontSize:13, fontWeight:700 }}>Acquire INQAI</button>
                         </div>
                       </div>
                     ) : (
                       <div>
                         <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10, marginBottom:12 }}>
                           {[
-                            { l:'Token Balance',   v:fmtN(totalInqai,4)+' INQAI', c:'#a78bfa' },
+                            { l:'Token Balance',   v:fmtN(totalInqai,4)+' INQAI', c:'#93c5fd' },
                             { l:'Current Value',   v:fmtUsd(currentValue),         c:'#10b981' },
                             { l:'P&L vs Presale',  v:(totalPnL>=0?'+':'')+fmtUsd(totalPnL), c:grc(totalPnL) },
                           ].map(s => (
@@ -428,7 +428,7 @@ export default function AnalyticsPage() {
                         </div>
                         {purchases.slice(-3).reverse().map((p, i) => (
                           <div key={i} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'7px 10px', background:'rgba(255,255,255,0.03)', borderRadius:8, fontSize:11, marginBottom:4 }}>
-                            <span style={{ color:'#a78bfa', fontWeight:600 }}>{p.amount?.toLocaleString()} INQAI</span>
+                            <span style={{ color:'#93c5fd', fontWeight:600 }}>{p.amount?.toLocaleString()} INQAI</span>
                             <span style={{ color:'rgba(255,255,255,0.4)' }}>for {fmtUsd(p.usdAmount)}</span>
                             <span style={{ color:'rgba(255,255,255,0.25)', fontSize:10 }}>{new Date(p.timestamp).toLocaleDateString()}</span>
                           </div>
@@ -436,11 +436,11 @@ export default function AnalyticsPage() {
                         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginTop:14 }}>
                           <button
                             onClick={() => { setSendOpen(true); setSendError(null); setSendTo(''); setSendAmt(''); setSendHash(undefined); }}
-                            style={{ padding:'10px', borderRadius:10, fontSize:13, fontWeight:700, cursor:'pointer', background:'rgba(124,58,237,0.12)', border:'1px solid rgba(124,58,237,0.35)', color:'#a78bfa', transition:'all 0.2s' }}
+                            style={{ padding:'10px', borderRadius:10, fontSize:13, fontWeight:700, cursor:'pointer', background:'rgba(59,130,246,0.12)', border:'1px solid rgba(59,130,246,0.35)', color:'#93c5fd', transition:'all 0.2s' }}
                           >Send INQAI →</button>
                           <button
                             onClick={() => router.push('/buy')}
-                            style={{ padding:'10px', borderRadius:10, fontSize:13, fontWeight:700, cursor:'pointer', background:'linear-gradient(135deg,#7c3aed,#4f46e5)', border:'1px solid rgba(255,255,255,0.1)', color:'#fff' }}
+                            style={{ padding:'10px', borderRadius:10, fontSize:13, fontWeight:700, cursor:'pointer', background:'#3b82f6', border:'1px solid rgba(255,255,255,0.1)', color:'#fff' }}
                           >Acquire More</button>
                         </div>
                       </div>
@@ -448,7 +448,7 @@ export default function AnalyticsPage() {
                   </div>
 
                   {/* On-chain treasury card */}
-                  <div style={{ background:'rgba(13,13,32,0.85)', border:`1px solid ${isOnChainNAV?'rgba(16,185,129,0.25)':'rgba(255,255,255,0.06)'}`, borderRadius:20, padding:'22px', backdropFilter:'blur(12px)' }}>
+                  <div style={{ background:'rgba(17,17,19,0.85)', border:`1px solid ${isOnChainNAV?'rgba(16,185,129,0.25)':'rgba(255,255,255,0.06)'}`, borderRadius:20, padding:'22px', backdropFilter:'blur(12px)' }}>
                     <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:14 }}>
                       <Shield size={16} color={isOnChainNAV?'#10b981':'#6b7280'} />
                       <h3 style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.8)', margin:0 }}>On-Chain Treasury</h3>
@@ -460,7 +460,7 @@ export default function AnalyticsPage() {
                       {[
                         { l:'Total AUM',         v: fmtUsd(aumUSD),                             c:'#10b981' },
                         { l:'ETH in Vault',       v: (treasury.vaultEth??0).toFixed(4)+' ETH',   c:'#60a5fa' },
-                        { l:'Tokens Sold',        v: tokensCommitted > 0 ? fmtN(tokensCommitted,0)+' INQAI' : 'Pending', c:'#a78bfa' },
+                        { l:'Tokens Sold',        v: tokensCommitted > 0 ? fmtN(tokensCommitted,0)+' INQAI' : 'Pending', c:'#93c5fd' },
                       ].map(s => (
                         <div key={s.l} style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:10, padding:'10px 12px' }}>
                           <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)', marginBottom:2 }}>{s.l}</div>
@@ -486,9 +486,9 @@ export default function AnalyticsPage() {
 
                   
                   {/* Portfolio backing */}
-                  <div style={{ background:'rgba(13,13,32,0.85)', border:'1px solid rgba(124,58,237,0.18)', borderRadius:20, padding:'22px', backdropFilter:'blur(12px)' }}>
+                  <div style={{ background:'rgba(17,17,19,0.85)', border:'1px solid rgba(59,130,246,0.18)', borderRadius:20, padding:'22px', backdropFilter:'blur(12px)' }}>
                     <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:6 }}>
-                      <Layers size={16} color="#a78bfa" />
+                      <Layers size={16} color="#93c5fd" />
                       <h3 style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.8)', margin:0 }}>Your Portfolio Backing</h3>
                       <div style={{ marginLeft:'auto', fontSize:10, color:'rgba(255,255,255,0.3)', fontFamily:'monospace' }}>{effInvested>0?fmtUsd(effInvested)+' → 66 assets':'$'+INQAI_TOKEN.presalePrice+'/token → 66 assets'}</div>
                     </div>
@@ -502,25 +502,25 @@ export default function AnalyticsPage() {
                       <div key={a.symbol} style={{ display:'grid', gridTemplateColumns:'54px 1fr 70px 58px 62px', gap:6, alignItems:'center', marginBottom:5 }}>
                         <span style={{ fontWeight:800, fontSize:11, color:'#fff' }}>{a.symbol}</span>
                         <div style={{ position:'relative', height:5, background:'rgba(255,255,255,0.06)', borderRadius:3, overflow:'hidden' }}>
-                          <div style={{ position:'absolute', left:0, top:0, height:'100%', borderRadius:3, width:`${Math.min((a.weight/(backingAssets[0]?.weight||1))*100,100)}%`, background:ACTION_COL[a.action]||'#7c3aed' }} />
+                          <div style={{ position:'absolute', left:0, top:0, height:'100%', borderRadius:3, width:`${Math.min((a.weight/(backingAssets[0]?.weight||1))*100,100)}%`, background:ACTION_COL[a.action]||'#3b82f6' }} />
                         </div>
                         <div style={{ fontSize:11, fontWeight:700, color:'#10b981', fontFamily:'monospace', textAlign:'right' }}>{fmtUsd(a.myUsd)}</div>
                         <div style={{ fontSize:10, fontFamily:'monospace', textAlign:'right', color:grc(a.change24h) }}>{pct(a.change24h)}</div>
-                        <div style={{ fontSize:9, padding:'1px 5px', borderRadius:100, textAlign:'center', background:`${ACTION_COL[a.action]||'#7c3aed'}20`, color:ACTION_COL[a.action]||'#7c3aed', border:`1px solid ${ACTION_COL[a.action]||'#7c3aed'}40`, fontWeight:700 }}>{a.action}</div>
+                        <div style={{ fontSize:9, padding:'1px 5px', borderRadius:100, textAlign:'center', background:`${ACTION_COL[a.action]||'#3b82f6'}20`, color:ACTION_COL[a.action]||'#3b82f6', border:`1px solid ${ACTION_COL[a.action]||'#3b82f6'}40`, fontWeight:700 }}>{a.action}</div>
                       </div>
                     ))}
-                    <div style={{ marginTop:10, padding:'7px 10px', background:'rgba(124,58,237,0.07)', border:'1px solid rgba(124,58,237,0.18)', borderRadius:8, fontSize:10, color:'rgba(255,255,255,0.35)', lineHeight:1.7 }}>
+                    <div style={{ marginTop:10, padding:'7px 10px', background:'rgba(59,130,246,0.07)', border:'1px solid rgba(59,130,246,0.18)', borderRadius:8, fontSize:10, color:'rgba(255,255,255,0.35)', lineHeight:1.7 }}>
                       AI re-evaluates all 66 assets every 8 seconds. Showing top 12 by weight.
                     </div>
                   </div>
                 </div>
 
                 <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
-                  <div style={{ background:'rgba(13,13,32,0.85)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:20, padding:'22px', backdropFilter:'blur(12px)' }}>
+                  <div style={{ background:'rgba(17,17,19,0.85)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:20, padding:'22px', backdropFilter:'blur(12px)' }}>
                     <h3 style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.8)', marginBottom:14 }}>Allocation by Category</h3>
                     <CategoryDonut data={cats} size={180} />
                   </div>
-                  <div style={{ background:'rgba(13,13,32,0.85)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:20, padding:'22px', backdropFilter:'blur(12px)' }}>
+                  <div style={{ background:'rgba(17,17,19,0.85)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:20, padding:'22px', backdropFilter:'blur(12px)' }}>
                     <h3 style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.8)', marginBottom:14 }}>Live Metrics</h3>
                     {[
                       { l:'INQAI NAV',      v:'$'+navPerToken.toFixed(4) },
@@ -538,17 +538,17 @@ export default function AnalyticsPage() {
                       </div>
                     ))}
                   </div>
-                  <div style={{ background:'rgba(13,13,32,0.85)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:20, padding:'22px', backdropFilter:'blur(12px)' }}>
+                  <div style={{ background:'rgba(17,17,19,0.85)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:20, padding:'22px', backdropFilter:'blur(12px)' }}>
                     <h3 style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.8)', marginBottom:14 }}>AI Strategy</h3>
                     {(cats.length > 0
                       ? cats.slice(0,6).map((cat:any,i:number) => ({
                           l: ({major:'Core BTC·ETH·SOL',defi:'DeFi & Protocols',stablecoin:'Stablecoins & RWA',l2:'L2 & Interop','liquid-stake':'Liquid Staking',ai:'AI Tokens',rwa:'Real World Assets'} as any)[cat.category] || cat.category,
                           p: Math.round(cat.pct),
-                          c: (['#3b82f6','#7c3aed','#10b981','#0ea5e9','#f59e0b','#a78bfa'] as string[])[i] || '#6b7280',
+                          c: (['#3b82f6','#3b82f6','#10b981','#0ea5e9','#f59e0b','#93c5fd'] as string[])[i] || '#6b7280',
                         }))
                       : [
                           { l:'Core BTC·ETH·SOL', p:38, c:'#3b82f6' },
-                          { l:'DeFi & Protocols',  p:20, c:'#7c3aed' },
+                          { l:'DeFi & Protocols',  p:20, c:'#3b82f6' },
                           { l:'Stablecoins & RWA', p:12, c:'#10b981' },
                           { l:'L2 & Interop',      p:12, c:'#0ea5e9' },
                           { l:'Liquid Staking',    p:10, c:'#f59e0b' },
@@ -568,12 +568,12 @@ export default function AnalyticsPage() {
             {/* ── FEES TAB ── */}
             {tab === 'fees' && (
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
-                <div style={{ background:'rgba(13,13,32,0.85)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:20, padding:'24px', backdropFilter:'blur(12px)' }}>
+                <div style={{ background:'rgba(17,17,19,0.85)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:20, padding:'24px', backdropFilter:'blur(12px)' }}>
                   <h3 style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.8)', marginBottom:18 }}>Fee Structure</h3>
-                  <div style={{ padding:'14px', background:'rgba(124,58,237,0.07)', border:'1px solid rgba(124,58,237,0.18)', borderRadius:12, marginBottom:14 }}>
+                  <div style={{ padding:'14px', background:'rgba(59,130,246,0.07)', border:'1px solid rgba(59,130,246,0.18)', borderRadius:12, marginBottom:14 }}>
                     <div style={{ fontSize:12, fontWeight:700, marginBottom:4 }}>Performance Fee: 15% of yields</div>
                     <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)', lineHeight:1.7 }}>No management fee · No deposit fee · No withdrawal fee. Only charged on positive portfolio yield.</div>
-                    <div style={{ fontSize:16, fontWeight:900, color:'#a78bfa', fontFamily:'monospace', marginTop:8 }}>{fmtUsd(Math.max(0,hasHoldings?totalPnL*0.15:0))}</div>
+                    <div style={{ fontSize:16, fontWeight:900, color:'#93c5fd', fontFamily:'monospace', marginTop:8 }}>{fmtUsd(Math.max(0,hasHoldings?totalPnL*0.15:0))}</div>
                     <div style={{ fontSize:10, color:'rgba(255,255,255,0.3)', marginTop:2 }}>Estimated YTD fee on your holdings</div>
                   </div>
                   <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)', lineHeight:1.8 }}>
@@ -584,7 +584,7 @@ export default function AnalyticsPage() {
                     <strong style={{color:'#6366f1'}}>5%</strong> → Chainlink Automation (keeps AI running)
                   </div>
                 </div>
-                <div style={{ background:'rgba(13,13,32,0.85)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:20, padding:'24px', backdropFilter:'blur(12px)' }}>
+                <div style={{ background:'rgba(17,17,19,0.85)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:20, padding:'24px', backdropFilter:'blur(12px)' }}>
                   <h3 style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.8)', marginBottom:18 }}>Fee Allocation</h3>
                   {(() => {
                     const totalFees = Math.max(0, hasHoldings ? totalPnL * 0.15 : 0);
@@ -605,12 +605,12 @@ export default function AnalyticsPage() {
                     </div>
                   ))}
                 </div>
-                <div style={{ gridColumn:'1 / -1', background:'rgba(13,13,32,0.85)', border:'1px solid rgba(124,58,237,0.15)', borderRadius:20, padding:'24px', backdropFilter:'blur(12px)' }}>
+                <div style={{ gridColumn:'1 / -1', background:'rgba(17,17,19,0.85)', border:'1px solid rgba(59,130,246,0.15)', borderRadius:20, padding:'24px', backdropFilter:'blur(12px)' }}>
                   <h3 style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.8)', marginBottom:18 }}>Tokenomics</h3>
                   <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16 }}>
                     {[
                       { l:'Total Supply',  v:Number(process.env.NEXT_PUBLIC_TOTAL_SUPPLY||100000000).toLocaleString(), sub:'Fixed · never changes',      c:'#fff',    i:'flame' },
-                      { l:'Presale Price', v:'$'+INQAI_TOKEN.presalePrice.toFixed(2),                                sub:`${(((INQAI_TOKEN.targetPrice/INQAI_TOKEN.presalePrice)-1)*100).toFixed(0)}% below target`, c:'#a78bfa', i:'price' },
+                      { l:'Presale Price', v:'$'+INQAI_TOKEN.presalePrice.toFixed(2),                                sub:`${(((INQAI_TOKEN.targetPrice/INQAI_TOKEN.presalePrice)-1)*100).toFixed(0)}% below target`, c:'#93c5fd', i:'price' },
                       { l:'Target Price',  v:'$'+INQAI_TOKEN.targetPrice.toFixed(2),                                sub:'Based on portfolio + fees',  c:'#10b981', i:'target' },
                       { l:'Target APY',    v:(INQAI_TOKEN.targetAPY*100).toFixed(1)+'%',                            sub:'Multi-strategy AI yield',    c:'#f59e0b', i:'apy' },
                     ].map(t => (
@@ -639,7 +639,7 @@ export default function AnalyticsPage() {
         <div style={{ position:'fixed', inset:0, zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(0,0,0,0.75)', backdropFilter:'blur(6px)' }}
           onClick={(e) => { if (e.target === e.currentTarget) setSendOpen(false); }}
         >
-          <div style={{ background:'#0d0d20', border:'1px solid rgba(124,58,237,0.35)', borderRadius:20, padding:'28px 24px', width:'100%', maxWidth:420, margin:'0 16px' }}>
+          <div style={{ background:'#111113', border:'1px solid rgba(59,130,246,0.35)', borderRadius:20, padding:'28px 24px', width:'100%', maxWidth:420, margin:'0 16px' }}>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:22 }}>
               <h3 style={{ fontSize:16, fontWeight:800, margin:0 }}>Send INQAI</h3>
               <button onClick={() => setSendOpen(false)} style={{ background:'none', border:'none', color:'rgba(255,255,255,0.4)', fontSize:20, cursor:'pointer', lineHeight:1 }}>×</button>
@@ -659,7 +659,7 @@ export default function AnalyticsPage() {
                   </a>
                 )}
                 <button onClick={() => setSendOpen(false)}
-                  style={{ padding:'9px 20px', borderRadius:10, background:'linear-gradient(135deg,#7c3aed,#4f46e5)', color:'#fff', border:'none', cursor:'pointer', fontSize:13, fontWeight:700 }}>
+                  style={{ padding:'9px 20px', borderRadius:10, background:'#3b82f6', color:'#fff', border:'none', cursor:'pointer', fontSize:13, fontWeight:700 }}>
                   Done
                 </button>
               </div>
@@ -677,7 +677,7 @@ export default function AnalyticsPage() {
                   <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
                     <span style={{ fontSize:11, color:'rgba(255,255,255,0.4)' }}>Amount (INQAI)</span>
                     <button onClick={() => setSendAmt((onChainBalance > 0 ? onChainBalance : totalInqai).toFixed(4))}
-                      style={{ fontSize:10, background:'none', border:'none', color:'#a78bfa', cursor:'pointer', padding:0 }}>
+                      style={{ fontSize:10, background:'none', border:'none', color:'#93c5fd', cursor:'pointer', padding:0 }}>
                       Max: {fmtN(onChainBalance > 0 ? onChainBalance : totalInqai, 4)}
                     </button>
                   </div>
@@ -696,7 +696,7 @@ export default function AnalyticsPage() {
                 )}
 
                 {isSending && !sendConfirmed && !sendError && (
-                  <div style={{ padding:'9px 12px', background:'rgba(124,58,237,0.07)', border:'1px solid rgba(124,58,237,0.2)', borderRadius:8, fontSize:12, color:'#a78bfa', marginBottom:14 }}>
+                  <div style={{ padding:'9px 12px', background:'rgba(59,130,246,0.07)', border:'1px solid rgba(59,130,246,0.2)', borderRadius:8, fontSize:12, color:'#93c5fd', marginBottom:14 }}>
                     Confirm in your wallet…
                   </div>
                 )}
@@ -713,7 +713,7 @@ export default function AnalyticsPage() {
                     Cancel
                   </button>
                   <button onClick={handleSend} disabled={isSending}
-                    style={{ padding:'11px', borderRadius:10, background: isSending ? 'rgba(124,58,237,0.25)' : 'linear-gradient(135deg,#7c3aed,#4f46e5)', border:'1px solid rgba(255,255,255,0.1)', color:'#fff', fontSize:13, fontWeight:700, cursor: isSending ? 'wait' : 'pointer' }}>
+                    style={{ padding:'11px', borderRadius:10, background: isSending ? 'rgba(59,130,246,0.25)' : '#3b82f6', border:'1px solid rgba(255,255,255,0.1)', color:'#fff', fontSize:13, fontWeight:700, cursor: isSending ? 'wait' : 'pointer' }}>
                     {isSending ? 'Sending…' : 'Confirm Send'}
                   </button>
                 </div>

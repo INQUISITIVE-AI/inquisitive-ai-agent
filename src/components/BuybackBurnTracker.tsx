@@ -66,7 +66,7 @@ export default function BuybackBurnTracker() {
           { l: 'INQAI Burned',   v: burnedLive.toLocaleString('en-US', { maximumFractionDigits: 0 }) + ' INQAI',              c: '#ef4444' },
           { l: 'Supply Burned',  v: burnPctLive.toFixed(4) + '%',                                                              c: '#f97316' },
         ] as const).map(s => (
-          <div key={s.l} style={{ background: 'rgba(13,13,32,0.97)', padding: '22px 24px' }}>
+          <div key={s.l} style={{ background: 'rgba(17,17,19,0.97)', padding: '22px 24px' }}>
             <div style={{ fontSize: 18, fontWeight: 800, color: s.c, fontFamily: 'monospace', letterSpacing: '-0.5px', marginBottom: 5 }}>{s.v}</div>
             <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>{s.l}</div>
           </div>
@@ -77,7 +77,7 @@ export default function BuybackBurnTracker() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: 'rgba(255,255,255,0.05)' }}>
 
         {/* LEFT — Fee Distribution */}
-        <div style={{ background: 'rgba(13,13,32,0.97)', padding: '32px 32px' }}>
+        <div style={{ background: 'rgba(17,17,19,0.97)', padding: '32px 32px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
             <Activity size={15} color="#ef4444" />
             <span style={{ fontSize: 11, fontWeight: 800, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Fee Distribution</span>
@@ -122,7 +122,7 @@ export default function BuybackBurnTracker() {
         </div>
 
         {/* RIGHT — Token Supply */}
-        <div style={{ background: 'rgba(13,13,32,0.97)', padding: '32px 32px', borderLeft: '1px solid rgba(255,255,255,0.05)' }}>
+        <div style={{ background: 'rgba(17,17,19,0.97)', padding: '32px 32px', borderLeft: '1px solid rgba(255,255,255,0.05)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
             <Flame size={15} color="#ef4444" />
             <span style={{ fontSize: 11, fontWeight: 800, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Token Supply — Live On-Chain</span>
@@ -168,7 +168,7 @@ export default function BuybackBurnTracker() {
       </div>
 
       {/* ── Footer ─────────────────────────────────────────────────────────── */}
-      <div style={{ background: 'rgba(13,13,32,0.97)', marginTop: 1, padding: '14px 32px', display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+      <div style={{ background: 'rgba(17,17,19,0.97)', marginTop: 1, padding: '14px 32px', display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
           <div style={{ width: 5, height: 5, borderRadius: '50%', background: DIST_LIVE ? '#10b981' : '#f59e0b', boxShadow: `0 0 6px ${DIST_LIVE ? '#10b981' : '#f59e0b'}` }} />
           <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>Fee Distributor: {DIST_LIVE ? 'Live' : 'Pending deployment'}</span>

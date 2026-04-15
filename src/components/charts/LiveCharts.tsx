@@ -15,7 +15,7 @@ const fmtUsd = (n: number) => {
 const DarkTooltip = ({ active, payload, label, prefix = '$', pricePrecision = 2 }: any) => {
   if (!active || !payload?.length) return null;
   return (
-    <div style={{ background: '#0d0d20', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '8px 12px', fontSize: 12 }}>
+    <div style={{ background: '#111113', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '8px 12px', fontSize: 12 }}>
       <div style={{ color: 'rgba(255,255,255,0.4)', marginBottom: 4 }}>{label}</div>
       {payload.map((p: any, i: number) => (
         <div key={i} style={{ color: p.color || '#a78bfa', fontWeight: 700 }}>
@@ -107,7 +107,7 @@ export function CategoryDonut({ data, size = 180 }: { data: any[]; size?: number
             <Cell key={i} fill={CAT_COLORS[entry.category] || '#374151'} stroke="transparent" />
           ))}
         </Pie>
-        <Tooltip formatter={(v: any) => fmtUsd(v)} contentStyle={{ background: '#0d0d20', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 11 }} />
+        <Tooltip formatter={(v: any) => fmtUsd(v)} contentStyle={{ background: '#111113', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 11 }} />
       </PieChart>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
         {top.slice(0, 6).map((c: any) => (
@@ -129,9 +129,9 @@ export function VolumeChart({ data, height = 60 }: { data: any[]; height?: numbe
   return (
     <ResponsiveContainer width="100%" height={height}>
       <BarChart data={data} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
-        <Bar dataKey="v" fill="rgba(124,58,237,0.3)" radius={[1, 1, 0, 0]}>
+        <Bar dataKey="v" fill="rgba(59,130,246,0.3)" radius={[1, 1, 0, 0]}>
           {data.map((_: any, i: number) => (
-            <Cell key={i} fill={`rgba(124,58,237,${0.2 + (data[i]?.v / max) * 0.5})`} />
+            <Cell key={i} fill={`rgba(59,130,246,${0.2 + (data[i]?.v / max) * 0.5})`} />
           ))}
         </Bar>
         <Tooltip content={<DarkTooltip prefix="$" pricePrecision={0} />} />
@@ -158,7 +158,7 @@ export function Sparkline({ prices, width = 60, height = 24, color }: { prices: 
 }
 
 // ── Confidence Radial ────────────────────────────────────────
-export function ConfidenceRing({ value, size = 56, color = '#7c3aed', label }: { value: number; size?: number; color?: string; label?: string }) {
+export function ConfidenceRing({ value, size = 56, color = '#3b82f6', label }: { value: number; size?: number; color?: string; label?: string }) {
   const r = (size / 2) - 5;
   const circ = 2 * Math.PI * r;
   const fill = circ * value;

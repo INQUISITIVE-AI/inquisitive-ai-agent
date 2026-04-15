@@ -46,11 +46,11 @@ export default function ProofOfReserves() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 1, marginBottom: 1, background: 'rgba(255,255,255,0.05)' }}>
         {([
           { l: 'Total AUM',      v: loading ? '…' : '$' + totalAum.toLocaleString('en-US', { maximumFractionDigits: 0 }),     c: '#10b981' },
-          { l: 'NAV per Token',  v: loading ? '…' : '$' + navPerTok.toFixed(6),                                                c: '#a78bfa' },
+          { l: 'NAV per Token',  v: loading ? '…' : '$' + navPerTok.toFixed(6),                                                c: '#93c5fd' },
           { l: 'FDV',            v: loading ? '…' : '$' + fdv.toLocaleString('en-US', { maximumFractionDigits: 0 }),           c: '#60a5fa' },
           { l: 'Backing Ratio',  v: loading ? '…' : '100%',                                                                    c: '#10b981' },
         ] as const).map(s => (
-          <div key={s.l} style={{ background: 'rgba(13,13,32,0.97)', padding: '22px 24px' }}>
+          <div key={s.l} style={{ background: 'rgba(17,17,19,0.97)', padding: '22px 24px' }}>
             <div style={{ fontSize: 20, fontWeight: 800, color: s.c, fontFamily: 'monospace', letterSpacing: '-0.5px', marginBottom: 5 }}>{s.v}</div>
             <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>{s.l}</div>
           </div>
@@ -61,7 +61,7 @@ export default function ProofOfReserves() {
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 1, background: 'rgba(255,255,255,0.05)' }}>
 
         {/* LEFT — Holdings Table */}
-        <div style={{ background: 'rgba(13,13,32,0.97)', padding: '28px 32px' }}>
+        <div style={{ background: 'rgba(17,17,19,0.97)', padding: '28px 32px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <Wallet size={15} color="#10b981" />
@@ -122,7 +122,7 @@ export default function ProofOfReserves() {
         </div>
 
         {/* RIGHT — Verification + Backing Info */}
-        <div style={{ background: 'rgba(13,13,32,0.97)', padding: '28px 28px', borderLeft: '1px solid rgba(255,255,255,0.05)' }}>
+        <div style={{ background: 'rgba(17,17,19,0.97)', padding: '28px 28px', borderLeft: '1px solid rgba(255,255,255,0.05)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
             <Shield size={15} color="#10b981" />
             <span style={{ fontSize: 11, fontWeight: 800, color: '#10b981', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Verification</span>
@@ -167,7 +167,7 @@ export default function ProofOfReserves() {
       </div>
 
       {/* ── Footer ─────────────────────────────────────────────────────────── */}
-      <div style={{ background: 'rgba(13,13,32,0.97)', marginTop: 1, padding: '14px 32px', display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+      <div style={{ background: 'rgba(17,17,19,0.97)', marginTop: 1, padding: '14px 32px', display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
           <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#10b981', boxShadow: '0 0 6px #10b981' }} />
           <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>Vault: Live</span>

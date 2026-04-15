@@ -194,11 +194,11 @@ export default function StakingDashboard() {
         {([
           { l: 'Total Staked',  v: statsLoading ? '…' : fmtInqai(globalStats?.totalStaked) + ' INQAI',              c: '#10b981' },
           { l: 'Current APY',   v: statsLoading ? '…' : (CONTRACT_LIVE ? (globalStats?.apy?.toFixed(1) ?? '0.0') : '—') + '%', c: '#10b981' },
-          { l: 'Stakers',       v: statsLoading ? '…' : (globalStats?.totalStakers || 0).toLocaleString(),          c: '#a78bfa' },
+          { l: 'Stakers',       v: statsLoading ? '…' : (globalStats?.totalStakers || 0).toLocaleString(),          c: '#93c5fd' },
           { l: 'Supply Staked', v: statsLoading ? '…' : (globalStats?.stakingRatio?.toFixed(1) ?? '0.0') + '%',     c: '#60a5fa' },
           { l: 'Rewards Paid',  v: statsLoading ? '…' : fmtInqai(globalStats?.totalRewards) + ' INQAI',             c: '#f59e0b' },
         ] as const).map(s => (
-          <div key={s.l} style={{ background: 'rgba(13,13,32,0.97)', padding: '22px 24px' }}>
+          <div key={s.l} style={{ background: 'rgba(17,17,19,0.97)', padding: '22px 24px' }}>
             <div style={{ fontSize: 20, fontWeight: 800, color: s.c, fontFamily: 'monospace', letterSpacing: '-0.5px', marginBottom: 5 }}>{s.v}</div>
             <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>{s.l}</div>
           </div>
@@ -209,7 +209,7 @@ export default function StakingDashboard() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: 'rgba(255,255,255,0.05)' }}>
 
         {/* LEFT — Stake Interface */}
-        <div style={{ background: 'rgba(13,13,32,0.97)', padding: '32px 32px' }}>
+        <div style={{ background: 'rgba(17,17,19,0.97)', padding: '32px 32px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
             <Lock size={15} color="#10b981" />
             <span style={{ fontSize: 11, fontWeight: 800, color: '#10b981', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Stake INQAI</span>
@@ -220,16 +220,16 @@ export default function StakingDashboard() {
               <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 14, lineHeight: 1.7, marginBottom: 24 }}>
                 Connect your wallet to stake INQAI and earn 60% of all protocol performance fees, distributed proportionally to all stakers.
               </p>
-              <button onClick={() => open()} style={{ width: '100%', padding: '14px', borderRadius: 8, cursor: 'pointer', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              <button onClick={() => open()} style={{ width: '100%', padding: '14px', borderRadius: 8, cursor: 'pointer', background: '#3b82f6', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                 <Wallet size={15} /> Connect Wallet
               </button>
             </>
           ) : !CONTRACT_LIVE ? (
             <>
-              <div style={{ background: 'rgba(124,58,237,0.07)', border: '1px solid rgba(124,58,237,0.18)', borderRadius: 8, padding: '18px 20px', marginBottom: 18 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: '#a78bfa', marginBottom: 6 }}>Staking Contract — Pending Deployment</div>
+              <div style={{ background: 'rgba(59,130,246,0.07)', border: '1px solid rgba(59,130,246,0.18)', borderRadius: 8, padding: '18px 20px', marginBottom: 18 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#93c5fd', marginBottom: 6 }}>Staking Contract — Pending Deployment</div>
                 <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.65 }}>
-                  The staking contract deploys at INQAI token launch. Set <code style={{ color: '#a78bfa', fontSize: 11 }}>NEXT_PUBLIC_STAKING_CONTRACT</code> once live to activate full staking UI.
+                  The staking contract deploys at INQAI token launch. Set <code style={{ color: '#93c5fd', fontSize: 11 }}>NEXT_PUBLIC_STAKING_CONTRACT</code> once live to activate full staking UI.
                 </div>
               </div>
               <div style={{ padding: '14px 16px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8 }}>
@@ -258,7 +258,7 @@ export default function StakingDashboard() {
               )}
 
               {needsApproval ? (
-                <button onClick={handleApprove} disabled={isTxPending} style={{ width: '100%', padding: '13px', borderRadius: 8, cursor: isTxPending ? 'not-allowed' : 'pointer', background: isTxPending ? 'rgba(124,58,237,0.35)' : 'linear-gradient(135deg,#7c3aed,#4f46e5)', border: 'none', color: '#fff', fontSize: 13, fontWeight: 700 }}>
+                <button onClick={handleApprove} disabled={isTxPending} style={{ width: '100%', padding: '13px', borderRadius: 8, cursor: isTxPending ? 'not-allowed' : 'pointer', background: isTxPending ? 'rgba(59,130,246,0.35)' : '#3b82f6', border: 'none', color: '#fff', fontSize: 13, fontWeight: 700 }}>
                   {txStep === 'approving' ? '⏳ Approving…' : '✓ Approve INQAI'}
                 </button>
               ) : (
@@ -279,7 +279,7 @@ export default function StakingDashboard() {
         </div>
 
         {/* RIGHT — Your Position */}
-        <div style={{ background: 'rgba(13,13,32,0.97)', padding: '32px 32px', borderLeft: '1px solid rgba(255,255,255,0.05)' }}>
+        <div style={{ background: 'rgba(17,17,19,0.97)', padding: '32px 32px', borderLeft: '1px solid rgba(255,255,255,0.05)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
             <Wallet size={15} color="#60a5fa" />
             <span style={{ fontSize: 11, fontWeight: 800, color: '#60a5fa', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Your Position</span>
@@ -319,7 +319,7 @@ export default function StakingDashboard() {
                 </div>
                 <div style={{ padding: '16px', background: 'rgba(167,139,250,0.06)', border: '1px solid rgba(167,139,250,0.12)', borderRadius: 8 }}>
                   <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 5 }}>Lifetime Rewards</div>
-                  <div style={{ fontSize: 22, fontWeight: 900, color: '#a78bfa', fontFamily: 'monospace' }}>{parseFloat(pendingReward).toLocaleString('en-US', { maximumFractionDigits: 4 })}</div>
+                  <div style={{ fontSize: 22, fontWeight: 900, color: '#93c5fd', fontFamily: 'monospace' }}>{parseFloat(pendingReward).toLocaleString('en-US', { maximumFractionDigits: 4 })}</div>
                   <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>INQAI auto-received</div>
                 </div>
               </div>
@@ -350,10 +350,10 @@ export default function StakingDashboard() {
       </div>
 
       {/* ── Rewards Calculator ─────────────────────────────────────────────── */}
-      <div style={{ background: 'rgba(13,13,32,0.97)', marginTop: 1, padding: '28px 32px' }}>
+      <div style={{ background: 'rgba(17,17,19,0.97)', marginTop: 1, padding: '28px 32px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-          <TrendingUp size={15} color="#a78bfa" />
-          <span style={{ fontSize: 11, fontWeight: 800, color: '#a78bfa', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Rewards Calculator</span>
+          <TrendingUp size={15} color="#93c5fd" />
+          <span style={{ fontSize: 11, fontWeight: 800, color: '#93c5fd', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Rewards Calculator</span>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 24, alignItems: 'start' }}>
           <div>
@@ -373,7 +373,7 @@ export default function StakingDashboard() {
       </div>
 
       {/* ── Footer ─────────────────────────────────────────────────────────── */}
-      <div style={{ background: 'rgba(13,13,32,0.97)', marginTop: 1, padding: '14px 32px', display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+      <div style={{ background: 'rgba(17,17,19,0.97)', marginTop: 1, padding: '14px 32px', display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
           <div style={{ width: 5, height: 5, borderRadius: '50%', background: CONTRACT_LIVE ? '#10b981' : '#f59e0b', boxShadow: `0 0 6px ${CONTRACT_LIVE ? '#10b981' : '#f59e0b'}` }} />
           <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>Staking: {CONTRACT_LIVE ? 'Live' : 'Pending deployment'}</span>

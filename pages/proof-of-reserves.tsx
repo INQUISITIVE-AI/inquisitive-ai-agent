@@ -11,7 +11,7 @@ export default function ProofOfReservesPage() {
         <title>Proof of Reserves | INQUISITIVE</title>
         <meta name="description" content="Verify INQAI token backing in real-time. Every token is backed by the 66-asset AI-managed portfolio vault. Full on-chain transparency." />
       </Head>
-      <div style={{ minHeight: '100vh', background: '#07071a', color: '#fff', fontFamily: 'system-ui,-apple-system,sans-serif' }}>
+      <div style={{ minHeight: '100vh', background: '#0a0a0b', color: '#f4f4f5', fontFamily: 'Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif' }}>
         <div className="mesh-bg" />
 
         {/* Nav */}

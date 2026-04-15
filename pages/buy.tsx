@@ -230,7 +230,7 @@ export default function BuyPage() {
         <meta name="description" content={`Acquire INQAI — proportional ownership in a professionally managed portfolio of 66 digital assets. $${INQAI_TOKEN.presalePrice} presale price. ${Number(process.env.NEXT_PUBLIC_TOTAL_SUPPLY||100000000).toLocaleString()} fixed supply. Self-custody.`} />
       </Head>
 
-      <div style={{ minHeight: '100vh', background: '#07071a', color: '#fff', fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif' }}>
+      <div style={{ minHeight: '100vh', background: '#0a0a0b', color: '#f4f4f5', fontFamily: 'Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif' }}>
         <div className="mesh-bg" />
 
         {/* NAV */}
@@ -244,26 +244,26 @@ export default function BuyPage() {
             <div>
               {/* Header */}
               <div style={{ marginBottom: 28 }}>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.25)', borderRadius: 100, padding: '5px 14px', marginBottom: 16, fontSize: 12, color: '#c4b5fd' }}>
-                  <span className="anim-blink" style={{ width: 5, height: 5, borderRadius: '50%', background: '#7c3aed', display: 'inline-block' }} />
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: 100, padding: '5px 14px', marginBottom: 16, fontSize: 12, color: '#c4b5fd' }}>
+                  <span className="anim-blink" style={{ width: 5, height: 5, borderRadius: '50%', background: '#3b82f6', display: 'inline-block' }} />
                   Presale Active
                 </div>
                 <h1 style={{ fontSize: 32, fontWeight: 900, marginBottom: 8, lineHeight: 1.1 }}>
                   Acquire <span className="grad-text">INQAI</span>
                 </h1>
                 <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.45)', lineHeight: 1.7 }}>
-                  Presale price <strong style={{ color: '#a78bfa' }}>${INQAI_TOKEN.presalePrice}</strong> per token. Target listing price <strong style={{ color: '#fff' }}>${INQAI_TOKEN.targetPrice}</strong>. Tokens delivered to your self-custody wallet.
+                  Presale price <strong style={{ color: '#93c5fd' }}>${INQAI_TOKEN.presalePrice}</strong> per token. Target listing price <strong style={{ color: '#fff' }}>${INQAI_TOKEN.targetPrice}</strong>. Tokens delivered to your self-custody wallet.
                 </p>
               </div>
 
 
               {/* Main card */}
-              <div style={{ background: 'rgba(13,13,32,0.85)', border: '1px solid rgba(124,58,237,0.2)', borderRadius: 22, padding: '28px 26px', backdropFilter: 'blur(20px)', boxShadow: '0 0 60px rgba(124,58,237,0.06)' }}>
+              <div style={{ background: 'rgba(17,17,19,0.85)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 22, padding: '28px 26px', backdropFilter: 'blur(20px)', boxShadow: '0 0 60px rgba(59,130,246,0.06)' }}>
 
                 {/* STEP 1 — Connect */}
                 {!isConnected && (
                   <div style={{ textAlign: 'center', padding: '32px 16px' }}>
-                    <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'center' }}><Lock size={44} color="#7c3aed" strokeWidth={1.5} /></div>
+                    <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'center' }}><Lock size={44} color="#3b82f6" strokeWidth={1.5} /></div>
                     <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Connect Your Wallet</h3>
                     <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', marginBottom: 26, lineHeight: 1.7 }}>
                       Connect your wallet to proceed. INQAI tokens are delivered directly to your wallet address. Non-custodial. No intermediary holds your assets.
@@ -271,9 +271,9 @@ export default function BuyPage() {
                     <OpenWalletButton
                       style={{
                         width: '100%', padding: '14px', borderRadius: 14, fontSize: 15, fontWeight: 800,
-                        background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff',
+                        background: '#3b82f6', color: '#fff',
                         border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer',
-                        boxShadow: '0 6px 24px rgba(124,58,237,0.45)', letterSpacing: '-0.2px',
+                        boxShadow: '0 6px 24px rgba(59,130,246,0.45)', letterSpacing: '-0.2px',
                       }}
                     >
                       Connect Wallet
@@ -308,12 +308,12 @@ export default function BuyPage() {
                             onClick={() => setPayToken(tok)}
                             style={{
                               padding: '10px 8px', borderRadius: 12, cursor: 'pointer', textAlign: 'center',
-                              border: `1px solid ${payToken === tok ? 'rgba(124,58,237,0.5)' : 'rgba(255,255,255,0.07)'}`,
-                              background: payToken === tok ? 'rgba(124,58,237,0.15)' : 'rgba(255,255,255,0.03)',
+                              border: `1px solid ${payToken === tok ? 'rgba(59,130,246,0.5)' : 'rgba(255,255,255,0.07)'}`,
+                              background: payToken === tok ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.03)',
                               transition: 'all 0.15s',
                             }}
                           >
-                            <div style={{ fontWeight: 800, fontSize: 13, color: payToken === tok ? '#a78bfa' : 'rgba(255,255,255,0.7)' }}>{tok}</div>
+                            <div style={{ fontWeight: 800, fontSize: 13, color: payToken === tok ? '#93c5fd' : 'rgba(255,255,255,0.7)' }}>{tok}</div>
                             <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>{balMap[tok]}</div>
                           </button>
                         ))}
@@ -335,7 +335,7 @@ export default function BuyPage() {
                             background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
                             color: '#fff', fontSize: 18, fontWeight: 700, outline: 'none', boxSizing: 'border-box',
                           }}
-                          onFocus={e => e.target.style.borderColor = 'rgba(124,58,237,0.5)'}
+                          onFocus={e => e.target.style.borderColor = 'rgba(59,130,246,0.5)'}
                           onBlur={e  => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
                         />
                       </div>
@@ -346,9 +346,9 @@ export default function BuyPage() {
                             onClick={() => setUsdAmount(p)}
                             style={{
                               flex: 1, padding: '5px 0', borderRadius: 8, fontSize: 11, cursor: 'pointer',
-                              background: usdAmount === p ? 'rgba(124,58,237,0.2)' : 'rgba(255,255,255,0.04)',
-                              border: `1px solid ${usdAmount === p ? 'rgba(124,58,237,0.4)' : 'rgba(255,255,255,0.07)'}`,
-                              color: usdAmount === p ? '#a78bfa' : 'rgba(255,255,255,0.4)',
+                              background: usdAmount === p ? 'rgba(59,130,246,0.2)' : 'rgba(255,255,255,0.04)',
+                              border: `1px solid ${usdAmount === p ? 'rgba(59,130,246,0.4)' : 'rgba(255,255,255,0.07)'}`,
+                              color: usdAmount === p ? '#93c5fd' : 'rgba(255,255,255,0.4)',
                               fontWeight: 600,
                             }}
                           >${p}</button>
@@ -357,10 +357,10 @@ export default function BuyPage() {
                     </div>
 
                     {/* Receive breakdown */}
-                    <div style={{ background: 'rgba(124,58,237,0.07)', border: '1px solid rgba(124,58,237,0.18)', borderRadius: 14, padding: '16px 18px', marginBottom: 22 }}>
+                    <div style={{ background: 'rgba(59,130,246,0.07)', border: '1px solid rgba(59,130,246,0.18)', borderRadius: 14, padding: '16px 18px', marginBottom: 22 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                         <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>You receive</span>
-                        <span style={{ fontSize: 22, fontWeight: 900, color: '#a78bfa', fontFamily: 'monospace' }}>
+                        <span style={{ fontSize: 22, fontWeight: 900, color: '#93c5fd', fontFamily: 'monospace' }}>
                           {inqaiAmt} <span style={{ fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.4)' }}>INQAI</span>
                         </span>
                       </div>
@@ -418,11 +418,11 @@ export default function BuyPage() {
                                 Awaiting payment
                               </div>
                             </div>
-                            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 4 }}>You receive: <strong style={{ color: '#a78bfa' }}>{inqaiAmt} INQAI</strong></div>
+                            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 4 }}>You receive: <strong style={{ color: '#93c5fd' }}>{inqaiAmt} INQAI</strong></div>
                             <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Unique {payToken} Payment Address</div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(0,0,0,0.3)', borderRadius: 10, padding: '10px 12px', marginBottom: 8 }}>
                               <span style={{ fontSize: 11, color: '#fff', fontFamily: 'monospace', wordBreak: 'break-all', flex: 1 }}>{chargeAddress || '…'}</span>
-                              <button onClick={() => { if (chargeAddress) { navigator.clipboard.writeText(chargeAddress); setCopied(true); setTimeout(() => setCopied(false), 2000); } }} style={{ background: copied ? 'rgba(16,185,129,0.2)' : 'rgba(124,58,237,0.3)', border: `1px solid ${copied ? 'rgba(16,185,129,0.4)' : 'rgba(124,58,237,0.4)'}`, borderRadius: 6, color: copied ? '#6ee7b7' : '#a78bfa', fontSize: 10, padding: '4px 8px', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s' }}>{copied ? '✓ Copied' : 'Copy'}</button>
+                              <button onClick={() => { if (chargeAddress) { navigator.clipboard.writeText(chargeAddress); setCopied(true); setTimeout(() => setCopied(false), 2000); } }} style={{ background: copied ? 'rgba(16,185,129,0.2)' : 'rgba(59,130,246,0.3)', border: `1px solid ${copied ? 'rgba(16,185,129,0.4)' : 'rgba(59,130,246,0.4)'}`, borderRadius: 6, color: copied ? '#6ee7b7' : '#93c5fd', fontSize: 10, padding: '4px 8px', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s' }}>{copied ? '✓ Copied' : 'Copy'}</button>
                             </div>
                             {chargeExpiry && (
                               <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', marginBottom: 8 }}>Address expires: {new Date(chargeExpiry).toLocaleTimeString()}</div>
@@ -442,9 +442,9 @@ export default function BuyPage() {
                       disabled={isBuying}
                       style={{
                         width: '100%', padding: '14px', borderRadius: 14, fontSize: 16, fontWeight: 800,
-                        background: isBuying ? 'rgba(124,58,237,0.25)' : 'linear-gradient(135deg,#7c3aed,#4f46e5)',
+                        background: isBuying ? 'rgba(59,130,246,0.25)' : '#3b82f6',
                         color: '#fff', border: '1px solid rgba(255,255,255,0.1)', cursor: isBuying ? 'wait' : 'pointer',
-                        boxShadow: isBuying ? 'none' : '0 6px 24px rgba(124,58,237,0.45)',
+                        boxShadow: isBuying ? 'none' : '0 6px 24px rgba(59,130,246,0.45)',
                         transition: 'all 0.2s', letterSpacing: '-0.2px',
                       }}
                     >
@@ -484,9 +484,9 @@ export default function BuyPage() {
                     </h3>
                     <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', marginBottom: 20 }}>
                       {txHash ? (
-                        <><strong style={{ color: '#a78bfa' }}>{inqaiAmt} INQAI</strong> delivered instantly to your wallet.</>
+                        <><strong style={{ color: '#93c5fd' }}>{inqaiAmt} INQAI</strong> delivered instantly to your wallet.</>
                       ) : (
-                        <><strong style={{ color: '#a78bfa' }}>{payToken}</strong> payment detected on-chain. <strong style={{ color: '#a78bfa' }}>{inqaiAmt} INQAI</strong> delivered instantly.</>
+                        <><strong style={{ color: '#93c5fd' }}>{payToken}</strong> payment detected on-chain. <strong style={{ color: '#93c5fd' }}>{inqaiAmt} INQAI</strong> delivered instantly.</>
                       )}
                     </p>
                     {txHash ? (
@@ -513,9 +513,9 @@ export default function BuyPage() {
                         onClick={() => router.push('/analytics')}
                         style={{
                           padding: '12px', borderRadius: 12, fontSize: 14, fontWeight: 700,
-                          background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff',
+                          background: '#3b82f6', color: '#fff',
                           border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer',
-                          boxShadow: '0 4px 16px rgba(124,58,237,0.35)',
+                          boxShadow: '0 4px 16px rgba(59,130,246,0.35)',
                         }}
                       >View Holdings →</button>
                       <button
@@ -536,10 +536,10 @@ export default function BuyPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
               {/* Tokenomics */}
-              <div style={{ background: 'rgba(13,13,32,0.8)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 20, padding: '24px', backdropFilter: 'blur(12px)' }}>
+              <div style={{ background: 'rgba(17,17,19,0.8)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 20, padding: '24px', backdropFilter: 'blur(12px)' }}>
                 <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 18, color: 'rgba(255,255,255,0.7)' }}>Token Specifications</h3>
                 {[
-                  { label: 'Presale Price',  val: `$${INQAI_TOKEN.presalePrice}`,                   col: '#a78bfa' },
+                  { label: 'Presale Price',  val: `$${INQAI_TOKEN.presalePrice}`,                   col: '#93c5fd' },
                   { label: 'Target Price',   val: `$${INQAI_TOKEN.targetPrice}`,                    col: '#fff'    },
                   { label: 'Target APY',     val: `${(INQAI_TOKEN.targetAPY * 100).toFixed(1)}%`,   col: '#10b981' },
                   { label: 'Tokens Sold',    val: salesData?.token?.tokensSold > 0 ? salesData.token.tokensSold.toLocaleString('en-US', {maximumFractionDigits:0}) : (salesData ? '0' : '—'), col: salesData?.token?.tokensSold > 0 ? '#10b981' : '#6b7280' },
@@ -565,7 +565,7 @@ export default function BuyPage() {
 
               {/* Live Purchase Feed */}
               {salesData?.recentPurchases?.length > 0 && (
-                <div style={{ background: 'rgba(13,13,32,0.8)', border: '1px solid rgba(16,185,129,0.15)', borderRadius: 20, padding: '20px 22px', backdropFilter: 'blur(12px)' }}>
+                <div style={{ background: 'rgba(17,17,19,0.8)', border: '1px solid rgba(16,185,129,0.15)', borderRadius: 20, padding: '20px 22px', backdropFilter: 'blur(12px)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
                     <span className="anim-blink" style={{ width: 6, height: 6, borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
                     <h3 style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.7)', margin: 0 }}>Recent On-Chain Purchases</h3>
@@ -574,7 +574,7 @@ export default function BuyPage() {
                   {salesData.recentPurchases.slice(0, 5).map((p: any, i: number) => (
                     <div key={p.hash || i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0', borderBottom: i < 4 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
                       <div>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: '#a78bfa' }}>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: '#93c5fd' }}>
                           {p.inqaiAmount > 0 ? `${p.inqaiAmount.toLocaleString('en-US', {maximumFractionDigits:0})} INQAI` : '—'}
                         </div>
                         <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 1 }}>
@@ -601,7 +601,7 @@ export default function BuyPage() {
               )}
 
               {/* Security + Audit Status */}
-              <div style={{ background: 'rgba(13,13,32,0.8)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 20, padding: '24px', backdropFilter: 'blur(12px)' }}>
+              <div style={{ background: 'rgba(17,17,19,0.8)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 20, padding: '24px', backdropFilter: 'blur(12px)' }}>
                 <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 18, color: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', gap: 8 }}>
                   <Shield size={14} color="#10b981" /> Security Architecture
                 </h3>
@@ -627,7 +627,7 @@ export default function BuyPage() {
               </div>
 
               {/* How it works */}
-              <div style={{ background: 'rgba(13,13,32,0.8)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 20, padding: '24px', backdropFilter: 'blur(12px)' }}>
+              <div style={{ background: 'rgba(17,17,19,0.8)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 20, padding: '24px', backdropFilter: 'blur(12px)' }}>
                 <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 18, color: 'rgba(255,255,255,0.7)' }}>How INQAI Works</h3>
                 {[
                   { n: '01', t: 'Acquire INQAI',              d: `Purchase at the $${INQAI_TOKEN.presalePrice} presale price. Tokens are delivered directly to your self-custody wallet. No intermediary.` },
@@ -636,7 +636,7 @@ export default function BuyPage() {
                   { n: '04', t: 'Compounding Value Accrual',   d: '60% of all protocol fees are deployed for open-market buybacks. 20% is permanently burned. Circulating supply contracts over time.' },
                 ].map(item => (
                   <div key={item.n} style={{ display: 'flex', gap: 12, marginBottom: 14 }}>
-                    <div style={{ width: 24, height: 24, borderRadius: 8, background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 900, color: '#a78bfa', flexShrink: 0, marginTop: 2 }}>{item.n}</div>
+                    <div style={{ width: 24, height: 24, borderRadius: 8, background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 900, color: '#93c5fd', flexShrink: 0, marginTop: 2 }}>{item.n}</div>
                     <div>
                       <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 3 }}>{item.t}</div>
                       <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6 }}>{item.d}</div>
@@ -646,7 +646,7 @@ export default function BuyPage() {
               </div>
 
               {/* Payment tokens */}
-              <div style={{ background: 'rgba(13,13,32,0.8)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 20, padding: '24px', backdropFilter: 'blur(12px)' }}>
+              <div style={{ background: 'rgba(17,17,19,0.8)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 20, padding: '24px', backdropFilter: 'blur(12px)' }}>
                 <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 16, color: 'rgba(255,255,255,0.7)' }}>Accepted Payment</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 8 }}>
                   {INQAI_TOKEN.paymentTokens.map(t => (

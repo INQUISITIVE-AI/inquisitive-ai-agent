@@ -113,7 +113,7 @@ Vault Contract: ${process.env.NEXT_PUBLIC_VAULT_ADDRESS || '0x721b0c1fcf28646d6e
         <meta name="robots" content="index, follow" />
       </Head>
 
-      <div style={{ minHeight: '100vh', background: '#07071a', color: '#fff', fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif' }}>
+      <div style={{ minHeight: '100vh', background: '#0a0a0b', color: '#fff', fontFamily: 'Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif' }}>
         <div className="mesh-bg" />
         
         {/* Header */}
@@ -133,7 +133,7 @@ Vault Contract: ${process.env.NEXT_PUBLIC_VAULT_ADDRESS || '0x721b0c1fcf28646d6e
           {/* Title */}
           <div style={{ textAlign: 'center', marginBottom: 48 }}>
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
-              <Scale size={40} color="#7c3aed" />
+              <Scale size={40} color="#3b82f6" />
             </div>
             <h1 style={{ fontSize: 32, fontWeight: 900, letterSpacing: '-0.5px', marginBottom: 8 }}>Terms of Service</h1>
             <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>Last Updated: April 14, 2026</p>

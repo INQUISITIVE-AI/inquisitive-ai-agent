@@ -70,7 +70,7 @@ export default function WithdrawPage() {
       <Head>
         <title>Withdraw ETH | INQUISITIVE</title>
       </Head>
-      <div style={{ minHeight: '100vh', background: '#07071a', color: '#fff', fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif' }}>
+      <div style={{ minHeight: '100vh', background: '#0a0a0b', color: '#f4f4f5', fontFamily: 'Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif' }}>
         <div className="mesh-bg" />
 
         {/* NAV */}
@@ -91,13 +91,13 @@ export default function WithdrawPage() {
             </div>
 
             {/* Main card */}
-            <div style={{ background: 'rgba(13,13,32,0.9)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 22, padding: '28px 26px', backdropFilter: 'blur(20px)' }}>
+            <div style={{ background: 'rgba(17,17,19,0.9)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 22, padding: '28px 26px', backdropFilter: 'blur(20px)' }}>
 
               {/* Connect prompt */}
               {!isConnected && (
                 <div style={{ textAlign: 'center', padding: '20px 0 8px' }}>
                   <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 20 }}>Connect the vault owner wallet to proceed.</p>
-                  <OpenWalletButton style={{ width: '100%', padding: '13px', borderRadius: 12, fontSize: 15, fontWeight: 800, background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', boxShadow: '0 4px 20px rgba(124,58,237,0.4)' }}>
+                  <OpenWalletButton style={{ width: '100%', padding: '13px', borderRadius: 12, fontSize: 15, fontWeight: 800, background: '#3b82f6', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', boxShadow: '0 4px 20px rgba(59,130,246,0.4)' }}>
                     Connect Wallet
                   </OpenWalletButton>
                 </div>

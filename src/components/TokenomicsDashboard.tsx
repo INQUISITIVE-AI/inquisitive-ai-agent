@@ -5,7 +5,7 @@ import { Coins, TrendingUp, Users, Lock, Flame, Award } from 'lucide-react';
 // ── Tokenomics Dashboard Component ─────────────────────────────────────────
 // Complete tokenomics visualization with real-time data
 
-const COLORS = ['#7c3aed', '#10b981', '#ef4444', '#f59e0b', '#6366f1', '#ec4899'];
+const COLORS = ['#3b82f6', '#10b981', '#ef4444', '#f59e0b', '#6366f1', '#ec4899'];
 
 interface TokenomicsData {
   totalSupply: number;
@@ -63,8 +63,8 @@ export default function TokenomicsDashboard() {
 
   return (
     <div style={{
-      background: 'linear-gradient(135deg, rgba(13,13,32,0.95) 0%, rgba(24,24,48,0.9) 100%)',
-      border: '1px solid rgba(124,58,237,0.3)',
+      background: 'linear-gradient(135deg, rgba(17,17,19,0.95) 0%, rgba(24,24,48,0.9) 100%)',
+      border: '1px solid rgba(59,130,246,0.3)',
       borderRadius: 24,
       padding: 32,
       backdropFilter: 'blur(20px)',
@@ -77,7 +77,7 @@ export default function TokenomicsDashboard() {
           display: 'inline-flex',
           alignItems: 'center',
           gap: 12,
-          background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
+          background: 'linear-gradient(135deg, #3b82f6 0%, #a855f7 100%)',
           padding: '12px 24px',
           borderRadius: 50,
           marginBottom: 16
@@ -109,7 +109,7 @@ export default function TokenomicsDashboard() {
           borderRadius: 16,
           textAlign: 'center'
         }}>
-          <Coins size={24} color="#7c3aed" style={{ marginBottom: 12 }} />
+          <Coins size={24} color="#3b82f6" style={{ marginBottom: 12 }} />
           <div style={{ fontSize: 28, fontWeight: 800, color: 'white' }}>
             {data.totalSupply.toLocaleString()}
           </div>
@@ -189,8 +189,8 @@ export default function TokenomicsDashboard() {
               </Pie>
               <Tooltip
                 contentStyle={{
-                  backgroundColor: 'rgba(13,13,32,0.95)',
-                  border: '1px solid rgba(124,58,237,0.3)',
+                  backgroundColor: 'rgba(17,17,19,0.95)',
+                  border: '1px solid rgba(59,130,246,0.3)',
                   borderRadius: 8,
                   color: 'white'
                 }}
@@ -221,7 +221,7 @@ export default function TokenomicsDashboard() {
               <YAxis stroke="rgba(255,255,255,0.5)" />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: 'rgba(13,13,32,0.95)',
+                  backgroundColor: 'rgba(17,17,19,0.95)',
                   border: '1px solid rgba(239,68,68,0.3)',
                   borderRadius: 8,
                   color: 'white'

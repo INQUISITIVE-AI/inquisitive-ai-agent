@@ -33,7 +33,7 @@ const sigStyle = (s: string) => {
     YIELD:    {bg:'rgba(132,204,22,0.12)', col:'#a3e635',br:'rgba(132,204,22,0.3)'},
     BORROW:   {bg:'rgba(6,182,212,0.12)',  col:'#22d3ee',br:'rgba(6,182,212,0.3)'},
     SWAP:     {bg:'rgba(59,130,246,0.12)', col:'#60a5fa',br:'rgba(59,130,246,0.3)'},
-    EARN:     {bg:'rgba(167,139,250,0.12)',col:'#a78bfa',br:'rgba(167,139,250,0.3)'},
+    EARN:     {bg:'rgba(147,197,253,0.12)',col:'#93c5fd',br:'rgba(147,197,253,0.3)'},
     LOOP:     {bg:'rgba(251,146,60,0.12)', col:'#fb923c',br:'rgba(251,146,60,0.3)'},
     MULTIPLY: {bg:'rgba(236,72,153,0.12)', col:'#f472b6',br:'rgba(236,72,153,0.3)'},
     REWARDS:  {bg:'rgba(234,179,8,0.12)',  col:'#facc15',br:'rgba(234,179,8,0.3)'},
@@ -44,10 +44,10 @@ const sigStyle = (s: string) => {
 };
 const catCol = (c: string) => {
   const m: Record<string,string> = {
-    major:'#3b82f6',defi:'#7c3aed',ai:'#ec4899',l2:'#06b6d4',
+    major:'#3b82f6',defi:'#3b82f6',ai:'#ec4899',l2:'#06b6d4',
     stablecoin:'#10b981',rwa:'#f97316','liquid-stake':'#f59e0b',
     interop:'#6366f1',privacy:'#6b7280',payment:'#84cc16',
-    storage:'#0891b2',oracle:'#a78bfa',institutional:'#8b5cf6',
+    storage:'#0891b2',oracle:'#93c5fd',institutional:'#8b5cf6',
     gaming:'#f472b6',iot:'#34d399',data:'#60a5fa',
   };
   return m[c] || '#6b7280';
@@ -148,7 +148,7 @@ export default function TokenPage() {
   return (
     <>
       <Head><title>Portfolio — 66 Backed Assets | INQUISITIVE</title></Head>
-      <div style={{minHeight:'100vh',background:'#07071a',color:'#fff',fontFamily:'-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif'}}>
+      <div style={{minHeight:'100vh',background:'#0a0a0b',color:'#fff',fontFamily:'Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif'}}>
         <div className="mesh-bg" />
 
         {/* NAV */}
@@ -164,14 +164,14 @@ export default function TokenPage() {
           <div style={{maxWidth:1400,margin:'0 auto'}}>
             <div style={{display:'grid',gridTemplateColumns:'repeat(6,1fr)',gap:8,marginBottom:20}}>
               {[
-                {label:'Total Assets',    val:`${assets.length}/66`,  col:'#a78bfa'},
+                {label:'Total Assets',    val:`${assets.length}/66`,  col:'#93c5fd'},
                 {label:'Total MCap',      val:fmtUsd(totalMCap),     col:'#60a5fa'},
                 {label:'Avg 24h Change',  val:pct(avgChange),         col:grc(avgChange)},
                 {label:'AI Buy Positions', val:buys+' assets',         col:'#34d399'},
                 {label:'Stakeable',       val:stakeable+' assets',    col:'#f59e0b'},
                 {label:'Best APY',        val:'27% ENA',              col:'#10b981'},
               ].map(s=>(
-                <div key={s.label} style={{background:'rgba(13,13,32,0.8)',border:'1px solid rgba(255,255,255,0.06)',borderRadius:12,padding:'12px 16px',backdropFilter:'blur(12px)'}}>
+                <div key={s.label} style={{background:'rgba(17,17,19,0.8)',border:'1px solid rgba(255,255,255,0.06)',borderRadius:12,padding:'12px 16px',backdropFilter:'blur(12px)'}}>
                   <div style={{fontSize:16,fontWeight:800,color:s.col,fontFamily:'monospace'}}>{s.val}</div>
                   <div style={{fontSize:10,color:'rgba(255,255,255,0.35)',marginTop:3,textTransform:'uppercase',letterSpacing:'0.5px'}}>{s.label}</div>
                 </div>
@@ -191,7 +191,7 @@ export default function TokenPage() {
                 style={{width:'100%',padding:'8px 12px',borderRadius:9,background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.08)',color:'#fff',fontSize:12,outline:'none',boxSizing:'border-box',marginBottom:8}} />
               <div style={{display:'flex',gap:4,overflowX:'auto',marginBottom:6}}>
                 {cats.slice(0,8).map(c=>(
-                  <button key={c} onClick={()=>setCatF(c)} style={{padding:'4px 9px',borderRadius:6,background:catF===c?'rgba(124,58,237,0.25)':'rgba(255,255,255,0.04)',border:`1px solid ${catF===c?'rgba(124,58,237,0.4)':'transparent'}`,color:catF===c?'#a78bfa':'rgba(255,255,255,0.4)',fontSize:10,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap',transition:'all 0.15s',textTransform:'capitalize'}}>{c}</button>
+                  <button key={c} onClick={()=>setCatF(c)} style={{padding:'4px 9px',borderRadius:6,background:catF===c?'rgba(59,130,246,0.25)':'rgba(255,255,255,0.04)',border:`1px solid ${catF===c?'rgba(59,130,246,0.4)':'transparent'}`,color:catF===c?'#93c5fd':'rgba(255,255,255,0.4)',fontSize:10,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap',transition:'all 0.15s',textTransform:'capitalize'}}>{c}</button>
                 ))}
               </div>
               <div style={{display:'flex',gap:3}}>
@@ -205,7 +205,7 @@ export default function TokenPage() {
             <div style={{flex:1,overflowY:'auto'}}>
               {loading ? (
                 <div style={{textAlign:'center',padding:40,color:'rgba(255,255,255,0.3)'}}>
-                  <div className="animate-spin" style={{width:24,height:24,border:'2px solid #7c3aed',borderTopColor:'transparent',borderRadius:'50%',margin:'0 auto 12px'}} />
+                  <div className="animate-spin" style={{width:24,height:24,border:'2px solid #3b82f6',borderTopColor:'transparent',borderRadius:'50%',margin:'0 auto 12px'}} />
                   <div style={{fontSize:12}}>Loading live prices...</div>
                 </div>
               ) : sorted.map(asset => {
@@ -214,8 +214,8 @@ export default function TokenPage() {
                 const isSelected = selected?.symbol === asset.symbol;
                 return (
                   <div key={asset.symbol} onClick={()=>selectAsset(asset)}
-                    style={{padding:'10px 14px',borderBottom:'1px solid rgba(255,255,255,0.03)',cursor:'pointer',transition:'all 0.15s',borderLeft:`3px solid ${isSelected?catCol(asset.category):'transparent'}`,background:isSelected?`rgba(${catCol(asset.category).slice(1).match(/.{2}/g)?.map(h=>parseInt(h,16)).join(',')||'124,58,237'},0.08)`:'transparent'}}
-                    onMouseEnter={e=>{if(!isSelected){e.currentTarget.style.background='rgba(124,58,237,0.05)';e.currentTarget.style.borderLeftColor='rgba(124,58,237,0.3)';}}}
+                    style={{padding:'10px 14px',borderBottom:'1px solid rgba(255,255,255,0.03)',cursor:'pointer',transition:'all 0.15s',borderLeft:`3px solid ${isSelected?catCol(asset.category):'transparent'}`,background:isSelected?`rgba(${catCol(asset.category).slice(1).match(/.{2}/g)?.map(h=>parseInt(h,16)).join(',')||'59,130,246'},0.08)`:'transparent'}}
+                    onMouseEnter={e=>{if(!isSelected){e.currentTarget.style.background='rgba(59,130,246,0.05)';e.currentTarget.style.borderLeftColor='rgba(59,130,246,0.3)';}}}
                     onMouseLeave={e=>{if(!isSelected){e.currentTarget.style.background='transparent';e.currentTarget.style.borderLeftColor='transparent';}}}>
                     <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:4}}>
                       <div style={{display:'flex',alignItems:'center',gap:8}}>
@@ -259,7 +259,7 @@ export default function TokenPage() {
                     const catMCap   = catAssets.reduce((s,a)=>s+(a.marketCap||0),0);
                     const catBuys   = catAssets.filter(a=>a.signal==='BUY').length;
                     return (
-                      <div key={cat} onClick={()=>setCatF(cat)} style={{background:'rgba(13,13,32,0.8)',border:`1px solid ${catCol(cat)}22`,borderRadius:12,padding:'14px 16px',cursor:'pointer',transition:'all 0.2s',backdropFilter:'blur(12px)'}}
+                      <div key={cat} onClick={()=>setCatF(cat)} style={{background:'rgba(17,17,19,0.8)',border:`1px solid ${catCol(cat)}22`,borderRadius:12,padding:'14px 16px',cursor:'pointer',transition:'all 0.2s',backdropFilter:'blur(12px)'}}
                         onMouseEnter={e=>{e.currentTarget.style.borderColor=catCol(cat)+'55';e.currentTarget.style.transform='translateY(-2px)';}}
                         onMouseLeave={e=>{e.currentTarget.style.borderColor=catCol(cat)+'22';e.currentTarget.style.transform='none';}}>
                         <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
@@ -279,8 +279,8 @@ export default function TokenPage() {
                   {assets.map(a=>{
                     const ss = sigStyle(a.signal||'HOLD');
                     return (
-                      <div key={a.symbol} onClick={()=>selectAsset(a)} style={{background:'rgba(13,13,32,0.8)',border:'1px solid rgba(255,255,255,0.05)',borderRadius:12,padding:'12px 14px',cursor:'pointer',transition:'all 0.15s',backdropFilter:'blur(12px)'}}
-                        onMouseEnter={e=>{e.currentTarget.style.borderColor='rgba(124,58,237,0.3)';e.currentTarget.style.transform='translateY(-1px)';}}
+                      <div key={a.symbol} onClick={()=>selectAsset(a)} style={{background:'rgba(17,17,19,0.8)',border:'1px solid rgba(255,255,255,0.05)',borderRadius:12,padding:'12px 14px',cursor:'pointer',transition:'all 0.15s',backdropFilter:'blur(12px)'}}
+                        onMouseEnter={e=>{e.currentTarget.style.borderColor='rgba(59,130,246,0.3)';e.currentTarget.style.transform='translateY(-1px)';}}
                         onMouseLeave={e=>{e.currentTarget.style.borderColor='rgba(255,255,255,0.05)';e.currentTarget.style.transform='none';}}>
                         <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
                           <span style={{fontWeight:800,fontSize:14}}>{a.symbol}</span>
@@ -351,7 +351,7 @@ export default function TokenPage() {
                   {/* Tab bar */}
                   <div style={{display:'flex',gap:0,marginTop:-4}}>
                     {(['analysis','yield','details'] as const).map(t=>(
-                      <button key={t} onClick={()=>setTab(t)} style={{padding:'10px 20px',background:'transparent',border:'none',borderBottom:`2px solid ${tab===t?'#7c3aed':'transparent'}`,color:tab===t?'#a78bfa':'rgba(255,255,255,0.4)',fontSize:13,fontWeight:600,cursor:'pointer',textTransform:'capitalize',transition:'all 0.15s'}}>{t}</button>
+                      <button key={t} onClick={()=>setTab(t)} style={{padding:'10px 20px',background:'transparent',border:'none',borderBottom:`2px solid ${tab===t?'#3b82f6':'transparent'}`,color:tab===t?'#93c5fd':'rgba(255,255,255,0.4)',fontSize:13,fontWeight:600,cursor:'pointer',textTransform:'capitalize',transition:'all 0.15s'}}>{t}</button>
                     ))}
                   </div>
                 </div>
@@ -361,7 +361,7 @@ export default function TokenPage() {
                   {tab === 'analysis' && (
                     <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
                       {/* AI Score */}
-                      <div style={{background:'rgba(13,13,32,0.8)',border:'1px solid rgba(255,255,255,0.06)',borderRadius:16,padding:20,backdropFilter:'blur(12px)'}}>
+                      <div style={{background:'rgba(17,17,19,0.8)',border:'1px solid rgba(255,255,255,0.06)',borderRadius:16,padding:20,backdropFilter:'blur(12px)'}}>
                         <h3 style={{fontSize:13,fontWeight:700,marginBottom:16,color:'rgba(255,255,255,0.7)',textTransform:'uppercase',letterSpacing:'0.5px'}}>AI Research Scores</h3>
                         {analysis?.signal ? (
                           <>
@@ -381,10 +381,10 @@ export default function TokenPage() {
                                 </div>
                               </div>
                             ))}
-                            <div style={{padding:'12px 14px',background:'rgba(124,58,237,0.08)',border:'1px solid rgba(124,58,237,0.18)',borderRadius:10,marginTop:4,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                            <div style={{padding:'12px 14px',background:'rgba(59,130,246,0.08)',border:'1px solid rgba(59,130,246,0.18)',borderRadius:10,marginTop:4,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                               <div>
                                 <div style={{fontSize:10,color:'rgba(255,255,255,0.4)',textTransform:'uppercase',letterSpacing:'0.5px'}}>Final Score</div>
-                                <div style={{fontSize:22,fontWeight:900,color:'#a78bfa',fontFamily:'monospace'}}>{(analysis.signal.finalScore*100).toFixed(1)}%</div>
+                                <div style={{fontSize:22,fontWeight:900,color:'#93c5fd',fontFamily:'monospace'}}>{(analysis.signal.finalScore*100).toFixed(1)}%</div>
                               </div>
                               <div style={{...sigStyle(analysis.signal.action),padding:'6px 14px',borderRadius:8,fontWeight:800,fontSize:14,border:`1px solid ${sigStyle(analysis.signal.action).br}`}}>
                                 {analysis.signal.action}
@@ -393,14 +393,14 @@ export default function TokenPage() {
                           </>
                         ) : (
                           <div style={{textAlign:'center',padding:20,color:'rgba(255,255,255,0.3)'}}>
-                            <div className="animate-spin" style={{width:20,height:20,border:'2px solid #7c3aed',borderTopColor:'transparent',borderRadius:'50%',margin:'0 auto 8px'}} />
+                            <div className="animate-spin" style={{width:20,height:20,border:'2px solid #3b82f6',borderTopColor:'transparent',borderRadius:'50%',margin:'0 auto 8px'}} />
                             Loading analysis...
                           </div>
                         )}
                       </div>
 
                       {/* Risk Gate */}
-                      <div style={{background:'rgba(13,13,32,0.8)',border:'1px solid rgba(255,255,255,0.06)',borderRadius:16,padding:20,backdropFilter:'blur(12px)'}}>
+                      <div style={{background:'rgba(17,17,19,0.8)',border:'1px solid rgba(255,255,255,0.06)',borderRadius:16,padding:20,backdropFilter:'blur(12px)'}}>
                         <h3 style={{fontSize:13,fontWeight:700,marginBottom:16,color:'rgba(255,255,255,0.7)',textTransform:'uppercase',letterSpacing:'0.5px'}}>Risk Gate</h3>
                         {analysis?.signal?.riskGate ? (
                           <>
@@ -416,14 +416,14 @@ export default function TokenPage() {
                             <div style={{display:'flex',flexDirection:'column',gap:6}}>
                               {(analysis.signal.reasons||[]).slice(0,5).map((r:string,i:number)=>(
                                 <div key={i} style={{display:'flex',gap:8,fontSize:11,color:'rgba(255,255,255,0.45)',lineHeight:1.5}}>
-                                  <span style={{color:'#7c3aed',flexShrink:0,marginTop:1}}>→</span>
+                                  <span style={{color:'#3b82f6',flexShrink:0,marginTop:1}}>→</span>
                                   <span>{r}</span>
                                 </div>
                               ))}
                             </div>
                             {analysis.signal.riskGate.pass && (
-                              <div style={{marginTop:14,padding:'10px 12px',background:'rgba(124,58,237,0.07)',border:'1px solid rgba(124,58,237,0.15)',borderRadius:8,fontSize:11,color:'rgba(255,255,255,0.5)',lineHeight:1.6}}>
-                                <strong style={{color:'#a78bfa'}}>Entry plan:</strong> Stop @ {((analysis.signal.riskGate?.stopLoss||0)).toFixed?.(4)||'—'} · Target @ {(analysis.signal.riskGate?.target||0).toFixed?.(4)||'—'} · Max 2% portfolio risk
+                              <div style={{marginTop:14,padding:'10px 12px',background:'rgba(59,130,246,0.07)',border:'1px solid rgba(59,130,246,0.15)',borderRadius:8,fontSize:11,color:'rgba(255,255,255,0.5)',lineHeight:1.6}}>
+                                <strong style={{color:'#93c5fd'}}>Entry plan:</strong> Stop @ {((analysis.signal.riskGate?.stopLoss||0)).toFixed?.(4)||'—'} · Target @ {(analysis.signal.riskGate?.target||0).toFixed?.(4)||'—'} · Max 2% portfolio risk
                               </div>
                             )}
                           </>
@@ -431,7 +431,7 @@ export default function TokenPage() {
                       </div>
 
                       {/* Macro Context */}
-                      <div style={{background:'rgba(13,13,32,0.8)',border:'1px solid rgba(255,255,255,0.06)',borderRadius:16,padding:20,backdropFilter:'blur(12px)'}}>
+                      <div style={{background:'rgba(17,17,19,0.8)',border:'1px solid rgba(255,255,255,0.06)',borderRadius:16,padding:20,backdropFilter:'blur(12px)'}}>
                         <h3 style={{fontSize:13,fontWeight:700,marginBottom:14,color:'rgba(255,255,255,0.7)',textTransform:'uppercase',letterSpacing:'0.5px'}}>Macro Context</h3>
                         {analysis?.macro ? (
                           <>
@@ -440,14 +440,14 @@ export default function TokenPage() {
                                 <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',marginBottom:4}}>Regime</div>
                                 <div style={{fontSize:18,fontWeight:900,color:analysis.macro.regime==='BULL'?'#34d399':analysis.macro.regime==='BEAR'?'#f87171':'#fbbf24'}}>{analysis.macro.regime}</div>
                               </div>
-                              <div style={{padding:'10px 14px',background:'rgba(124,58,237,0.08)',border:'1px solid rgba(124,58,237,0.15)',borderRadius:10,flex:1,textAlign:'center'}}>
+                              <div style={{padding:'10px 14px',background:'rgba(59,130,246,0.08)',border:'1px solid rgba(59,130,246,0.15)',borderRadius:10,flex:1,textAlign:'center'}}>
                                 <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',marginBottom:4}}>Risk Score</div>
-                                <div style={{fontSize:18,fontWeight:900,color:'#a78bfa',fontFamily:'monospace'}}>{((analysis.macro.riskScore||0.5)*100).toFixed(0)}%</div>
+                                <div style={{fontSize:18,fontWeight:900,color:'#93c5fd',fontFamily:'monospace'}}>{((analysis.macro.riskScore||0.5)*100).toFixed(0)}%</div>
                               </div>
                             </div>
                             {(analysis.macro.signals||[]).slice(0,3).map((s:any,i:number)=>(
                               <div key={i} style={{padding:'7px 10px',marginBottom:4,background:'rgba(255,255,255,0.04)',borderRadius:8,fontSize:11,color:'rgba(255,255,255,0.5)'}}>
-                                <strong style={{color:'#a78bfa'}}>{s.signal}:</strong> {s.desc}
+                                <strong style={{color:'#93c5fd'}}>{s.signal}:</strong> {s.desc}
                               </div>
                             ))}
                           </>
@@ -456,7 +456,7 @@ export default function TokenPage() {
 
                       {/* Fear & Greed */}
                       {analysis?.fearGreed && (
-                        <div style={{background:'rgba(13,13,32,0.8)',border:'1px solid rgba(255,255,255,0.06)',borderRadius:16,padding:20,backdropFilter:'blur(12px)'}}>
+                        <div style={{background:'rgba(17,17,19,0.8)',border:'1px solid rgba(255,255,255,0.06)',borderRadius:16,padding:20,backdropFilter:'blur(12px)'}}>
                           <h3 style={{fontSize:13,fontWeight:700,marginBottom:14,color:'rgba(255,255,255,0.7)',textTransform:'uppercase',letterSpacing:'0.5px'}}>Fear & Greed</h3>
                           <div style={{textAlign:'center',padding:'10px 0'}}>
                             <div style={{fontSize:60,fontWeight:900,fontFamily:'monospace',color:analysis.fearGreed.value<25?'#ef4444':analysis.fearGreed.value<45?'#f97316':analysis.fearGreed.value<55?'#f59e0b':analysis.fearGreed.value<75?'#84cc16':'#10b981'}}>{analysis.fearGreed.value}</div>
@@ -483,9 +483,9 @@ export default function TokenPage() {
                           lendApy && {type:'LEND',icon:'DollarSign',proto:'Aave V3 / Compound',apy:lendApy,risk:'LOW',col:'#f59e0b',desc:`Supply to lending pool at ${lendApy}% APY. Withdraw anytime.`},
                           selected.yieldable && {type:'YIELD',icon:'Wheat',proto:'Uniswap V3 LP',apy:12.0,risk:'MEDIUM',col:'#84cc16',desc:`Provide liquidity to earn swap fees + rewards. IL risk.`},
                           selected.lendable && {type:'LOOP',icon:'Infinity',proto:'Aave Recursive',apy:(stk?.apy||lendApy||4)*2.8,risk:'MEDIUM',col:'#8b5cf6',desc:`Recursive lend-borrow for amplified yield. Max 5 loops.`},
-                          {type:'EARN',icon:'Gem',proto:'Best Auto-Select',apy:Math.max(stk?.apy||0,lendApy||0,selected.yieldable?12:0)||3,risk:'LOW',col:'#a78bfa',desc:'Auto-selects best risk-adjusted APY across all protocols.'},
+                          {type:'EARN',icon:'Gem',proto:'Best Auto-Select',apy:Math.max(stk?.apy||0,lendApy||0,selected.yieldable?12:0)||3,risk:'LOW',col:'#93c5fd',desc:'Auto-selects best risk-adjusted APY across all protocols.'},
                         ].filter(Boolean).map((y:any,i)=>(
-                          <div key={i} style={{background:'rgba(13,13,32,0.8)',border:`1px solid ${y.col}22`,borderRadius:16,padding:18,backdropFilter:'blur(12px)'}}>
+                          <div key={i} style={{background:'rgba(17,17,19,0.8)',border:`1px solid ${y.col}22`,borderRadius:16,padding:18,backdropFilter:'blur(12px)'}}>
                             <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:10}}>
                               {y.icon === 'Lock' && <Lock size={24} color={y.col} />}
                               {y.icon === 'DollarSign' && <DollarSign size={24} color={y.col} />}
@@ -513,7 +513,7 @@ export default function TokenPage() {
                           </div>
                         ))}
                         {!selected.yieldable && !selected.stakeable && !selected.lendable && (
-                          <div style={{background:'rgba(13,13,32,0.8)',border:'1px solid rgba(255,255,255,0.06)',borderRadius:16,padding:20,color:'rgba(255,255,255,0.4)',fontSize:13}}>
+                          <div style={{background:'rgba(17,17,19,0.8)',border:'1px solid rgba(255,255,255,0.06)',borderRadius:16,padding:20,color:'rgba(255,255,255,0.4)',fontSize:13}}>
                             {selected.symbol} does not support yield strategies. Consider BUY for price exposure.
                           </div>
                         )}
@@ -523,7 +523,7 @@ export default function TokenPage() {
 
                   {tab === 'details' && (
                     <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
-                      <div style={{background:'rgba(13,13,32,0.8)',border:'1px solid rgba(255,255,255,0.06)',borderRadius:16,padding:20,backdropFilter:'blur(12px)'}}>
+                      <div style={{background:'rgba(17,17,19,0.8)',border:'1px solid rgba(255,255,255,0.06)',borderRadius:16,padding:20,backdropFilter:'blur(12px)'}}>
                         <h3 style={{fontSize:13,fontWeight:700,marginBottom:14,color:'rgba(255,255,255,0.6)',textTransform:'uppercase',letterSpacing:'0.5px'}}>Asset Details</h3>
                         {[
                           ['Symbol', selected.symbol],
@@ -547,7 +547,7 @@ export default function TokenPage() {
                           </div>
                         ))}
                       </div>
-                      <div style={{background:'rgba(13,13,32,0.8)',border:'1px solid rgba(255,255,255,0.06)',borderRadius:16,padding:20,backdropFilter:'blur(12px)'}}>
+                      <div style={{background:'rgba(17,17,19,0.8)',border:'1px solid rgba(255,255,255,0.06)',borderRadius:16,padding:20,backdropFilter:'blur(12px)'}}>
                         <h3 style={{fontSize:13,fontWeight:700,marginBottom:14,color:'rgba(255,255,255,0.6)',textTransform:'uppercase',letterSpacing:'0.5px'}}>AI Signal Summary</h3>
                         {analysis?.signal ? (
                           <>
@@ -580,7 +580,7 @@ export default function TokenPage() {
 
         {/* Toast */}
         {toast && (
-          <div style={{position:'fixed',bottom:24,right:24,zIndex:300,background:'#0d0d20',border:`1px solid ${toast.success?'rgba(16,185,129,0.3)':'rgba(239,68,68,0.3)'}`,borderRadius:14,padding:'16px 20px',maxWidth:340,boxShadow:'0 8px 40px rgba(0,0,0,0.5)',backdropFilter:'blur(16px)'}}>
+          <div style={{position:'fixed',bottom:24,right:24,zIndex:300,background:'#111113',border:`1px solid ${toast.success?'rgba(16,185,129,0.3)':'rgba(239,68,68,0.3)'}`,borderRadius:14,padding:'16px 20px',maxWidth:340,boxShadow:'0 8px 40px rgba(0,0,0,0.5)',backdropFilter:'blur(16px)'}}>
             <div style={{display:'flex',gap:12,alignItems:'flex-start'}}>
               <span style={{fontSize:18,color:toast.success?'#34d399':'#f87171'}}>{toast.success?'✓':'✗'}</span>
               <div style={{flex:1}}>

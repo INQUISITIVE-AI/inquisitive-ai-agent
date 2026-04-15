@@ -11,7 +11,7 @@ export default function ReferralPage() {
         <title>Referral Program | INQUISITIVE</title>
         <meta name="description" content="Earn 5% commission on every referral + 5% bonus for the person you refer. Share your link and earn INQAI tokens." />
       </Head>
-      <div style={{ minHeight: '100vh', background: '#07071a', color: '#fff', fontFamily: 'system-ui,-apple-system,sans-serif' }}>
+      <div style={{ minHeight: '100vh', background: '#0a0a0b', color: '#f4f4f5', fontFamily: 'Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif' }}>
         <div className="mesh-bg" />
 
         {/* Nav */}

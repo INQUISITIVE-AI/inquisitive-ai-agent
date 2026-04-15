@@ -14,7 +14,7 @@ export default function handler(_req: NextRequest) {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          background: '#07071a',
+          background: '#0a0a0b',
           position: 'relative',
           overflow: 'hidden',
         }}
@@ -23,13 +23,13 @@ export default function handler(_req: NextRequest) {
         <div style={{
           position: 'absolute', top: -120, left: -80,
           width: 700, height: 600,
-          background: 'radial-gradient(ellipse, rgba(124,58,237,0.22) 0%, transparent 70%)',
+          background: 'radial-gradient(ellipse, rgba(59,130,246,0.18) 0%, transparent 70%)',
           display: 'flex',
         }} />
         <div style={{
           position: 'absolute', bottom: -100, right: -60,
           width: 600, height: 500,
-          background: 'radial-gradient(ellipse, rgba(79,70,229,0.16) 0%, transparent 70%)',
+          background: 'radial-gradient(ellipse, rgba(37,99,235,0.12) 0%, transparent 70%)',
           display: 'flex',
         }} />
 
@@ -57,7 +57,7 @@ export default function handler(_req: NextRequest) {
               background: 'radial-gradient(circle at 32% 24%, #A855F7 0%, #7C3AED 8%, #4C1D95 22%, #1E0A4A 40%, #0A0225 60%, #050118 80%, #01000A 100%)',
               border: '3.5px solid rgba(167,139,250,0.55)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 0 90px rgba(124,58,237,0.65), 0 0 40px rgba(124,58,237,0.35), 0 10px 36px rgba(0,0,0,0.70)',
+              boxShadow: '0 0 90px rgba(59,130,246,0.5), 0 0 40px rgba(59,130,246,0.25), 0 10px 36px rgba(0,0,0,0.70)',
               position: 'relative',
             }}>
               {/* INQAI "I" letterform */}
@@ -133,7 +133,7 @@ export default function handler(_req: NextRequest) {
           display: 'flex', justifyContent: 'center',
         }}>
           <div style={{
-            fontSize: 16, color: 'rgba(124,58,237,0.65)',
+            fontSize: 16, color: 'rgba(59,130,246,0.5)',
             letterSpacing: '2px', fontWeight: 600,
           }}>
             getinqai.com

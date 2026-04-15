@@ -11,7 +11,7 @@ export default function BurnsPage() {
         <title>Buyback & Burn | INQUISITIVE</title>
         <meta name="description" content="Track INQAI token buybacks and burns in real-time. 60% of performance fees fund open-market buybacks. 20% permanently burned. 15% to treasury. 5% auto-funds Chainlink Automation." />
       </Head>
-      <div style={{ minHeight: '100vh', background: '#07071a', color: '#fff', fontFamily: 'system-ui,-apple-system,sans-serif' }}>
+      <div style={{ minHeight: '100vh', background: '#0a0a0b', color: '#f4f4f5', fontFamily: 'Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif' }}>
         <div className="mesh-bg" />
 
         {/* Nav */}

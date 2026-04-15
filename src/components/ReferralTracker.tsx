@@ -61,11 +61,11 @@ export default function ReferralTracker() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 1, marginBottom: 1, background: 'rgba(255,255,255,0.05)' }}>
         {([
           { l: 'Your Commission', v: '5%',   sub: 'On every referred purchase',  c: '#10b981' },
-          { l: 'Referee Bonus',   v: '5%',   sub: 'On their first purchase',      c: '#a78bfa' },
+          { l: 'Referee Bonus',   v: '5%',   sub: 'On their first purchase',      c: '#93c5fd' },
           { l: 'Total Referrers', v: statsLoading ? '…' : (globalStats?.totalReferrers || 0).toLocaleString(), sub: 'Active referrers', c: '#60a5fa' },
           { l: 'Bonus Pool',      v: statsLoading ? '…' : parseFloat(globalStats?.bonusPool || '0').toLocaleString('en-US', { maximumFractionDigits: 0 }) + ' INQAI', sub: 'Available payouts', c: '#f59e0b' },
         ] as const).map(s => (
-          <div key={s.l} style={{ background: 'rgba(13,13,32,0.97)', padding: '22px 24px' }}>
+          <div key={s.l} style={{ background: 'rgba(17,17,19,0.97)', padding: '22px 24px' }}>
             <div style={{ fontSize: 20, fontWeight: 800, color: s.c, fontFamily: 'monospace', letterSpacing: '-0.5px', marginBottom: 5 }}>{s.v}</div>
             <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>{s.l}</div>
             <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', marginTop: 2 }}>{s.sub}</div>
@@ -77,10 +77,10 @@ export default function ReferralTracker() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: 'rgba(255,255,255,0.05)' }}>
 
         {/* LEFT — Your Referral Link */}
-        <div style={{ background: 'rgba(13,13,32,0.97)', padding: '32px 32px' }}>
+        <div style={{ background: 'rgba(17,17,19,0.97)', padding: '32px 32px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
-            <Share2 size={15} color="#a78bfa" />
-            <span style={{ fontSize: 11, fontWeight: 800, color: '#a78bfa', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Your Referral Link</span>
+            <Share2 size={15} color="#93c5fd" />
+            <span style={{ fontSize: 11, fontWeight: 800, color: '#93c5fd', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Your Referral Link</span>
           </div>
 
           {!isConnected ? (
@@ -88,7 +88,7 @@ export default function ReferralTracker() {
               <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 14, lineHeight: 1.7, marginBottom: 24 }}>
                 Connect your wallet to generate your unique referral link. Your wallet address is your referral code — share it and earn 5% INQAI on every purchase made through your link.
               </p>
-              <button onClick={() => open()} style={{ width: '100%', padding: '14px', borderRadius: 8, cursor: 'pointer', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              <button onClick={() => open()} style={{ width: '100%', padding: '14px', borderRadius: 8, cursor: 'pointer', background: '#3b82f6', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                 <Wallet size={15} /> Connect Wallet
               </button>
             </>
@@ -128,8 +128,8 @@ export default function ReferralTracker() {
               </div>
 
               {!CONTRACT_LIVE && (
-                <div style={{ marginTop: 18, padding: '12px 16px', background: 'rgba(124,58,237,0.07)', border: '1px solid rgba(124,58,237,0.15)', borderRadius: 8, fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.6 }}>
-                  <strong style={{ color: '#a78bfa' }}>Referral rewards begin at contract launch.</strong> Share your link now — purchases made with your code before launch will be credited when the referral contract deploys.
+                <div style={{ marginTop: 18, padding: '12px 16px', background: 'rgba(59,130,246,0.07)', border: '1px solid rgba(59,130,246,0.15)', borderRadius: 8, fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.6 }}>
+                  <strong style={{ color: '#93c5fd' }}>Referral rewards begin at contract launch.</strong> Share your link now — purchases made with your code before launch will be credited when the referral contract deploys.
                 </div>
               )}
             </>
@@ -137,7 +137,7 @@ export default function ReferralTracker() {
         </div>
 
         {/* RIGHT — Performance or How It Works */}
-        <div style={{ background: 'rgba(13,13,32,0.97)', padding: '32px 32px', borderLeft: '1px solid rgba(255,255,255,0.05)' }}>
+        <div style={{ background: 'rgba(17,17,19,0.97)', padding: '32px 32px', borderLeft: '1px solid rgba(255,255,255,0.05)' }}>
           {isConnected && userStats?.isReferrer ? (
             <>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
@@ -158,7 +158,7 @@ export default function ReferralTracker() {
               </div>
               <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 20 }}>
                 <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Est. INQAI per 1 ETH referred</div>
-                <div style={{ fontSize: 32, fontWeight: 900, color: '#a78bfa', fontFamily: 'monospace' }}>
+                <div style={{ fontSize: 32, fontWeight: 900, color: '#93c5fd', fontFamily: 'monospace' }}>
                   ~{parseFloat(globalStats?.estimatedBonusPerEth?.referrer || '0').toLocaleString('en-US', { maximumFractionDigits: 0 })}
                 </div>
               </div>
@@ -191,7 +191,7 @@ export default function ReferralTracker() {
       </div>
 
       {/* ── Footer ─────────────────────────────────────────────────────────── */}
-      <div style={{ background: 'rgba(13,13,32,0.97)', marginTop: 1, padding: '14px 32px', display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+      <div style={{ background: 'rgba(17,17,19,0.97)', marginTop: 1, padding: '14px 32px', display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
           <div style={{ width: 5, height: 5, borderRadius: '50%', background: CONTRACT_LIVE ? '#10b981' : '#f59e0b', boxShadow: `0 0 6px ${CONTRACT_LIVE ? '#10b981' : '#f59e0b'}` }} />
           <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>Referral Contract: {CONTRACT_LIVE ? 'Live' : 'Pending deployment'}</span>

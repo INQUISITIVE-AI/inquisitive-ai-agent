@@ -92,10 +92,10 @@ const ASSETS_66 = [
 
 const catColor = (c: string) => {
   const m: Record<string,string> = {
-    major:'#3b82f6',defi:'#7c3aed',ai:'#ec4899',l2:'#06b6d4',
+    major:'#3b82f6',defi:'#3b82f6',ai:'#ec4899',l2:'#06b6d4',
     stablecoin:'#10b981',rwa:'#f97316','liquid-stake':'#f59e0b',
     interop:'#6366f1',privacy:'#6b7280',payment:'#84cc16',
-    storage:'#0891b2',oracle:'#a78bfa',institutional:'#8b5cf6',
+    storage:'#0891b2',oracle:'#93c5fd',institutional:'#8b5cf6',
     gaming:'#f472b6',iot:'#34d399',data:'#60a5fa',
   };
   return m[c] || '#6b7280';
@@ -112,20 +112,20 @@ export default function HelpPage() {
 
   const S = ({ children }: { children: React.ReactNode }) => (
     <div style={{display:'flex',gap:8,alignItems:'flex-start',fontSize:13,color:'rgba(255,255,255,0.5)',lineHeight:1.6}}>
-      <span style={{color:'#7c3aed',flexShrink:0,marginTop:1}}>→</span>
+      <span style={{color:'#3b82f6',flexShrink:0,marginTop:1}}>→</span>
       <span>{children}</span>
     </div>
   );
 
   const Code = ({ children }: { children: React.ReactNode }) => (
-    <code style={{background:'rgba(124,58,237,0.1)',color:'#c4b5fd',padding:'1px 6px',borderRadius:5,fontSize:12,border:'1px solid rgba(124,58,237,0.2)',fontFamily:'monospace'}}>{children}</code>
+    <code style={{background:'rgba(59,130,246,0.1)',color:'#c4b5fd',padding:'1px 6px',borderRadius:5,fontSize:12,border:'1px solid rgba(59,130,246,0.2)',fontFamily:'monospace'}}>{children}</code>
   );
 
   const sections: Record<string, React.ReactNode> = {
     overview: (
       <div>
         <div style={{marginBottom:32}}>
-          <div style={{fontSize:11,letterSpacing:2,color:'#7c3aed',textTransform:'uppercase',marginBottom:8}}>Documentation</div>
+          <div style={{fontSize:11,letterSpacing:2,color:'#3b82f6',textTransform:'uppercase',marginBottom:8}}>Documentation</div>
           <h1 style={{fontSize:32,fontWeight:900,letterSpacing:'-0.5px',marginBottom:8}}>INQUISITIVE</h1>
           <p style={{fontSize:15,color:'rgba(255,255,255,0.5)',lineHeight:1.7,maxWidth:640}}>
             INQAI represents proportional ownership in a professionally managed portfolio of 66 digital assets. Proprietary AI systems execute 11 trading strategies continuously, optimizing portfolio composition and risk-adjusted returns.
@@ -133,13 +133,13 @@ export default function HelpPage() {
         </div>
 
         {/* Presale CTA */}
-        <div style={{background:'linear-gradient(135deg,rgba(124,58,237,0.15),rgba(37,99,235,0.1))',border:'1px solid rgba(124,58,237,0.3)',borderRadius:16,padding:22,marginBottom:28,display:'flex',justifyContent:'space-between',alignItems:'center',gap:16}}>
+        <div style={{background:'linear-gradient(135deg,rgba(59,130,246,0.15),rgba(37,99,235,0.1))',border:'1px solid rgba(59,130,246,0.3)',borderRadius:16,padding:22,marginBottom:28,display:'flex',justifyContent:'space-between',alignItems:'center',gap:16}}>
           <div>
             <div style={{fontSize:12,color:'rgba(255,255,255,0.35)',marginBottom:4,display:'flex',alignItems:'center',gap:6}}><Flame size={14} color="#f59e0b" /> Presale Active</div>
-            <div style={{fontSize:20,fontWeight:900,marginBottom:4}}>Acquire INQAI at <span style={{color:'#a78bfa'}}>$8 per token</span> — 47% below target price</div>
+            <div style={{fontSize:20,fontWeight:900,marginBottom:4}}>Acquire INQAI at <span style={{color:'#93c5fd'}}>$8 per token</span> — 47% below target price</div>
             <div style={{fontSize:12,color:'rgba(255,255,255,0.45)'}}>ERC-20 · Asset-backed · 18.5% target APY · Self-custody delivery</div>
           </div>
-          <button onClick={()=>router.push('/buy')} style={{padding:'12px 24px',borderRadius:12,background:'linear-gradient(135deg,#7c3aed,#4f46e5)',color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer',border:'1px solid rgba(255,255,255,0.1)',boxShadow:'0 4px 20px rgba(124,58,237,0.4)',whiteSpace:'nowrap',flexShrink:0}}>
+          <button onClick={()=>router.push('/buy')} style={{padding:'12px 24px',borderRadius:12,background:'#3b82f6',color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer',border:'1px solid rgba(255,255,255,0.1)',boxShadow:'0 4px 20px rgba(59,130,246,0.4)',whiteSpace:'nowrap',flexShrink:0}}>
             Acquire INQAI →
           </button>
         </div>
@@ -177,11 +177,11 @@ export default function HelpPage() {
             {icon:Coins,label:'Portfolio Assets',v:'66',desc:'66 assets spanning major, DeFi, AI, Layer 2, stablecoins, RWA, liquid staking, and restaking categories.'},
             {icon:Flame,label:'Fee Distribution',v:'60/20/20',desc:'Planned: 60% buybacks, 20% burns, 20% treasury — pending FeeDistributor contract deployment.'},
           ].map(k=>(
-            <div key={k.label} style={{background:'rgba(13,13,32,0.8)',border:'1px solid rgba(255,255,255,0.06)',borderRadius:14,padding:18,backdropFilter:'blur(12px)'}}>
+            <div key={k.label} style={{background:'rgba(17,17,19,0.8)',border:'1px solid rgba(255,255,255,0.06)',borderRadius:14,padding:18,backdropFilter:'blur(12px)'}}>
               <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:8}}>
-                <k.icon size={24} color={k.icon === Brain ? '#7c3aed' : k.icon === Gem ? '#a78bfa' : k.icon === Shield ? '#dc2626' : k.icon === Zap ? '#2563eb' : k.icon === Coins ? '#f59e0b' : '#f59e0b'} strokeWidth={1.8} />
+                <k.icon size={24} color={k.icon === Brain ? '#3b82f6' : k.icon === Gem ? '#93c5fd' : k.icon === Shield ? '#dc2626' : k.icon === Zap ? '#2563eb' : k.icon === Coins ? '#f59e0b' : '#f59e0b'} strokeWidth={1.8} />
                 <div>
-                  <div style={{fontSize:18,fontWeight:900,color:'#a78bfa',fontFamily:'monospace'}}>{k.v}</div>
+                  <div style={{fontSize:18,fontWeight:900,color:'#93c5fd',fontFamily:'monospace'}}>{k.v}</div>
                   <div style={{fontSize:11,fontWeight:700,color:'rgba(255,255,255,0.7)'}}>{k.label}</div>
                 </div>
               </div>
@@ -204,7 +204,7 @@ export default function HelpPage() {
         <h2 style={{fontSize:26,fontWeight:900,marginBottom:4}}>Five-Component Architecture</h2>
         <p style={{color:'rgba(255,255,255,0.4)',fontSize:13,marginBottom:28}}>Five specialized components working in perfect coordination — Standard of Procedure (SoP)</p>
         {[
-          {icon:Brain,name:'The Brain',col:'#7c3aed',sub:'AI Decision Engine',detail:[
+          {icon:Brain,name:'The Brain',col:'#3b82f6',sub:'AI Decision Engine',detail:[
             'Processes all 66 assets every 8 seconds',
             'Combines 5 intelligence engines: Pattern Engine, Reasoning Engine, Portfolio Engine, Learning Engine, Risk Engine',
             'Applies risk-first methodology as final gate before any execution',
@@ -236,7 +236,7 @@ export default function HelpPage() {
             'Security audit: P0 fixes completed (access control, emergency withdraw, tests)',
             'No private keys in codebase — execution via Chainlink Automation (planned)',
           ]},
-          {icon:Eye,name:'The Oracle',col:'#7c3aed',sub:'Price Intelligence',detail:[
+          {icon:Eye,name:'The Oracle',col:'#3b82f6',sub:'Price Intelligence',detail:[
             'Primary: CoinGecko REAL LIVE API — 66 assets with 30-second polling',
             'Fallback: CryptoCompare API — 66-asset coverage',
             'Macro: CoinGecko BTC/ETH/SOL regime signals + Alternative.me Fear & Greed index',
@@ -245,7 +245,7 @@ export default function HelpPage() {
             'Sanity checks reject prices >50% outside expected range',
           ]},
         ].map(c=>(
-          <div key={c.name} style={{background:'rgba(13,13,32,0.8)',border:`1px solid ${c.col}22`,borderRadius:16,padding:22,marginBottom:12,backdropFilter:'blur(12px)'}}>
+          <div key={c.name} style={{background:'rgba(17,17,19,0.8)',border:`1px solid ${c.col}22`,borderRadius:16,padding:22,marginBottom:12,backdropFilter:'blur(12px)'}}>
             <div style={{display:'flex',alignItems:'center',gap:14,marginBottom:14}}>
               <c.icon size={30} color={c.col} strokeWidth={1.8} />
               <div>
@@ -275,10 +275,10 @@ export default function HelpPage() {
           {icon:Infinity,name:'LOOP',col:'#8b5cf6',detail:'Recursive yield optimization: deposit → borrow against collateral → re-deposit → repeat. Max 5 loops, max 80% LTV per loop. Calculates cumulative APY and health factor before executing. Automatically capped by risk limits. Uses Aave V3 + Morpho as primary protocols.',params:'symbol, amount, params.maxLoops?, params.targetLTV?'},
           {icon:Lock,name:'STAKE',col:'#06b6d4',detail:'Network staking across 27+ protocols with real APY data. ETH → Lido (3.8% APY), SOL → Jito (6.8%), DOT → Polkadot nomination (12%), ATOM → Cosmos delegation (15%), ENA → Ethena sENA (27%), INJ → Injective DAO (11%), NEAR → NEAR Staking (9%), TAO → Bittensor Subnet (12%).',params:'symbol, amount, params.protocol?'},
           {icon:X,name:'MULTIPLY',col:'#f97316',detail:'Leveraged long exposure. Max 3× for major assets (BTC, ETH, SOL), max 2× for DeFi. Calculates liquidation price, daily borrow cost (e.g. 8.5%/yr), and break-even price move. Blocked if portfolio heat ≥ 6%. Maximum leverage enforced by the risk engine.',params:'symbol, amount, params.leverage?'},
-          {icon:Gem,name:'EARN',col:'#a78bfa',detail:'Automatic best-strategy selection. Evaluates all available strategies (lending, staking, LP, looping) for the asset and selects the highest risk-adjusted APY. Scoring: APY - (risk_penalty × risk_score). Stakes are prioritized for liquid staking tokens. Non-yieldable assets return trading recommendation.',params:'symbol, amount'},
+          {icon:Gem,name:'EARN',col:'#93c5fd',detail:'Automatic best-strategy selection. Evaluates all available strategies (lending, staking, LP, looping) for the asset and selects the highest risk-adjusted APY. Scoring: APY - (risk_penalty × risk_score). Stakes are prioritized for liquid staking tokens. Non-yieldable assets return trading recommendation.',params:'symbol, amount'},
           {icon:Gift,name:'REWARDS',col:'#ec4899',detail:'Claim + auto-compound protocol rewards. Supported protocols: Aave (stkAAVE rewards), Lido (stETH rebases), Curve (CRV + veCRV), Balancer (BAL + gauge), Jupiter (JUP governance), Injective (INJ staking), Cosmos (ATOM), Polkadot (DOT), Hivemapper (HONEY), The Graph (GRT), Ethena (ENA), Soil (SOIL). Auto-compound reinvests immediately.',params:'symbol, params.autoCompound?'},
         ].map(f=>(
-          <div key={f.name} style={{background:'rgba(13,13,32,0.8)',border:`1px solid ${f.col}18`,borderRadius:14,padding:18,marginBottom:10,backdropFilter:'blur(12px)'}}>
+          <div key={f.name} style={{background:'rgba(17,17,19,0.8)',border:`1px solid ${f.col}18`,borderRadius:14,padding:18,marginBottom:10,backdropFilter:'blur(12px)'}}>
             <div style={{display:'flex',alignItems:'flex-start',gap:14}}>
               <f.icon size={26} color={f.col} strokeWidth={1.8} style={{flexShrink:0}} />
               <div style={{flex:1}}>
@@ -301,7 +301,7 @@ export default function HelpPage() {
         <p style={{color:'rgba(255,255,255,0.4)',fontSize:13,marginBottom:20}}>Exact specification — real live prices from CoinGecko API · 30-second polling</p>
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))',gap:6}}>
           {ASSETS_66.map(a=>(
-            <div key={a.s} style={{background:'rgba(13,13,32,0.8)',border:`1px solid ${catColor(a.cat)}20`,borderRadius:10,padding:'10px 12px',backdropFilter:'blur(12px)'}}>
+            <div key={a.s} style={{background:'rgba(17,17,19,0.8)',border:`1px solid ${catColor(a.cat)}20`,borderRadius:10,padding:'10px 12px',backdropFilter:'blur(12px)'}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:4}}>
                 <span style={{fontSize:11,color:'rgba(255,255,255,0.25)'}}>{a.n}</span>
                 <span style={{fontSize:9,padding:'1px 5px',borderRadius:4,background:`${catColor(a.cat)}18`,color:catColor(a.cat),fontWeight:600,textTransform:'capitalize'}}>{a.cat}</span>
@@ -360,7 +360,7 @@ export default function HelpPage() {
             'On-chain execution live — 5-cycle launch validation passed at deployment',
           ]},
         ].map(r=>(
-          <div key={r.org} style={{background:'rgba(13,13,32,0.8)',border:`1px solid ${r.col}20`,borderRadius:16,padding:22,marginBottom:12,backdropFilter:'blur(12px)'}}>
+          <div key={r.org} style={{background:'rgba(17,17,19,0.8)',border:`1px solid ${r.col}20`,borderRadius:16,padding:22,marginBottom:12,backdropFilter:'blur(12px)'}}>
             <div style={{display:'flex',alignItems:'center',gap:14,marginBottom:14}}>
               {r.icon === 'Brain' && <Brain size={28} color={r.col} />}
               {r.icon === 'Bot' && <Bot size={28} color={r.col} />}
@@ -399,7 +399,7 @@ export default function HelpPage() {
           {title:'Rule 7: Paper Trade Validation',col:'#8b5cf6',detail:'The first 5 AI decision cycles run in paper trade mode — signals are calculated but trades are NOT executed with real capital. This validates that the AI is performing correctly before risking money. Only after 5 validated cycles does the system switch to live execution.'},
           {title:'Rule 8: Decision Transparency',col:'#06b6d4',detail:'Every AI decision must be accompanied by a clear, plain-language explanation. No black boxes. If the system cannot explain why it is taking a trade, it will not take it. The X-Ray component fulfills this with full decision transparency for every trade.'},
         ].map(r=>(
-          <div key={r.title} style={{background:'rgba(13,13,32,0.8)',border:`1px solid ${r.col}18`,borderRadius:14,padding:18,marginBottom:10,backdropFilter:'blur(12px)'}}>
+          <div key={r.title} style={{background:'rgba(17,17,19,0.8)',border:`1px solid ${r.col}18`,borderRadius:14,padding:18,marginBottom:10,backdropFilter:'blur(12px)'}}>
             <h3 style={{fontSize:14,fontWeight:800,color:r.col,marginBottom:8}}>{r.title}</h3>
             <p style={{fontSize:12,color:'rgba(255,255,255,0.5)',lineHeight:1.7,margin:0}}>{r.detail}</p>
           </div>
@@ -413,9 +413,9 @@ export default function HelpPage() {
         <p style={{color:'rgba(255,255,255,0.4)',fontSize:13,marginBottom:28}}>Independent security layers at every level. No single point of failure.</p>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
           {[
-            {icon:'Lock',title:'Secure Treasury',col:'#7c3aed',detail:'Treasury operations with secure access controls and timelock protections for withdrawal operations.'},
+            {icon:'Lock',title:'Secure Treasury',col:'#3b82f6',detail:'Treasury operations with secure access controls and timelock protections for withdrawal operations.'},
           ].map(s=>(
-            <div key={s.title} style={{background:'rgba(13,13,32,0.8)',border:`1px solid ${s.col}18`,borderRadius:14,padding:18,backdropFilter:'blur(12px)'}}>
+            <div key={s.title} style={{background:'rgba(17,17,19,0.8)',border:`1px solid ${s.col}18`,borderRadius:14,padding:18,backdropFilter:'blur(12px)'}}>
               <div style={{display:'flex',gap:12,alignItems:'flex-start',marginBottom:8}}>
                 {s.icon === 'Lock' && <Lock size={24} color={s.col} />}
                 <h3 style={{fontSize:14,fontWeight:800,color:s.col,margin:0}}>{s.title}</h3>
@@ -453,7 +453,7 @@ export default function HelpPage() {
             {m:'GET', p:'/chart/categories',          d:'Market cap allocation by asset category — used for the donut chart in Analytics'},
             {m:'GET', p:'/initialize',                d:'Re-initialize the AI agent and all services — triggers fresh price + macro fetch'},
           ].map(e=>(
-            <div key={e.p} style={{display:'flex',alignItems:'center',gap:12,background:'rgba(13,13,32,0.8)',border:'1px solid rgba(255,255,255,0.05)',borderRadius:10,padding:'10px 14px',backdropFilter:'blur(12px)'}}>
+            <div key={e.p} style={{display:'flex',alignItems:'center',gap:12,background:'rgba(17,17,19,0.8)',border:'1px solid rgba(255,255,255,0.05)',borderRadius:10,padding:'10px 14px',backdropFilter:'blur(12px)'}}>
               <span style={{fontSize:10,fontWeight:700,padding:'3px 8px',borderRadius:5,flexShrink:0,background:e.m==='GET'?'rgba(16,185,129,0.15)':'rgba(59,130,246,0.15)',color:e.m==='GET'?'#34d399':'#60a5fa',border:`1px solid ${e.m==='GET'?'rgba(16,185,129,0.25)':'rgba(59,130,246,0.25)'}`}}>{e.m}</span>
               <Code>/api/inquisitiveAI{e.p}</Code>
               <span style={{fontSize:11,color:'rgba(255,255,255,0.4)',flex:1}}>{e.d}</span>
@@ -467,8 +467,8 @@ export default function HelpPage() {
       <div>
         <h2 style={{fontSize:26,fontWeight:900,marginBottom:28}}>INQAI Token Economics</h2>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:16}}>
-          <div style={{background:'rgba(13,13,32,0.8)',border:'1px solid rgba(124,58,237,0.2)',borderRadius:16,padding:22,backdropFilter:'blur(12px)'}}>
-            <h3 style={{fontSize:15,fontWeight:700,color:'#a78bfa',marginBottom:16}}>Token Specifications</h3>
+          <div style={{background:'rgba(17,17,19,0.8)',border:'1px solid rgba(59,130,246,0.2)',borderRadius:16,padding:22,backdropFilter:'blur(12px)'}}>
+            <h3 style={{fontSize:15,fontWeight:700,color:'#93c5fd',marginBottom:16}}>Token Specifications</h3>
             {[
               ['Name','INQUISITIVE'],['Symbol','INQAI'],['Standard','ERC-20'],
               ['Backing','66-Asset Digital Portfolio'],['Network','Ethereum Mainnet'],
@@ -484,7 +484,7 @@ export default function HelpPage() {
               </div>
             ))}
           </div>
-          <div style={{background:'rgba(13,13,32,0.8)',border:'1px solid rgba(37,99,235,0.2)',borderRadius:16,padding:22,backdropFilter:'blur(12px)'}}>
+          <div style={{background:'rgba(17,17,19,0.8)',border:'1px solid rgba(37,99,235,0.2)',borderRadius:16,padding:22,backdropFilter:'blur(12px)'}}>
             <h3 style={{fontSize:15,fontWeight:700,color:'#60a5fa',marginBottom:16}}>Token Distribution</h3>
             {[
               {cat:'Ecosystem Growth',pct:'35%',amt:'35M INQAI',vest:'36 months linear'},
@@ -498,18 +498,18 @@ export default function HelpPage() {
                 <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}>
                   <span style={{fontSize:12,color:'rgba(255,255,255,0.6)',fontWeight:600}}>{t.cat}</span>
                   <div style={{textAlign:'right'}}>
-                    <span style={{fontSize:13,fontWeight:800,color:'#a78bfa'}}>{t.pct}</span>
+                    <span style={{fontSize:13,fontWeight:800,color:'#93c5fd'}}>{t.pct}</span>
                     <span style={{fontSize:10,color:'rgba(255,255,255,0.3)',marginLeft:6}}>{t.vest}</span>
                   </div>
                 </div>
                 <div style={{height:4,borderRadius:2,background:'rgba(255,255,255,0.06)',overflow:'hidden'}}>
-                  <div style={{height:'100%',width:t.pct,background:'linear-gradient(90deg,#7c3aed80,#7c3aed)',borderRadius:2}} />
+                  <div style={{height:'100%',width:t.pct,background:'linear-gradient(90deg,#3b82f680,#3b82f6)',borderRadius:2}} />
                 </div>
               </div>
             ))}
           </div>
         </div>
-        <div style={{background:'rgba(13,13,32,0.8)',border:'1px solid rgba(16,185,129,0.2)',borderRadius:16,padding:22,backdropFilter:'blur(12px)'}}>
+        <div style={{background:'rgba(17,17,19,0.8)',border:'1px solid rgba(16,185,129,0.2)',borderRadius:16,padding:22,backdropFilter:'blur(12px)'}}>
           <h3 style={{fontSize:15,fontWeight:700,color:'#34d399',marginBottom:16}}>Value Accrual Mechanisms</h3>
           <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12}}>
             {[
@@ -624,7 +624,7 @@ export default function HelpPage() {
             ]
           },
         ].map(p=>(
-          <div key={p.phase} style={{background:'rgba(13,13,32,0.8)',border:`1px solid ${p.col}20`,borderRadius:16,padding:20,marginBottom:12,backdropFilter:'blur(12px)'}}>
+          <div key={p.phase} style={{background:'rgba(17,17,19,0.8)',border:`1px solid ${p.col}20`,borderRadius:16,padding:20,marginBottom:12,backdropFilter:'blur(12px)'}}>
             <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:8}}>
               <h3 style={{fontSize:16,fontWeight:800,margin:0}}>{p.phase}</h3>
               <span style={{fontSize:10,padding:'3px 10px',borderRadius:100,background:`${p.col}18`,color:p.col,fontWeight:700,border:`1px solid ${p.col}30`}}>{p.status}</span>
@@ -646,7 +646,7 @@ export default function HelpPage() {
   return (
     <>
       <Head><title>Docs | INQUISITIVE</title></Head>
-      <div style={{minHeight:'100vh',background:'#07071a',color:'#fff',fontFamily:'-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif'}}>
+      <div style={{minHeight:'100vh',background:'#0a0a0b',color:'#fff',fontFamily:'Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif'}}>
         <div className="mesh-bg" />
 
         {/* Nav */}
@@ -657,7 +657,7 @@ export default function HelpPage() {
           <div style={{width:220,flexShrink:0,borderRight:'1px solid rgba(255,255,255,0.05)',background:'rgba(8,8,22,0.7)',padding:'16px 10px',position:'sticky',top:52,height:'calc(100vh - 52px)',overflowY:'auto'}}>
             <div style={{fontSize:10,color:'rgba(255,255,255,0.25)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:12,padding:'0 8px'}}>Documentation</div>
             {NAV_ITEMS.map((n: {id:string; Icon:any; label:string})=>(
-              <button key={n.id} onClick={()=>setActive(n.id)} style={{width:'100%',display:'flex',alignItems:'center',gap:8,padding:'8px 10px',borderRadius:9,background:active===n.id?'rgba(124,58,237,0.15)':'transparent',border:`1px solid ${active===n.id?'rgba(124,58,237,0.25)':'transparent'}`,color:active===n.id?'#a78bfa':'rgba(255,255,255,0.45)',fontSize:12,fontWeight:active===n.id?700:500,cursor:'pointer',textAlign:'left',marginBottom:2,transition:'all 0.15s'}}>
+              <button key={n.id} onClick={()=>setActive(n.id)} style={{width:'100%',display:'flex',alignItems:'center',gap:8,padding:'8px 10px',borderRadius:9,background:active===n.id?'rgba(59,130,246,0.15)':'transparent',border:`1px solid ${active===n.id?'rgba(59,130,246,0.25)':'transparent'}`,color:active===n.id?'#93c5fd':'rgba(255,255,255,0.45)',fontSize:12,fontWeight:active===n.id?700:500,cursor:'pointer',textAlign:'left',marginBottom:2,transition:'all 0.15s'}}>
                 <n.Icon size={14} strokeWidth={2} />
                 <span>{n.label}</span>
               </button>

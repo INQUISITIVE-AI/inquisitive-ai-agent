@@ -49,7 +49,7 @@ const PATTERN_COLORS: Record<string, string> = {
 const ACTION_COL: Record<string, string> = {
   BUY: '#10b981', SELL: '#ef4444', REDUCE: '#f87171',
   STAKE: '#38bdf8', LEND: '#fbbf24', YIELD: '#a3e635',
-  BORROW: '#22d3ee', SWAP: '#60a5fa', EARN: '#a78bfa',
+  BORROW: '#22d3ee', SWAP: '#60a5fa', EARN: '#93c5fd',
   LOOP: '#fb923c', MULTIPLY: '#f472b6', REWARDS: '#facc15',
   HOLD: '#6b7280', SKIP: '#4b5563',
   ACCUMULATE: '#84cc16',
@@ -120,17 +120,17 @@ export default function PriceActionDashboard({ signals = [], macro, onSignalClic
       {/* ── Header Stats ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
         {/* Pattern Count */}
-        <div style={{ background: 'rgba(13,13,32,0.85)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: 20, backdropFilter: 'blur(12px)' }}>
+        <div style={{ background: 'rgba(17,17,19,0.85)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: 20, backdropFilter: 'blur(12px)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-            <Brain size={18} color="#7c3aed" />
+            <Brain size={18} color="#3b82f6" />
             <span style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.6)' }}>Price Action Signals</span>
           </div>
-          <div style={{ fontSize: 32, fontWeight: 900, color: '#7c3aed', fontFamily: 'monospace' }}>{signals.length}</div>
+          <div style={{ fontSize: 32, fontWeight: 900, color: '#3b82f6', fontFamily: 'monospace' }}>{signals.length}</div>
           <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 4 }}>Active patterns detected</div>
         </div>
 
         {/* High Probability */}
-        <div style={{ background: 'rgba(13,13,32,0.85)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 16, padding: 20, backdropFilter: 'blur(12px)' }}>
+        <div style={{ background: 'rgba(17,17,19,0.85)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 16, padding: 20, backdropFilter: 'blur(12px)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
             <Target size={18} color="#10b981" />
             <span style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.6)' }}>High Probability</span>
@@ -140,7 +140,7 @@ export default function PriceActionDashboard({ signals = [], macro, onSignalClic
         </div>
 
         {/* Regime */}
-        <div style={{ background: 'rgba(13,13,32,0.85)', border: `1px solid ${regimeCol}30`, borderRadius: 16, padding: 20, backdropFilter: 'blur(12px)' }}>
+        <div style={{ background: 'rgba(17,17,19,0.85)', border: `1px solid ${regimeCol}30`, borderRadius: 16, padding: 20, backdropFilter: 'blur(12px)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
             <Scale size={18} color={regimeCol} />
             <span style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.6)' }}>Market Regime</span>
@@ -150,7 +150,7 @@ export default function PriceActionDashboard({ signals = [], macro, onSignalClic
         </div>
 
         {/* Fear & Greed */}
-        <div style={{ background: 'rgba(13,13,32,0.85)', border: `1px solid ${fgColor}30`, borderRadius: 16, padding: 20, backdropFilter: 'blur(12px)' }}>
+        <div style={{ background: 'rgba(17,17,19,0.85)', border: `1px solid ${fgColor}30`, borderRadius: 16, padding: 20, backdropFilter: 'blur(12px)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
             <Activity size={18} color={fgColor} />
             <span style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.6)' }}>Fear & Greed</span>
@@ -161,9 +161,9 @@ export default function PriceActionDashboard({ signals = [], macro, onSignalClic
       </div>
 
       {/* ── Pattern Filter Chips ── */}
-      <div style={{ background: 'rgba(13,13,32,0.85)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: 20, backdropFilter: 'blur(12px)' }}>
+      <div style={{ background: 'rgba(17,17,19,0.85)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: 20, backdropFilter: 'blur(12px)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-          <Eye size={16} color="#a78bfa" />
+          <Eye size={16} color="#93c5fd" />
           <span style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.7)' }}>Filter by Pattern</span>
           {selectedPattern && (
             <button
@@ -182,9 +182,9 @@ export default function PriceActionDashboard({ signals = [], macro, onSignalClic
               style={{
                 padding: '8px 14px',
                 borderRadius: 10,
-                border: `1px solid ${selectedPattern === pattern ? PATTERN_COLORS[pattern] || '#7c3aed' : 'rgba(255,255,255,0.1)'}`,
-                background: selectedPattern === pattern ? `${PATTERN_COLORS[pattern] || '#7c3aed'}15` : 'rgba(255,255,255,0.03)',
-                color: selectedPattern === pattern ? PATTERN_COLORS[pattern] || '#7c3aed' : 'rgba(255,255,255,0.6)',
+                border: `1px solid ${selectedPattern === pattern ? PATTERN_COLORS[pattern] || '#3b82f6' : 'rgba(255,255,255,0.1)'}`,
+                background: selectedPattern === pattern ? `${PATTERN_COLORS[pattern] || '#3b82f6'}15` : 'rgba(255,255,255,0.03)',
+                color: selectedPattern === pattern ? PATTERN_COLORS[pattern] || '#3b82f6' : 'rgba(255,255,255,0.6)',
                 fontSize: 12,
                 fontWeight: 600,
                 cursor: 'pointer',
@@ -193,7 +193,7 @@ export default function PriceActionDashboard({ signals = [], macro, onSignalClic
                 gap: 6,
               }}
             >
-              <span style={{ width: 8, height: 8, borderRadius: '50%', background: PATTERN_COLORS[pattern] || '#7c3aed' }} />
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: PATTERN_COLORS[pattern] || '#3b82f6' }} />
               {pattern}
               <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginLeft: 2 }}>({count})</span>
             </button>
@@ -202,7 +202,7 @@ export default function PriceActionDashboard({ signals = [], macro, onSignalClic
       </div>
 
       {/* ── Signals Grid ── */}
-      <div style={{ background: 'rgba(13,13,32,0.85)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: 20, backdropFilter: 'blur(12px)' }}>
+      <div style={{ background: 'rgba(17,17,19,0.85)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: 20, backdropFilter: 'blur(12px)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Zap size={16} color="#f59e0b" />
@@ -247,9 +247,9 @@ export default function PriceActionDashboard({ signals = [], macro, onSignalClic
                       fontSize: 10,
                       padding: '3px 8px',
                       borderRadius: 100,
-                      background: `${ACTION_COL[s.action] || '#7c3aed'}20`,
-                      color: ACTION_COL[s.action] || '#7c3aed',
-                      border: `1px solid ${ACTION_COL[s.action] || '#7c3aed'}40`,
+                      background: `${ACTION_COL[s.action] || '#3b82f6'}20`,
+                      color: ACTION_COL[s.action] || '#3b82f6',
+                      border: `1px solid ${ACTION_COL[s.action] || '#3b82f6'}40`,
                       fontWeight: 700,
                     }}
                   >
@@ -261,7 +261,7 @@ export default function PriceActionDashboard({ signals = [], macro, onSignalClic
                 <div style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                     <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>Price Action Score</span>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: '#a78bfa', fontFamily: 'monospace' }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: '#93c5fd', fontFamily: 'monospace' }}>
                       {(s.paScore * 100).toFixed(0)}%
                     </span>
                   </div>
@@ -297,9 +297,9 @@ export default function PriceActionDashboard({ signals = [], macro, onSignalClic
                           fontSize: 9,
                           padding: '3px 6px',
                           borderRadius: 4,
-                          background: `${PATTERN_COLORS[patternType] || '#7c3aed'}15`,
-                          color: PATTERN_COLORS[patternType] || '#7c3aed',
-                          border: `1px solid ${PATTERN_COLORS[patternType] || '#7c3aed'}30`,
+                          background: `${PATTERN_COLORS[patternType] || '#3b82f6'}15`,
+                          color: PATTERN_COLORS[patternType] || '#3b82f6',
+                          border: `1px solid ${PATTERN_COLORS[patternType] || '#3b82f6'}30`,
                         }}
                         title={p}
                       >

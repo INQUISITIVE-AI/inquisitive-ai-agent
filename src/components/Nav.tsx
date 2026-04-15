@@ -41,10 +41,10 @@ export default function Nav({ activePage }: NavProps) {
           l.accent ? (
             <button key={l.id} onClick={() => router.push(l.path)} style={{
               padding: '7px 18px', borderRadius: 9,
-              background: 'linear-gradient(135deg,#7c3aed,#4f46e5)',
+              background: '#3b82f6',
               color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer',
               border: '1px solid rgba(255,255,255,0.1)',
-              boxShadow: activePage === l.id ? '0 4px 20px rgba(124,58,237,0.5)' : '0 2px 10px rgba(124,58,237,0.3)',
+              boxShadow: activePage === l.id ? '0 4px 20px rgba(59,130,246,0.5)' : '0 2px 10px rgba(59,130,246,0.3)',
               transition: 'all 0.2s',
             }}>
               {l.label}
@@ -52,9 +52,9 @@ export default function Nav({ activePage }: NavProps) {
           ) : (
             <button key={l.id} onClick={() => router.push(l.path)} style={{
               padding: '7px 14px', borderRadius: 8,
-              background: activePage === l.id ? 'rgba(124,58,237,0.15)' : 'transparent',
-              border: `1px solid ${activePage === l.id ? 'rgba(124,58,237,0.3)' : 'transparent'}`,
-              color: activePage === l.id ? '#a78bfa' : 'rgba(255,255,255,0.5)',
+              background: activePage === l.id ? 'rgba(59,130,246,0.15)' : 'transparent',
+              border: `1px solid ${activePage === l.id ? 'rgba(59,130,246,0.3)' : 'transparent'}`,
+              color: activePage === l.id ? '#93c5fd' : 'rgba(255,255,255,0.5)',
               fontSize: 13, fontWeight: activePage === l.id ? 600 : 500,
               cursor: 'pointer', transition: 'all 0.15s',
             }}

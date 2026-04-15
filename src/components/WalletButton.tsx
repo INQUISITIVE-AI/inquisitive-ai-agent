@@ -53,10 +53,10 @@ export default function WalletButton({ label = 'Connect Wallet' }: WalletButtonP
         display: 'flex', alignItems: 'center', gap: 7,
         padding: '7px 18px', borderRadius: 10,
         cursor: 'pointer',
-        background: 'linear-gradient(135deg,#7c3aed,#4f46e5)',
+        background: '#3b82f6',
         border: '1px solid rgba(255,255,255,0.1)',
         color: '#fff', fontSize: 13, fontWeight: 700,
-        boxShadow: '0 2px 12px rgba(124,58,237,0.35)',
+        boxShadow: '0 2px 12px rgba(59,130,246,0.35)',
         transition: 'all 0.15s',
       }}
     >

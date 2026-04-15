@@ -185,8 +185,8 @@ export default function LiquidityLauncher() {
 
   return (
     <div style={{
-      background: 'linear-gradient(135deg, rgba(13,13,32,0.95) 0%, rgba(37,24,64,0.9) 100%)',
-      border: '1px solid rgba(124,58,237,0.3)',
+      background: 'linear-gradient(135deg, rgba(17,17,19,0.95) 0%, rgba(37,24,64,0.9) 100%)',
+      border: '1px solid rgba(59,130,246,0.3)',
       borderRadius: 24,
       padding: 32,
       backdropFilter: 'blur(20px)',
@@ -199,7 +199,7 @@ export default function LiquidityLauncher() {
           display: 'inline-flex',
           alignItems: 'center',
           gap: 12,
-          background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
+          background: 'linear-gradient(135deg, #3b82f6 0%, #a855f7 100%)',
           padding: '12px 24px',
           borderRadius: 50,
           marginBottom: 16
@@ -240,7 +240,7 @@ export default function LiquidityLauncher() {
           <div style={{
             height: '100%',
             width: `${Math.min(progressPercent, 100)}%`,
-            background: 'linear-gradient(90deg, #7c3aed, #a855f7)',
+            background: 'linear-gradient(90deg, #3b82f6, #a855f7)',
             borderRadius: 6,
             transition: 'width 0.5s ease'
           }} />
@@ -311,7 +311,7 @@ export default function LiquidityLauncher() {
           style={{
             width: '100%',
             padding: '16px 24px',
-            background: 'linear-gradient(135deg, #7c3aed, #a855f7)',
+            background: 'linear-gradient(135deg, #3b82f6, #a855f7)',
             border: 'none',
             borderRadius: 12,
             color: 'white',
@@ -393,7 +393,7 @@ export default function LiquidityLauncher() {
                 disabled={loading || parseFloat(depositAmount) <= 0}
                 style={{
                   padding: '16px 32px',
-                  background: 'linear-gradient(135deg, #7c3aed, #a855f7)',
+                  background: 'linear-gradient(135deg, #3b82f6, #a855f7)',
                   border: 'none',
                   borderRadius: 12,
                   color: 'white',
@@ -414,8 +414,8 @@ export default function LiquidityLauncher() {
           {/* User contribution */}
           {userStats && parseFloat(userStats.contributed) > 0 && (
             <div style={{
-              background: 'rgba(124,58,237,0.1)',
-              border: '1px solid rgba(124,58,237,0.3)',
+              background: 'rgba(59,130,246,0.1)',
+              border: '1px solid rgba(59,130,246,0.3)',
               padding: 16,
               borderRadius: 12,
               marginBottom: 16

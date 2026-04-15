@@ -52,7 +52,7 @@ export default function SendPage() {
   return (
     <>
       <Head><title>Send INQAI | INQUISITIVE</title></Head>
-      <div style={{ minHeight:"100vh", background:"#07071a", color:"#fff", fontFamily:"system-ui,sans-serif" }}>
+      <div style={{ minHeight:"100vh", background:"#0a0a0b", color:"#fff", fontFamily:"system-ui,sans-serif" }}>
         <SiteNav />
         <div style={{ display:"flex", justifyContent:"center", padding:"60px 24px" }}>
           <div style={{ width:"100%", maxWidth:420 }}>
@@ -60,7 +60,7 @@ export default function SendPage() {
               <h1 style={{ fontSize:24, fontWeight:900, marginBottom:6 }}>Send INQAI</h1>
               <p style={{ fontSize:13, color:"rgba(255,255,255,0.4)" }}>Transfer INQAI tokens to any Ethereum address.</p>
             </div>
-            <div style={{ background:"rgba(13,13,32,0.9)", border:"1px solid rgba(124,58,237,0.2)", borderRadius:22, padding:"26px 24px" }}>
+            <div style={{ background:"rgba(17,17,19,0.9)", border:"1px solid rgba(59,130,246,0.2)", borderRadius:22, padding:"26px 24px" }}>
               {!isConnected && (
                 <div style={{ textAlign:"center", padding:"12px 0" }}>
                   <p style={{ fontSize:13, color:"rgba(255,255,255,0.4)", marginBottom:18 }}>Connect your wallet to send INQAI.</p>
@@ -83,9 +83,9 @@ export default function SendPage() {
               )}
               {isConnected && !wrongChain && !confirmed && (
                 <div>
-                  <div style={{ display:"flex", justifyContent:"space-between", padding:"8px 12px", background:"rgba(124,58,237,0.07)", border:"1px solid rgba(124,58,237,0.18)", borderRadius:9, marginBottom:18 }}>
+                  <div style={{ display:"flex", justifyContent:"space-between", padding:"8px 12px", background:"rgba(59,130,246,0.07)", border:"1px solid rgba(59,130,246,0.18)", borderRadius:9, marginBottom:18 }}>
                     <span style={{ fontSize:12, color:"rgba(255,255,255,0.4)" }}>Balance</span>
-                    <span style={{ fontSize:13, fontWeight:800, color:"#a78bfa", fontFamily:"monospace" }}>{balance > 0 ? balance.toLocaleString("en-US",{maximumFractionDigits:4}) : "0"} INQAI</span>
+                    <span style={{ fontSize:13, fontWeight:800, color:"#93c5fd", fontFamily:"monospace" }}>{balance > 0 ? balance.toLocaleString("en-US",{maximumFractionDigits:4}) : "0"} INQAI</span>
                   </div>
                   <div style={{ padding:"10px 13px", background:"rgba(251,191,36,0.07)", border:"1px solid rgba(251,191,36,0.22)", borderRadius:10, marginBottom:14, fontSize:12, color:"#fbbf24", lineHeight:1.6 }}>
                     <strong>⚠ INQAI is an ERC-20 token on Ethereum Mainnet.</strong> Recipient must be an Ethereum address starting with <code style={{background:"rgba(0,0,0,0.3)",padding:"1px 5px",borderRadius:4}}>0x</code>. Do <strong>not</strong> enter a Bitcoin, Solana, or other non-ETH address — tokens sent to the wrong chain address are permanently lost.
@@ -98,7 +98,7 @@ export default function SendPage() {
                     <label style={{ fontSize:10, color:"rgba(255,255,255,0.35)", textTransform:"uppercase", letterSpacing:"0.8px", marginBottom:6, display:"block" }}>Amount</label>
                     <div style={{ display:"flex", gap:8 }}>
                       <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0" min="0" style={{ flex:1, padding:"11px 13px", borderRadius:10, background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", color:"#fff", fontSize:16, fontWeight:700, outline:"none", boxSizing:"border-box" }} />
-                      <button onClick={() => setAmount(balance.toFixed(4))} style={{ padding:"0 14px", borderRadius:9, background:"rgba(124,58,237,0.2)", border:"1px solid rgba(124,58,237,0.35)", color:"#a78bfa", fontSize:11, fontWeight:700, cursor:"pointer" }}>MAX</button>
+                      <button onClick={() => setAmount(balance.toFixed(4))} style={{ padding:"0 14px", borderRadius:9, background:"rgba(59,130,246,0.2)", border:"1px solid rgba(59,130,246,0.35)", color:"#93c5fd", fontSize:11, fontWeight:700, cursor:"pointer" }}>MAX</button>
                     </div>
                   </div>
                   {error && (
@@ -106,7 +106,7 @@ export default function SendPage() {
                       <span style={{ fontSize:12, color:"#f87171" }}>{error}</span>
                     </div>
                   )}
-                  <button onClick={handleSend} disabled={sending || balance === 0} style={{ width:"100%", padding:"13px", borderRadius:12, fontSize:15, fontWeight:800, background: sending ? "rgba(124,58,237,0.3)" : "linear-gradient(135deg,#7c3aed,#4f46e5)", border:"1px solid rgba(255,255,255,0.1)", color:"#fff", cursor: sending || balance === 0 ? "not-allowed" : "pointer", boxShadow: sending ? "none" : "0 4px 20px rgba(124,58,237,0.4)" }}>
+                  <button onClick={handleSend} disabled={sending || balance === 0} style={{ width:"100%", padding:"13px", borderRadius:12, fontSize:15, fontWeight:800, background: sending ? "rgba(59,130,246,0.3)" : "#3b82f6", border:"1px solid rgba(255,255,255,0.1)", color:"#fff", cursor: sending || balance === 0 ? "not-allowed" : "pointer", boxShadow: sending ? "none" : "0 4px 20px rgba(59,130,246,0.4)" }}>
                     {sending ? "Confirm in wallet…" : balance === 0 ? "No INQAI balance" : "Send INQAI"}
                   </button>
                 </div>
