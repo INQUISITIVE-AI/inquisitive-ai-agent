@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'; // v2026.04.15-force
+import { useState, useEffect } from 'react'; // v2026.04.15-redeploy
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';
