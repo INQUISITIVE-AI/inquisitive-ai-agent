@@ -15,13 +15,18 @@ import SiteNav from '../src/components/SiteNav';
 
 
 const VAULT_ADDR = (process.env.NEXT_PUBLIC_VAULT_ADDRESS || '0xb99dc519c4373e5017222bbd46f42a4e12a0ec25') as `0x${string}`;
+// Full VaultV2 ABI - functions that actually exist on the contract
 const VAULT_ABI = [
   { name:'performUpkeep',        type:'function', stateMutability:'nonpayable', inputs:[{name:'performData',type:'bytes'}], outputs:[] },
-  { name:'getPortfolioLength',   type:'function', stateMutability:'view',      inputs:[],                             outputs:[{name:'',type:'uint256'}] },
   { name:'getETHBalance',        type:'function', stateMutability:'view',      inputs:[],                             outputs:[{name:'',type:'uint256'}] },
   { name:'automationEnabled',    type:'function', stateMutability:'view',      inputs:[],                             outputs:[{name:'',type:'bool'}] },
-  { name:'cycleCount',           type:'function', stateMutability:'view',      inputs:[],                             outputs:[{name:'',type:'uint256'}] },
+  { name:'totalTrades',          type:'function', stateMutability:'view',      inputs:[],                             outputs:[{name:'',type:'uint256'}] },
+  { name:'totalVolume',          type:'function', stateMutability:'view',      inputs:[],                             outputs:[{name:'',type:'uint256'}] },
   { name:'owner',                type:'function', stateMutability:'view',      inputs:[],                             outputs:[{name:'',type:'address'}] },
+  { name:'aiOracle',             type:'function', stateMutability:'view',      inputs:[],                             outputs:[{name:'',type:'address'}] },
+  { name:'getTrackedAssets',     type:'function', stateMutability:'view',      inputs:[],                             outputs:[{name:'',type:'address[]'}] },
+  { name:'MIN_TRADE_GAP',        type:'function', stateMutability:'view',      inputs:[],                             outputs:[{name:'',type:'uint256'}] },
+  { name:'MIN_TRADE_AMOUNT',     type:'function', stateMutability:'view',      inputs:[],                             outputs:[{name:'',type:'uint256'}] },
 ] as const;
 
 // PHASE1: 32 ETH-mainnet ERC-20s — per CMC watchlist
@@ -89,8 +94,9 @@ export default function AnalyticsPage() {
   const [triggering, setTriggering] = useState(false);
 
   // ── Vault on-chain state (live reads, no private key) ─────────────────────
-  const { data: vaultPortfolioLen } = useReadContract({
-    address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'getPortfolioLength',
+  // VaultV2 uses getTrackedAssets (array) - length is portfolio count
+  const { data: vaultTrackedAssets } = useReadContract({
+    address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'getTrackedAssets',
     chainId: 1, query: { refetchInterval: 30000 },
   });
   const { data: vaultEthBal } = useReadContract({
@@ -101,19 +107,30 @@ export default function AnalyticsPage() {
     address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'automationEnabled',
     chainId: 1, query: { refetchInterval: 30000 },
   });
-  const { data: vaultCycleCount } = useReadContract({
-    address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'cycleCount',
+  // VaultV2 uses totalTrades (not cycleCount)
+  const { data: vaultTotalTrades } = useReadContract({
+    address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'totalTrades',
+    chainId: 1, query: { refetchInterval: 30000 },
+  });
+  const { data: vaultTotalVolume } = useReadContract({
+    address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'totalVolume',
     chainId: 1, query: { refetchInterval: 30000 },
   });
   const { data: vaultOwnerAddr } = useReadContract({
     address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'owner',
     chainId: 1, query: { refetchInterval: 60000 },
   });
+  const { data: vaultAiOracle } = useReadContract({
+    address: VAULT_ADDR, abi: VAULT_ABI, functionName: 'aiOracle',
+    chainId: 1, query: { refetchInterval: 60000 },
+  });
   const vaultEthOnChain = vaultEthBal ? Number(vaultEthBal) / 1e18 : 0;
   const isVaultOwner = !!(address && vaultOwnerAddr && address.toLowerCase() === (vaultOwnerAddr as string).toLowerCase());
-  const portfolioOnChain= vaultPortfolioLen ? Number(vaultPortfolioLen) : 0;
-  const automationOn    = automationEnabledData === true;
-  const cyclesOnChain   = vaultCycleCount ? Number(vaultCycleCount) : 0;
+  // getTrackedAssets returns array, length is the portfolio count
+  const portfolioOnChain = vaultTrackedAssets ? (vaultTrackedAssets as string[]).length : 0;
+  const automationOn = automationEnabledData === true;
+  const totalTradesOnChain = vaultTotalTrades ? Number(vaultTotalTrades) : 0;
+  const totalVolumeOnChain = vaultTotalVolume ? Number(vaultTotalVolume) / 1e18 : 0;
 
   
   const activeVault = VAULT_ADDR;
@@ -317,7 +334,7 @@ export default function AnalyticsPage() {
               </div>
               <div style={{ display:'flex', gap:10, alignItems:'center' }}>
                 <div style={{ width:8, height:8, borderRadius:9, background:'#10b981', boxShadow:'0 0 8px #10b981' }} />
-                <span style={{ fontSize:12, color:'#10b981', fontWeight:700 }}>LIVE · {!nav ? 'Connecting…' : cyclesOnChain > 0 ? `Cycle #${cyclesOnChain.toLocaleString()}` : '66 assets · live'}</span>
+                <span style={{ fontSize:12, color:'#10b981', fontWeight:700 }}>LIVE · {!nav ? 'Connecting…' : totalTradesOnChain > 0 ? `${totalTradesOnChain.toLocaleString()} trades · on-chain` : '66 assets · live'}</span>
                 {isOnChainNAV && (
                   <span style={{ fontSize:10, padding:'2px 8px', borderRadius:100, background:'rgba(16,185,129,0.12)', color:'#34d399', border:'1px solid rgba(16,185,129,0.25)', fontWeight:700 }}>
                     ON-CHAIN NAV · {fmtUsd(aumUSD)} AUM
@@ -530,7 +547,8 @@ export default function AnalyticsPage() {
                       { l:'Active Signals', v:String(buys),               c:'#10b981' },
                       { l:'Reduce/Exit',    v:String(sells),              c:'#ef4444' },
                       { l:'Active Assets',  v:String(nav?.portfolio?.assetCount??'—') },
-                      { l:'Vault Cycles',   v:(cyclesOnChain||0).toLocaleString() },
+                      { l:'Total Trades',   v:(totalTradesOnChain||0).toLocaleString() },
+                      { l:'Total Volume',   v:fmtUsd(totalVolumeOnChain) },
                     ].map((r:any) => (
                       <div key={r.l} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'7px 0', borderBottom:'1px solid rgba(255,255,255,0.04)' }}>
                         <span style={{ fontSize:12, color:'rgba(255,255,255,0.4)' }}>{r.l}</span>
