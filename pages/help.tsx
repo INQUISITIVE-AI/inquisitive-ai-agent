@@ -475,8 +475,8 @@ export default function HelpPage() {
               ['Total Supply', `${Number(process.env.NEXT_PUBLIC_TOTAL_SUPPLY || 100000000).toLocaleString()} INQAI`],['Inflation','None — fixed supply'],
               ['Presale Price', `$${process.env.NEXT_PUBLIC_PRESALE_PRICE || '8'}/token`],['Target Price', `$${process.env.NEXT_PUBLIC_TARGET_PRICE || '15'}/token`],
               ['Target Market Cap','$1.5B (at $15/token)'],['Target APY', `${((parseFloat(process.env.NEXT_PUBLIC_TARGET_APY || '0.185')) * 100).toFixed(1)}%`],
-              ['Performance Fee','15% of positive yields · live FeeDistributor: 0x0d6aed…'],
-              ['Fee Distribution','60% buybacks · 20% burns · 15% stakers · 5% operations'],
+              ['Performance Fee','15% of positive yields · FeeDistributor: 0x0d6aed… · activates with trading'],
+              ['Fee Distribution','60% buybacks · 20% burns · 15% stakers · 5% operations · active when trading begins'],
             ].map(([k,v])=>(
               <div key={k} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,0.04)',fontSize:12}}>
                 <span style={{color:'rgba(255,255,255,0.4)'}}>{k}</span>
@@ -488,9 +488,9 @@ export default function HelpPage() {
             <h3 style={{fontSize:15,fontWeight:700,color:'#60a5fa',marginBottom:16}}>Token Distribution</h3>
             {[
               {cat:'Ecosystem Growth',pct:'35%',amt:'35M INQAI',vest:'36 months linear'},
-              {cat:'Team & Advisors', pct:'20%',amt:'20M INQAI',vest:'3-month cliff · 36-month linear vesting'},
+              {cat:'Team & Advisors', pct:'20%',amt:'20M INQAI',vest:'Immediate'},
               {cat:'Foundation',      pct:'15%',amt:'15M INQAI',vest:'36 months linear'},
-              {cat:'Liquidity',       pct:'15%',amt:'15M INQAI',vest:'Locked — DEX liquidity provisioning'},
+              {cat:'Liquidity',       pct:'15%',amt:'15M INQAI',vest:'Immediate — DEX liquidity provisioning'},
               {cat:'Community',       pct:'10%',amt:'10M INQAI',vest:'36 months linear'},
               {cat:'Strategic Reserve',pct:'5%',amt:'5M INQAI', vest:'36 months linear'},
             ].map(t=>(
@@ -515,7 +515,7 @@ export default function HelpPage() {
             {[
               {icon:Gem,title:'Asset-Backed Ownership',desc:'Each INQAI token represents proportional ownership in a diversified portfolio of 66 digital assets, professionally managed by proprietary AI systems.'},
               {icon:TrendingUp,title:'Portfolio Performance',desc:'Five intelligence engines optimize the 66-asset portfolio continuously across 11 trading strategies, compounding risk-adjusted returns into the underlying backing.'},
-              {icon:Flame,title:'Systematic Buybacks + Burns',desc:'FeeDistributor live: 60% of all performance fees used for open-market INQAI buybacks, 20% permanently burned — increasing scarcity automatically.'},
+              {icon:Flame,title:'Systematic Buybacks + Burns',desc:'FeeDistributor deployed: 60% of performance fees allocated to open-market INQAI buybacks, 20% to burns — activates when trading begins.'},
               {icon:Lock,title:'Staking Rewards',desc:'INQAIStaking contract deployed. 15% of all protocol fees distributed pro-rata to INQAI stakers. Staking UI coming soon.'},
             ].map(v=>(
               <div key={v.title} style={{background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.06)',borderRadius:12,padding:14}}>
@@ -571,7 +571,7 @@ export default function HelpPage() {
           {
             phase:'Phase 3 — Live DeFi Execution',
             status:'IN PROGRESS',
-            detail:'VaultV2 deployed and funded. Blocker: Chainlink Automation must be registered and funded with LINK to enable autonomous trade execution.',
+            detail:'VaultV2 deployed and funded with ETH. Not yet actively trading. Chainlink Automation registration and LINK funding required for autonomous trade execution.',
             items:[
               'VaultV2 deployed and seeded with ETH — 0xb99dc519c4373e5017222bbd46f42a4e12a0ec25',
               'AI oracle wallet submitting signals via submitSignalsBatch() every 10 minutes (GitHub Actions)',
@@ -610,7 +610,7 @@ export default function HelpPage() {
               'Reasoning engine — multi-factor decision making with Fear & Greed logic active',
               'Portfolio engine — Kelly Criterion sizing + Sharpe optimization running',
               'Learning engine — adaptive signal weighting + meta-cognitive self-monitoring',
-              'Risk engine — 2% per trade / 6% heat / 15% drawdown circuit breaker enforced',
+              'Risk engine — 2% per trade / 6% heat / 15% drawdown circuit breaker (active when trading begins)',
               'Performance tracking — win rate, P&L, signal confidence tracking live',
               'PENDING: Chainlink Automation registration (final step for autonomous execution)',
               'PENDING: Cross-chain execution via deBridge DLN',
