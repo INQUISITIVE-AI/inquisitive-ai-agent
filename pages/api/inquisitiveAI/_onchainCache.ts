@@ -11,17 +11,25 @@ const RPC_URLS = [
   'https://ethereum.publicnode.com',
 ];
 
-const VAULT_ADDR    = process.env.INQUISITIVE_VAULT_ADDRESS || '0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb';
+// VaultV2 is the active vault — V1 (0x721b...) has been drained and is legacy
+const VAULT_ADDR    = process.env.NEXT_PUBLIC_VAULT_V2_ADDRESS || process.env.INQUISITIVE_VAULT_ADDRESS || '0xb99dc519c4373e5017222bbd46f42a4e12a0ec25';
 const INQAI_ADDR    = process.env.INQAI_TOKEN_ADDRESS       || '0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5';
 const DEPLOYER_ADDR = process.env.DEPLOYER_ADDRESS          || '0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746';
 const USDC_ADDR     = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48';
 
 const SEL_TOTAL_SUPPLY   = '0x18160ddd'; // keccak256("totalSupply()")
-const SEL_PORTFOLIO_LEN  = '0xe6f713d5'; // keccak256("getPortfolioLength()")
-const SEL_CYCLE_COUNT    = '0x316fda0f'; // keccak256("cycleCount()")
-const SEL_AUTO_ENABLED   = '0xd966a594'; // keccak256("automationEnabled()")
-const SEL_LAST_DEPLOY    = '0x579578e3'; // keccak256("lastDeployTime()")
-const SEL_OWNER          = '0x8da5cb5b'; // keccak256("owner()")
+// VaultV2 selectors — keccak256 of function signatures
+// NOTE: getPortfolioLength/cycleCount/lastDeployTime are V1-only; VaultV2 uses totalTrades/totalVolume
+const SEL_TOTAL_TRADES   = '0xc8ecfd24'; // keccak256("totalTrades()")
+const SEL_TOTAL_VOLUME   = '0x4094d273'; // keccak256("totalVolume()")
+const SEL_AUTO_ENABLED   = '0xd966a594'; // keccak256("automationEnabled()") — same in V2
+const SEL_LAST_TRADE     = '0xd67b3515'; // keccak256("lastTradeTime()")
+const SEL_OWNER          = '0x8da5cb5b'; // keccak256("owner()") — standard OZ
+const SEL_AI_ORACLE      = '0x4e6a4a36'; // keccak256("aiOracle()")
+// V1-only selectors kept for reference but NOT called on VaultV2:
+// SEL_PORTFOLIO_LEN = '0xe6f713d5' getPortfolioLength() — V1 only
+// SEL_CYCLE_COUNT   = '0x316fda0f' cycleCount() — V1 only
+// SEL_LAST_DEPLOY   = '0x579578e3' lastDeployTime() — V1 only
 
 function encodeBalanceOf(addr: string): string {
   return '0x70a08231' + addr.toLowerCase().replace('0x', '').padStart(64, '0');
@@ -84,10 +92,10 @@ async function fetchOnchain(): Promise<OnchainSnapshot> {
     vaultInqaiHex,
     deployerUsdcHex,
     vaultUsdcHex,
-    portfolioLenHex,
-    cycleCountHex,
+    totalTradesHex,   // VaultV2: totalTrades() replaces cycleCount()
+    totalVolumeHex,   // VaultV2: totalVolume() — new field
     autoEnabledHex,
-    lastDeployHex,
+    lastTradeHex,     // VaultV2: lastTradeTime() replaces lastDeployTime()
     ownerHex,
   ] = await Promise.all([
     rpcOne('eth_getBalance', [VAULT_ADDR,    'latest']),
@@ -97,10 +105,10 @@ async function fetchOnchain(): Promise<OnchainSnapshot> {
     rpcOne('eth_call', [{ to: INQAI_ADDR, data: encodeBalanceOf(VAULT_ADDR) },   'latest']),
     rpcOne('eth_call', [{ to: USDC_ADDR,  data: encodeBalanceOf(DEPLOYER_ADDR) },'latest']),
     rpcOne('eth_call', [{ to: USDC_ADDR,  data: encodeBalanceOf(VAULT_ADDR) },   'latest']),
-    rpcOne('eth_call', [{ to: VAULT_ADDR, data: SEL_PORTFOLIO_LEN },             'latest']),
-    rpcOne('eth_call', [{ to: VAULT_ADDR, data: SEL_CYCLE_COUNT },               'latest']),
+    rpcOne('eth_call', [{ to: VAULT_ADDR, data: SEL_TOTAL_TRADES },              'latest']),
+    rpcOne('eth_call', [{ to: VAULT_ADDR, data: SEL_TOTAL_VOLUME },              'latest']),
     rpcOne('eth_call', [{ to: VAULT_ADDR, data: SEL_AUTO_ENABLED },              'latest']),
-    rpcOne('eth_call', [{ to: VAULT_ADDR, data: SEL_LAST_DEPLOY },               'latest']),
+    rpcOne('eth_call', [{ to: VAULT_ADDR, data: SEL_LAST_TRADE },                'latest']),
     rpcOne('eth_call', [{ to: VAULT_ADDR, data: SEL_OWNER },                     'latest']),
   ]);
 
@@ -108,21 +116,21 @@ async function fetchOnchain(): Promise<OnchainSnapshot> {
   const deployerEth = parseHex(deployerEthHex, 18);
   const totalSupply = parseHex(totalSupplyHex, 18) || 100_000_000;
   const vaultInqai  = parseHex(vaultInqaiHex,  18);
-  // Guard: if deployer INQAI balance RPC returned null/failed, assume deployer
-  // still holds the full supply. This prevents a null read from producing a
-  // fake 100M circulating supply and a spurious ~$800M market cap.
   const deployerInqaiRaw = parseHex(deployerInqaiHex, 18);
   const deployerInqai    = deployerInqaiHex === null
-    ? totalSupply          // RPC failed — conservative: assume none sold yet
+    ? totalSupply
     : deployerInqaiRaw;
-  const deployerUsdc  = parseHex(deployerUsdcHex,   6);
-  const vaultUsdc     = parseHex(vaultUsdcHex,      6);
-  const portfolioLength    = portfolioLenHex && portfolioLenHex !== '0x' ? parseInt(portfolioLenHex, 16) : 0;
-  const cycleCount          = cycleCountHex   && cycleCountHex   !== '0x' ? parseInt(cycleCountHex, 16) : 0;
-  const automationEnabled   = !!(autoEnabledHex && autoEnabledHex !== '0x' && BigInt(autoEnabledHex) !== 0n);
-  const lastDeployTime      = lastDeployHex   && lastDeployHex   !== '0x' ? parseInt(lastDeployHex, 16) : 0;
-  const ownerAddr           = ownerHex && ownerHex.length >= 42 ? '0x' + ownerHex.slice(-40) : '';
-  const circulatingSupply   = Math.max(0, totalSupply - deployerInqai);
+  const deployerUsdc     = parseHex(deployerUsdcHex, 6);
+  const vaultUsdc        = parseHex(vaultUsdcHex,    6);
+  // VaultV2 state
+  const totalTrades     = totalTradesHex && totalTradesHex !== '0x' ? parseInt(totalTradesHex, 16) : 0;
+  const totalVolume     = parseHex(totalVolumeHex, 18); // in ETH
+  const automationEnabled = !!(autoEnabledHex && autoEnabledHex !== '0x' && BigInt(autoEnabledHex) !== 0n);
+  const lastDeployTime    = lastTradeHex && lastTradeHex !== '0x' ? parseInt(lastTradeHex, 16) : 0;
+  const ownerAddr         = ownerHex && ownerHex.length >= 42 ? '0x' + ownerHex.slice(-40) : '';
+  const circulatingSupply = Math.max(0, totalSupply - deployerInqai);
+  // VaultV2 doesn't use portfolioLength — tracked via getTrackedAssets() array (not needed here)
+  const portfolioLength   = 0;
 
   return {
     vaultEth,
@@ -137,8 +145,8 @@ async function fetchOnchain(): Promise<OnchainSnapshot> {
     circulatingSupply,
     tokensSold:         circulatingSupply,
     portfolioLength,
-    portfolioConfigured: portfolioLength > 0,
-    cycleCount,
+    portfolioConfigured: false, // VaultV2: configured when aiOracle sets signals
+    cycleCount:         totalTrades, // map totalTrades → cycleCount for backwards compat
     automationEnabled,
     lastDeployTime,
     ownerAddr,

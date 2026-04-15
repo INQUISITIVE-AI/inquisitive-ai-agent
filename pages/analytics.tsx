@@ -487,9 +487,11 @@ export default function AnalyticsPage() {
                     </div>
                     <div style={{ display:'flex', flexDirection:'column', gap:6, fontSize:11 }}>
                       {[
-                        { l:'Vault Contract',  v:vaultAddress,                                      href:`https://etherscan.io/address/${vaultAddress}` },
-                        { l:'INQAI Token',     v:INQAI_TOKEN.address,                               href:`https://etherscan.io/token/${INQAI_TOKEN.address}` },
-                        { l:'AI Strategy Mgr', v:'0x8431173FA9594B43E226D907E26EF68cD6B6542D',     href:'https://etherscan.io/address/0x8431173FA9594B43E226D907E26EF68cD6B6542D' },
+                        { l:'VaultV2 (Active)',  v:'0xb99dc519c4373e5017222bbd46f42a4e12a0ec25', href:'https://etherscan.io/address/0xb99dc519c4373e5017222bbd46f42a4e12a0ec25' },
+                        { l:'INQAI Token',       v:INQAI_TOKEN.address,                          href:`https://etherscan.io/token/${INQAI_TOKEN.address}` },
+                        { l:'FeeDistributor',    v:'0x0d6aed33e80bc541904906d73ba4bfe18c730a09', href:'https://etherscan.io/address/0x0d6aed33e80bc541904906d73ba4bfe18c730a09' },
+                        { l:'INQAIStaking',      v:'0x46625868a36c11310fb988a69100e87519558e59', href:'https://etherscan.io/address/0x46625868a36c11310fb988a69100e87519558e59' },
+                        { l:'INQAITimelock',     v:'0x972b7f40d1837f0b8bf003d7147de7b9fcfc601e', href:'https://etherscan.io/address/0x972b7f40d1837f0b8bf003d7147de7b9fcfc601e' },
                       ].map(s => (
                         <div key={s.l} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'6px 8px', background:'rgba(255,255,255,0.02)', borderRadius:8 }}>
                           <span style={{ color:'rgba(255,255,255,0.4)', fontSize:10 }}>{s.l}</span>
@@ -598,8 +600,8 @@ export default function AnalyticsPage() {
                     15% performance fee is distributed:<br/>
                     <strong style={{color:'#10b981'}}>60%</strong> → Open-market INQAI buybacks (buy pressure)<br/>
                     <strong style={{color:'#ef4444'}}>20%</strong> → Permanent token burns (deflationary)<br/>
-                    <strong style={{color:'#f59e0b'}}>15%</strong> → Treasury (development &amp; security reserves)<br/>
-                    <strong style={{color:'#6366f1'}}>5%</strong> → Chainlink Automation (keeps AI running)
+                    <strong style={{color:'#f59e0b'}}>15%</strong> → INQAI Stakers (pro-rata share of all fees)<br/>
+                    <strong style={{color:'#6366f1'}}>5%</strong> → Protocol operations &amp; Chainlink funding
                   </div>
                 </div>
                 <div style={{ background:'rgba(17,17,19,0.85)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:20, padding:'24px', backdropFilter:'blur(12px)' }}>
@@ -607,10 +609,10 @@ export default function AnalyticsPage() {
                   {(() => {
                     const totalFees = Math.max(0, hasHoldings ? totalPnL * 0.15 : 0);
                     return [
-                      { l:'Buybacks (60%)',   v:totalFees*0.60, p:60, c:'#10b981', d:'INQAI bought on open market → creates buy pressure' },
-                      { l:'Burns (20%)',      v:totalFees*0.20, p:20, c:'#ef4444', d:'INQAI permanently destroyed → reduces supply' },
-                      { l:'Treasury (15%)',  v:totalFees*0.15, p:15, c:'#f59e0b', d:'Protocol reserves for development & security' },
-                      { l:'Chainlink (5%)',  v:totalFees*0.05, p:5,  c:'#6366f1', d:'Auto-funds Chainlink Automation — keeps AI running forever' },
+                      { l:'Buybacks (60%)',  v:totalFees*0.60, p:60, c:'#10b981', d:'INQAI bought on open market → continuous buy pressure' },
+                      { l:'Burns (20%)',     v:totalFees*0.20, p:20, c:'#ef4444', d:'INQAI permanently destroyed → deflationary supply' },
+                      { l:'Stakers (15%)',   v:totalFees*0.15, p:15, c:'#f59e0b', d:'Pro-rata share to INQAI stakers → boosted by lock duration' },
+                      { l:'Operations (5%)', v:totalFees*0.05, p:5,  c:'#6366f1', d:'Protocol upkeep, Chainlink Automation, and security reserves' },
                     ];
                   })().map(f => (
                     <div key={f.l} style={{ marginBottom:16 }}>

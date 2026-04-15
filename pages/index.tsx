@@ -335,11 +335,11 @@ export default function Home() {
               One transaction. 66 assets managed 24/7 by AI. No rebalancing. No strategies to monitor. No fees until it performs.
             </p>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 56 }}>
-              <button onClick={() => router.push('/analytics')} className="btn-primary" style={{ fontSize: 15, padding: '13px 32px' }}>
-                View Dashboard
+              <button onClick={() => router.push('/buy')} className="btn-primary" style={{ fontSize: 15, padding: '13px 32px' }}>
+                Acquire INQAI
               </button>
-              <button onClick={() => router.push('/help')} className="btn-secondary" style={{ fontSize: 15, padding: '13px 32px' }}>
-                Read the Docs
+              <button onClick={() => router.push('/token')} className="btn-secondary" style={{ fontSize: 15, padding: '13px 32px' }}>
+                View Portfolio
               </button>
             </div>
 

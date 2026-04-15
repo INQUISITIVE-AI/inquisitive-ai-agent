@@ -11,8 +11,8 @@ import { getOnchain, VAULT_ADDR, INQAI_ADDR, DEPLOYER_ADDR } from '../_onchainCa
 // NAV = presale_price × (current_portfolio_index / 100)
 // Portfolio index = 100 × (1 + weighted_7d_return) — resets to 100 each Monday.
 
-const PRESALE_PRICE = parseFloat(process.env.NEXT_PUBLIC_PRESALE_PRICE || '0');
-const TARGET_PRICE  = parseFloat(process.env.NEXT_PUBLIC_TARGET_PRICE || '0');
+const PRESALE_PRICE = parseFloat(process.env.NEXT_PUBLIC_PRESALE_PRICE || '8');
+const TARGET_PRICE  = parseFloat(process.env.NEXT_PUBLIC_TARGET_PRICE  || '15');
 const TOTAL_SUPPLY  = parseInt(process.env.NEXT_PUBLIC_TOTAL_SUPPLY || '100000000');
 
 export const config = { maxDuration: 30 };
