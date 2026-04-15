@@ -112,7 +112,7 @@ export default function HelpPage() {
 
   const S = ({ children }: { children: React.ReactNode }) => (
     <div style={{display:'flex',gap:8,alignItems:'flex-start',fontSize:13,color:'rgba(255,255,255,0.5)',lineHeight:1.6}}>
-      <span style={{color:'#3b82f6',flexShrink:0,marginTop:1}}>→</span>
+      <span style={{color:'#3b82f6',flexShrink:0,marginTop:1,fontSize:10}}>-</span>
       <span>{children}</span>
     </div>
   );
@@ -140,7 +140,7 @@ export default function HelpPage() {
             <div style={{fontSize:12,color:'rgba(255,255,255,0.45)'}}>ERC-20 · Asset-backed · 18.5% target APY · Self-custody delivery</div>
           </div>
           <button onClick={()=>router.push('/buy')} style={{padding:'12px 24px',borderRadius:12,background:'#3b82f6',color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer',border:'1px solid rgba(255,255,255,0.1)',boxShadow:'0 4px 20px rgba(59,130,246,0.4)',whiteSpace:'nowrap',flexShrink:0}}>
-            Acquire INQAI →
+            Acquire INQAI
           </button>
         </div>
 
@@ -273,7 +273,7 @@ export default function HelpPage() {
           {icon:Leaf,name:'YIELD',col:'#84cc16',detail:'Liquidity provision and yield farming. Three pool types: Stable pools (4.8% APY, low risk, e.g. USDC/BTC), Volatile LP (12% APY, medium risk, e.g. ETH/USDC), Leveraged pools (25% APY, high risk). Risk-adjusted selection based on risk-first methodology.',params:'symbol, amount, params.poolType?'},
           {icon:Coins,name:'BORROW',col:'#0ea5e9',detail:'Capital-efficient borrowing against collateral. Deposit a blue-chip asset (BTC, ETH, SOL) as collateral on Aave V3 or Morpho Blue and borrow stablecoins (USDC, BTC, SOL) at the current market rate. The AI deploys borrowed capital into higher-yield strategies. Borrow APR vs deployment APY spread must be positive. LTV capped at 65% for safety. Health factor always maintained above 1.5.',params:'collateralSymbol, borrowSymbol, amount, params.protocol?, params.ltv?'},
           {icon:Infinity,name:'LOOP',col:'#8b5cf6',detail:'Recursive yield optimization: deposit → borrow against collateral → re-deposit → repeat. Max 5 loops, max 80% LTV per loop. Calculates cumulative APY and health factor before executing. Automatically capped by risk limits. Uses Aave V3 + Morpho as primary protocols.',params:'symbol, amount, params.maxLoops?, params.targetLTV?'},
-          {icon:Lock,name:'STAKE',col:'#06b6d4',detail:'Network staking across 27+ protocols with real APY data. ETH → Lido (3.8% APY), SOL → Jito (6.8%), DOT → Polkadot nomination (12%), ATOM → Cosmos delegation (15%), ENA → Ethena sENA (27%), INJ → Injective DAO (11%), NEAR → NEAR Staking (9%), TAO → Bittensor Subnet (12%).',params:'symbol, amount, params.protocol?'},
+          {icon:Lock,name:'STAKE',col:'#06b6d4',detail:'Network staking across 27+ protocols with real APY data. ETH via Lido (3.8% APY), SOL via Jito (6.8%), DOT via Polkadot nomination (12%), ATOM via Cosmos delegation (15%), ENA via Ethena sENA (27%), INJ via Injective DAO (11%), NEAR via NEAR Staking (9%), TAO via Bittensor Subnet (12%).',params:'symbol, amount, params.protocol?'},
           {icon:X,name:'MULTIPLY',col:'#f97316',detail:'Leveraged long exposure. Max 3× for major assets (BTC, ETH, SOL), max 2× for DeFi. Calculates liquidation price, daily borrow cost (e.g. 8.5%/yr), and break-even price move. Blocked if portfolio heat ≥ 6%. Maximum leverage enforced by the risk engine.',params:'symbol, amount, params.leverage?'},
           {icon:Gem,name:'EARN',col:'#93c5fd',detail:'Automatic best-strategy selection. Evaluates all available strategies (lending, staking, LP, looping) for the asset and selects the highest risk-adjusted APY. Scoring: APY - (risk_penalty × risk_score). Stakes are prioritized for liquid staking tokens. Non-yieldable assets return trading recommendation.',params:'symbol, amount'},
           {icon:Gift,name:'REWARDS',col:'#ec4899',detail:'Claim + auto-compound protocol rewards. Supported protocols: Aave (stkAAVE rewards), Lido (stETH rebases), Curve (CRV + veCRV), Balancer (BAL + gauge), Jupiter (JUP governance), Injective (INJ staking), Cosmos (ATOM), Polkadot (DOT), Hivemapper (HONEY), The Graph (GRT), Ethena (ENA), Soil (SOIL). Auto-compound reinvests immediately.',params:'symbol, params.autoCompound?'},
@@ -631,7 +631,7 @@ export default function HelpPage() {
             <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
               {p.items.map((item,i)=>(
                 <div key={i} style={{display:'flex',alignItems:'flex-start',gap:6,background:'rgba(255,255,255,0.04)',borderRadius:8,padding:'5px 10px',fontSize:11,color:'rgba(255,255,255,0.55)',maxWidth:'100%'}}>
-                  <span style={{color:p.col,flexShrink:0}}>✓</span><span>{item}</span>
+                  <span style={{color:p.col,flexShrink:0,fontSize:10}}>[+]</span><span>{item}</span>
                 </div>
               ))}
             </div>

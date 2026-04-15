@@ -168,7 +168,7 @@ export default function WithdrawPage() {
                       <CheckCircle2 size={14} color="#34d399" style={{ flexShrink: 0, marginTop: 1 }} />
                       <div style={{ fontSize: 12, color: '#6ee7b7', lineHeight: 1.6 }}>
                         <strong>Withdrawal sent!</strong>{' '}
-                        <a href={`https://etherscan.io/tx/${txHash}`} target="_blank" rel="noopener noreferrer" style={{ color: '#34d399' }}>View on Etherscan ↗</a>
+                        <a href={`https://etherscan.io/tx/${txHash}`} target="_blank" rel="noopener noreferrer" style={{ color: '#34d399' }}>View on Etherscan</a>
                       </div>
                     </div>
                   )}

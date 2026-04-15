@@ -460,7 +460,7 @@ export default function AnalyticsPage() {
                           <button
                             onClick={() => { setSendOpen(true); setSendError(null); setSendTo(''); setSendAmt(''); setSendHash(undefined); }}
                             style={{ padding:'10px', borderRadius:10, fontSize:13, fontWeight:700, cursor:'pointer', background:'rgba(59,130,246,0.12)', border:'1px solid rgba(59,130,246,0.35)', color:'#93c5fd', transition:'all 0.2s' }}
-                          >Send INQAI →</button>
+                          >Send INQAI</button>
                           <button
                             onClick={() => router.push('/buy')}
                             style={{ padding:'10px', borderRadius:10, fontSize:13, fontWeight:700, cursor:'pointer', background:'#3b82f6', border:'1px solid rgba(255,255,255,0.1)', color:'#fff' }}
@@ -516,7 +516,7 @@ export default function AnalyticsPage() {
                       <Layers size={16} color="#3b82f6" />
                       <h3 style={{ fontSize:14, fontWeight:700, color:'#f4f4f5', margin:0 }}>Your Portfolio Backing</h3>
                       {hasHoldings && effInvested > 0 && (
-                        <div style={{ marginLeft:'auto', fontSize:10, color:'#71717a', fontFamily:'monospace' }}>{fmtUsd(effInvested)} → 66 assets</div>
+                        <div style={{ marginLeft:'auto', fontSize:10, color:'#71717a', fontFamily:'monospace' }}>{fmtUsd(effInvested)} to 66 assets</div>
                       )}
                     </div>
                     {!hasHoldings || effInvested <= 0 ? (
@@ -610,10 +610,10 @@ export default function AnalyticsPage() {
                   </div>
                   <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)', lineHeight:1.8 }}>
                     15% performance fee is distributed:<br/>
-                    <strong style={{color:'#10b981'}}>60%</strong> → Open-market INQAI buybacks (buy pressure)<br/>
-                    <strong style={{color:'#ef4444'}}>20%</strong> → Permanent token burns (deflationary)<br/>
-                    <strong style={{color:'#f59e0b'}}>15%</strong> → INQAI Stakers (pro-rata share of all fees)<br/>
-                    <strong style={{color:'#6366f1'}}>5%</strong> → Protocol operations &amp; Chainlink funding
+                    <strong style={{color:'#10b981'}}>60%</strong> Open-market INQAI buybacks (buy pressure)<br/>
+                    <strong style={{color:'#ef4444'}}>20%</strong> Permanent token burns (deflationary)<br/>
+                    <strong style={{color:'#f59e0b'}}>15%</strong> INQAI Stakers (pro-rata share of all fees)<br/>
+                    <strong style={{color:'#6366f1'}}>5%</strong> Protocol operations &amp; Chainlink funding
                   </div>
                 </div>
                 <div style={{ background:'#1a1a1f', border:'1px solid rgba(255,255,255,0.06)', borderRadius:16, padding:'24px' }}>
@@ -621,9 +621,9 @@ export default function AnalyticsPage() {
                   {(() => {
                     const totalFees = Math.max(0, hasHoldings ? totalPnL * 0.15 : 0);
                     return [
-                      { l:'Buybacks (60%)',  v:totalFees*0.60, p:60, c:'#10b981', d:'INQAI bought on open market → continuous buy pressure' },
-                      { l:'Burns (20%)',     v:totalFees*0.20, p:20, c:'#ef4444', d:'INQAI permanently destroyed → deflationary supply' },
-                      { l:'Stakers (15%)',   v:totalFees*0.15, p:15, c:'#f59e0b', d:'Pro-rata share to INQAI stakers → boosted by lock duration' },
+                      { l:'Buybacks (60%)',  v:totalFees*0.60, p:60, c:'#10b981', d:'INQAI bought on open market' },
+                      { l:'Burns (20%)',     v:totalFees*0.20, p:20, c:'#ef4444', d:'INQAI permanently destroyed' },
+                      { l:'Stakers (15%)',   v:totalFees*0.15, p:15, c:'#f59e0b', d:'Pro-rata share to INQAI stakers' },
                       { l:'Operations (5%)', v:totalFees*0.05, p:5,  c:'#6366f1', d:'Protocol upkeep, Chainlink Automation, and security reserves' },
                     ];
                   })().map(f => (
@@ -679,15 +679,14 @@ export default function AnalyticsPage() {
 
             {sendConfirmed ? (
               <div style={{ textAlign:'center', padding:'16px 0' }}>
-                <div style={{ fontSize:32, marginBottom:8 }}>✓</div>
-                <div style={{ fontSize:14, fontWeight:700, color:'#10b981', marginBottom:6 }}>Transfer confirmed!</div>
+                <div style={{ fontSize:14, fontWeight:700, color:'#10b981', marginBottom:6 }}>Transfer confirmed</div>
                 <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)', marginBottom:16 }}>
                   {sendAmt} INQAI sent to {sendTo.slice(0,8)}…{sendTo.slice(-6)}
                 </div>
                 {sendHash && (
                   <a href={`https://etherscan.io/tx/${sendHash}`} target="_blank" rel="noopener noreferrer"
                     style={{ fontSize:11, color:'#6ee7b7', display:'block', marginBottom:14 }}>
-                    View on Etherscan ↗
+                    View on Etherscan
                   </a>
                 )}
                 <button onClick={() => setSendOpen(false)}

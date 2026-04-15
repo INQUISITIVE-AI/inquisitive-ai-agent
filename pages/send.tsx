@@ -76,7 +76,7 @@ export default function SendPage() {
                 <div style={{ textAlign:"center", padding:"16px 0" }}>
                   <div style={{ fontSize:17, fontWeight:800, marginBottom:8, color:"#10b981" }}>Sent!</div>
                   <div style={{ fontSize:12, color:"rgba(255,255,255,0.4)", marginBottom:16 }}>{parseFloat(amount).toLocaleString()} INQAI to {to.slice(0,8)}…{to.slice(-6)}</div>
-                  <a href={`https://etherscan.io/tx/${txHash}`} target="_blank" rel="noopener noreferrer" style={{ color:"#34d399", fontSize:12, fontWeight:700 }}>View on Etherscan ↗</a>
+                  <a href={`https://etherscan.io/tx/${txHash}`} target="_blank" rel="noopener noreferrer" style={{ color:"#34d399", fontSize:12, fontWeight:700 }}>View on Etherscan</a>
                   <br /><br />
                   <button onClick={() => { setTxHash(undefined); setTo(""); setAmount(""); }} style={{ padding:"8px 20px", borderRadius:9, background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", color:"rgba(255,255,255,0.5)", fontSize:13, cursor:"pointer" }}>Send Again</button>
                 </div>
