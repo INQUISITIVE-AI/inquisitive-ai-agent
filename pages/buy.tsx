@@ -258,7 +258,7 @@ export default function BuyPage() {
 
 
               {/* Main card */}
-              <div style={{ background: 'rgba(17,17,19,0.85)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 22, padding: '28px 26px', backdropFilter: 'blur(20px)', boxShadow: '0 0 60px rgba(59,130,246,0.06)' }}>
+              <div style={{ background: '#1a1a1f', border: '1px solid rgba(59,130,246,0.18)', borderRadius: 16, padding: '28px 26px' }}>
 
                 {/* STEP 1 — Connect */}
                 {!isConnected && (
@@ -508,7 +508,7 @@ export default function BuyPage() {
                         </div>
                       </div>
                     )}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
                       <button
                         onClick={() => router.push('/analytics')}
                         style={{
@@ -527,6 +527,22 @@ export default function BuyPage() {
                         }}
                       >Acquire More</button>
                     </div>
+                    <button
+                      onClick={async () => {
+                        try {
+                          await (window as any).ethereum?.request({
+                            method: 'wallet_watchAsset',
+                            params: { type: 'ERC20', options: {
+                              address: INQAI_TOKEN.address,
+                              symbol: INQAI_TOKEN.symbol,
+                              decimals: INQAI_TOKEN.decimals,
+                              image: 'https://getinqai.com/inqai-logo.svg',
+                            }},
+                          });
+                        } catch {}
+                      }}
+                      style={{ width: '100%', padding: '9px', borderRadius: 10, fontSize: 12, fontWeight: 600, cursor: 'pointer', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.25)', color: '#93c5fd' }}
+                    >+ Add INQAI to MetaMask / Wallet</button>
                   </div>
                 )}
               </div>
@@ -536,8 +552,8 @@ export default function BuyPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
               {/* Tokenomics */}
-              <div style={{ background: 'rgba(17,17,19,0.8)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 20, padding: '24px', backdropFilter: 'blur(12px)' }}>
-                <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 18, color: 'rgba(255,255,255,0.7)' }}>Token Specifications</h3>
+              <div style={{ background: '#1a1a1f', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: '24px' }}>
+                <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 18, color: '#f4f4f5' }}>Token Specifications</h3>
                 {[
                   { label: 'Presale Price',  val: `$${INQAI_TOKEN.presalePrice}`,                   col: '#93c5fd' },
                   { label: 'Target Price',   val: `$${INQAI_TOKEN.targetPrice}`,                    col: '#fff'    },
@@ -565,7 +581,7 @@ export default function BuyPage() {
 
               {/* Live Purchase Feed */}
               {salesData?.recentPurchases?.length > 0 && (
-                <div style={{ background: 'rgba(17,17,19,0.8)', border: '1px solid rgba(16,185,129,0.15)', borderRadius: 20, padding: '20px 22px', backdropFilter: 'blur(12px)' }}>
+                <div style={{ background: '#1a1a1f', border: '1px solid rgba(16,185,129,0.12)', borderRadius: 16, padding: '20px 22px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
                     <span className="anim-blink" style={{ width: 6, height: 6, borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
                     <h3 style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.7)', margin: 0 }}>Recent On-Chain Purchases</h3>

@@ -5,7 +5,7 @@ import { Flame, TrendingUp, PiggyBank, Activity, ArrowUpRight, ExternalLink } fr
 
 const INQAI_ADDR = '0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5' as `0x${string}`;
 const DEAD_ADDR  = '0x000000000000000000000000000000000000dEaD' as `0x${string}`;
-const DIST_CONTRACT = (process.env.NEXT_PUBLIC_FEE_DISTRIBUTOR || '0x0000000000000000000000000000000000000000') as `0x${string}`;
+const DIST_CONTRACT = (process.env.NEXT_PUBLIC_FEE_DISTRIBUTOR || '0x0d6aed33e80bc541904906d73ba4bfe18c730a09') as `0x${string}`;
 const DIST_LIVE = DIST_CONTRACT !== '0x0000000000000000000000000000000000000000';
 
 interface FeeData {
@@ -56,7 +56,7 @@ export default function BuybackBurnTracker() {
   }, [fetchFeeData]);
 
   return (
-    <div style={{ fontFamily: 'system-ui,-apple-system,sans-serif', color: '#fff' }}>
+    <div style={{ fontFamily: 'Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif', color: '#f4f4f5' }}>
 
       {/* ── Token Supply Stats (live on-chain) ────────────────────────────── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 1, marginBottom: 1, background: 'rgba(255,255,255,0.05)' }}>
@@ -66,7 +66,7 @@ export default function BuybackBurnTracker() {
           { l: 'INQAI Burned',   v: burnedLive.toLocaleString('en-US', { maximumFractionDigits: 0 }) + ' INQAI',              c: '#ef4444' },
           { l: 'Supply Burned',  v: burnPctLive.toFixed(4) + '%',                                                              c: '#f97316' },
         ] as const).map(s => (
-          <div key={s.l} style={{ background: 'rgba(17,17,19,0.97)', padding: '22px 24px' }}>
+          <div key={s.l} style={{ background: '#1a1a1f', padding: '22px 24px' }}>
             <div style={{ fontSize: 18, fontWeight: 800, color: s.c, fontFamily: 'monospace', letterSpacing: '-0.5px', marginBottom: 5 }}>{s.v}</div>
             <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>{s.l}</div>
           </div>
@@ -77,7 +77,7 @@ export default function BuybackBurnTracker() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: 'rgba(255,255,255,0.05)' }}>
 
         {/* LEFT — Fee Distribution */}
-        <div style={{ background: 'rgba(17,17,19,0.97)', padding: '32px 32px' }}>
+        <div style={{ background: '#1a1a1f', padding: '28px 32px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
             <Activity size={15} color="#ef4444" />
             <span style={{ fontSize: 11, fontWeight: 800, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Fee Distribution</span>
@@ -85,10 +85,10 @@ export default function BuybackBurnTracker() {
 
           {/* Distribution rows */}
           {[
-            { label: 'Buybacks → Staking Rewards', pct: 60, color: '#10b981', ethVal: data?.distribution.buybacks.eth },
-            { label: 'Permanently Burned',          pct: 20, color: '#ef4444', ethVal: data?.distribution.burns.eth    },
-            { label: 'Treasury & Operations',       pct: 15, color: '#818cf8', ethVal: data?.distribution.treasury.eth },
-            { label: 'Chainlink Automation',        pct: 5,  color: '#f59e0b', ethVal: '0' },
+            { label: 'Open-Market INQAI Buybacks', pct: 60, color: '#10b981', ethVal: data?.distribution.buybacks.eth },
+            { label: 'Permanent Burns',             pct: 20, color: '#ef4444', ethVal: data?.distribution.burns.eth    },
+            { label: 'INQAI Staker Rewards',        pct: 15, color: '#3b82f6', ethVal: data?.distribution.treasury.eth },
+            { label: 'Chainlink & Operations',      pct: 5,  color: '#f59e0b', ethVal: '0' },
           ].map(r => (
             <div key={r.label} style={{ marginBottom: 20 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 12 }}>
@@ -122,7 +122,7 @@ export default function BuybackBurnTracker() {
         </div>
 
         {/* RIGHT — Token Supply */}
-        <div style={{ background: 'rgba(17,17,19,0.97)', padding: '32px 32px', borderLeft: '1px solid rgba(255,255,255,0.05)' }}>
+        <div style={{ background: '#1a1a1f', padding: '28px 32px', borderLeft: '1px solid rgba(255,255,255,0.05)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
             <Flame size={15} color="#ef4444" />
             <span style={{ fontSize: 11, fontWeight: 800, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Token Supply — Live On-Chain</span>
@@ -168,7 +168,7 @@ export default function BuybackBurnTracker() {
       </div>
 
       {/* ── Footer ─────────────────────────────────────────────────────────── */}
-      <div style={{ background: 'rgba(17,17,19,0.97)', marginTop: 1, padding: '14px 32px', display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+      <div style={{ background: '#1a1a1f', marginTop: 1, padding: '14px 32px', display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
           <div style={{ width: 5, height: 5, borderRadius: '50%', background: DIST_LIVE ? '#10b981' : '#f59e0b', boxShadow: `0 0 6px ${DIST_LIVE ? '#10b981' : '#f59e0b'}` }} />
           <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>Fee Distributor: {DIST_LIVE ? 'Live' : 'Pending deployment'}</span>
@@ -177,7 +177,7 @@ export default function BuybackBurnTracker() {
           <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#10b981', boxShadow: '0 0 6px #10b981' }} />
           <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>Token supply reads: Live on-chain</span>
         </div>
-        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.18)', marginLeft: 'auto' }}>15% performance fee · 60% buybacks · 20% burn · 15% treasury · 5% Chainlink</span>
+        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.18)', marginLeft: 'auto' }}>15% performance fee · 60% buybacks · 20% burn · 15% stakers · 5% operations</span>
       </div>
     </div>
   );

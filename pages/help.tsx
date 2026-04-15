@@ -177,7 +177,7 @@ export default function HelpPage() {
             {icon:Coins,label:'Portfolio Assets',v:'66',desc:'66 assets spanning major, DeFi, AI, Layer 2, stablecoins, RWA, liquid staking, and restaking categories.'},
             {icon:Flame,label:'Fee Distribution',v:'60/20/15/5',desc:'Protocol revenue split: 60% open-market INQAI buybacks, 20% permanent burn, 15% staker rewards, 5% protocol operations. FeeDistributor contract live on mainnet.'},
           ].map(k=>(
-            <div key={k.label} style={{background:'rgba(17,17,19,0.8)',border:'1px solid rgba(255,255,255,0.06)',borderRadius:14,padding:18,backdropFilter:'blur(12px)'}}>
+            <div key={k.label} style={{background:'#1a1a1f',border:'1px solid rgba(255,255,255,0.06)',borderRadius:14,padding:18}}>
               <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:8}}>
                 <k.icon size={24} color={k.icon === Brain ? '#3b82f6' : k.icon === Gem ? '#93c5fd' : k.icon === Shield ? '#dc2626' : k.icon === Zap ? '#2563eb' : k.icon === Coins ? '#f59e0b' : '#f59e0b'} strokeWidth={1.8} />
                 <div>
@@ -245,7 +245,7 @@ export default function HelpPage() {
             'Sanity checks reject prices >50% outside expected range',
           ]},
         ].map(c=>(
-          <div key={c.name} style={{background:'rgba(17,17,19,0.8)',border:`1px solid ${c.col}22`,borderRadius:16,padding:22,marginBottom:12,backdropFilter:'blur(12px)'}}>
+          <div key={c.name} style={{background:'#1a1a1f',border:`1px solid ${c.col}15`,borderRadius:16,padding:22,marginBottom:12}}>
             <div style={{display:'flex',alignItems:'center',gap:14,marginBottom:14}}>
               <c.icon size={30} color={c.col} strokeWidth={1.8} />
               <div>
@@ -278,7 +278,7 @@ export default function HelpPage() {
           {icon:Gem,name:'EARN',col:'#93c5fd',detail:'Automatic best-strategy selection. Evaluates all available strategies (lending, staking, LP, looping) for the asset and selects the highest risk-adjusted APY. Scoring: APY - (risk_penalty × risk_score). Stakes are prioritized for liquid staking tokens. Non-yieldable assets return trading recommendation.',params:'symbol, amount'},
           {icon:Gift,name:'REWARDS',col:'#ec4899',detail:'Claim + auto-compound protocol rewards. Supported protocols: Aave (stkAAVE rewards), Lido (stETH rebases), Curve (CRV + veCRV), Balancer (BAL + gauge), Jupiter (JUP governance), Injective (INJ staking), Cosmos (ATOM), Polkadot (DOT), Hivemapper (HONEY), The Graph (GRT), Ethena (ENA), Soil (SOIL). Auto-compound reinvests immediately.',params:'symbol, params.autoCompound?'},
         ].map(f=>(
-          <div key={f.name} style={{background:'rgba(17,17,19,0.8)',border:`1px solid ${f.col}18`,borderRadius:14,padding:18,marginBottom:10,backdropFilter:'blur(12px)'}}>
+          <div key={f.name} style={{background:'#1a1a1f',border:`1px solid ${f.col}15`,borderRadius:14,padding:18,marginBottom:10}}>
             <div style={{display:'flex',alignItems:'flex-start',gap:14}}>
               <f.icon size={26} color={f.col} strokeWidth={1.8} style={{flexShrink:0}} />
               <div style={{flex:1}}>
@@ -360,7 +360,7 @@ export default function HelpPage() {
             'On-chain execution live — 5-cycle launch validation passed at deployment',
           ]},
         ].map(r=>(
-          <div key={r.org} style={{background:'rgba(17,17,19,0.8)',border:`1px solid ${r.col}20`,borderRadius:16,padding:22,marginBottom:12,backdropFilter:'blur(12px)'}}>
+          <div key={r.org} style={{background:'#1a1a1f',border:`1px solid ${r.col}15`,borderRadius:16,padding:22,marginBottom:12}}>
             <div style={{display:'flex',alignItems:'center',gap:14,marginBottom:14}}>
               {r.icon === 'Brain' && <Brain size={28} color={r.col} />}
               {r.icon === 'Bot' && <Bot size={28} color={r.col} />}
@@ -399,7 +399,7 @@ export default function HelpPage() {
           {title:'Rule 7: Paper Trade Validation',col:'#8b5cf6',detail:'The first 5 AI decision cycles run in paper trade mode — signals are calculated but trades are NOT executed with real capital. This validates that the AI is performing correctly before risking money. Only after 5 validated cycles does the system switch to live execution.'},
           {title:'Rule 8: Decision Transparency',col:'#06b6d4',detail:'Every AI decision must be accompanied by a clear, plain-language explanation. No black boxes. If the system cannot explain why it is taking a trade, it will not take it. The X-Ray component fulfills this with full decision transparency for every trade.'},
         ].map(r=>(
-          <div key={r.title} style={{background:'rgba(17,17,19,0.8)',border:`1px solid ${r.col}18`,borderRadius:14,padding:18,marginBottom:10,backdropFilter:'blur(12px)'}}>
+          <div key={r.title} style={{background:'#1a1a1f',border:`1px solid ${r.col}15`,borderRadius:14,padding:18,marginBottom:10}}>
             <h3 style={{fontSize:14,fontWeight:800,color:r.col,marginBottom:8}}>{r.title}</h3>
             <p style={{fontSize:12,color:'rgba(255,255,255,0.5)',lineHeight:1.7,margin:0}}>{r.detail}</p>
           </div>
@@ -415,7 +415,7 @@ export default function HelpPage() {
           {[
             {icon:'Lock',title:'Secure Treasury',col:'#3b82f6',detail:'Treasury operations with secure access controls and timelock protections for withdrawal operations.'},
           ].map(s=>(
-            <div key={s.title} style={{background:'rgba(17,17,19,0.8)',border:`1px solid ${s.col}18`,borderRadius:14,padding:18,backdropFilter:'blur(12px)'}}>
+            <div key={s.title} style={{background:'#1a1a1f',border:`1px solid ${s.col}15`,borderRadius:14,padding:18}}>
               <div style={{display:'flex',gap:12,alignItems:'flex-start',marginBottom:8}}>
                 {s.icon === 'Lock' && <Lock size={24} color={s.col} />}
                 <h3 style={{fontSize:14,fontWeight:800,color:s.col,margin:0}}>{s.title}</h3>
@@ -453,7 +453,7 @@ export default function HelpPage() {
             {m:'GET', p:'/chart/categories',          d:'Market cap allocation by asset category — used for the donut chart in Analytics'},
             {m:'GET', p:'/initialize',                d:'Re-initialize the AI agent and all services — triggers fresh price + macro fetch'},
           ].map(e=>(
-            <div key={e.p} style={{display:'flex',alignItems:'center',gap:12,background:'rgba(17,17,19,0.8)',border:'1px solid rgba(255,255,255,0.05)',borderRadius:10,padding:'10px 14px',backdropFilter:'blur(12px)'}}>
+            <div key={e.p} style={{display:'flex',alignItems:'center',gap:12,background:'#1a1a1f',border:'1px solid rgba(255,255,255,0.06)',borderRadius:10,padding:'10px 14px'}}>
               <span style={{fontSize:10,fontWeight:700,padding:'3px 8px',borderRadius:5,flexShrink:0,background:e.m==='GET'?'rgba(16,185,129,0.15)':'rgba(59,130,246,0.15)',color:e.m==='GET'?'#34d399':'#60a5fa',border:`1px solid ${e.m==='GET'?'rgba(16,185,129,0.25)':'rgba(59,130,246,0.25)'}`}}>{e.m}</span>
               <Code>/api/inquisitiveAI{e.p}</Code>
               <span style={{fontSize:11,color:'rgba(255,255,255,0.4)',flex:1}}>{e.d}</span>
@@ -467,7 +467,7 @@ export default function HelpPage() {
       <div>
         <h2 style={{fontSize:26,fontWeight:900,marginBottom:28}}>INQAI Token Economics</h2>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:16}}>
-          <div style={{background:'rgba(17,17,19,0.8)',border:'1px solid rgba(59,130,246,0.2)',borderRadius:16,padding:22,backdropFilter:'blur(12px)'}}>
+          <div style={{background:'#1a1a1f',border:'1px solid rgba(59,130,246,0.15)',borderRadius:16,padding:22}}>
             <h3 style={{fontSize:15,fontWeight:700,color:'#93c5fd',marginBottom:16}}>Token Specifications</h3>
             {[
               ['Name','INQUISITIVE'],['Symbol','INQAI'],['Standard','ERC-20'],
@@ -475,8 +475,8 @@ export default function HelpPage() {
               ['Total Supply', `${Number(process.env.NEXT_PUBLIC_TOTAL_SUPPLY || 100000000).toLocaleString()} INQAI`],['Inflation','None — fixed supply'],
               ['Presale Price', `$${process.env.NEXT_PUBLIC_PRESALE_PRICE || '8'}/token`],['Target Price', `$${process.env.NEXT_PUBLIC_TARGET_PRICE || '15'}/token`],
               ['Target Market Cap','$1.5B (at $15/token)'],['Target APY', `${((parseFloat(process.env.NEXT_PUBLIC_TARGET_APY || '0.185')) * 100).toFixed(1)}%`],
-              ['Performance Fee','15% flat on yields (pending FeeDistributor)'],
-              ['Fee Distribution','Planned: 60% buybacks · 20% burns · 20% treasury'],
+              ['Performance Fee','15% of positive yields · live FeeDistributor: 0x0d6aed…'],
+              ['Fee Distribution','60% buybacks · 20% burns · 15% stakers · 5% operations'],
             ].map(([k,v])=>(
               <div key={k} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,0.04)',fontSize:12}}>
                 <span style={{color:'rgba(255,255,255,0.4)'}}>{k}</span>
@@ -484,7 +484,7 @@ export default function HelpPage() {
               </div>
             ))}
           </div>
-          <div style={{background:'rgba(17,17,19,0.8)',border:'1px solid rgba(37,99,235,0.2)',borderRadius:16,padding:22,backdropFilter:'blur(12px)'}}>
+          <div style={{background:'#1a1a1f',border:'1px solid rgba(59,130,246,0.15)',borderRadius:16,padding:22}}>
             <h3 style={{fontSize:15,fontWeight:700,color:'#60a5fa',marginBottom:16}}>Token Distribution</h3>
             {[
               {cat:'Ecosystem Growth',pct:'35%',amt:'35M INQAI',vest:'36 months linear'},
@@ -509,14 +509,14 @@ export default function HelpPage() {
             ))}
           </div>
         </div>
-        <div style={{background:'rgba(17,17,19,0.8)',border:'1px solid rgba(16,185,129,0.2)',borderRadius:16,padding:22,backdropFilter:'blur(12px)'}}>
+        <div style={{background:'#1a1a1f',border:'1px solid rgba(16,185,129,0.15)',borderRadius:16,padding:22}}>
           <h3 style={{fontSize:15,fontWeight:700,color:'#34d399',marginBottom:16}}>Value Accrual Mechanisms</h3>
           <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12}}>
             {[
               {icon:Gem,title:'Asset-Backed Ownership',desc:'Each INQAI token represents proportional ownership in a diversified portfolio of 66 digital assets, professionally managed by proprietary AI systems.'},
               {icon:TrendingUp,title:'Portfolio Performance',desc:'Five intelligence engines optimize the 66-asset portfolio continuously across 11 trading strategies, compounding risk-adjusted returns into the underlying backing.'},
-              {icon:Flame,title:'Systematic Buybacks + Burns',desc:'Planned: 60% of protocol fees for buybacks, 20% burned — pending FeeDistributor deployment.'},
-              {icon:Lock,title:'Staking Rewards',desc:'Planned: Token staking for protocol yield — pending INQAIStaking contract deployment.'},
+              {icon:Flame,title:'Systematic Buybacks + Burns',desc:'FeeDistributor live: 60% of all performance fees used for open-market INQAI buybacks, 20% permanently burned — increasing scarcity automatically.'},
+              {icon:Lock,title:'Staking Rewards',desc:'INQAIStaking contract deployed. 15% of all protocol fees distributed pro-rata to INQAI stakers. Staking UI coming soon.'},
             ].map(v=>(
               <div key={v.title} style={{background:'rgba(16,185,129,0.05)',border:'1px solid rgba(16,185,129,0.12)',borderRadius:12,padding:14}}>
                 <v.icon size={24} color="#34d399" strokeWidth={1.8} />
@@ -553,78 +553,76 @@ export default function HelpPage() {
           },
           {
             phase:'Phase 2 — Smart Contracts',
-            status:'IN PROGRESS',
-            col:'#f59e0b',
-            detail:'5 contracts deployed. 6 additional contracts pending including VaultV2, FeeDistributor, Staking.',
+            status:'COMPLETE',
+            col:'#10b981',
+            detail:'All 11 contracts deployed and wired on Ethereum Mainnet. Funds migrated from legacy vault to VaultV2.',
             items:[
-              'INQAI ERC-20 token deployed — 0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5',
-              'Legacy vault deployed — 0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb',
-              'Strategy contracts deployed — StrategyManager, Strategy, ProfitMaximizer',
-              'PENDING: VaultV2 with signal-based trading + Chainlink Automation',
-              'PENDING: FeeDistributor for buyback/burn mechanism',
-              'PENDING: INQAIStaking, ReferralTracker, LiquidityLauncher, Timelock',
-              'Security: Emergency pause, access control modifiers, emergency withdraw — implemented',
-              'Tests: 20 Foundry tests covering access control, pause, emergency scenarios',
-              'CI/CD: GitHub Actions pipeline with lint, build, Foundry tests, Slither',
+              'INQAI ERC-20 — 0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5',
+              'InquisitiveVaultV2 (UUPS proxy) — 0xb99dc519c4373e5017222bbd46f42a4e12a0ec25 — active vault',
+              'FeeDistributor — 0x0d6aed33e80bc541904906d73ba4bfe18c730a09 — 60/20/15/5 split live',
+              'INQAIStaking — 0x46625868a36c11310fb988a69100e87519558e59',
+              'ReferralTracker — 0xa9a851b9659de281bfad8c5c81fe0b55aa23727a',
+              'LiquidityLauncher — 0x617664c7dab0462c50780564f9554413c729830d',
+              'INQAITimelock (48h delay) — 0x972b7f40d1837f0b8bf003d7147de7b9fcfc601e',
+              'INQAIInsurance — 0xa0486fc0b9e4a282eca0435bae141be6982e502e',
+              'AIStrategyManager, InquisitiveStrategy, ProfitMaximizer — all deployed',
+              'Contract wiring complete: Staking→FeeDistributor→Staking, ReferralTracker→Launcher',
+              'Legacy vault (0x721b…) drained — 0.0106 ETH migrated to VaultV2',
             ]
           },
           {
             phase:'Phase 3 — Live DeFi Execution',
-            status:'PENDING',
-            col:'#6b7280',
-            detail:'NOT LIVE — DeFi integrations require VaultV2 deployment + Chainlink Automation registration.',
+            status:'IN PROGRESS',
+            col:'#f59e0b',
+            detail:'VaultV2 deployed and funded. Blocker: Chainlink Automation must be registered and funded with LINK to enable autonomous trade execution.',
             items:[
-              'PENDING: Aave V3 lending integration',
-              'PENDING: Morpho Blue isolated markets',
-              'PENDING: Uniswap V3 LP management',
-              'PENDING: Jupiter Aggregator for Solana swaps',
-              'PENDING: 1inch / Uniswap V3 routing',
-              'PENDING: Lido, Jito, Sanctum liquid staking',
-              'PENDING: Aave V3 borrowing with collateral optimization',
-              'PENDING: Recursive looping with health factor guards',
-              'PENDING: Flashbots MEV protection',
-              'PENDING: Chainlink Automation registration (requires 50 LINK)',
-              'BLOCKER: VaultV2 contract must be deployed first',
-              'BLOCKER: Portfolio weights must be set for all 66 assets',
+              'VaultV2 deployed and seeded with ETH — 0xb99dc519c4373e5017222bbd46f42a4e12a0ec25',
+              'AI oracle wallet submitting signals via submitSignalsBatch() every 10 minutes (GitHub Actions)',
+              'PENDING: Chainlink Automation registration at automation.chain.link (requires 20+ LINK)',
+              'PENDING: Portfolio tracked assets registration in VaultV2 (setupVaultV2.js ready)',
+              'PENDING: Uniswap V3 swap routing for on-chain execution',
+              'PENDING: Aave V3, Morpho Blue lending integrations',
+              'PENDING: Lido, Jito, Sanctum liquid staking integrations',
+              'PENDING: Flashbots MEV protection for large trades',
             ]
           },
           {
             phase:'Phase 4 — Token Launch & Ecosystem',
             status:'IN PROGRESS',
             col:'#f59e0b',
-            detail:'Token deployed. Platform frontend live. DEX liquidity, staking, referral pending contract deployments.',
+            detail:'Token deployed. All support contracts live. Presale active. DEX liquidity provisioning and CEX listings pending.',
             items:[
               'INQAI token deployed — 0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5',
-              'Platform live — getinqai.com with analytics, docs, legal pages',
-              'PENDING: Uniswap V3 liquidity pools (requires LiquidityLauncher)',
-              'PENDING: CEX listings (requires DEX liquidity first)',
-              'Analytics dashboard — real-time AI signals, price tracking operational',
-              'PENDING: Community staking (requires INQAIStaking contract)',
-              'PENDING: Referral programme (requires ReferralTracker contract)',
-              'PENDING: Ecosystem grants distribution mechanism',
-              'Buy page — frontend ready, contract integration pending',
+              'Platform live — getinqai.com with analytics, docs, reserves, burns pages',
+              'Presale active — $8/token via ETH, BTC, SOL, TRX, USDC',
+              'INQAIStaking deployed — 0x46625868a36c11310fb988a69100e87519558e59 (UI pending)',
+              'ReferralTracker deployed — 0xa9a851b9659de281bfad8c5c81fe0b55aa23727a (UI pending)',
+              'LiquidityLauncher deployed — 0x617664c7dab0462c50780564f9554413c729830d',
+              'Analytics dashboard — real-time AI signals, proof of reserves, burn tracker operational',
+              'PENDING: Uniswap V3 liquidity provisioning via LiquidityLauncher',
+              'PENDING: CEX listings (after DEX liquidity established)',
             ]
           },
           {
             phase:'Phase 5 — Advanced AI & Cross-Chain',
             status:'IN PROGRESS',
             col:'#f59e0b',
-            detail:'AI brain operational with 5 engines. Real trade execution requires VaultV2 + Chainlink Automation.',
+            detail:'AI brain fully operational with 5 engines running every 8 seconds. VaultV2 live. Chainlink Automation registration is the final step for autonomous on-chain execution.',
             items:[
-              'AI metrics dashboard — confidence scores, regime signals live',
-              'Pattern engine — market pattern recognition operational',
-              'Reasoning engine — multi-factor decision making active',
-              'Portfolio engine — optimization algorithms running',
-              'Learning engine — adaptive signal weighting',
-              'Risk engine — 2% per trade, 6% heat, 15% drawdown limits',
-              'PENDING: Real-time on-chain execution (needs VaultV2 + Automation)',
-              'Performance tracking — simulated P&L, win rate tracking',
-              'Market regime detection — bull/bear/sideways identification live',
+              'AI Brain operational — 5 engines: Pattern, Reasoning, Portfolio, Learning, Risk',
+              'Signals submitted to VaultV2 every 10 minutes via GitHub Actions oracle',
+              'Pattern engine — market pattern recognition + regime detection operational',
+              'Reasoning engine — multi-factor decision making with Fear & Greed logic active',
+              'Portfolio engine — Kelly Criterion sizing + Sharpe optimization running',
+              'Learning engine — adaptive signal weighting + meta-cognitive self-monitoring',
+              'Risk engine — 2% per trade / 6% heat / 15% drawdown circuit breaker enforced',
+              'Performance tracking — win rate, P&L, signal confidence tracking live',
+              'PENDING: Chainlink Automation registration (final step for autonomous execution)',
               'PENDING: Cross-chain execution via deBridge DLN',
             ]
           },
         ].map(p=>(
-          <div key={p.phase} style={{background:'rgba(17,17,19,0.8)',border:`1px solid ${p.col}20`,borderRadius:16,padding:20,marginBottom:12,backdropFilter:'blur(12px)'}}>
+          <div key={p.phase} style={{background:'#1a1a1f',border:`1px solid ${p.col}15`,borderRadius:16,padding:20,marginBottom:12}}>
             <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:8}}>
               <h3 style={{fontSize:16,fontWeight:800,margin:0}}>{p.phase}</h3>
               <span style={{fontSize:10,padding:'3px 10px',borderRadius:100,background:`${p.col}18`,color:p.col,fontWeight:700,border:`1px solid ${p.col}30`}}>{p.status}</span>
