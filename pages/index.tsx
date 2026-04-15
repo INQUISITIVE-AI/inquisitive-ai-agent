@@ -100,15 +100,6 @@ export default function Home() {
               verifiable on Ethereum in real time.
             </p>
 
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 64 }}>
-              <button
-                onClick={() => router.push('/help')}
-                className="btn-primary"
-                style={{ fontSize: 15, display: 'inline-flex', alignItems: 'center', gap: 8 }}
-              >
-                Documentation <ArrowRight size={15} />
-              </button>
-            </div>
 
             {/* Live data row — pulled from API, no placeholder numbers */}
             {loaded && (

@@ -525,7 +525,6 @@ export default function AnalyticsPage() {
                         <div style={{ marginTop:12, fontSize:13, color:'#71717a' }}>
                           {address ? 'Acquire INQAI to see your proportional backing across 66 assets.' : 'Connect your wallet to view your portfolio backing.'}
                         </div>
-                        {address && <button onClick={() => router.push('/buy')} style={{ marginTop:14, padding:'9px 22px', borderRadius:8, background:'#3b82f6', color:'#fff', border:'none', cursor:'pointer', fontSize:13, fontWeight:600 }}>Acquire INQAI</button>}
                       </div>
                     ) : (
                       <>
