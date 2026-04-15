@@ -259,11 +259,11 @@ export default function StakingDashboard() {
 
               {needsApproval ? (
                 <button onClick={handleApprove} disabled={isTxPending} style={{ width: '100%', padding: '13px', borderRadius: 8, cursor: isTxPending ? 'not-allowed' : 'pointer', background: isTxPending ? 'rgba(59,130,246,0.35)' : '#3b82f6', border: 'none', color: '#fff', fontSize: 13, fontWeight: 700 }}>
-                  {txStep === 'approving' ? '⏳ Approving…' : '✓ Approve INQAI'}
+                  {txStep === 'approving' ? 'Approving...' : 'Approve INQAI'}
                 </button>
               ) : (
                 <button onClick={handleStake} disabled={isTxPending || !stakeAmount || parseFloat(stakeAmount) <= 0} style={{ width: '100%', padding: '13px', borderRadius: 8, cursor: (!stakeAmount || parseFloat(stakeAmount) <= 0 || isTxPending) ? 'not-allowed' : 'pointer', background: (!stakeAmount || parseFloat(stakeAmount) <= 0 || isTxPending) ? 'rgba(16,185,129,0.25)' : '#10b981', border: 'none', color: '#fff', fontSize: 13, fontWeight: 700 }}>
-                  {txStep === 'staking' ? '⏳ Staking…' : 'Stake INQAI'}
+                  {txStep === 'staking' ? 'Staking...' : 'Stake INQAI'}
                 </button>
               )}
 
@@ -300,7 +300,7 @@ export default function StakingDashboard() {
                   { l: 'Distribution',      v: 'Proportional to stake size'      },
                   { l: 'Automation',        v: 'Chainlink Automation — zero key' },
                   { l: 'Lock period',       v: '30 days from stake date'         },
-                  { l: 'Performance fee',   v: '15% of vault gains (60%→stakers)' },
+                  { l: 'Performance fee',   v: '15% of vault gains (60% to stakers)' },
                 ].map(r => (
                   <div key={r.l} style={{ display: 'flex', justifyContent: 'space-between', padding: '9px 0', borderBottom: '1px solid rgba(255,255,255,0.04)', fontSize: 13 }}>
                     <span style={{ color: 'rgba(255,255,255,0.38)' }}>{r.l}</span>
@@ -334,10 +334,10 @@ export default function StakingDashboard() {
 
               {/* Autonomous model: rewards auto-distributed via FeeDistributor buybacks */}
               <button onClick={handleUnstake} disabled={!canUnstake || isTxPending} style={{ width: '100%', padding: '12px', borderRadius: 8, cursor: (!canUnstake || isTxPending) ? 'not-allowed' : 'pointer', background: (!canUnstake || isTxPending) ? 'rgba(239,68,68,0.18)' : '#ef4444', border: 'none', color: '#fff', fontSize: 13, fontWeight: 700 }}>
-                {txStep === 'unstaking' ? '⏳ Unstaking…' : 'Unstake All'}
+                {txStep === 'unstaking' ? 'Unstaking...' : 'Unstake All'}
               </button>
               <div style={{ marginTop: 10, padding: '10px 14px', background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.12)', borderRadius: 6, fontSize: 11, color: '#10b981', textAlign: 'center' }}>
-                ✓ Rewards auto-distributed via FeeDistributor buybacks
+                Rewards auto-distributed via FeeDistributor buybacks
               </div>
 
               {txError   && <div style={{ marginTop: 10, padding: '10px 14px', background: 'rgba(239,68,68,0.07)', border: '1px solid rgba(239,68,68,0.18)', borderRadius: 6, fontSize: 12, color: '#f87171' }}>{txError}</div>}

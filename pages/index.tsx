@@ -86,7 +86,7 @@ export default function Home() {
         <section style={{ paddingTop: 180, paddingBottom: 140, paddingLeft: 24, paddingRight: 24, textAlign: 'center', position: 'relative', zIndex: 1 }}>
           <div style={{ maxWidth: 720, margin: '0 auto' }}>
 
-            <div style={{ fontSize: 11, letterSpacing: '2.5px', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', fontWeight: 500, marginBottom: 28, fontFamily: 'JetBrains Mono, monospace' }}>
+            <div style={{ fontSize: 11, letterSpacing: '2.5px', color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', fontWeight: 500, marginBottom: 28, fontFamily: 'JetBrains Mono, monospace' }}>
               Ethereum Mainnet · ERC-20 · {loaded ? `${regime} Regime` : 'Connecting…'}
             </div>
 
@@ -94,7 +94,7 @@ export default function Home() {
               The First Autonomous<br />On-Chain AI Fund
             </h1>
 
-            <p style={{ fontSize: 'clamp(15px, 2vw, 17px)', color: '#71717a', maxWidth: 480, margin: '0 auto 48px', lineHeight: 1.75, fontWeight: 400 }}>
+            <p style={{ fontSize: 'clamp(15px, 2vw, 17px)', color: '#a1a1aa', maxWidth: 480, margin: '0 auto 48px', lineHeight: 1.75, fontWeight: 400 }}>
               Five independent AI engines manage a 66-asset digital portfolio through a
               single ERC-20 token — every allocation, signal, and execution fully
               verifiable on Ethereum in real time.
@@ -113,7 +113,7 @@ export default function Home() {
                 ].map(s => (
                   <div key={s.label} style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: 13, fontWeight: 700, color: s.color, fontFamily: 'JetBrains Mono, monospace' }}>{s.value}</div>
-                    <div style={{ fontSize: 10, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '1px', marginTop: 4 }}>{s.label}</div>
+                    <div style={{ fontSize: 10, color: '#71717a', textTransform: 'uppercase', letterSpacing: '1px', marginTop: 4 }}>{s.label}</div>
                   </div>
                 ))}
               </div>
@@ -127,7 +127,7 @@ export default function Home() {
             <div style={{ textAlign: 'center', marginBottom: 64 }}>
               <div style={label}>Protocol Design</div>
               <h2 style={{ fontSize: 'clamp(1.6rem, 3vw, 2.2rem)', fontWeight: 700, letterSpacing: '-0.025em', marginBottom: 12 }}>Institutional Infrastructure. Transparent Execution.</h2>
-              <p style={{ color: '#71717a', fontSize: 15, maxWidth: 440, margin: '0 auto' }}>Three layers of the INQUISITIVE protocol — from capital entry to on-chain settlement.</p>
+              <p style={{ color: '#a1a1aa', fontSize: 15, maxWidth: 440, margin: '0 auto' }}>Three layers of the INQUISITIVE protocol — from capital entry to on-chain settlement.</p>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 2 }}>
               {[
@@ -142,7 +142,7 @@ export default function Home() {
                 >
                   <div style={{ fontSize: 48, fontWeight: 800, color: 'rgba(59,130,246,0.08)', fontFamily: 'JetBrains Mono, monospace', lineHeight: 1, marginBottom: 20 }}>{s.n}</div>
                   <h3 style={{ fontSize: 15, fontWeight: 700, color: '#f1f1f3', marginBottom: 10 }}>{s.title}</h3>
-                  <p style={{ fontSize: 13, color: '#52525b', lineHeight: 1.7, margin: 0 }}>{s.desc}</p>
+                  <p style={{ fontSize: 13, color: '#a1a1aa', lineHeight: 1.7, margin: 0 }}>{s.desc}</p>
                 </div>
               ))}
             </div>
@@ -155,7 +155,7 @@ export default function Home() {
             <div style={{ textAlign: 'center', marginBottom: 56 }}>
               <div style={label}>System Architecture</div>
               <h2 style={{ fontSize: 'clamp(1.6rem, 3vw, 2.2rem)', fontWeight: 700, letterSpacing: '-0.025em', marginBottom: 12 }}>Five-Layer Quantitative System</h2>
-              <p style={{ color: '#71717a', fontSize: 15, maxWidth: 420, margin: '0 auto' }}>Each component operates independently with dedicated oversight. Designed for institutional-grade reliability.</p>
+              <p style={{ color: '#a1a1aa', fontSize: 15, maxWidth: 420, margin: '0 auto' }}>Each component operates independently with dedicated oversight. Designed for institutional-grade reliability.</p>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 12 }}>
               {ENGINES.map(e => (
@@ -163,7 +163,7 @@ export default function Home() {
                   <e.Icon size={20} color={e.color} strokeWidth={1.5} style={{ marginBottom: 14, display: 'block' }} />
                   <div style={{ fontSize: 13, fontWeight: 700, color: '#f1f1f3', marginBottom: 4 }}>{e.name}</div>
                   <div style={{ fontSize: 11, color: '#3b82f6', marginBottom: 10, fontWeight: 500 }}>{e.sub}</div>
-                  <div style={{ fontSize: 12, color: '#52525b', lineHeight: 1.65 }}>{e.desc}</div>
+                  <div style={{ fontSize: 12, color: '#a1a1aa', lineHeight: 1.65 }}>{e.desc}</div>
                 </div>
               ))}
             </div>
@@ -176,14 +176,14 @@ export default function Home() {
             <div style={{ textAlign: 'center', marginBottom: 56 }}>
               <div style={label}>Execution Layer</div>
               <h2 style={{ fontSize: 'clamp(1.6rem, 3vw, 2.2rem)', fontWeight: 700, letterSpacing: '-0.025em', marginBottom: 12 }}>11 Institutional Execution Strategies</h2>
-              <p style={{ color: '#71717a', fontSize: 15, maxWidth: 440, margin: '0 auto' }}>Deployed autonomously across DeFi protocols. Token holders gain diversified yield exposure without active management.</p>
+              <p style={{ color: '#a1a1aa', fontSize: 15, maxWidth: 440, margin: '0 auto' }}>Deployed autonomously across DeFi protocols. Token holders gain diversified yield exposure without active management.</p>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(175px,1fr))', gap: 10 }}>
               {STRATEGIES.map(s => (
                 <div key={s.name} className="card-lift" style={card}>
                   <s.Icon size={18} color="#3b82f6" strokeWidth={1.5} style={{ marginBottom: 12, display: 'block' }} />
                   <div style={{ fontSize: 12, fontWeight: 700, color: '#f1f1f3', marginBottom: 6, fontFamily: 'JetBrains Mono, monospace' }}>{s.name}</div>
-                  <div style={{ fontSize: 11, color: '#52525b', lineHeight: 1.65 }}>{s.desc}</div>
+                  <div style={{ fontSize: 11, color: '#a1a1aa', lineHeight: 1.65 }}>{s.desc}</div>
                 </div>
               ))}
             </div>
@@ -196,7 +196,7 @@ export default function Home() {
             <div style={{ textAlign: 'center', marginBottom: 56 }}>
               <div style={label}>Fee Structure</div>
               <h2 style={{ fontSize: 'clamp(1.6rem, 3vw, 2.2rem)', fontWeight: 700, letterSpacing: '-0.025em', marginBottom: 12 }}>Performance-Only. Zero Management Fee.</h2>
-              <p style={{ color: '#71717a', fontSize: 15 }}>15% on yield generated. No AUM fee. No entry or exit costs.</p>
+              <p style={{ color: '#a1a1aa', fontSize: 15 }}>15% on yield generated. No AUM fee. No entry or exit costs.</p>
             </div>
             <div style={{ ...card, overflow: 'hidden', padding: 0 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '12px 24px' }}>
@@ -238,10 +238,10 @@ export default function Home() {
             <div style={{ background: '#080809', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '24px 28px', fontFamily: 'JetBrains Mono, Fira Code, Menlo, monospace', fontSize: 13, lineHeight: 1.85, color: '#52525b' }}>
               <div><span style={{ color: '#3f3f46' }}>$</span> <span style={{ color: '#f1f1f3' }}>git clone https://github.com/INQUISITIVE-AI/inquisitive-ai-agent.git</span></div>
               <div><span style={{ color: '#3f3f46' }}>$</span> <span style={{ color: '#f1f1f3' }}>cd inquisitive-ai-agent && npm install && npm start</span></div>
-              <div style={{ marginTop: 8, color: '#10b981' }}>✓ InquisitiveBrain initialized — 5 engines active</div>
-              <div style={{ color: '#10b981' }}>✓ PriceFeed connected — 66 assets @ 30s intervals</div>
-              <div style={{ color: '#10b981' }}>✓ VaultV2 oracle ready — submitting signals on-chain</div>
-              <div style={{ color: '#3b82f6' }}>→ Agent running</div>
+              <div style={{ marginTop: 8, color: '#10b981' }}>InquisitiveBrain initialized — 5 engines active</div>
+              <div style={{ color: '#10b981' }}>PriceFeed connected — 66 assets @ 30s intervals</div>
+              <div style={{ color: '#10b981' }}>VaultV2 oracle ready — submitting signals on-chain</div>
+              <div style={{ color: '#3b82f6' }}>Agent running</div>
             </div>
           </div>
         </section>

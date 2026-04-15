@@ -88,7 +88,7 @@ export default function SendPage() {
                     <span style={{ fontSize:13, fontWeight:800, color:"#93c5fd", fontFamily:"monospace" }}>{balance > 0 ? balance.toLocaleString("en-US",{maximumFractionDigits:4}) : "0"} INQAI</span>
                   </div>
                   <div style={{ padding:"10px 13px", background:"rgba(251,191,36,0.07)", border:"1px solid rgba(251,191,36,0.22)", borderRadius:10, marginBottom:14, fontSize:12, color:"#fbbf24", lineHeight:1.6 }}>
-                    <strong>⚠ INQAI is an ERC-20 token on Ethereum Mainnet.</strong> Recipient must be an Ethereum address starting with <code style={{background:"rgba(0,0,0,0.3)",padding:"1px 5px",borderRadius:4}}>0x</code>. Do <strong>not</strong> enter a Bitcoin, Solana, or other non-ETH address — tokens sent to the wrong chain address are permanently lost.
+                    <strong>WARNING: INQAI is an ERC-20 token on Ethereum Mainnet.</strong> Recipient must be an Ethereum address starting with <code style={{background:"rgba(0,0,0,0.3)",padding:"1px 5px",borderRadius:4}}>0x</code>. Do <strong>not</strong> enter a Bitcoin, Solana, or other non-ETH address. Tokens sent to the wrong chain address are permanently lost.
                   </div>
                   <div style={{ marginBottom:14 }}>
                     <label style={{ fontSize:10, color:"rgba(255,255,255,0.35)", textTransform:"uppercase", letterSpacing:"0.8px", marginBottom:6, display:"block" }}>Recipient Ethereum Address</label>

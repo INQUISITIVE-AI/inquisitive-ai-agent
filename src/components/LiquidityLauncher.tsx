@@ -211,7 +211,7 @@ export default function LiquidityLauncher() {
         </div>
         
         <h2 style={{ fontSize: 28, fontWeight: 800, color: 'white', margin: '0 0 8px' }}>
-          $10K → Uniswap V3
+          $10K to Uniswap V3
         </h2>
         <p style={{ color: 'rgba(255,255,255,0.6)', margin: 0 }}>
           When $10,000 is raised, the INQAI/ETH pool auto-launches

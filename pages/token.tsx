@@ -405,7 +405,7 @@ export default function TokenPage() {
                         {analysis?.signal?.riskGate ? (
                           <>
                             <div style={{padding:'12px 14px',background:analysis.signal.riskGate.pass?'rgba(16,185,129,0.08)':'rgba(239,68,68,0.08)',border:`1px solid ${analysis.signal.riskGate.pass?'rgba(16,185,129,0.2)':'rgba(239,68,68,0.2)'}`,borderRadius:10,marginBottom:14,display:'flex',alignItems:'center',gap:10}}>
-                              <span style={{fontSize:20,color:analysis.signal.riskGate.pass?'#34d399':'#f87171'}}>{analysis.signal.riskGate.pass?'✓':'✗'}</span>
+                              <span style={{fontSize:20,color:analysis.signal.riskGate.pass?'#34d399':'#f87171'}}>{analysis.signal.riskGate.pass?'PASS':'FAIL'}</span>
                               <div>
                                 <div style={{fontWeight:700,fontSize:13,color:analysis.signal.riskGate.pass?'#34d399':'#f87171'}}>
                                   {analysis.signal.riskGate.pass?'PASSED all risk gates':'BLOCKED by risk gate'}
@@ -582,7 +582,7 @@ export default function TokenPage() {
         {toast && (
           <div style={{position:'fixed',bottom:24,right:24,zIndex:300,background:'#111113',border:`1px solid ${toast.success?'rgba(16,185,129,0.3)':'rgba(239,68,68,0.3)'}`,borderRadius:14,padding:'16px 20px',maxWidth:340,boxShadow:'0 8px 40px rgba(0,0,0,0.5)',backdropFilter:'blur(16px)'}}>
             <div style={{display:'flex',gap:12,alignItems:'flex-start'}}>
-              <span style={{fontSize:18,color:toast.success?'#34d399':'#f87171'}}>{toast.success?'✓':'✗'}</span>
+              <span style={{fontSize:18,color:toast.success?'#34d399':'#f87171'}}>{toast.success?'OK':'X'}</span>
               <div style={{flex:1}}>
                 <div style={{fontWeight:700,fontSize:13,color:toast.success?'#34d399':'#f87171',marginBottom:4}}>
                   {toast.success?`${toast.action} Executed`:'Failed'}
