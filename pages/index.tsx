@@ -106,14 +106,7 @@ export default function Home() {
                 className="btn-primary"
                 style={{ fontSize: 15, display: 'inline-flex', alignItems: 'center', gap: 8 }}
               >
-                Protocol Documentation <ArrowRight size={15} />
-              </button>
-              <button
-                onClick={() => router.push('/buy')}
-                className="btn-secondary"
-                style={{ fontSize: 15 }}
-              >
-                Acquire INQAI
+                Documentation <ArrowRight size={15} />
               </button>
             </div>
 

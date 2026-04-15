@@ -1,4 +1,4 @@
-import { http, fallback, getAddress } from 'viem';
+import { http, fallback } from 'viem';
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
 import { mainnet, polygon, arbitrum, base, optimism } from '@reown/appkit/networks';
 
@@ -54,7 +54,7 @@ export const INQAI_TOKEN = {
   standard:     'ERC-20',
   address:      '0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5' as `0x${string}`,
   teamWallet:   '0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746' as `0x${string}`,
-  vaultAddress: (() => { try { return getAddress((process.env.NEXT_PUBLIC_VAULT_ADDRESS || '0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb').toLowerCase()); } catch { return '0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb' as `0x${string}`; } })(),
+  vaultAddress: '0xb99dc519c4373e5017222bbd46f42a4e12a0ec25' as `0x${string}`,
   btcAddress:   'bc1q54tccqs2z3gp74pdatfnfucrzxuv2755fq6cfg',
   solAddress:   '7a2WzumijyGTqALmqoDZd3mvyP2aS7R4GjBdBxMUjRPk',
   trxAddress:   'TDSkgbhuMAHChDw6kGCLJmM9v7PPMJgHJA',

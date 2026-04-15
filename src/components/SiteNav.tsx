@@ -78,28 +78,6 @@ export default function SiteNav({ position = 'sticky', right }: SiteNavProps) {
 
       {right && <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginRight: 8, flexShrink: 0 }}>{right}</div>}
 
-      {/* Ghost CTA — "Launch App" not "Buy Token" */}
-      <button
-        onClick={() => router.push('/analytics')}
-        style={{
-          padding: '7px 16px',
-          borderRadius: 8,
-          cursor: 'pointer',
-          fontSize: 13,
-          fontWeight: 500,
-          background: 'transparent',
-          color: '#f4f4f5',
-          border: '1px solid rgba(255,255,255,0.12)',
-          transition: 'border-color 0.2s',
-          marginRight: 8,
-          flexShrink: 0,
-        }}
-        onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)'; }}
-        onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; }}
-      >
-        Launch App
-      </button>
-
       <WalletButton />
     </nav>
   );

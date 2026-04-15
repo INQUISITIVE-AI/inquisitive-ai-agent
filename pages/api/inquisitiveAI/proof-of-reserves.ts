@@ -4,7 +4,8 @@ import { ethers } from 'ethers';
 // ── Proof of Reserves API ──────────────────────────────────────────────────
 // Real-time vault holdings and portfolio backing verification
 
-const VAULT_ADDRESS = '0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb';
+// VaultV2 — the active vault (V1 0x721b... was drained/legacy)
+const VAULT_ADDRESS = process.env.NEXT_PUBLIC_VAULT_V2_ADDRESS || '0xb99dc519c4373e5017222bbd46f42a4e12a0ec25';
 const INQAI_TOKEN = '0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5';
 
 const ERC20_ABI = [
@@ -59,9 +60,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const provider = new ethers.JsonRpcProvider(
-      process.env.MAINNET_RPC_URL || 'https://eth-mainnet.g.alchemy.com/v2/demo'
-    );
+    const rpcUrls = [
+      process.env.MAINNET_RPC_URL,
+      'https://eth.llamarpc.com',
+      'https://rpc.ankr.com/eth',
+      'https://ethereum.publicnode.com',
+    ].filter(Boolean) as string[];
+    const provider = new ethers.JsonRpcProvider(rpcUrls[0]);
 
     // Fetch prices
     const prices = await fetchPrices();
