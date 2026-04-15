@@ -131,15 +131,14 @@ export default function Home() {
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 2 }}>
               {[
-                { n: '01', title: 'Acquire & Hold',          desc: 'Purchase INQAI tokens with ETH, BTC, SOL, TRX, or USDC. Tokens are delivered directly to your self-custody wallet — no platform accounts, no KYC, no lock-ups.', href: '/buy' },
-                { n: '02', title: 'AI Manages the Portfolio', desc: 'Five independent AI engines analyze all 66 assets every 8 seconds. Consensus signals are submitted on-chain every 5 minutes via Vercel Cron — fully automated, no human discretion.', href: '/analytics' },
-                { n: '03', title: 'On-Chain Settlement',      desc: 'VaultV2 executes trades, harvests yield, and updates positions directly on Ethereum mainnet. Every transaction is publicly verifiable on Etherscan in real time.', href: '/proof-of-reserves' },
+                { n: '01', title: 'Acquire & Hold',          desc: 'Purchase INQAI tokens with ETH, BTC, SOL, TRX, or USDC. Tokens are delivered directly to your self-custody wallet — no platform accounts, no KYC, no lock-ups.' },
+                { n: '02', title: 'AI Manages the Portfolio', desc: 'Five independent AI engines analyze all 66 assets every 8 seconds. Consensus signals are submitted on-chain every 5 minutes via Vercel Cron — fully automated, no human discretion.' },
+                { n: '03', title: 'On-Chain Settlement',      desc: 'VaultV2 executes trades, harvests yield, and updates positions directly on Ethereum mainnet. Every transaction is publicly verifiable on Etherscan in real time.' },
               ].map((s, i) => (
                 <div
                   key={s.n}
                   className="card-lift"
-                  style={{ ...card, borderRadius: i === 0 ? '12px 0 0 12px' : i === 2 ? '0 12px 12px 0' : 0, borderRight: i < 2 ? 'none' : undefined, cursor: 'pointer' }}
-                  onClick={() => router.push(s.href)}
+                  style={{ ...card, borderRadius: i === 0 ? '12px 0 0 12px' : i === 2 ? '0 12px 12px 0' : 0, borderRight: i < 2 ? 'none' : undefined }}
                 >
                   <div style={{ fontSize: 48, fontWeight: 800, color: 'rgba(59,130,246,0.08)', fontFamily: 'JetBrains Mono, monospace', lineHeight: 1, marginBottom: 20 }}>{s.n}</div>
                   <h3 style={{ fontSize: 15, fontWeight: 700, color: '#f1f1f3', marginBottom: 10 }}>{s.title}</h3>
