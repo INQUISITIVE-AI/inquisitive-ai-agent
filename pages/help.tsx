@@ -135,7 +135,7 @@ export default function HelpPage() {
         {/* Presale CTA */}
         <div style={{background:'linear-gradient(135deg,rgba(59,130,246,0.15),rgba(37,99,235,0.1))',border:'1px solid rgba(59,130,246,0.3)',borderRadius:16,padding:22,marginBottom:28,display:'flex',justifyContent:'space-between',alignItems:'center',gap:16}}>
           <div>
-            <div style={{fontSize:12,color:'rgba(255,255,255,0.35)',marginBottom:4,display:'flex',alignItems:'center',gap:6}}><Flame size={14} color="#f59e0b" /> Presale Active</div>
+            <div style={{fontSize:12,color:'rgba(255,255,255,0.35)',marginBottom:4,display:'flex',alignItems:'center',gap:6}}>Presale Active</div>
             <div style={{fontSize:20,fontWeight:900,marginBottom:4}}>Acquire INQAI at <span style={{color:'#93c5fd'}}>$8 per token</span> — 47% below target price</div>
             <div style={{fontSize:12,color:'rgba(255,255,255,0.45)'}}>ERC-20 · Asset-backed · 18.5% target APY · Self-custody delivery</div>
           </div>
@@ -146,9 +146,9 @@ export default function HelpPage() {
 
         {/* Live system status */}
         {status && (
-          <div style={{background:'rgba(16,185,129,0.06)',border:'1px solid rgba(16,185,129,0.15)',borderRadius:16,padding:20,marginBottom:28}}>
-            <div style={{fontSize:12,fontWeight:700,color:'#34d399',marginBottom:12,display:'flex',alignItems:'center',gap:6}}>
-              <span style={{width:6,height:6,borderRadius:'50%',background:'#10b981',display:'inline-block'}} className="anim-blink" />
+          <div style={{background:'rgba(59,130,246,0.06)',border:'1px solid rgba(59,130,246,0.15)',borderRadius:16,padding:20,marginBottom:28}}>
+            <div style={{fontSize:12,fontWeight:700,color:'#93c5fd',marginBottom:12,display:'flex',alignItems:'center',gap:6}}>
+              <span style={{width:6,height:6,borderRadius:'50%',background:'#3b82f6',display:'inline-block'}} className="anim-blink" />
               System Live
             </div>
             <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12}}>
@@ -159,9 +159,9 @@ export default function HelpPage() {
                 {l:'AI Signals',v:status.brain?.signalCount||66,u:'active'},
               ].map(s=>(
                 <div key={s.l} style={{background:'rgba(255,255,255,0.04)',borderRadius:10,padding:'12px 14px',textAlign:'center'}}>
-                  <div style={{fontSize:20,fontWeight:900,color:'#34d399',fontFamily:'monospace'}}>{s.v}</div>
+                  <div style={{fontSize:20,fontWeight:900,color:'#93c5fd',fontFamily:'monospace'}}>{s.v}</div>
                   <div style={{fontSize:10,color:'rgba(255,255,255,0.35)',marginTop:3}}>{s.l}</div>
-                  <div style={{fontSize:9,color:'rgba(16,185,129,0.6)',marginTop:1}}>{s.u}</div>
+                  <div style={{fontSize:9,color:'rgba(147,197,253,0.6)',marginTop:1}}>{s.u}</div>
                 </div>
               ))}
             </div>
@@ -179,7 +179,7 @@ export default function HelpPage() {
           ].map(k=>(
             <div key={k.label} style={{background:'#1a1a1f',border:'1px solid rgba(255,255,255,0.06)',borderRadius:14,padding:18}}>
               <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:8}}>
-                <k.icon size={24} color={k.icon === Brain ? '#3b82f6' : k.icon === Gem ? '#93c5fd' : k.icon === Shield ? '#dc2626' : k.icon === Zap ? '#2563eb' : k.icon === Coins ? '#f59e0b' : '#f59e0b'} strokeWidth={1.8} />
+                <k.icon size={24} color='#71717a' strokeWidth={1.8} />
                 <div>
                   <div style={{fontSize:18,fontWeight:900,color:'#93c5fd',fontFamily:'monospace'}}>{k.v}</div>
                   <div style={{fontSize:11,fontWeight:700,color:'rgba(255,255,255,0.7)'}}>{k.label}</div>
@@ -190,8 +190,8 @@ export default function HelpPage() {
           ))}
         </div>
 
-        <div style={{background:'rgba(251,191,36,0.05)',border:'1px solid rgba(251,191,36,0.15)',borderRadius:14,padding:18}}>
-          <div style={{fontSize:13,fontWeight:700,color:'#fbbf24',marginBottom:8,display:'flex',alignItems:'center',gap:6}}><AlertTriangle size={16} color="#fbbf24" /> Risk Disclosure</div>
+        <div style={{background:'rgba(59,130,246,0.05)',border:'1px solid rgba(59,130,246,0.15)',borderRadius:14,padding:18}}>
+          <div style={{fontSize:13,fontWeight:700,color:'#93c5fd',marginBottom:8,display:'flex',alignItems:'center',gap:6}}><AlertTriangle size={16} color="#93c5fd" /> Risk Disclosure</div>
           <p style={{fontSize:12,color:'rgba(255,255,255,0.4)',lineHeight:1.7,margin:0}}>
             INQAI is an ERC-20 token representing proportional ownership in a professionally managed portfolio of 66 digital assets. All trading functions execute autonomously based on AI signals. Past performance is not indicative of future results. Target APY of 18.5% is a projection based on strategy design, not a guarantee. Digital assets carry substantial risk including total loss of capital. This documentation is for informational purposes only and does not constitute financial advice.
           </p>
@@ -266,24 +266,24 @@ export default function HelpPage() {
         <h2 style={{fontSize:26,fontWeight:900,marginBottom:4}}>11 Trading Functions</h2>
         <p style={{color:'rgba(255,255,255,0.4)',fontSize:13,marginBottom:28}}>Every major DeFi strategy executed autonomously by the trading engine. Zero human intervention.</p>
         {[
-          {icon:TrendingUp,name:'BUY',col:'#10b981',detail:'Optimal market entry. AI determines entry timing with 2% max risk limit. Position sized by Kelly Criterion with 2:1 R:R floor. Stop loss at 2× ATR below entry. Checks portfolio heat (max 6% open risk) before executing.',params:'symbol, amount, stopLoss?, target?'},
-          {icon:TrendingDown,name:'SELL',col:'#ef4444',detail:'Profit-optimized exit with stop-loss enforcement. Tracks unrealized P&L in real-time. Updates portfolio heat and drawdown metrics after each exit. Records win/loss for performance attribution.',params:'symbol, amount'},
-          {icon:ArrowLeftRight,name:'SWAP',col:'#3b82f6',detail:'Best-route DEX aggregation. Solana assets: routes through Jupiter Aggregator for best price across all Solana DEXs. Ethereum/EVM assets: routes through 1inch or Uniswap V3. Auto-detects chain from asset type. Max 0.3% slippage.',params:'fromSymbol, toSymbol, amount, params.slippage?'},
-          {icon:Landmark,name:'LEND',col:'#f59e0b',detail:'Supply assets to lending protocols for yield. Protocol priority: Aave V3 (primary), Compound V3, SparkLend, Morpho Blue, Maple Finance. APY data: USDC ~4.8%, ETH ~1.8%, BTC ~0.25%, Stables ~4.5%. Tracked with position ID for withdrawal.',params:'symbol, amount, params.protocol?'},
-          {icon:Leaf,name:'YIELD',col:'#84cc16',detail:'Liquidity provision and yield farming. Three pool types: Stable pools (4.8% APY, low risk, e.g. USDC/BTC), Volatile LP (12% APY, medium risk, e.g. ETH/USDC), Leveraged pools (25% APY, high risk). Risk-adjusted selection based on risk-first methodology.',params:'symbol, amount, params.poolType?'},
-          {icon:Coins,name:'BORROW',col:'#0ea5e9',detail:'Capital-efficient borrowing against collateral. Deposit a blue-chip asset (BTC, ETH, SOL) as collateral on Aave V3 or Morpho Blue and borrow stablecoins (USDC, BTC, SOL) at the current market rate. The AI deploys borrowed capital into higher-yield strategies. Borrow APR vs deployment APY spread must be positive. LTV capped at 65% for safety. Health factor always maintained above 1.5.',params:'collateralSymbol, borrowSymbol, amount, params.protocol?, params.ltv?'},
-          {icon:Infinity,name:'LOOP',col:'#8b5cf6',detail:'Recursive yield optimization: deposit → borrow against collateral → re-deposit → repeat. Max 5 loops, max 80% LTV per loop. Calculates cumulative APY and health factor before executing. Automatically capped by risk limits. Uses Aave V3 + Morpho as primary protocols.',params:'symbol, amount, params.maxLoops?, params.targetLTV?'},
-          {icon:Lock,name:'STAKE',col:'#06b6d4',detail:'Network staking across 27+ protocols with real APY data. ETH via Lido (3.8% APY), SOL via Jito (6.8%), DOT via Polkadot nomination (12%), ATOM via Cosmos delegation (15%), ENA via Ethena sENA (27%), INJ via Injective DAO (11%), NEAR via NEAR Staking (9%), TAO via Bittensor Subnet (12%).',params:'symbol, amount, params.protocol?'},
-          {icon:X,name:'MULTIPLY',col:'#f97316',detail:'Leveraged long exposure. Max 3× for major assets (BTC, ETH, SOL), max 2× for DeFi. Calculates liquidation price, daily borrow cost (e.g. 8.5%/yr), and break-even price move. Blocked if portfolio heat ≥ 6%. Maximum leverage enforced by the risk engine.',params:'symbol, amount, params.leverage?'},
-          {icon:Gem,name:'EARN',col:'#93c5fd',detail:'Automatic best-strategy selection. Evaluates all available strategies (lending, staking, LP, looping) for the asset and selects the highest risk-adjusted APY. Scoring: APY - (risk_penalty × risk_score). Stakes are prioritized for liquid staking tokens. Non-yieldable assets return trading recommendation.',params:'symbol, amount'},
-          {icon:Gift,name:'REWARDS',col:'#ec4899',detail:'Claim + auto-compound protocol rewards. Supported protocols: Aave (stkAAVE rewards), Lido (stETH rebases), Curve (CRV + veCRV), Balancer (BAL + gauge), Jupiter (JUP governance), Injective (INJ staking), Cosmos (ATOM), Polkadot (DOT), Hivemapper (HONEY), The Graph (GRT), Ethena (ENA), Soil (SOIL). Auto-compound reinvests immediately.',params:'symbol, params.autoCompound?'},
+          {icon:TrendingUp,name:'BUY',detail:'Optimal market entry. AI determines entry timing with 2% max risk limit. Position sized by Kelly Criterion with 2:1 R:R floor. Stop loss at 2× ATR below entry. Checks portfolio heat (max 6% open risk) before executing.',params:'symbol, amount, stopLoss?, target?'},
+          {icon:TrendingDown,name:'SELL',detail:'Profit-optimized exit with stop-loss enforcement. Tracks unrealized P&L in real-time. Updates portfolio heat and drawdown metrics after each exit. Records win/loss for performance attribution.',params:'symbol, amount'},
+          {icon:ArrowLeftRight,name:'SWAP',detail:'Best-route DEX aggregation. Solana assets: routes through Jupiter Aggregator for best price across all Solana DEXs. Ethereum/EVM assets: routes through 1inch or Uniswap V3. Auto-detects chain from asset type. Max 0.3% slippage.',params:'fromSymbol, toSymbol, amount, params.slippage?'},
+          {icon:Landmark,name:'LEND',detail:'Supply assets to lending protocols for yield. Protocol priority: Aave V3 (primary), Compound V3, SparkLend, Morpho Blue, Maple Finance. APY data: USDC ~4.8%, ETH ~1.8%, BTC ~0.25%, Stables ~4.5%. Tracked with position ID for withdrawal.',params:'symbol, amount, params.protocol?'},
+          {icon:Leaf,name:'YIELD',detail:'Liquidity provision and yield farming. Three pool types: Stable pools (4.8% APY, low risk, e.g. USDC/BTC), Volatile LP (12% APY, medium risk, e.g. ETH/USDC), Leveraged pools (25% APY, high risk). Risk-adjusted selection based on risk-first methodology.',params:'symbol, amount, params.poolType?'},
+          {icon:Coins,name:'BORROW',detail:'Capital-efficient borrowing against collateral. Deposit a blue-chip asset (BTC, ETH, SOL) as collateral on Aave V3 or Morpho Blue and borrow stablecoins (USDC, BTC, SOL) at the current market rate. The AI deploys borrowed capital into higher-yield strategies. Borrow APR vs deployment APY spread must be positive. LTV capped at 65% for safety. Health factor always maintained above 1.5.',params:'collateralSymbol, borrowSymbol, amount, params.protocol?, params.ltv?'},
+          {icon:Infinity,name:'LOOP',detail:'Recursive yield optimization: deposit, borrow against collateral, re-deposit, repeat. Max 5 loops, max 80% LTV per loop. Calculates cumulative APY and health factor before executing. Automatically capped by risk limits. Uses Aave V3 + Morpho as primary protocols.',params:'symbol, amount, params.maxLoops?, params.targetLTV?'},
+          {icon:Lock,name:'STAKE',detail:'Network staking across 27+ protocols with real APY data. ETH via Lido (3.8% APY), SOL via Jito (6.8%), DOT via Polkadot nomination (12%), ATOM via Cosmos delegation (15%), ENA via Ethena sENA (27%), INJ via Injective DAO (11%), NEAR via NEAR Staking (9%), TAO via Bittensor Subnet (12%).',params:'symbol, amount, params.protocol?'},
+          {icon:X,name:'MULTIPLY',detail:'Leveraged long exposure. Max 3× for major assets (BTC, ETH, SOL), max 2× for DeFi. Calculates liquidation price, daily borrow cost (e.g. 8.5%/yr), and break-even price move. Blocked if portfolio heat ≥ 6%. Maximum leverage enforced by the risk engine.',params:'symbol, amount, params.leverage?'},
+          {icon:Gem,name:'EARN',detail:'Automatic best-strategy selection. Evaluates all available strategies (lending, staking, LP, looping) for the asset and selects the highest risk-adjusted APY. Scoring: APY - (risk_penalty × risk_score). Stakes are prioritized for liquid staking tokens. Non-yieldable assets return trading recommendation.',params:'symbol, amount'},
+          {icon:Gift,name:'REWARDS',detail:'Claim + auto-compound protocol rewards. Supported protocols: Aave (stkAAVE rewards), Lido (stETH rebases), Curve (CRV + veCRV), Balancer (BAL + gauge), Jupiter (JUP governance), Injective (INJ staking), Cosmos (ATOM), Polkadot (DOT), Hivemapper (HONEY), The Graph (GRT), Ethena (ENA), Soil (SOIL). Auto-compound reinvests immediately.',params:'symbol, params.autoCompound?'},
         ].map(f=>(
-          <div key={f.name} style={{background:'#1a1a1f',border:`1px solid ${f.col}15`,borderRadius:14,padding:18,marginBottom:10}}>
+          <div key={f.name} style={{background:'#1a1a1f',border:'1px solid rgba(255,255,255,0.06)',borderRadius:14,padding:18,marginBottom:10}}>
             <div style={{display:'flex',alignItems:'flex-start',gap:14}}>
-              <f.icon size={26} color={f.col} strokeWidth={1.8} style={{flexShrink:0}} />
+              <f.icon size={26} color='#71717a' strokeWidth={1.8} style={{flexShrink:0}} />
               <div style={{flex:1}}>
                 <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:6}}>
-                  <h3 style={{fontSize:15,fontWeight:800,color:f.col,margin:0}}>{f.name}</h3>
+                  <h3 style={{fontSize:15,fontWeight:800,color:'#e4e4e7',margin:0}}>{f.name}</h3>
                   <Code>GET /api/inquisitiveAI/trade</Code>
                 </div>
                 <p style={{fontSize:12,color:'rgba(255,255,255,0.5)',lineHeight:1.7,marginBottom:8}}>{f.detail}</p>
@@ -319,15 +319,15 @@ export default function HelpPage() {
         <h2 style={{fontSize:26,fontWeight:900,marginBottom:4}}>INQUISITIVE Intelligence System</h2>
         <p style={{color:'rgba(255,255,255,0.4)',fontSize:13,marginBottom:28}}>5 AI engines powering every 8-second decision cycle — built by INQUISITIVE</p>
         {[
-          {org:'Pattern Engine',badge:'RL · Regime Detection',col:'#3b82f6',icon:'Brain',pts:[
-            'Reinforcement learning action-value scoring across all 66 assets simultaneously',
-            'Pattern recognition — volume-price relationship analysis in real time',
-            'Regime detection: BULL / BEAR / NEUTRAL using multi-factor state space',
-            'Q-value scoring: assigns future-state value to every potential trade action',
-            'ATH-distance valuation: deep value accumulation when price is far below all-time high',
-            'Volume confirmation: confidence-weighted signal filtering',
+          {org:'Pattern Engine',badge:'Technical · Statistical',icon:'Brain',pts:[
+            'Pattern recognition via Statistical+ML+Neural consensus for signal validation',
+            'Momentum analysis with regime detection (BULL/BEAR/CHOP) via volatility metrics',
+            'Support/resistance calculation using volume profile and pivot analysis',
+            'Statistical edge detection: win rate ≥60%, profit factor ≥1.5, Sharpe ≥1.0',
+            'Multi-timeframe confluence: 1H/4H/Daily alignment scoring for signal strength',
+            'Dynamic risk adjustment: position sizes scale with conviction (0.5×-1.5× base)',
           ]},
-          {org:'Reasoning Engine',badge:'Fundamental · Sentiment',col:'#10b981',icon:'Bot',pts:[
+          {org:'Reasoning Engine',badge:'Fundamental · Sentiment',icon:'Bot',pts:[
             'Fundamental asset analysis via multi-step logical evaluation',
             'Category-based scoring: AI tokens +5%, RWA tokens +3%, institutional tokens +4%',
             'Sentiment analysis via Fear & Greed index interpretation (extreme = contrarian)',
@@ -335,7 +335,7 @@ export default function HelpPage() {
             'Yield-bearing asset identification: staking/lending adds fundamental value score',
             'Stablecoin logic: skip trading, redirect to lending protocols for safe yield',
           ]},
-          {org:'Portfolio Engine',badge:'Optimization · Diversification',col:'#ef4444',icon:'Microscope',pts:[
+          {org:'Portfolio Engine',badge:'Optimization · Diversification',icon:'Microscope',pts:[
             'Sharpe-optimized scoring: reward = (alpha - 0.5×beta²×variance)/sqrt(variance)',
             'Correlation-aware diversification: under-represented categories get scoring boost',
             'Market cap tier weighting: mega-cap (>$100B) for stability, small-cap for alpha',
@@ -343,7 +343,7 @@ export default function HelpPage() {
             'TWAP execution for large orders to minimize market impact',
             'Multi-factor model: momentum, value, quality, size applied to all 66 assets',
           ]},
-          {org:'Learning Engine',badge:'Adaptive · Meta-Cognitive',col:'#f97316',icon:'Activity',pts:[
+          {org:'Learning Engine',badge:'Adaptive · Meta-Cognitive',icon:'Activity',pts:[
             'Meta-cognitive self-awareness: monitors own confidence calibration over time',
             '7-day trend analysis for momentum-aware position management',
             'Liquidity quality scoring: $100M 24h volume required for full weight',
@@ -351,7 +351,7 @@ export default function HelpPage() {
             'Adaptive thresholds: BEAR regime raises required confidence from 70% to 75%',
             'Plain-language explanation generated for every AI decision made',
           ]},
-          {org:'Risk Engine',badge:'Risk Gate',col:'#fbbf24',icon:'Shield',pts:[
+          {org:'Risk Engine',badge:'Risk Gate',icon:'Shield',pts:[
             '2% max portfolio risk per trade — hard-coded, cannot be bypassed',
             '6% max portfolio heat across all open positions simultaneously',
             '15% drawdown circuit breaker — all trading halts automatically',
@@ -360,16 +360,16 @@ export default function HelpPage() {
             'On-chain execution live — 5-cycle launch validation passed at deployment',
           ]},
         ].map(r=>(
-          <div key={r.org} style={{background:'#1a1a1f',border:`1px solid ${r.col}15`,borderRadius:16,padding:22,marginBottom:12}}>
+          <div key={r.org} style={{background:'#1a1a1f',border:'1px solid rgba(255,255,255,0.06)',borderRadius:16,padding:22,marginBottom:12}}>
             <div style={{display:'flex',alignItems:'center',gap:14,marginBottom:14}}>
-              {r.icon === 'Brain' && <Brain size={28} color={r.col} />}
-              {r.icon === 'Bot' && <Bot size={28} color={r.col} />}
-              {r.icon === 'Microscope' && <Microscope size={28} color={r.col} />}
-              {r.icon === 'Activity' && <Activity size={28} color={r.col} />}
-              {r.icon === 'Shield' && <Shield size={28} color={r.col} />}
+              {r.icon === 'Brain' && <Brain size={28} color='#71717a' />}
+              {r.icon === 'Bot' && <Bot size={28} color='#71717a' />}
+              {r.icon === 'Microscope' && <Microscope size={28} color='#71717a' />}
+              {r.icon === 'Activity' && <Activity size={28} color='#71717a' />}
+              {r.icon === 'Shield' && <Shield size={28} color='#71717a' />}
               <div>
-                <h3 style={{fontSize:18,fontWeight:800,margin:0}}>{r.org}</h3>
-                <span style={{fontSize:11,padding:'2px 8px',borderRadius:100,background:`${r.col}15`,color:r.col,fontWeight:600,border:`1px solid ${r.col}25`}}>{r.badge}</span>
+                <h3 style={{fontSize:18,fontWeight:800,margin:0,color:'#e4e4e7'}}>{r.org}</h3>
+                <span style={{fontSize:11,padding:'2px 8px',borderRadius:100,background:'rgba(255,255,255,0.06)',color:'rgba(255,255,255,0.5)',fontWeight:600,border:'1px solid rgba(255,255,255,0.1)'}}>{r.badge}</span>
               </div>
             </div>
             <div style={{display:'flex',flexDirection:'column',gap:6}}>
@@ -382,25 +382,25 @@ export default function HelpPage() {
 
     riskMethodology: (
       <div>
-        <div style={{background:'rgba(251,191,36,0.06)',border:'1px solid rgba(251,191,36,0.2)',borderRadius:14,padding:18,marginBottom:24}}>
-          <div style={{fontSize:14,fontWeight:700,color:'#fbbf24',marginBottom:8}}>Risk-First Methodology</div>
+        <div style={{background:'rgba(59,130,246,0.06)',border:'1px solid rgba(59,130,246,0.2)',borderRadius:14,padding:18,marginBottom:24}}>
+          <div style={{fontSize:14,fontWeight:700,color:'#93c5fd',marginBottom:8}}>Risk-First Methodology</div>
           <p style={{fontSize:12,color:'rgba(255,255,255,0.5)',lineHeight:1.7,margin:0}}>
             This is the risk management backbone of the entire INQAI system. Every AI trade signal must pass through all 8 risk gates before execution. Capital preservation is always prioritized over profit generation.
           </p>
         </div>
         <h2 style={{fontSize:26,fontWeight:900,marginBottom:20}}>8 Risk Gates</h2>
         {[
-          {title:'Rule 1: Risk First, Profit Second',col:'#fbbf24',detail:'Capital preservation ALWAYS comes before profit maximization. The first question is never "how much can I make?" but "how much can I lose?" Every trade evaluation begins with risk assessment. If the risk is not acceptable, the trade is skipped regardless of potential profit.'},
-          {title:'Rule 2: 2% Max Risk Per Trade',col:'#ef4444',detail:'Never risk more than 2% of total portfolio value on a single trade. Position size is calculated as: (Portfolio × 2%) ÷ (Entry Price - Stop Loss Price). This ensures 50 consecutive losing trades — an impossible streak — cannot wipe out the account. This is a HARD LIMIT.'},
-          {title:'Rule 3: 6% Portfolio Heat Maximum',col:'#f97316',detail:'Maximum total open risk across ALL positions simultaneously is 6%. If three 2% risk trades are open, portfolio heat = 6% and NO new trades open until one closes. This prevents correlated drawdown where multiple trades go against you simultaneously.'},
-          {title:'Rule 4: 15% Drawdown Circuit Breaker',col:'#dc2626',detail:'If the portfolio drawdown from peak reaches 15%, ALL automated trading halts immediately. Human review is required before trading resumes. This is a non-negotiable circuit breaker. It prevents catastrophic loss during black swan events, flash crashes, or AI misconfidence cycles.'},
-          {title:'Rule 5: 2:1 Minimum Risk:Reward',col:'#10b981',detail:'Every trade must offer at least 2× the potential gain vs. the potential loss before entry. If the setup doesn\'t offer a 2:1 ratio, the trade is SKIPPED. This means the win rate only needs to be 34%+ to be profitable. Better setups have 3:1 or even 5:1.'},
-          {title:'Rule 6: Technical Stop Loss at 2× ATR',col:'#3b82f6',detail:'Stop losses are placed at technically significant levels — 2 times the Average True Range (ATR) below entry. This is based on real price volatility. It prevents being stopped out by normal market noise while still protecting capital from trending moves against the position.'},
-          {title:'Rule 7: Paper Trade Validation',col:'#8b5cf6',detail:'The first 5 AI decision cycles run in paper trade mode — signals are calculated but trades are NOT executed with real capital. This validates that the AI is performing correctly before risking money. Only after 5 validated cycles does the system switch to live execution.'},
-          {title:'Rule 8: Decision Transparency',col:'#06b6d4',detail:'Every AI decision must be accompanied by a clear, plain-language explanation. No black boxes. If the system cannot explain why it is taking a trade, it will not take it. The X-Ray component fulfills this with full decision transparency for every trade.'},
+          {title:'Rule 1: Risk First, Profit Second',detail:'Capital preservation ALWAYS comes before profit maximization. The first question is never "how much can I make?" but "how much can I lose?" Every trade evaluation begins with risk assessment. If the risk is not acceptable, the trade is skipped regardless of potential profit.'},
+          {title:'Rule 2: 2% Max Risk Per Trade',detail:'Never risk more than 2% of total portfolio value on a single trade. Position size is calculated as: (Portfolio × 2%) ÷ (Entry Price - Stop Loss Price). This ensures 50 consecutive losing trades — an impossible streak — cannot wipe out the account. This is a HARD LIMIT.'},
+          {title:'Rule 3: 6% Portfolio Heat Maximum',detail:'Maximum total open risk across ALL positions simultaneously is 6%. If three 2% risk trades are open, portfolio heat = 6% and NO new trades open until one closes. This prevents correlated drawdown where multiple trades go against you simultaneously.'},
+          {title:'Rule 4: 15% Drawdown Circuit Breaker',detail:'If the portfolio drawdown from peak reaches 15%, ALL automated trading halts immediately. Human review is required before trading resumes. This is a non-negotiable circuit breaker. It prevents catastrophic loss during black swan events, flash crashes, or AI misconfidence cycles.'},
+          {title:'Rule 5: 2:1 Minimum Risk:Reward',detail:'Every trade must offer at least 2× the potential gain vs. the potential loss before entry. If the setup doesn\'t offer a 2:1 ratio, the trade is SKIPPED. This means the win rate only needs to be 34%+ to be profitable. Better setups have 3:1 or even 5:1.'},
+          {title:'Rule 6: Technical Stop Loss at 2× ATR',detail:'Stop losses are placed at technically significant levels — 2 times the Average True Range (ATR) below entry. This is based on real price volatility. It prevents being stopped out by normal market noise while still protecting capital from trending moves against the position.'},
+          {title:'Rule 7: Paper Trade Validation',detail:'The first 5 AI decision cycles run in paper trade mode — signals are calculated but trades are NOT executed with real capital. This validates that the AI is performing correctly before risking money. Only after 5 validated cycles does the system switch to live execution.'},
+          {title:'Rule 8: Decision Transparency',detail:'Every AI decision must be accompanied by a clear, plain-language explanation. No black boxes. If the system cannot explain why it is taking a trade, it will not take it. The X-Ray component fulfills this with full decision transparency for every trade.'},
         ].map(r=>(
-          <div key={r.title} style={{background:'#1a1a1f',border:`1px solid ${r.col}15`,borderRadius:14,padding:18,marginBottom:10}}>
-            <h3 style={{fontSize:14,fontWeight:800,color:r.col,marginBottom:8}}>{r.title}</h3>
+          <div key={r.title} style={{background:'#1a1a1f',border:'1px solid rgba(255,255,255,0.06)',borderRadius:14,padding:18,marginBottom:10}}>
+            <h3 style={{fontSize:14,fontWeight:800,color:'#e4e4e7',marginBottom:8}}>{r.title}</h3>
             <p style={{fontSize:12,color:'rgba(255,255,255,0.5)',lineHeight:1.7,margin:0}}>{r.detail}</p>
           </div>
         ))}
@@ -443,7 +443,7 @@ export default function HelpPage() {
             {m:'GET', p:'/assets/:symbol',             d:'Single asset — live price + full AI analysis from all 5 engines'},
             {m:'GET', p:'/signals',                   d:'All AI brain signals, top buy opportunities, borrow opportunities, risk assessment, cycle count'},
             {m:'GET', p:'/analyze/:symbol',            d:'Deep analysis: Pattern/Reasoning/Portfolio/Learning engine scores + risk gate result + explanation'},
-            {m:'GET', p:'/prices',                    d:'Raw price map for all 66 assets (symbol → price object) from CoinGecko'},
+            {m:'GET', p:'/prices',                    d:'Raw price map for all 66 assets from CoinGecko'},
             {m:'GET', p:'/prices/:symbol',             d:'Single asset live price, 24h/7d change, volume, market cap, ATH distance'},
             {m:'GET', p:'/macro',                     d:'Macro indicators: Fear & Greed (Alternative.me) + BTC/ETH/SOL prices (CoinGecko) + market regime'},
             {m:'GET', p:'/portfolio/positions',       d:'All open positions with current price, unrealized P&L, entry price, stop, target'},
@@ -454,7 +454,7 @@ export default function HelpPage() {
             {m:'GET', p:'/initialize',                d:'Re-initialize the AI agent and all services — triggers fresh price + macro fetch'},
           ].map(e=>(
             <div key={e.p} style={{display:'flex',alignItems:'center',gap:12,background:'#1a1a1f',border:'1px solid rgba(255,255,255,0.06)',borderRadius:10,padding:'10px 14px'}}>
-              <span style={{fontSize:10,fontWeight:700,padding:'3px 8px',borderRadius:5,flexShrink:0,background:e.m==='GET'?'rgba(16,185,129,0.15)':'rgba(59,130,246,0.15)',color:e.m==='GET'?'#34d399':'#60a5fa',border:`1px solid ${e.m==='GET'?'rgba(16,185,129,0.25)':'rgba(59,130,246,0.25)'}`}}>{e.m}</span>
+              <span style={{fontSize:10,fontWeight:700,padding:'3px 8px',borderRadius:5,flexShrink:0,background:'rgba(59,130,246,0.15)',color:'#93c5fd',border:'1px solid rgba(59,130,246,0.25)'}}>{e.m}</span>
               <Code>/api/inquisitiveAI{e.p}</Code>
               <span style={{fontSize:11,color:'rgba(255,255,255,0.4)',flex:1}}>{e.d}</span>
             </div>
@@ -509,8 +509,8 @@ export default function HelpPage() {
             ))}
           </div>
         </div>
-        <div style={{background:'#1a1a1f',border:'1px solid rgba(16,185,129,0.15)',borderRadius:16,padding:22}}>
-          <h3 style={{fontSize:15,fontWeight:700,color:'#34d399',marginBottom:16}}>Value Accrual Mechanisms</h3>
+        <div style={{background:'#1a1a1f',border:'1px solid rgba(255,255,255,0.06)',borderRadius:16,padding:22}}>
+          <h3 style={{fontSize:15,fontWeight:700,color:'#e4e4e7',marginBottom:16}}>Value Accrual Mechanisms</h3>
           <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12}}>
             {[
               {icon:Gem,title:'Asset-Backed Ownership',desc:'Each INQAI token represents proportional ownership in a diversified portfolio of 66 digital assets, professionally managed by proprietary AI systems.'},
@@ -518,9 +518,9 @@ export default function HelpPage() {
               {icon:Flame,title:'Systematic Buybacks + Burns',desc:'FeeDistributor live: 60% of all performance fees used for open-market INQAI buybacks, 20% permanently burned — increasing scarcity automatically.'},
               {icon:Lock,title:'Staking Rewards',desc:'INQAIStaking contract deployed. 15% of all protocol fees distributed pro-rata to INQAI stakers. Staking UI coming soon.'},
             ].map(v=>(
-              <div key={v.title} style={{background:'rgba(16,185,129,0.05)',border:'1px solid rgba(16,185,129,0.12)',borderRadius:12,padding:14}}>
-                <v.icon size={24} color="#34d399" strokeWidth={1.8} />
-                <div style={{fontSize:13,fontWeight:700,color:'#34d399',marginBottom:6}}>{v.title}</div>
+              <div key={v.title} style={{background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.06)',borderRadius:12,padding:14}}>
+                <v.icon size={24} color="#71717a" strokeWidth={1.8} />
+                <div style={{fontSize:13,fontWeight:700,color:'#e4e4e7',marginBottom:6}}>{v.title}</div>
                 <p style={{fontSize:11,color:'rgba(255,255,255,0.4)',lineHeight:1.6,margin:0}}>{v.desc}</p>
               </div>
             ))}
@@ -537,7 +537,6 @@ export default function HelpPage() {
           {
             phase:'Phase 1 — Foundation',
             status:'COMPLETE',
-            col:'#10b981',
             detail:'The entire AI brain, trading engine, price feed, macro data layer, REST API, WebSocket broadcaster, and Next.js frontend are fully operational.',
             items:[
               '66-asset portfolio with real live prices via CoinGecko API (30-second polling)',
@@ -554,7 +553,6 @@ export default function HelpPage() {
           {
             phase:'Phase 2 — Smart Contracts',
             status:'COMPLETE',
-            col:'#10b981',
             detail:'All 11 contracts deployed and wired on Ethereum Mainnet. Funds migrated from legacy vault to VaultV2.',
             items:[
               'INQAI ERC-20 — 0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5',
@@ -566,14 +564,13 @@ export default function HelpPage() {
               'INQAITimelock (48h delay) — 0x972b7f40d1837f0b8bf003d7147de7b9fcfc601e',
               'INQAIInsurance — 0xa0486fc0b9e4a282eca0435bae141be6982e502e',
               'AIStrategyManager, InquisitiveStrategy, ProfitMaximizer — all deployed',
-              'Contract wiring complete: Staking→FeeDistributor→Staking, ReferralTracker→Launcher',
+              'Contract wiring complete: Staking to FeeDistributor to Staking, ReferralTracker to Launcher',
               'Legacy vault (0x721b…) drained — 0.0106 ETH migrated to VaultV2',
             ]
           },
           {
             phase:'Phase 3 — Live DeFi Execution',
             status:'IN PROGRESS',
-            col:'#f59e0b',
             detail:'VaultV2 deployed and funded. Blocker: Chainlink Automation must be registered and funded with LINK to enable autonomous trade execution.',
             items:[
               'VaultV2 deployed and seeded with ETH — 0xb99dc519c4373e5017222bbd46f42a4e12a0ec25',
@@ -589,7 +586,6 @@ export default function HelpPage() {
           {
             phase:'Phase 4 — Token Launch & Ecosystem',
             status:'IN PROGRESS',
-            col:'#f59e0b',
             detail:'Token deployed. All support contracts live. Presale active. DEX liquidity provisioning and CEX listings pending.',
             items:[
               'INQAI token deployed — 0xB312B6E0842b6D51b15fdB19e62730815C1C7Ce5',
@@ -606,7 +602,6 @@ export default function HelpPage() {
           {
             phase:'Phase 5 — Advanced AI & Cross-Chain',
             status:'IN PROGRESS',
-            col:'#f59e0b',
             detail:'AI brain fully operational with 5 engines running every 8 seconds. VaultV2 live. Chainlink Automation registration is the final step for autonomous on-chain execution.',
             items:[
               'AI Brain operational — 5 engines: Pattern, Reasoning, Portfolio, Learning, Risk',
@@ -622,16 +617,16 @@ export default function HelpPage() {
             ]
           },
         ].map(p=>(
-          <div key={p.phase} style={{background:'#1a1a1f',border:`1px solid ${p.col}15`,borderRadius:16,padding:20,marginBottom:12}}>
+          <div key={p.phase} style={{background:'#1a1a1f',border:'1px solid rgba(255,255,255,0.06)',borderRadius:16,padding:20,marginBottom:12}}>
             <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:8}}>
-              <h3 style={{fontSize:16,fontWeight:800,margin:0}}>{p.phase}</h3>
-              <span style={{fontSize:10,padding:'3px 10px',borderRadius:100,background:`${p.col}18`,color:p.col,fontWeight:700,border:`1px solid ${p.col}30`}}>{p.status}</span>
+              <h3 style={{fontSize:16,fontWeight:800,margin:0,color:'#e4e4e7'}}>{p.phase}</h3>
+              <span style={{fontSize:10,padding:'3px 10px',borderRadius:100,background:'rgba(255,255,255,0.06)',color:'rgba(255,255,255,0.5)',fontWeight:700,border:'1px solid rgba(255,255,255,0.1)'}}>{p.status}</span>
             </div>
             <p style={{fontSize:12,color:'rgba(255,255,255,0.45)',lineHeight:1.6,margin:'0 0 12px'}}>{p.detail}</p>
             <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
               {p.items.map((item,i)=>(
                 <div key={i} style={{display:'flex',alignItems:'flex-start',gap:6,background:'rgba(255,255,255,0.04)',borderRadius:8,padding:'5px 10px',fontSize:11,color:'rgba(255,255,255,0.55)',maxWidth:'100%'}}>
-                  <span style={{color:p.col,flexShrink:0,fontSize:10}}>[+]</span><span>{item}</span>
+                  <span style={{color:'#71717a',flexShrink:0,fontSize:10}}>[+]</span><span>{item}</span>
                 </div>
               ))}
             </div>
