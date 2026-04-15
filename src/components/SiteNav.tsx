@@ -6,10 +6,9 @@ import InqaiLogo from './InqaiLogo';
 const WalletButton = dynamic(() => import('./WalletButton'), { ssr: false });
 
 const LINKS = [
-  { l: 'Analytics',     p: '/analytics'         },
-  { l: 'Docs',          p: '/help'              },
-  { l: 'Reserves',      p: '/proof-of-reserves' },
-  { l: 'Burns',         p: '/burns'             },
+  { l: 'Docs',     p: '/help'              },
+  { l: 'Reserves', p: '/proof-of-reserves' },
+  { l: 'Burns',    p: '/burns'             },
 ];
 
 interface SiteNavProps {
