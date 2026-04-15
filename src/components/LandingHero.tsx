@@ -167,7 +167,7 @@ export default function LandingHero() {
         justifyContent: 'center',
       }}>
         {[
-          { Icon: Shield, text: 'Audited Contracts' },
+          { Icon: Shield, text: 'Verified Contracts' },
           { Icon: Lock,   text: 'Non-Custodial' },
           { Icon: Globe,  text: 'Fully On-Chain' },
           { Icon: TrendingUp, text: 'Chainlink Automation' },

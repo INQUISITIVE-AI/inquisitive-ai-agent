@@ -175,7 +175,7 @@ export default function HelpPage() {
             {icon:Shield,label:'Max Risk/Trade',v:'2%',desc:'Never risk more than 2% of portfolio on a single trade — hard-coded rule'},
             {icon:Zap,label:'Trading Functions',v:'11',desc:'BUY, SELL, SWAP, LEND, YIELD, BORROW, LOOP, STAKE, MULTIPLY, EARN, REWARDS. All executed autonomously.'},
             {icon:Coins,label:'Portfolio Assets',v:'66',desc:'66 assets spanning major, DeFi, AI, Layer 2, stablecoins, RWA, liquid staking, and restaking categories.'},
-            {icon:Flame,label:'Fee Distribution',v:'60/20/20',desc:'Planned: 60% buybacks, 20% burns, 20% treasury — pending FeeDistributor contract deployment.'},
+            {icon:Flame,label:'Fee Distribution',v:'60/20/15/5',desc:'Protocol revenue split: 60% open-market INQAI buybacks, 20% permanent burn, 15% staker rewards, 5% protocol operations. FeeDistributor contract live on mainnet.'},
           ].map(k=>(
             <div key={k.label} style={{background:'rgba(17,17,19,0.8)',border:'1px solid rgba(255,255,255,0.06)',borderRadius:14,padding:18,backdropFilter:'blur(12px)'}}>
               <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:8}}>
@@ -210,16 +210,16 @@ export default function HelpPage() {
             'Applies risk-first methodology as final gate before any execution',
             'Outputs signals: BUY / SELL / HOLD / REDUCE / SKIP',
             'Confidence scores determine position sizing via Kelly Criterion',
-            'AI signals generated every 8 seconds — pending vault deployment for on-chain execution',
+            'AI signals submitted on-chain via vaultOracle service to InquisitiveVaultV2 every 5 minutes',
             'BEAR regime raises confidence threshold from 70% to 75%',
           ]},
-          {icon:Zap,name:'The Executioner',col:'#2563eb',sub:'AI Smart Vault (Coming Soon)',detail:[
-            'Planned: Signal-based execution of 11 trading functions via VaultV2 contract',
-            'Planned: Chainlink Automation integration for autonomous execution',
-            'Planned: Aave V3, Morpho Blue lending integrations',
-            'Planned: Uniswap V3, Jupiter, 1inch DEX routing',
-            'Planned: Lido, Jito liquid staking integrations',
-            'Status: VaultV2 contract ready, pending deployment and Chainlink Automation registration',
+          {icon:Zap,name:'The Executioner',col:'#2563eb',sub:'AI Smart Vault — Live on Mainnet',detail:[
+            'InquisitiveVaultV2 deployed: 0xb99dc519c4373e5017222bbd46f42a4e12a0ec25',
+            'Signal-based execution: AI brain submits BUY/SELL signals via submitSignalsBatch()',
+            'Chainlink Automation integration: pending upkeep registration and LINK funding',
+            'Execution layer: Uniswap V3 router for all ETH-mainnet swaps',
+            'AI oracle: signals submitted by deployer wallet (0x4e7d700f...)',
+            'Trade limits: 1% of vault per trade, 5-minute cooldown between trades',
           ]},
           {icon:BarChart3,name:'The X-Ray',col:'#0891b2',sub:'Performance Monitor',detail:[
             'Real-time performance attribution — which strategies are profitable',
@@ -229,12 +229,12 @@ export default function HelpPage() {
             'WebSocket real-time feeds for live dashboard updates',
           ]},
           {icon:Shield,name:'The Guardian',col:'#dc2626',sub:'Security Layer',detail:[
-            'Emergency pause/unpause on vault contracts — immediate halt capability',
-            'Planned: 48-hour timelock for critical operations (pending Timelock deployment)',
-            'Planned: AI-powered circuit breakers for anomalous behavior detection',
+            'Emergency pause/unpause on all vault contracts — immediate halt capability',
+            'INQAITimelock deployed: 0x972b7f40d1837f0b8bf003d7147de7b9fcfc601e — 48-hour delay on critical operations',
+            'INQAIInsurance deployed: 0xa0486fc0b9e4a282eca0435bae141be6982e502e — protocol insurance pool',
             'Risk engine: 2% max per trade, 6% portfolio heat, 15% drawdown circuit breaker',
-            'Security audit: P0 fixes completed (access control, emergency withdraw, tests)',
-            'No private keys in codebase — execution via Chainlink Automation (planned)',
+            'VaultV2 UUPS upgradeable proxy — owner can upgrade implementation only',
+            'Execution via Chainlink Automation or AI oracle wallet — no manual intervention',
           ]},
           {icon:Eye,name:'The Oracle',col:'#3b82f6',sub:'Price Intelligence',detail:[
             'Primary: CoinGecko REAL LIVE API — 66 assets with 30-second polling',

@@ -206,7 +206,7 @@ export default function AnalyticsPage() {
   // Real on-chain treasury data
   const treasury      = nav?.treasury ?? {} as any;
   const aumUSD        = treasury.aumUSD        ?? 0;
-  const totalEthUSD   = (treasury.vaultEth ?? 0) * (treasury.ethPrice ?? 3200);
+  const totalEthUSD   = (treasury.vaultEth ?? 0) * (treasury.ethPrice ?? 0); // ethPrice comes from live CoinGecko feed
   const vaultAddress  = treasury.vaultAddress  || VAULT_ADDR;
   const isOnChainNAV  = navSource === 'on-chain-aum';
   // Tokens committed estimate: circulating supply from on-chain (post-airdrop) OR vault AUM ÷ presale price (pre-airdrop)

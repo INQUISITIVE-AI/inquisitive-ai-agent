@@ -259,8 +259,8 @@ export default function Home() {
               {[
                 { title: 'On-Chain Asset Backing',       desc: 'Each INQAI token represents verified, proportional ownership in a 66-asset digital portfolio. Valuations are transparent, real-time, and independently verifiable on-chain.' },
                 { title: 'Autonomous AI Management',     desc: 'Five independent AI models execute eleven capital deployment strategies simultaneously, optimizing risk-adjusted returns across the full 66-asset portfolio.' },
-                { title: 'Structural Value Accrual',     desc: '60% of all protocol fees fund open-market buybacks. 20% is permanently burned. Every fee cycle reduces circulating supply while increasing demand.' },
-                { title: 'Deflationary Fee Design',      desc: 'Protocol fees drive a continuous burn-and-buyback cycle: 60% to open-market INQAI purchases, 20% permanently removed from supply.' },
+                { title: 'Structural Value Accrual',     desc: 'Protocol revenue is split 60% to open-market INQAI buybacks, 20% permanent burn, 15% to stakers, and 5% to protocol operations — every fee cycle reduces supply while rewarding holders.' },
+                { title: 'Staker Revenue Sharing',       desc: '15% of all performance fees are distributed pro-rata to INQAI stakers. Longer lock periods amplify your share via a boost multiplier — up to 1.5× for 180-day commitments.' },
                 { title: 'Non-Custodial by Design',      desc: 'INQAI tokens are delivered directly to your self-custody wallet at the point of purchase. No third-party custody, no counterparty risk.' },
                 { title: 'Complete Decision Transparency', desc: 'Every AI signal, position, allocation weight, and risk metric is published in real time on the Analytics dashboard. No black box.' },
               ].map(v => (
@@ -348,7 +348,7 @@ export default function Home() {
               {[
                 { label: '12 Contracts',  sub: 'Mainnet deployed' },
                 { label: 'MIT License',   sub: 'Open source' },
-                { label: 'No Admin Keys', sub: 'Keyless execution' },
+                { label: 'Verified On-Chain', sub: 'Etherscan verified' },
                 { label: 'Chainlink',     sub: 'Automation + Oracle' },
               ].map(t => (
                 <div key={t.label} style={{ textAlign: 'center' }}>
