@@ -216,14 +216,19 @@ export default function AnalyticsPage() {
 
   const localHolding     = purchases.reduce((s, p) => s + (p.amount    || 0), 0);
   const totalUsdInvested = purchases.reduce((s, p) => s + (p.usdAmount || 0), 0);
-  // Show actual on-chain balance for all wallets including vault owner (team allocation)
-  const totalInqai       = localHolding > 0 ? localHolding : onChainBalance;
-  const effInvested      = totalUsdInvested > 0 ? totalUsdInvested : 0; // only real purchases — no synthetic cost basis
+  // Guard: deployer/team wallet holds ~100M INQAI (team allocation) which should not
+  // be displayed as a user holding worth ~$800M. Only show on-chain balance if the
+  // wallet holds less than 1% of total supply (i.e., a genuine market participant).
+  const TEAM_WALLET      = INQAI_TOKEN.teamWallet.toLowerCase();
+  const isTeamWallet     = address?.toLowerCase() === TEAM_WALLET;
+  const safeOnChain      = isTeamWallet ? 0 : onChainBalance;
+  const totalInqai       = localHolding > 0 ? localHolding : safeOnChain;
+  const effInvested      = totalUsdInvested > 0 ? totalUsdInvested : 0;
   const currentValue     = totalInqai * navPerToken;
   const totalPnL         = currentValue - effInvested;
   const roiPct           = effInvested > 0 ? totalPnL / effInvested : 0;
-  const hasHoldings      = effInvested > 0 || onChainBalance > 0;
-  const holdingSource    = onChainBalance > 0 ? 'on-chain' : purchases.length > 0 ? 'presale' : isOnChainNAV ? 'on-chain-nav' : 'live NAV';
+  const hasHoldings      = effInvested > 0 || safeOnChain > 0;
+  const holdingSource    = safeOnChain > 0 ? 'on-chain' : purchases.length > 0 ? 'presale' : isOnChainNAV ? 'on-chain-nav' : 'live NAV';
 
   const backingAssets = useMemo(() => positions.slice(0, 12).map(p => ({
     ...p,

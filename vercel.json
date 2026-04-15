@@ -3,6 +3,12 @@
   "buildCommand": "npm run build",
   "devCommand": "npm run dev",
   "installCommand": "npm install --legacy-peer-deps",
+  "crons": [
+    {
+      "path": "/api/inquisitiveAI/cron/oracle",
+      "schedule": "*/5 * * * *"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*\\.html|analytics|help|buy|)",
@@ -26,6 +32,9 @@
   "functions": {
     "pages/api/**": {
       "maxDuration": 30
+    },
+    "pages/api/inquisitiveAI/cron/oracle": {
+      "maxDuration": 55
     },
     "pages/api/inquisitiveAI/execute/auto": {
       "maxDuration": 55
