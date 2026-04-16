@@ -18,13 +18,14 @@ const DEPLOYER_ADDR = process.env.DEPLOYER_ADDRESS          || '0x4e7d700f7E1c6E
 const USDC_ADDR     = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48';
 
 const SEL_TOTAL_SUPPLY   = '0x18160ddd'; // keccak256("totalSupply()")
-// InquisitiveVaultUpdated selectors — keccak256 of function signatures
-const SEL_PORTFOLIO_LEN  = '0xe6f713d5'; // keccak256("getPortfolioLength()")
-const SEL_PHASE2_LEN     = '0x42d38eab'; // keccak256("getPhase2Length()")
-const SEL_CYCLE_COUNT    = '0x316fda0f'; // keccak256("cycleCount()")
-const SEL_AUTO_ENABLED   = '0xd966a594'; // keccak256("automationEnabled()")
-const SEL_LAST_DEPLOY    = '0x579578e3'; // keccak256("lastDeployTime()")
-const SEL_OWNER          = '0x8da5cb5b'; // keccak256("owner()")
+// InquisitiveVaultV2 (UUPS proxy) selectors — verified via cast sig
+const SEL_TOTAL_TRADES    = '0xe275c997'; // cast sig "totalTrades()"
+const SEL_TOTAL_VOLUME    = '0x5f81a57c'; // cast sig "totalVolume()"
+const SEL_AUTO_ENABLED    = '0xd966a594'; // cast sig "automationEnabled()"
+const SEL_LAST_TRADE      = '0xd5eee8b6'; // cast sig "lastTradeTime()"
+const SEL_OWNER           = '0x8da5cb5b'; // cast sig "owner()"
+const SEL_AI_ORACLE       = '0x31b221cd'; // cast sig "aiOracle()"
+const SEL_TRACKED_ASSETS  = '0xc4b97370'; // cast sig "getTrackedAssets()" → address[]
 
 function encodeBalanceOf(addr: string): string {
   return '0x70a08231' + addr.toLowerCase().replace('0x', '').padStart(64, '0');
@@ -87,12 +88,13 @@ async function fetchOnchain(): Promise<OnchainSnapshot> {
     vaultInqaiHex,
     deployerUsdcHex,
     vaultUsdcHex,
-    portfolioLenHex,
-    phase2LenHex,
-    cycleCountHex,
+    totalTradesHex,
+    totalVolumeHex,
     autoEnabledHex,
-    lastDeployHex,
+    lastTradeHex,
     ownerHex,
+    aiOracleHex,
+    trackedAssetsHex,
   ] = await Promise.all([
     rpcOne('eth_getBalance', [VAULT_ADDR,    'latest']),
     rpcOne('eth_getBalance', [DEPLOYER_ADDR, 'latest']),
@@ -101,12 +103,13 @@ async function fetchOnchain(): Promise<OnchainSnapshot> {
     rpcOne('eth_call', [{ to: INQAI_ADDR, data: encodeBalanceOf(VAULT_ADDR) },   'latest']),
     rpcOne('eth_call', [{ to: USDC_ADDR,  data: encodeBalanceOf(DEPLOYER_ADDR) },'latest']),
     rpcOne('eth_call', [{ to: USDC_ADDR,  data: encodeBalanceOf(VAULT_ADDR) },   'latest']),
-    rpcOne('eth_call', [{ to: VAULT_ADDR, data: SEL_PORTFOLIO_LEN },             'latest']),
-    rpcOne('eth_call', [{ to: VAULT_ADDR, data: SEL_PHASE2_LEN },               'latest']),
-    rpcOne('eth_call', [{ to: VAULT_ADDR, data: SEL_CYCLE_COUNT },              'latest']),
+    rpcOne('eth_call', [{ to: VAULT_ADDR, data: SEL_TOTAL_TRADES },             'latest']),
+    rpcOne('eth_call', [{ to: VAULT_ADDR, data: SEL_TOTAL_VOLUME },             'latest']),
     rpcOne('eth_call', [{ to: VAULT_ADDR, data: SEL_AUTO_ENABLED },             'latest']),
-    rpcOne('eth_call', [{ to: VAULT_ADDR, data: SEL_LAST_DEPLOY },              'latest']),
+    rpcOne('eth_call', [{ to: VAULT_ADDR, data: SEL_LAST_TRADE },               'latest']),
     rpcOne('eth_call', [{ to: VAULT_ADDR, data: SEL_OWNER },                    'latest']),
+    rpcOne('eth_call', [{ to: VAULT_ADDR, data: SEL_AI_ORACLE },                'latest']),
+    rpcOne('eth_call', [{ to: VAULT_ADDR, data: SEL_TRACKED_ASSETS },           'latest']),
   ]);
 
   const vaultEth    = parseHex(vaultEthHex,    18);
@@ -119,12 +122,16 @@ async function fetchOnchain(): Promise<OnchainSnapshot> {
     : deployerInqaiRaw;
   const deployerUsdc     = parseHex(deployerUsdcHex, 6);
   const vaultUsdc        = parseHex(vaultUsdcHex,    6);
-  // InquisitiveVaultUpdated on-chain state
-  const portfolioLength   = portfolioLenHex && portfolioLenHex !== '0x' ? parseInt(portfolioLenHex, 16) : 0;
-  const phase2Length      = phase2LenHex && phase2LenHex !== '0x' ? parseInt(phase2LenHex, 16) : 0;
-  const totalTrades       = cycleCountHex && cycleCountHex !== '0x' ? parseInt(cycleCountHex, 16) : 0;
+  // InquisitiveVaultV2 on-chain state
+  // getTrackedAssets() returns ABI-encoded address[]: offset(32) + length(32) + addrs
+  function decodeArrayLength(hex: string | null): number {
+    if (!hex || hex.length < 2 + 128) return 0;
+    try { return parseInt(hex.slice(2 + 64, 2 + 128), 16); } catch { return 0; }
+  }
+  const portfolioLength   = decodeArrayLength(trackedAssetsHex);
+  const totalTrades       = totalTradesHex && totalTradesHex !== '0x' ? parseInt(totalTradesHex, 16) : 0;
   const automationEnabled = !!(autoEnabledHex && autoEnabledHex !== '0x' && BigInt(autoEnabledHex) !== 0n);
-  const lastDeployTime    = lastDeployHex && lastDeployHex !== '0x' ? parseInt(lastDeployHex, 16) : 0;
+  const lastDeployTime    = lastTradeHex && lastTradeHex !== '0x' ? parseInt(lastTradeHex, 16) : 0;
   const ownerAddr         = ownerHex && ownerHex.length >= 42 ? '0x' + ownerHex.slice(-40) : '';
   const circulatingSupply = Math.max(0, totalSupply - deployerInqai);
 
@@ -142,7 +149,7 @@ async function fetchOnchain(): Promise<OnchainSnapshot> {
     tokensSold:         circulatingSupply,
     portfolioLength,
     portfolioConfigured: portfolioLength > 0,
-    cycleCount:         totalTrades,
+    cycleCount:          totalTrades,
     automationEnabled,
     lastDeployTime,
     ownerAddr,

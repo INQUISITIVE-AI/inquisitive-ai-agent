@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>INQUISITIVE — Vault Setup</title>
+<script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#080808;color:#e5e7eb;min-height:100vh;padding:24px}
+.card{background:#111;border:1px solid #1f2937;border-radius:10px;padding:20px;margin-bottom:16px}
+h1{font-size:15px;font-weight:700;color:#fff;margin-bottom:4px}
+h2{font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px}
+.badge{display:inline-block;font-size:10px;padding:3px 8px;border-radius:999px;font-weight:600}
+.badge-red{background:#7f1d1d;color:#fca5a5}
+.badge-green{background:#065f46;color:#6ee7b7}
+.badge-yellow{background:#78350f;color:#fcd34d}
+.status-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #1f2937;font-size:12px}
+.status-row:last-child{border-bottom:none}
+.val{font-family:monospace;font-size:11px}
+.val-green{color:#6ee7b7}
+.val-red{color:#f87171}
+.val-yellow{color:#fcd34d}
+.val-gray{color:#6b7280}
+.btn{display:block;width:100%;padding:11px;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;margin-top:10px;transition:opacity .15s}
+.btn:hover{opacity:.85}
+.btn:disabled{background:#1f2937!important;color:#4b5563!important;cursor:not-allowed}
+.btn-red{background:#b91c1c;color:#fff}
+.btn-green{background:#065f46;color:#fff}
+.btn-blue{background:#1d4ed8;color:#fff}
+.btn-purple{background:#6d28d9;color:#fff}
+.btn-small{font-size:11px;padding:7px;margin-top:6px}
+.log-box{background:#060606;border:1px solid #1f2937;border-radius:6px;padding:10px;height:180px;overflow-y:auto;font-size:11px;font-family:monospace;margin-top:10px}
+.log-info{color:#93c5fd}
+.log-ok{color:#6ee7b7}
+.log-warn{color:#fcd34d}
+.log-err{color:#f87171}
+.asset-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
+.asset-item{background:#0a0a0a;border:1px solid #1f2937;border-radius:6px;padding:8px;font-size:11px;font-family:monospace;display:flex;align-items:center;justify-content:space-between}
+.asset-item.added{border-color:#065f46;color:#6ee7b7}
+.asset-item.pending{border-color:#78350f;color:#fcd34d}
+progress-bar{width:100%;background:#1f2937;border-radius:3px;height:4px;display:block;margin-top:6px;overflow:hidden}
+.progress-fill{height:100%;background:#10b981;transition:width .3s}
+</style>
+</head>
+<body>
+
+<div class="card" style="display:flex;align-items:center;justify-content:space-between">
+  <div>
+    <h1>INQUISITIVE — Vault Setup Console</h1>
+    <div style="font-size:11px;color:#6b7280;margin-top:3px">InquisitiveVaultV2 · 0xb99dc519...ec25</div>
+  </div>
+  <span class="badge badge-red">MAINNET</span>
+</div>
+
+<!-- WALLET -->
+<div class="card">
+  <h2>1. Connect Wallet</h2>
+  <div id="wallet-status" style="font-size:12px;color:#6b7280;margin-bottom:10px">Not connected</div>
+  <button class="btn btn-blue" id="btn-connect" onclick="connectWallet()">Connect MetaMask</button>
+</div>
+
+<!-- VAULT STATE -->
+<div class="card">
+  <h2>2. Vault On-Chain State</h2>
+  <div class="status-row"><span>Vault</span><span class="val val-gray">0xb99dc519...ec25</span></div>
+  <div class="status-row"><span>ETH Balance</span><span class="val" id="s-eth">—</span></div>
+  <div class="status-row"><span>aiOracle</span><span class="val" id="s-oracle">—</span></div>
+  <div class="status-row"><span>Automation Enabled</span><span class="val" id="s-auto">—</span></div>
+  <div class="status-row"><span>Tracked Assets</span><span class="val" id="s-assets">—</span></div>
+  <div class="status-row"><span>Total Trades</span><span class="val" id="s-trades">—</span></div>
+  <div class="status-row"><span>Owner</span><span class="val" id="s-owner">—</span></div>
+  <button class="btn btn-blue btn-small" onclick="readState()">↻ Refresh State</button>
+</div>
+
+<!-- STEP A: Set AI Oracle -->
+<div class="card">
+  <h2>3. Set AI Oracle (Required for Signal Submission)</h2>
+  <p style="font-size:12px;color:#9ca3af;margin-bottom:8px">Sets aiOracle to your connected wallet so it can submit trade signals.</p>
+  <button class="btn btn-purple" id="btn-oracle" onclick="setOracle()" disabled>Set aiOracle → Connected Wallet</button>
+</div>
+
+<!-- STEP B: Enable Automation -->
+<div class="card">
+  <h2>4. Enable Automation</h2>
+  <p style="font-size:12px;color:#9ca3af;margin-bottom:8px">Allows Chainlink Automation and the AI oracle to call performUpkeep().</p>
+  <button class="btn btn-green" id="btn-auto" onclick="enableAutomation()" disabled>setAutomationEnabled(true)</button>
+</div>
+
+<!-- STEP C: Add Tracked Assets -->
+<div class="card">
+  <h2>5. Add Tracked Assets (25 assets)</h2>
+  <p style="font-size:12px;color:#9ca3af;margin-bottom:2px">Registers all ERC-20 assets so the vault can hold positions. Each is a separate TX.</p>
+  <div style="font-size:11px;color:#6b7280;margin-bottom:10px">Estimated gas: ~120,000 per asset · ~25 confirmations needed</div>
+  <button class="btn btn-red" id="btn-assets" onclick="addAllAssets()" disabled>Add All 25 Assets (sequential)</button>
+  <div style="margin-top:8px">
+    <div style="font-size:11px;color:#6b7280" id="asset-progress-label">0 / 25 added</div>
+    <div style="background:#1f2937;border-radius:3px;height:4px;margin-top:4px;overflow:hidden">
+      <div class="progress-fill" id="asset-progress-bar" style="width:0%"></div>
+    </div>
+  </div>
+  <div class="asset-grid" id="asset-grid"></div>
+</div>
+
+<!-- LOGS -->
+<div class="card">
+  <h2>Transaction Log</h2>
+  <div class="log-box" id="log-box"><span class="log-gray">Waiting for actions…</span></div>
+</div>
+
+<script>
+const VAULT = '0xb99dc519c4373e5017222bbd46f42a4e12a0ec25';
+const OWNER = '0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746';
+const CHAIN_ID = 1; // Ethereum mainnet
+
+const VAULT_ABI = [
+  'function owner() view returns (address)',
+  'function aiOracle() view returns (address)',
+  'function automationEnabled() view returns (bool)',
+  'function getTrackedAssets() view returns (address[])',
+  'function totalTrades() view returns (uint256)',
+  'function setAIOracle(address _newOracle)',
+  'function setAutomationEnabled(bool _enabled)',
+  'function addTrackedAsset(address _asset)',
+];
+
+const ASSETS = [
+  { symbol: 'WBTC',  addr: '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599' },
+  { symbol: 'WETH',  addr: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2' },
+  { symbol: 'stETH', addr: '0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84' },
+  { symbol: 'USDC',  addr: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48' },
+  { symbol: 'LINK',  addr: '0x514910771AF9Ca656af840dff83E8264EcF986CA' },
+  { symbol: 'UNI',   addr: '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984' },
+  { symbol: 'AAVE',  addr: '0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9' },
+  { symbol: 'LDO',   addr: '0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32' },
+  { symbol: 'GRT',   addr: '0xc944E90C64B2c07662A292be6244BDf05Cda44a7' },
+  { symbol: 'ARB',   addr: '0xB50721BCf8d664c30412Cfbc6cf7a15145234ad1' },
+  { symbol: 'ENA',   addr: '0x57e114B691Db790C35207b2e685D4A43181e6061' },
+  { symbol: 'ONDO',  addr: '0xfAbA6f8e4a5E8Ab82F62fe7C39859FA577269BE3' },
+  { symbol: 'MKR',   addr: '0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2' },
+  { symbol: 'ENS',   addr: '0xC18360217D8F7Ab5e7c516566761Ea12Ce7F9D72' },
+  { symbol: 'COMP',  addr: '0xc00e94Cb662C3520282E6f5717214004A7f26888' },
+  { symbol: 'CRV',   addr: '0xD533a949740bb3306d119CC777fa900bA034cd52' },
+  { symbol: 'CVX',   addr: '0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B' },
+  { symbol: 'BAL',   addr: '0xba100000625a3754423978a60c9317c58a424e3D' },
+  { symbol: 'SNX',   addr: '0xC011a73ee8576Fb46F5E1c5751cA3B9Fe0af2a6f' },
+  { symbol: 'QNT',   addr: '0x4a220E6096B25EADb88358cb44068A3248254675' },
+  { symbol: 'RNDR',  addr: '0x6De037ef9aD2725EB40118Bb1702EBb27e4Aeb24' },
+  { symbol: 'FET',   addr: '0xaea46A60368A7bD060eec7DF8CBa43b7EF41Ad85' },
+  { symbol: 'ZRO',   addr: '0x6985884C4392D348587B19cb9eAAf157F13271cd' },
+  { symbol: 'POL',   addr: '0x455e53CBB86018Ac2B8092FdCd39d8444aFFC3F6' },
+  { symbol: 'PAXG',  addr: '0x45804880De22913dAFE09f4980848ECE6EcbAf78' },
+];
+
+let provider, signer, vault, walletAddr;
+const assetStatus = {};
+
+function log(msg, cls='log-info') {
+  const box = document.getElementById('log-box');
+  const line = document.createElement('div');
+  line.className = cls;
+  line.textContent = '[' + new Date().toLocaleTimeString() + '] ' + msg;
+  box.appendChild(line);
+  box.scrollTop = box.scrollHeight;
+}
+
+function setEl(id, text, cls) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = text;
+  if (cls) { el.className = 'val ' + cls; }
+}
+
+async function connectWallet() {
+  try {
+    if (!window.ethereum) { alert('MetaMask not found'); return; }
+    provider = new ethers.providers.Web3Provider(window.ethereum);
+    await provider.send('eth_requestAccounts', []);
+    const network = await provider.getNetwork();
+    if (network.chainId !== CHAIN_ID) {
+      log('Wrong network — switch to Ethereum Mainnet', 'log-err');
+      await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x1' }] });
+      provider = new ethers.providers.Web3Provider(window.ethereum);
+    }
+    signer = provider.getSigner();
+    walletAddr = await signer.getAddress();
+    vault = new ethers.Contract(VAULT, VAULT_ABI, signer);
+
+    const isOwner = walletAddr.toLowerCase() === OWNER.toLowerCase();
+    document.getElementById('wallet-status').innerHTML =
+      '<span style="color:' + (isOwner ? '#6ee7b7' : '#f87171') + '">' +
+      (isOwner ? '✓ Team wallet — owner access' : '✗ Not team wallet — read-only') +
+      '</span><br><span style="font-family:monospace;font-size:11px;color:#9ca3af">' + walletAddr + '</span>';
+
+    document.getElementById('btn-oracle').disabled = !isOwner;
+    document.getElementById('btn-auto').disabled = !isOwner;
+    document.getElementById('btn-assets').disabled = !isOwner;
+    document.getElementById('btn-connect').textContent = 'Connected ✓';
+    document.getElementById('btn-connect').disabled = true;
+
+    log('Connected: ' + walletAddr + (isOwner ? ' (owner)' : ' (not owner)'), isOwner ? 'log-ok' : 'log-warn');
+    await readState();
+    renderAssetGrid([]);
+  } catch(e) { log('Connect error: ' + e.message, 'log-err'); }
+}
+
+async function readState() {
+  if (!provider) { log('Connect wallet first', 'log-warn'); return; }
+  try {
+    const vaultRead = new ethers.Contract(VAULT, VAULT_ABI, provider);
+    const [ethBal, oracle, autoOn, assets, trades, owner] = await Promise.all([
+      provider.getBalance(VAULT),
+      vaultRead.aiOracle().catch(() => '0x0000000000000000000000000000000000000000'),
+      vaultRead.automationEnabled().catch(() => false),
+      vaultRead.getTrackedAssets().catch(() => []),
+      vaultRead.totalTrades().catch(() => ethers.BigNumber.from(0)),
+      vaultRead.owner().catch(() => '?'),
+    ]);
+
+    setEl('s-eth', parseFloat(ethers.utils.formatEther(ethBal)).toFixed(6) + ' ETH', 'val-green');
+    const oracleStr = oracle.toLowerCase();
+    const oracleIsSet = oracleStr !== '0x0000000000000000000000000000000000000000';
+    setEl('s-oracle', oracleIsSet ? oracle.slice(0,6)+'…'+oracle.slice(-4) : 'NOT SET', oracleIsSet ? 'val-green' : 'val-red');
+    setEl('s-auto', autoOn ? 'ENABLED' : 'DISABLED', autoOn ? 'val-green' : 'val-red');
+    setEl('s-assets', assets.length + ' / 25', assets.length >= 25 ? 'val-green' : assets.length > 0 ? 'val-yellow' : 'val-red');
+    setEl('s-trades', trades.toString(), 'val-gray');
+    setEl('s-owner', owner.slice(0,6)+'…'+owner.slice(-4), 'val-gray');
+
+    // Update asset grid
+    const addedSet = new Set(assets.map(a => a.toLowerCase()));
+    renderAssetGrid(addedSet);
+
+    log('State refreshed — ' + assets.length + ' assets, automation=' + autoOn + ', oracle=' + (oracleIsSet ? oracle.slice(0,10)+'...' : 'NOT SET'), 'log-info');
+    return { oracle, autoOn, assets };
+  } catch(e) { log('Read state error: ' + e.message, 'log-err'); }
+}
+
+function renderAssetGrid(addedSet) {
+  const grid = document.getElementById('asset-grid');
+  grid.innerHTML = '';
+  ASSETS.forEach(a => {
+    const div = document.createElement('div');
+    const isAdded = addedSet.size > 0 && addedSet.has(a.addr.toLowerCase());
+    div.className = 'asset-item ' + (isAdded ? 'added' : 'pending');
+    div.id = 'asset-' + a.symbol;
+    div.innerHTML = '<span>' + a.symbol + '</span><span>' + (isAdded ? '✓' : '○') + '</span>';
+    grid.appendChild(div);
+  });
+  const count = addedSet.size;
+  document.getElementById('asset-progress-label').textContent = count + ' / 25 added';
+  document.getElementById('asset-progress-bar').style.width = (count / 25 * 100) + '%';
+}
+
+async function setOracle() {
+  if (!signer || !vault) { log('Connect wallet first', 'log-warn'); return; }
+  try {
+    document.getElementById('btn-oracle').disabled = true;
+    log('Setting aiOracle → ' + walletAddr + '…');
+    const tx = await vault.setAIOracle(walletAddr, { gasLimit: 80000 });
+    log('TX: ' + tx.hash, 'log-info');
+    await tx.wait(1);
+    log('✓ aiOracle set to ' + walletAddr, 'log-ok');
+    await readState();
+  } catch(e) {
+    log('setAIOracle error: ' + e.message, 'log-err');
+  } finally {
+    document.getElementById('btn-oracle').disabled = false;
+  }
+}
+
+async function enableAutomation() {
+  if (!signer || !vault) { log('Connect wallet first', 'log-warn'); return; }
+  try {
+    document.getElementById('btn-auto').disabled = true;
+    log('Enabling automation…');
+    const tx = await vault.setAutomationEnabled(true, { gasLimit: 80000 });
+    log('TX: ' + tx.hash, 'log-info');
+    await tx.wait(1);
+    log('✓ Automation enabled', 'log-ok');
+    await readState();
+  } catch(e) {
+    log('setAutomationEnabled error: ' + e.message, 'log-err');
+  } finally {
+    document.getElementById('btn-auto').disabled = false;
+  }
+}
+
+async function addAllAssets() {
+  if (!signer || !vault) { log('Connect wallet first', 'log-warn'); return; }
+  document.getElementById('btn-assets').disabled = true;
+
+  try {
+    // Read current state to skip already-added assets
+    const vaultRead = new ethers.Contract(VAULT, VAULT_ABI, provider);
+    const existing = await vaultRead.getTrackedAssets().catch(() => []);
+    const existingSet = new Set(existing.map(a => a.toLowerCase()));
+
+    let added = 0;
+    const total = ASSETS.filter(a => !existingSet.has(a.addr.toLowerCase())).length;
+    log('Adding ' + total + ' assets (' + existingSet.size + ' already tracked)…', 'log-info');
+
+    for (const asset of ASSETS) {
+      if (existingSet.has(asset.addr.toLowerCase())) {
+        log('⏭  ' + asset.symbol + ' — already tracked', 'log-ok');
+        const el = document.getElementById('asset-' + asset.symbol);
+        if (el) { el.className = 'asset-item added'; el.querySelector('span:last-child').textContent = '✓'; }
+        continue;
+      }
+      try {
+        log('Adding ' + asset.symbol + '…');
+        const tx = await vault.addTrackedAsset(asset.addr, { gasLimit: 150000 });
+        log('  TX: ' + tx.hash.slice(0,20) + '…', 'log-info');
+        await tx.wait(1);
+        added++;
+        existingSet.add(asset.addr.toLowerCase());
+        const el = document.getElementById('asset-' + asset.symbol);
+        if (el) { el.className = 'asset-item added'; el.querySelector('span:last-child').textContent = '✓'; }
+        const pct = (existingSet.size / 25 * 100).toFixed(0);
+        document.getElementById('asset-progress-label').textContent = existingSet.size + ' / 25 added';
+        document.getElementById('asset-progress-bar').style.width = pct + '%';
+        log('  ✓ ' + asset.symbol + ' added (' + existingSet.size + '/25)', 'log-ok');
+      } catch(e) {
+        log('  ✗ ' + asset.symbol + ' failed: ' + (e.reason || e.message?.slice(0,60)), 'log-err');
+      }
+    }
+
+    log('Done! ' + added + ' new assets added. Total: ' + existingSet.size + '/25', 'log-ok');
+    await readState();
+  } catch(e) {
+    log('Fatal: ' + e.message, 'log-err');
+  } finally {
+    document.getElementById('btn-assets').disabled = false;
+  }
+}
+
+window.addEventListener('load', () => {
+  if (window.ethereum) {
+    window.ethereum.on('accountsChanged', () => location.reload());
+    window.ethereum.on('chainChanged', () => location.reload());
+  }
+});
+</script>
+</body>
+</html>
