@@ -1,11 +1,11 @@
 /** @type {import('next').NextConfig} */
+const ORIGINS = (process.env.CORS_ORIGINS || 'https://getinqai.com,https://www.getinqai.com,https://app.getinqai.com')
+  .split(',').map(s => s.trim()).filter(Boolean);
+
 const nextConfig = {
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  typescript: { ignoreBuildErrors: false },
+  eslint:     { ignoreDuringBuilds: false },
+  reactStrictMode: true,
   transpilePackages: [
     '@reown/appkit',
     '@reown/appkit-adapter-wagmi',
@@ -15,9 +15,7 @@ const nextConfig = {
     '@walletconnect/universal-provider',
   ],
   async redirects() {
-    return [
-      { source: '/dashboard', destination: '/analytics', permanent: true },
-    ];
+    return [{ source: '/dashboard', destination: '/analytics', permanent: true }];
   },
   async headers() {
     return [
@@ -25,34 +23,25 @@ const nextConfig = {
         source: '/api/:path*',
         headers: [
           { key: 'Access-Control-Allow-Credentials', value: 'true' },
-          { key: 'Access-Control-Allow-Origin', value: '*' },
-          { key: 'Access-Control-Allow-Methods', value: 'GET,DELETE,PATCH,POST,PUT' },
-          { key: 'Access-Control-Allow-Headers', value: 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version' },
+          { key: 'Access-Control-Allow-Origin', value: ORIGINS[0] || 'https://getinqai.com' },
+          { key: 'Access-Control-Allow-Methods', value: 'GET,POST,OPTIONS' },
+          { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization' },
+          { key: 'Vary', value: 'Origin' },
         ],
       },
     ];
   },
   webpack: (config, { isServer }) => {
     if (!isServer) {
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        fs: false,
-        net: false,
-        tls: false,
-      };
+      config.resolve.fallback = { ...config.resolve.fallback, fs: false, net: false, tls: false };
     }
     config.resolve.alias = {
       ...config.resolve.alias,
       '@react-native-async-storage/async-storage': false,
-      // Resolve missing zksync modules
       'viem/_esm/chains/definitions/zksyncLocalHyperchain': false,
       'viem/_esm/chains/definitions/zksyncLocalHyperchainL1': false,
-      './definitions/zksyncLocalHyperchain': false,
-      './definitions/zksyncLocalHyperchainL1': false,
-      // @wagmi/core resolved via npm overrides in package.json
     };
     return config;
   },
 };
-
 module.exports = nextConfig;
