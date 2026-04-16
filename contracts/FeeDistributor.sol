@@ -72,7 +72,7 @@ contract FeeDistributor {
     address public constant WETH        = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address public constant LINK        = 0x514910771AF9Ca656af840dff83E8264EcF986CA;
     address public constant TEAM_WALLET = 0x4e7d700f7E1c6Eeb5c9426A0297AE0765899E746;
-    address public constant VAULT       = 0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb;
+    address public constant VAULT       = 0x721B0c1fcf28646D6e0f608A15495F7227cB6CFb;
 
     // Uniswap V3 SwapRouter
     address public constant SWAP_ROUTER = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
