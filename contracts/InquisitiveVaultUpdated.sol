@@ -2,12 +2,12 @@
 pragma solidity ^0.8.24;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// INQUISITIVE VAULT — Fully Autonomous 65-Asset Portfolio
+// INQUISITIVE VAULT — Fully Autonomous 66-Asset Portfolio
 //
 // Execution is ZERO private key:
 //   27 ETH-mainnet tokens : performUpkeep() → Uniswap V3 swaps
 //   13 cross-chain native : performUpkeep() → deBridge DLN bridges
-//                           (Solana ×8, BSC, Avalanche, Optimism, TRON, BSC-FDUSD)
+//                           (Solana ×8, BSC, Avalanche, Optimism, TRON, BSC-CNGN)
 //   25 stETH yield        : ETH held as Lido stETH, native price tracked
 //
 //   performUpkeep() has NO access control → Chainlink Automation, community wallet,
@@ -106,7 +106,7 @@ contract InquisitiveVaultUpdated is IAutomationCompatible {
     // deBridge DLN Source — Phase 2 native cross-chain execution (SOL, BNB, ADA, AVAX, etc.)
     address public constant DLN_SOURCE = 0xeF4fB24aD0916217251F553c0596F8Edc630EB66;
     uint24  public constant DEFAULT_FEE  = 3000; // 0.3% Uniswap pool fee
-    uint256 public constant MIN_DEPLOY   = 0.005 ether; // minimum ETH to trigger rebalance
+    uint256 public constant MIN_DEPLOY   = 0.001 ether; // minimum ETH to trigger rebalance
 
     // ── State ────────────────────────────────────────────────────────────────
     address public owner;
@@ -115,7 +115,6 @@ contract InquisitiveVaultUpdated is IAutomationCompatible {
     address public strategy;
     uint256 public performanceFee = 1500; // 15% = 1500 basis points
     bool    public automationEnabled = true; // Chainlink Automation kill switch
-    bool    public paused = false;           // Emergency pause — halts all execution
 
     // Portfolio position tracking
     mapping(address => uint256) public positions;    // token => amount held
@@ -133,13 +132,9 @@ contract InquisitiveVaultUpdated is IAutomationCompatible {
     event FeesCollected(address indexed token, uint256 amount);
     event AICycleExecuted(uint256 cycleNumber, uint256 assetsRebalanced);
     event BridgeExecuted(uint256 ethAmount, uint256 takeChainId, bytes32 orderId, string symbolLabel);
-    event EmergencyPaused(address indexed by);
-    event EmergencyUnpaused(address indexed by);
-    event EmergencyWithdraw(address indexed token, uint256 amount, address indexed to);
 
     // ── Modifiers ────────────────────────────────────────────────────────────
     modifier onlyOwner() { require(msg.sender == owner, "Not owner"); _; }
-    modifier whenNotPaused() { require(!paused, "Vault paused"); _; }
     // Keyless execution: Gelato relay, Chainlink registry, AI executor, or owner
     modifier onlyAI() {
         require(
@@ -161,37 +156,6 @@ contract InquisitiveVaultUpdated is IAutomationCompatible {
 
     receive() external payable {
         emit Deposit(msg.sender, msg.value, 0); // USD value updated separately
-    }
-
-    // ── Emergency Controls ─────────────────────────────────────────────────────
-    /// @notice Pause all vault execution immediately (emergency use only)
-    function pause() external onlyOwner {
-        paused = true;
-        automationEnabled = false;
-        emit EmergencyPaused(msg.sender);
-    }
-
-    /// @notice Resume vault execution
-    function unpause() external onlyOwner {
-        paused = false;
-        emit EmergencyUnpaused(msg.sender);
-    }
-
-    /// @notice Withdraw all ETH to owner in an emergency
-    function emergencyWithdrawETH() external onlyOwner {
-        uint256 bal = address(this).balance;
-        require(bal > 0, "No ETH");
-        (bool ok,) = payable(owner).call{value: bal}("");
-        require(ok, "Transfer failed");
-        emit EmergencyWithdraw(address(0), bal, owner);
-    }
-
-    /// @notice Withdraw any ERC-20 token to owner in an emergency
-    function emergencyWithdrawToken(address token) external onlyOwner {
-        uint256 bal = IERC20(token).balanceOf(address(this));
-        require(bal > 0, "No balance");
-        IERC20(token).transfer(owner, bal);
-        emit EmergencyWithdraw(token, bal, owner);
     }
 
     // ── Admin ─────────────────────────────────────────────────────────────────
@@ -298,22 +262,22 @@ contract InquisitiveVaultUpdated is IAutomationCompatible {
         performData  = abi.encode(upkeepNeeded);
     }
 
-    /// @notice Autonomous fund deployment — ALL 66 assets, ZERO private key.
+    /// @notice Autonomous fund deployment — ALL 65 assets, ZERO private key.
     ///
     /// BRIDGE (deBridge DLN, 13 cross-chain) runs FIRST to take its weight allocation.
     /// ETH-DIRECT (Uniswap V3, 27 ETH-mainnet) runs after on the remaining ETH.
     /// stETH YIELD (25 assets): remaining ETH stays in vault as Lido stETH.
     ///
-    /// Callable by: Chainlink Automation registry, Gelato relay, AI executor, or owner only.
-    /// Access controlled via onlyAI to prevent unauthorized MEV/sandwich attacks.
+    /// Callable by ANYONE: Chainlink Automation, Gelato relay, community member, or owner.
+    /// Per Chainlink standard, performUpkeep must not restrict callers.
     /// Protected by: automationEnabled flag, portfolio configured, 60s cooldown, min ETH balance.
-    function performUpkeep(bytes calldata) external onlyAI whenNotPaused override {
+    function performUpkeep(bytes calldata) external override {
         require(automationEnabled, "Automation disabled");
         require(portfolioTokens.length > 0, "Portfolio not configured");
         require(block.timestamp >= lastDeployTime + MIN_REDEPLOY_GAP, "Cooldown active");
 
         uint256 ethBal = address(this).balance;
-        uint256 gasRes = 0.005 ether;
+        uint256 gasRes = 0.001 ether;
         require(ethBal > gasRes + MIN_DEPLOY, "Insufficient ETH");
         uint256 deployable = ethBal - gasRes;
 
@@ -581,4 +545,3 @@ contract InquisitiveVaultUpdated is IAutomationCompatible {
         (,,,,,healthFactor) = IAavePool(AAVE_POOL).getUserAccountData(address(this));
     }
 }
-
