@@ -132,7 +132,7 @@ export default function Home() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 2 }}>
               {[
                 { n: '01', title: 'Acquire & Hold',          desc: 'Purchase INQAI tokens with ETH, BTC, SOL, TRX, or USDC. Tokens are delivered directly to your self-custody wallet — no platform accounts, no KYC, no lock-ups.' },
-                { n: '02', title: 'AI Manages the Portfolio', desc: 'Five independent AI engines analyze all 66 assets every 8 seconds. Consensus signals are submitted on-chain every 5 minutes via Vercel Cron — fully automated, no human discretion.' },
+                { n: '02', title: 'AI Manages the Portfolio', desc: 'Five independent AI engines analyze all 66 assets every 8 seconds. Consensus signals are submitted on-chain via Chainlink Functions — fully automated, no human discretion.' },
                 { n: '03', title: 'On-Chain Settlement',      desc: 'VaultV2 executes trades, harvests yield, and updates positions directly on Ethereum mainnet. Every transaction is publicly verifiable on Etherscan in real time.' },
               ].map((s, i) => (
                 <div
@@ -253,7 +253,7 @@ export default function Home() {
             <h2 style={{ fontSize: 'clamp(1.6rem, 3vw, 2.2rem)', fontWeight: 700, letterSpacing: '-0.025em', marginBottom: 16 }}>Built on Verifiable Infrastructure</h2>
             <p style={{ fontSize: 15, color: '#71717a', marginBottom: 48, lineHeight: 1.75 }}>
               Twelve smart contracts deployed and verified on Ethereum mainnet. MIT licensed.
-              Autonomous execution via Vercel Cron — no manual intervention required.
+              Autonomous execution via Chainlink Automation — no manual intervention required.
             </p>
 
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 56 }}>

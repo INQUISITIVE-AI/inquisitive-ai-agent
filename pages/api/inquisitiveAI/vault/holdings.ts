@@ -8,7 +8,7 @@ import { ethers } from 'ethers';
 // This is what Portfolio Backing should display when vault has real assets.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const VAULT_ADDRESS = '0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb';
+const VAULT_ADDRESS = process.env.NEXT_PUBLIC_VAULT_V2_ADDRESS || process.env.INQUISITIVE_VAULT_ADDRESS || '0xb99dc519c4373e5017222bbd46f42a4e12a0ec25';
 
 // ERC20 minimal ABI
 const ERC20_ABI = [

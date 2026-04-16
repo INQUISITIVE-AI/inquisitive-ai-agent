@@ -115,7 +115,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         eth: parseFloat(vaultEthIQ.toFixed(6)), 
         usd: parseFloat(vaultValueIQ.toFixed(2)), 
         ethPrice: ethPriceIQ,
-        address: process.env.INQUISITIVE_VAULT_ADDRESS || '0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb',
+        address: process.env.NEXT_PUBLIC_VAULT_V2_ADDRESS || process.env.INQUISITIVE_VAULT_ADDRESS || '0xb99dc519c4373e5017222bbd46f42a4e12a0ec25',
         owner: snap.status === 'fulfilled' ? snap.value.ownerAddr : '',
         automationEnabled: snap.status === 'fulfilled' ? snap.value.automationEnabled : false,
         portfolioLength: snap.status === 'fulfilled' ? snap.value.portfolioLength : 0

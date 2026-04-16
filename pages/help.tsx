@@ -210,7 +210,7 @@ export default function HelpPage() {
             'Applies risk-first methodology as final gate before any execution',
             'Outputs signals: BUY / SELL / HOLD / REDUCE / SKIP',
             'Confidence scores determine position sizing via Kelly Criterion',
-            'AI signals submitted on-chain via vaultOracle service to InquisitiveVaultV2 every 5 minutes',
+            'AI signals submitted on-chain via Chainlink Functions (decentralized oracle network)',
             'BEAR regime raises confidence threshold from 70% to 75%',
           ]},
           {icon:Zap,name:'The Executioner',col:'#2563eb',sub:'AI Smart Vault — Live on Mainnet',detail:[
@@ -218,7 +218,7 @@ export default function HelpPage() {
             'Signal-based execution: AI brain submits BUY/SELL signals via submitSignalsBatch()',
             'Chainlink Automation integration: pending upkeep registration and LINK funding',
             'Execution layer: Uniswap V3 router for all ETH-mainnet swaps',
-            'AI oracle: signals submitted by deployer wallet (0x4e7d700f...)',
+            'AI oracle: Chainlink Functions fetches signals from API and submits on-chain',
             'Trade limits: 1% of vault per trade, 5-minute cooldown between trades',
           ]},
           {icon:BarChart3,name:'The X-Ray',col:'#0891b2',sub:'Performance Monitor',detail:[
@@ -234,7 +234,7 @@ export default function HelpPage() {
             'INQAIInsurance deployed: 0xa0486fc0b9e4a282eca0435bae141be6982e502e — protocol insurance pool',
             'Risk engine: 2% max per trade, 6% portfolio heat, 15% drawdown circuit breaker',
             'VaultV2 UUPS upgradeable proxy — owner can upgrade implementation only',
-            'Execution via Chainlink Automation or AI oracle wallet — no manual intervention',
+            'Execution via Chainlink Automation only — decentralized, no manual intervention',
           ]},
           {icon:Eye,name:'The Oracle',col:'#3b82f6',sub:'Price Intelligence',detail:[
             'Primary: CoinGecko REAL LIVE API — 66 assets with 30-second polling',
@@ -574,7 +574,7 @@ export default function HelpPage() {
             detail:'VaultV2 deployed and funded with ETH. Not yet actively trading. Chainlink Automation registration and LINK funding required for autonomous trade execution.',
             items:[
               'VaultV2 deployed and seeded with ETH — 0xb99dc519c4373e5017222bbd46f42a4e12a0ec25',
-              'AI oracle wallet submitting signals via submitSignalsBatch() every 10 minutes (GitHub Actions)',
+              'AI signals served via API endpoint for Chainlink Functions to fetch and submit on-chain',
               'PENDING: Chainlink Automation registration at automation.chain.link (requires 20+ LINK)',
               'PENDING: Portfolio tracked assets registration in VaultV2 (setupVaultV2.js ready)',
               'PENDING: Uniswap V3 swap routing for on-chain execution',
@@ -605,7 +605,7 @@ export default function HelpPage() {
             detail:'AI brain fully operational with 5 engines running every 8 seconds. VaultV2 live. Chainlink Automation registration is the final step for autonomous on-chain execution.',
             items:[
               'AI Brain operational — 5 engines: Pattern, Reasoning, Portfolio, Learning, Risk',
-              'Signals submitted to VaultV2 every 10 minutes via GitHub Actions oracle',
+              'Chainlink Functions fetches AI signals and submits to VaultV2 via submitSignalsBatch()',
               'Pattern engine — market pattern recognition + regime detection operational',
               'Reasoning engine — multi-factor decision making with Fear & Greed logic active',
               'Portfolio engine — Kelly Criterion sizing + Sharpe optimization running',

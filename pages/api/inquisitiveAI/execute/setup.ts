@@ -5,14 +5,14 @@ import { ethers } from 'ethers';
 // Calls setPortfolio() + setPhase2Registry() + setAutomationEnabled(true) on-chain.
 // Requires EXECUTOR_PRIVATE_KEY (or DEPLOYER_PRIVATE_KEY) to be the vault owner.
 // Safe to call repeatedly — each step is idempotent (skipped if already done).
-// Called by Vercel Cron every 5 min until vault is fully configured.
+// Called manually (POST) or by admin tooling to configure the vault once at launch.
 // maxDuration: 300s to allow for slow mainnet tx confirmations.
 
 export const config = { maxDuration: 300 };
 
-const VAULT_ADDR = process.env.INQUISITIVE_VAULT_ADDRESS || '0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb';
+const VAULT_ADDR = process.env.NEXT_PUBLIC_VAULT_V2_ADDRESS || process.env.INQUISITIVE_VAULT_ADDRESS || '0xb99dc519c4373e5017222bbd46f42a4e12a0ec25';
 const RPC_URLS = [
-  process.env.MAINNET_RPC_URL || 'https://mainnet.infura.io/v3/d633cdc94aff412b90281fd14cd98868',
+  ...(process.env.MAINNET_RPC_URL ? [process.env.MAINNET_RPC_URL] : []),
   'https://eth.llamarpc.com',
   'https://rpc.ankr.com/eth',
   'https://ethereum.publicnode.com',

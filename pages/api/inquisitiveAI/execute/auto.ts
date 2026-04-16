@@ -12,7 +12,7 @@ import { ethers } from 'ethers';
 //
 // Keeper: Chainlink Automation — registered at automation.chain.link, must fund with LINK tokens for execution.
 
-const VAULT_ADDR = process.env.INQUISITIVE_VAULT_ADDRESS || '0x721b0c1fcf28646d6e0f608a15495f7227cb6cfb';
+const VAULT_ADDR = process.env.NEXT_PUBLIC_VAULT_V2_ADDRESS || process.env.INQUISITIVE_VAULT_ADDRESS || '0xb99dc519c4373e5017222bbd46f42a4e12a0ec25';
 const RPC_URLS   = [
   ...(process.env.MAINNET_RPC_URL ? [process.env.MAINNET_RPC_URL] : []),
   'https://eth.llamarpc.com',

@@ -13,7 +13,7 @@ import { getOnchain, VAULT_ADDR, DEPLOYER_ADDR } from '../_onchainCache';
 //   stETH-YIELD: 25 assets — ETH held as Lido stETH earning yield, native price tracked
 // All 66 allocations are LIVE — no simulation, no placeholders.
 // deBridge DLN: 0xeF4fB24aD0916217251F553c0596F8Edc630EB66
-// Hybrid keeper triggers performUpkeep(): cron-job.org (1 min) + GitHub Actions (5 min) + Vercel Cron (5 min).
+// Keeper: Chainlink Automation — registered at automation.chain.link, funded with LINK tokens.
 
 const MIN_DEPLOY    = 0.005;
 const MAX_TRADE_PCT = 0.02;
