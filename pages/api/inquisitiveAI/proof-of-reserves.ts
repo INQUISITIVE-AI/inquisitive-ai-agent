@@ -66,7 +66,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       'https://rpc.ankr.com/eth',
       'https://ethereum.publicnode.com',
     ].filter(Boolean) as string[];
-    const provider = new ethers.JsonRpcProvider(rpcUrls[0]);
+    const provider = new ethers.FallbackProvider(
+      rpcUrls.map((url, i) => ({ provider: new ethers.JsonRpcProvider(url), priority: i + 1, stallTimeout: 3000 })),
+      1
+    );
 
     // Fetch prices
     const prices = await fetchPrices();

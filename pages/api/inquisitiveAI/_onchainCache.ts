@@ -18,18 +18,13 @@ const DEPLOYER_ADDR = process.env.DEPLOYER_ADDRESS          || '0x4e7d700f7E1c6E
 const USDC_ADDR     = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48';
 
 const SEL_TOTAL_SUPPLY   = '0x18160ddd'; // keccak256("totalSupply()")
-// VaultV2 selectors — keccak256 of function signatures
-// NOTE: getPortfolioLength/cycleCount/lastDeployTime are V1-only; VaultV2 uses totalTrades/totalVolume
-const SEL_TOTAL_TRADES   = '0xc8ecfd24'; // keccak256("totalTrades()")
-const SEL_TOTAL_VOLUME   = '0x4094d273'; // keccak256("totalVolume()")
-const SEL_AUTO_ENABLED   = '0xd966a594'; // keccak256("automationEnabled()") — same in V2
-const SEL_LAST_TRADE     = '0xd67b3515'; // keccak256("lastTradeTime()")
-const SEL_OWNER          = '0x8da5cb5b'; // keccak256("owner()") — standard OZ
-const SEL_AI_ORACLE      = '0x4e6a4a36'; // keccak256("aiOracle()")
-// V1-only selectors kept for reference but NOT called on VaultV2:
-// SEL_PORTFOLIO_LEN = '0xe6f713d5' getPortfolioLength() — V1 only
-// SEL_CYCLE_COUNT   = '0x316fda0f' cycleCount() — V1 only
-// SEL_LAST_DEPLOY   = '0x579578e3' lastDeployTime() — V1 only
+// InquisitiveVaultUpdated selectors — keccak256 of function signatures
+const SEL_PORTFOLIO_LEN  = '0xe6f713d5'; // keccak256("getPortfolioLength()")
+const SEL_PHASE2_LEN     = '0x42d38eab'; // keccak256("getPhase2Length()")
+const SEL_CYCLE_COUNT    = '0x316fda0f'; // keccak256("cycleCount()")
+const SEL_AUTO_ENABLED   = '0xd966a594'; // keccak256("automationEnabled()")
+const SEL_LAST_DEPLOY    = '0x579578e3'; // keccak256("lastDeployTime()")
+const SEL_OWNER          = '0x8da5cb5b'; // keccak256("owner()")
 
 function encodeBalanceOf(addr: string): string {
   return '0x70a08231' + addr.toLowerCase().replace('0x', '').padStart(64, '0');
@@ -92,10 +87,11 @@ async function fetchOnchain(): Promise<OnchainSnapshot> {
     vaultInqaiHex,
     deployerUsdcHex,
     vaultUsdcHex,
-    totalTradesHex,   // VaultV2: totalTrades() replaces cycleCount()
-    totalVolumeHex,   // VaultV2: totalVolume() — new field
+    portfolioLenHex,
+    phase2LenHex,
+    cycleCountHex,
     autoEnabledHex,
-    lastTradeHex,     // VaultV2: lastTradeTime() replaces lastDeployTime()
+    lastDeployHex,
     ownerHex,
   ] = await Promise.all([
     rpcOne('eth_getBalance', [VAULT_ADDR,    'latest']),
@@ -105,11 +101,12 @@ async function fetchOnchain(): Promise<OnchainSnapshot> {
     rpcOne('eth_call', [{ to: INQAI_ADDR, data: encodeBalanceOf(VAULT_ADDR) },   'latest']),
     rpcOne('eth_call', [{ to: USDC_ADDR,  data: encodeBalanceOf(DEPLOYER_ADDR) },'latest']),
     rpcOne('eth_call', [{ to: USDC_ADDR,  data: encodeBalanceOf(VAULT_ADDR) },   'latest']),
-    rpcOne('eth_call', [{ to: VAULT_ADDR, data: SEL_TOTAL_TRADES },              'latest']),
-    rpcOne('eth_call', [{ to: VAULT_ADDR, data: SEL_TOTAL_VOLUME },              'latest']),
-    rpcOne('eth_call', [{ to: VAULT_ADDR, data: SEL_AUTO_ENABLED },              'latest']),
-    rpcOne('eth_call', [{ to: VAULT_ADDR, data: SEL_LAST_TRADE },                'latest']),
-    rpcOne('eth_call', [{ to: VAULT_ADDR, data: SEL_OWNER },                     'latest']),
+    rpcOne('eth_call', [{ to: VAULT_ADDR, data: SEL_PORTFOLIO_LEN },             'latest']),
+    rpcOne('eth_call', [{ to: VAULT_ADDR, data: SEL_PHASE2_LEN },               'latest']),
+    rpcOne('eth_call', [{ to: VAULT_ADDR, data: SEL_CYCLE_COUNT },              'latest']),
+    rpcOne('eth_call', [{ to: VAULT_ADDR, data: SEL_AUTO_ENABLED },             'latest']),
+    rpcOne('eth_call', [{ to: VAULT_ADDR, data: SEL_LAST_DEPLOY },              'latest']),
+    rpcOne('eth_call', [{ to: VAULT_ADDR, data: SEL_OWNER },                    'latest']),
   ]);
 
   const vaultEth    = parseHex(vaultEthHex,    18);
@@ -122,15 +119,14 @@ async function fetchOnchain(): Promise<OnchainSnapshot> {
     : deployerInqaiRaw;
   const deployerUsdc     = parseHex(deployerUsdcHex, 6);
   const vaultUsdc        = parseHex(vaultUsdcHex,    6);
-  // VaultV2 state
-  const totalTrades     = totalTradesHex && totalTradesHex !== '0x' ? parseInt(totalTradesHex, 16) : 0;
-  const totalVolume     = parseHex(totalVolumeHex, 18); // in ETH
+  // InquisitiveVaultUpdated on-chain state
+  const portfolioLength   = portfolioLenHex && portfolioLenHex !== '0x' ? parseInt(portfolioLenHex, 16) : 0;
+  const phase2Length      = phase2LenHex && phase2LenHex !== '0x' ? parseInt(phase2LenHex, 16) : 0;
+  const totalTrades       = cycleCountHex && cycleCountHex !== '0x' ? parseInt(cycleCountHex, 16) : 0;
   const automationEnabled = !!(autoEnabledHex && autoEnabledHex !== '0x' && BigInt(autoEnabledHex) !== 0n);
-  const lastDeployTime    = lastTradeHex && lastTradeHex !== '0x' ? parseInt(lastTradeHex, 16) : 0;
+  const lastDeployTime    = lastDeployHex && lastDeployHex !== '0x' ? parseInt(lastDeployHex, 16) : 0;
   const ownerAddr         = ownerHex && ownerHex.length >= 42 ? '0x' + ownerHex.slice(-40) : '';
   const circulatingSupply = Math.max(0, totalSupply - deployerInqai);
-  // VaultV2 doesn't use portfolioLength — tracked via getTrackedAssets() array (not needed here)
-  const portfolioLength   = 0;
 
   return {
     vaultEth,
@@ -145,8 +141,8 @@ async function fetchOnchain(): Promise<OnchainSnapshot> {
     circulatingSupply,
     tokensSold:         circulatingSupply,
     portfolioLength,
-    portfolioConfigured: false, // VaultV2: configured when aiOracle sets signals
-    cycleCount:         totalTrades, // map totalTrades → cycleCount for backwards compat
+    portfolioConfigured: portfolioLength > 0,
+    cycleCount:         totalTrades,
     automationEnabled,
     lastDeployTime,
     ownerAddr,

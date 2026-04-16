@@ -21,9 +21,10 @@ const RPC_URLS = [
 
 // Minimal ABI selectors (raw eth_call, no ethers dependency in server)
 const SELECTORS = {
-  cycleCount:        '0x316fda0f',
-  automationEnabled: '0x57c8e3a8',
-  lastDeployTime:    '0x5da4eeef',
+  cycleCount:        '0x316fda0f', // keccak256("cycleCount()")
+  automationEnabled: '0xd966a594', // keccak256("automationEnabled()")
+  lastDeployTime:    '0x579578e3', // keccak256("lastDeployTime()")
+  portfolioLength:   '0xe6f713d5', // keccak256("getPortfolioLength()")
 };
 
 async function rpcCall(method, params) {
@@ -43,19 +44,21 @@ async function rpcCall(method, params) {
 }
 
 async function readVaultState() {
-  const [ethBalHex, cycleHex, autoHex, lastDeployHex] = await Promise.all([
+  const [ethBalHex, cycleHex, autoHex, lastDeployHex, portfolioLenHex] = await Promise.all([
     rpcCall('eth_getBalance', [VAULT_ADDR, 'latest']),
     rpcCall('eth_call', [{ to: VAULT_ADDR, data: SELECTORS.cycleCount }, 'latest']),
     rpcCall('eth_call', [{ to: VAULT_ADDR, data: SELECTORS.automationEnabled }, 'latest']),
     rpcCall('eth_call', [{ to: VAULT_ADDR, data: SELECTORS.lastDeployTime }, 'latest']),
+    rpcCall('eth_call', [{ to: VAULT_ADDR, data: SELECTORS.portfolioLength }, 'latest']),
   ]);
 
   const ethBalance = ethBalHex ? parseFloat((BigInt(ethBalHex) * 10000n / 10n ** 18n).toString()) / 10000 : 0;
   const cycleCount = cycleHex && cycleHex !== '0x' ? parseInt(cycleHex, 16) : 0;
   const autoEnabled = autoHex && autoHex !== '0x' ? parseInt(autoHex, 16) !== 0 : false;
   const lastDeploy = lastDeployHex && lastDeployHex !== '0x' ? parseInt(lastDeployHex, 16) : 0;
+  const portfolioLength = portfolioLenHex && portfolioLenHex !== '0x' ? parseInt(portfolioLenHex, 16) : 0;
 
-  return { ethBalance, cycleCount, autoEnabled, lastDeploy, vaultAddress: VAULT_ADDR };
+  return { ethBalance, cycleCount, autoEnabled, lastDeploy, portfolioLength, vaultAddress: VAULT_ADDR };
 }
 
 class VaultOracleService extends EventEmitter {
