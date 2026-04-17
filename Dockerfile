@@ -4,6 +4,8 @@
 
 FROM node:20-alpine AS deps
 WORKDIR /app
+# Build tools for native modules (node-gyp, usb, etc.)
+RUN apk add --no-cache python3 make g++ linux-headers eudev-dev
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --legacy-peer-deps
 

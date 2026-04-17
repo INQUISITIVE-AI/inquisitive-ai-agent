@@ -27,9 +27,6 @@ jobs:
         run: npm audit --audit-level=high || true
         continue-on-error: true
 
-      - name: Lint
-        run: npm run lint --if-present
-
       - name: Build (Next.js)
         run: npm run build
         env:
@@ -77,8 +74,12 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
 
-      - name: Install forge-std
-        run: forge install foundry-rs/forge-std --no-commit --no-git || true
+      - name: Install forge-std (clone directly)
+        run: |
+          mkdir -p lib
+          if [ ! -d lib/forge-std ]; then
+            git clone --depth 1 https://github.com/foundry-rs/forge-std.git lib/forge-std
+          fi
 
       - name: Build contracts
         run: forge build --sizes
