@@ -133,7 +133,7 @@ export default function BuyPage() {
     setShowReconnect(false);
     setIsBuying(true);
 
-    if (usd < 10) { setError('Minimum purchase is $10'); setIsBuying(false); return; }
+    if (usd <= 0 || isNaN(usd)) { setError('Enter a valid amount'); setIsBuying(false); return; }
 
     if (payToken === 'BTC' || payToken === 'SOL' || payToken === 'TRX') {
       try {
@@ -329,7 +329,8 @@ export default function BuyPage() {
                           type="number"
                           value={usdAmount}
                           onChange={e => setUsdAmount(e.target.value)}
-                          min="10"
+                          min="0.01"
+                          step="0.01"
                           style={{
                             width: '100%', padding: '13px 14px 13px 28px', borderRadius: 12,
                             background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
@@ -468,7 +469,7 @@ export default function BuyPage() {
                       <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
                         <AlertTriangle size={12} color="#fbbf24" style={{ flexShrink: 0, marginTop: 1 }} />
                         <p style={{ margin: 0, fontSize: 10, color: 'rgba(255,255,255,0.3)', lineHeight: 1.7 }}>
-                          <strong style={{ color: 'rgba(255,255,255,0.4)' }}>Risk Disclosure:</strong> Digital assets carry substantial risk including total loss of capital. Target APY of {(INQAI_TOKEN.targetAPY*100).toFixed(1)}% is a projection based on AI strategy backtesting, not a guarantee. Past performance does not guarantee future results. Minimum $10. This is not financial advice.
+                          <strong style={{ color: 'rgba(255,255,255,0.4)' }}>Risk Disclosure:</strong> Digital assets carry substantial risk including total loss of capital. Target APY of {(INQAI_TOKEN.targetAPY*100).toFixed(1)}% is a projection based on AI strategy backtesting, not a guarantee. Past performance does not guarantee future results. This is not financial advice.
                         </p>
                       </div>
                     </div>

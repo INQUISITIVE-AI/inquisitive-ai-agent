@@ -2,10 +2,10 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
 
 // ── INQUISITIVE Vault Keeper ─────────────────────────────────────────────────
-// performUpkeep() handles ALL 65 assets in ONE call:
-//   BRIDGE     (deBridge DLN, 13 cross-chain)    — executed first
-//   ETH-DIRECT (Uniswap V3, 26 ETH-mainnet)      — executed after
-//   stETH YIELD (25 assets)                       — ETH held as Lido stETH
+// performUpkeep() handles ALL 66 assets in ONE call:
+//   BRIDGE     (deBridge DLN, cross-chain)       — executed first
+//   ETH-DIRECT (Uniswap V3, ETH-mainnet)         — executed after
+//   stETH YIELD                                   — ETH held as Lido stETH
 //
 //   Cross-chain receiver addresses stored on-chain via setPhase2Registry().
 //   Activation: node scripts/activate.js  → paste calldata into Etherscan Write Contract
@@ -85,30 +85,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
   }
 
-  // Vault idle — below checkUpkeep threshold
-  if (!upkeepNeeded && vaultETH < 0.005) {
+  // Vault idle — only if truly zero
+  if (!upkeepNeeded && vaultETH === 0) {
     return res.status(200).json({
       status:        'IDLE',
       autonomous:    true,
-      blockingReason: vaultETH === 0 ? 'Vault has 0 ETH — send ETH to the vault address to trigger execution.' : 'Vault ETH below 0.005 minimum — accepting deposits.',
-      reason:         'Vault ETH below minimum — accepting deposits',
+      blockingReason: 'Vault has 0 ETH — send ETH to the vault address to trigger execution.',
+      reason:         'Empty vault — accepting deposits',
       vaultETH, p1Assets, cycleCount,
       keeper:         'Chainlink Automation — automated upkeep execution when conditions are met',
       vaultAddress:   VAULT_ADDR,
       timestamp:      new Date().toISOString(),
-    });
-  }
-
-  // checkUpkeep passes at >=0.005 ETH, but performUpkeep requires >0.010 ETH
-  if (upkeepNeeded && vaultETH <= 0.010) {
-    return res.status(200).json({
-      status:        'UNDERFUNDED',
-      autonomous:    false,
-      blockingReason:`Vault has ${vaultETH.toFixed(6)} ETH. Minimum required for execution: 0.010 ETH.`,
-      reason:        `Vault has ${vaultETH.toFixed(6)} ETH — performUpkeep needs >0.010 ETH (0.005 gas reserve + 0.005 minimum deploy).`,
-      action:        `Send ETH to vault: ${VAULT_ADDR}  (recommend 0.1+ ETH for meaningful swaps across 26 assets)`,
-      vaultETH, p1Assets, cycleCount,
-      timestamp: new Date().toISOString(),
     });
   }
 
@@ -119,7 +106,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     upkeepNeeded,
     message:      upkeepNeeded
       ? 'Chainlink Automation will execute when funded with LINK tokens.'
-      : 'Vault is idle. Awaiting ETH deposit above 0.005 threshold.',
+      : 'Vault is idle. Awaiting ETH deposit — any amount accepted.',
     execution: {
       method:     'Chainlink Automation — automated upkeep execution when conditions are met',
       required:   'Fund with LINK tokens at automation.chain.link',

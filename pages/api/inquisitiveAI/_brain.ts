@@ -71,7 +71,7 @@ export const ASSET_REGISTRY: RegistryEntry[] = [
   { symbol:'SOIL',    cgId:'soil',                    name:'Soil',                             category:'defi',         yieldable:true,  stakeable:true,  lendable:false },
   { symbol:'BRZ',     cgId:'brz',                     name:'Brazilian Digital Token',          category:'stablecoin',   yieldable:true,  stakeable:false, lendable:true  },
   { symbol:'JPYC',    cgId:'jpyc',                    name:'JPYC',                             category:'stablecoin',   yieldable:false, stakeable:false, lendable:false },
-  { symbol:'CNGN',    cgId:'cngn',                    name:'Compliant Naira',                  category:'stablecoin',   yieldable:false, stakeable:false, lendable:false },
+  { symbol:'CNGN',    cgId:'compliant-naira',         name:'Compliant Naira',                  category:'stablecoin',   yieldable:false, stakeable:false, lendable:false },
   { symbol:'JITOSOL', cgId:'jito-staked-sol',         name:'Jito Staked SOL',                  category:'liquid-stake', yieldable:true,  stakeable:true,  lendable:false },
   { symbol:'JUPSOL',  cgId:'jupiter-staked-sol',      name:'Jupiter Staked SOL',               category:'liquid-stake', yieldable:true,  stakeable:true,  lendable:false },
   { symbol:'INF',     cgId:'sanctum-infinity',        name:'Sanctum Infinity',                 category:'liquid-stake', yieldable:true,  stakeable:true,  lendable:false },

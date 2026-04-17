@@ -4,23 +4,24 @@ import type { AssetInput, FGIndex } from '../_brain';
 import { getPrices } from '../_priceCache';
 import { getOnchain, VAULT_ADDR, DEPLOYER_ADDR } from '../_onchainCache';
 
-// ── 66-Asset Execution Monitor ────────────────────────────────────────────────────────────
+// ── 66-Asset Execution Monitor ─────────────────────────────────────────────────
 // ALL 66 assets scored with live NATIVE prices every cycle — CoinGecko primary.
 // NO proxy mapping — SOL is priced as SOL, BNB as BNB, TRX as TRX, etc.
-// Execution modes:
-//   ETH-DIRECT : 26 assets — Uniswap V3 ERC-20 swaps on Ethereum mainnet (SOIL pending)
-//   BRIDGE     : 13 assets — deBridge DLN bridges to Solana/BSC/Avalanche/Optimism/TRON
-//   stETH-YIELD: 25 assets — ETH held as Lido stETH earning yield, native price tracked
+// Execution modes (all 66 assets):
+//   ETH-DIRECT : Uniswap V3 ERC-20 swaps on Ethereum mainnet
+//   BRIDGE     : deBridge DLN bridges to Solana/BSC/Avalanche/Optimism/TRON
+//   stETH-YIELD: ETH held as Lido stETH earning yield, native price tracked
 // All 66 allocations are LIVE — no simulation, no placeholders.
 // deBridge DLN: 0xeF4fB24aD0916217251F553c0596F8Edc630EB66
 // Keeper: Chainlink Automation — registered at automation.chain.link, funded with LINK tokens.
 
-const MIN_DEPLOY    = 0.005;
+// No minimum ETH — deploy any non-zero amount. Gas reserve handled by wallet.
+const MIN_DEPLOY    = 0;
 const MAX_TRADE_PCT = 0.02;
 
 export const config = { maxDuration: 30 };
 
-// ── 26 ETH mainnet ERC-20s — direct Uniswap V3 execution (SOIL pending) ────
+// ── ETH mainnet ERC-20s — direct Uniswap V3 execution ───────────────
 export const ETH_NATIVE_TOKENS: Record<string, { address: string; fee: number }> = {
   BTC:  { address: '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599', fee: 3000 }, // WBTC
   ETH:  { address: '0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84', fee: 100  }, // stETH (Lido, rebasing 1:1 with ETH — no proxy disconnect)
@@ -155,7 +156,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     } catch {}
 
-    // ── 3. Build asset inputs (all 65) ────────────────────────────────────
+    // ── 3. Build asset inputs (all 66) ────────────────────────────────────
     const inputMap = new Map<string, AssetInput>();
     for (const meta of ASSET_REGISTRY) {
       const p = priceResult.map.get(meta.symbol);
@@ -181,13 +182,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const ethIn  = inputMap.get('ETH');
     const regime = getRegime((btcIn?.change24h ?? 0) * 100, (ethIn?.change24h ?? 0) * 100);
 
-    // ── 4. Score ALL 65 assets ────────────────────────────────────────────
+    // ── 4. Score ALL 66 assets ──────────────────────────────────────────────
     const signals = allInputs.map(inp => scoreAsset(inp, regime, fg, allInputs));
 
-    // ── 5. Build full 65-asset allocation plan ────────────────────────────
+    // ── 5. Build full 66-asset allocation plan ───────────────────────────────
     const weightSum  = Object.values(PORTFOLIO_WEIGHTS).reduce((s, w) => s + w, 0) || 1;
     const deployable = Math.max(0, vaultEth - MIN_DEPLOY);
-    const hasNewFunds= vaultEth > MIN_DEPLOY;
+    const hasNewFunds= vaultEth > 0;
 
     const allocationPlan = ASSET_REGISTRY
       .filter(meta => (PORTFOLIO_WEIGHTS[meta.symbol] ?? 0) > 0)
@@ -201,7 +202,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const targetUSD  = aumUSD * allocPct;
         const ethToSpend = deployable * allocPct;
         const actualEth  = Math.min(ethToSpend, deployable * MAX_TRADE_PCT);
-        const canExecute = hasNewFunds && actualEth >= 0.001 && (
+        const canExecute = hasNewFunds && actualEth > 0 && (
           (isEthDirect && !!tokenInfo) ||
           (chainInfo.mode === 'BRIDGE' && chainInfo.live)
         );

@@ -79,8 +79,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       positions,
       status: !portfolioConfigured
         ? 'PENDING_SETUP — run scripts/activate.js to call setPortfolio() on the vault'
-        : ethBalance <= 0.010
-          ? `LOW_FUNDING — vault has ${ethBalance.toFixed(4)} ETH, needs > 0.010 ETH for performUpkeep() to execute`
+        : ethBalance === 0
+          ? 'EMPTY — vault accepting deposits'
           : 'ACTIVE — vault funded and portfolio configured',
       timestamp: new Date().toISOString(),
     });
