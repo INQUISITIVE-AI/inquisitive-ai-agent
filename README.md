@@ -20,7 +20,7 @@ No hedge fund fees. No black box. Every signal, every weight, every decision —
 | **Execution** | 11 strategies: BUY, SELL, STAKE, LEND, YIELD, BORROW, LOOP, MULTIPLY, EARN, REWARDS, SWAP |
 | **Fees** | 15% performance-only. Zero AUM. Zero entry/exit. |
 | **Tokenomics** | 100M fixed supply. 60% of fees → buybacks. 20% → permanent burn. |
-| **Transparency** | Every signal published on-chain via Chainlink Automation |
+| **Transparency** | Signals computed via Chainlink Functions, executed via Chainlink Automation — all on-chain |
 
 ---
 
@@ -133,7 +133,12 @@ docker compose logs -f backend
 
 **Target:** 70–90% win rate via strict trend alignment and pullback entries only.
 
-**Execution threshold:** All 5 engines must reach 70% consensus before any action is taken.
+**Execution threshold:** Regime-aware consensus — **70% in BULL**, **75% in BEAR**. All 5 engines must agree before any action is taken.
+
+**Signal pipeline:**
+1. **Chainlink Functions** computes AI signals off-chain (deterministic, verifiable).
+2. **Chainlink Automation** triggers `performUpkeep()` on `InquisitiveVaultV2` to execute trades.
+3. Every signal, every trade, every rebalance — publicly indexed on Etherscan.
 
 ---
 

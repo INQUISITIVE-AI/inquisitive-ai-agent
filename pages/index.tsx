@@ -35,7 +35,7 @@ export default function Home() {
   const fg        = data?.ai?.fearGreed;
 
   const ENGINES = [
-    { Icon: Brain,    name: 'Quantitative AI Engine',  sub: 'Five-Model Consensus',    desc: 'Pattern, Reasoning, Portfolio, Learning, and Risk engines reach consensus before any position is taken. 70% threshold required in BULL; 75% in BEAR.', color: '#3b82f6' },
+    { Icon: Brain,    name: 'Quantitative AI Engine',  sub: 'Five-Model Consensus',    desc: 'Pattern, Reasoning, Portfolio, Risk, and Learning engines must reach consensus before any position is taken. 70% threshold required in BULL; 75% in BEAR.', color: '#3b82f6' },
     { Icon: Zap,      name: 'Autonomous Execution',    sub: 'DeFi Execution Layer',    desc: 'Eleven institutional strategies deployed autonomously — yield, lending, staking, leveraged exposure, liquidity provision — across all 66 positions.', color: '#3b82f6' },
     { Icon: BarChart3,name: 'Performance Analytics',   sub: 'Risk Attribution',        desc: 'Live P&L attribution, Sharpe ratio, drawdown tracking, and portfolio heat across all positions. Every AI decision explained in plain language.', color: '#3b82f6' },
     { Icon: Shield,   name: 'Risk Management',         sub: 'Capital Preservation',    desc: '2% maximum exposure per trade. 6% portfolio heat ceiling. 15% drawdown circuit breaker with automatic halt and emergency vault pause.', color: '#3b82f6' },

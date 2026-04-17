@@ -101,6 +101,36 @@ progress-bar{width:100%;background:#1f2937;border-radius:3px;height:4px;display:
   <div class="asset-grid" id="asset-grid"></div>
 </div>
 
+<!-- STEP D: Register Chainlink Automation -->
+<div class="card">
+  <h2>6. Register Chainlink Automation (Final Step — Enables Autonomous Execution)</h2>
+  <p style="font-size:12px;color:#9ca3af;margin-bottom:10px">This is the last step. Chainlink Automation will call <code style="color:#fcd34d">performUpkeep()</code> on the vault whenever <code style="color:#fcd34d">checkUpkeep()</code> returns true. No private key ever needed.</p>
+
+  <div style="background:#0a0a0a;border:1px solid #1f2937;border-radius:8px;padding:12px;font-size:11px;font-family:monospace;margin-bottom:10px;line-height:1.8">
+    <div><span style="color:#6b7280">Target Contract:</span> <span style="color:#6ee7b7">0xb99dc519c4373e5017222bbd46f42a4e12a0ec25</span></div>
+    <div><span style="color:#6b7280">Upkeep Type:</span> <span style="color:#6ee7b7">Custom Logic</span></div>
+    <div><span style="color:#6b7280">Trigger:</span> <span style="color:#6ee7b7">checkUpkeep() returns true</span></div>
+    <div><span style="color:#6b7280">Gas Limit:</span> <span style="color:#6ee7b7">2,500,000</span></div>
+    <div><span style="color:#6b7280">Starting Balance:</span> <span style="color:#6ee7b7">5 LINK minimum</span></div>
+    <div><span style="color:#6b7280">Admin Address:</span> <span style="color:#6ee7b7">0x4e7d700f7e1c6eeb5c9426a0297ae0765899e746</span></div>
+  </div>
+
+  <ol style="font-size:12px;color:#9ca3af;line-height:1.9;padding-left:20px;margin-bottom:12px">
+    <li>Click the link below to open Chainlink Automation</li>
+    <li>Connect the <strong style="color:#fff">same owner wallet</strong> (<code style="color:#6ee7b7">0x4e7d700f...</code>)</li>
+    <li>Click <strong style="color:#fff">"Register new Upkeep"</strong> → select <strong style="color:#fff">"Custom Logic"</strong></li>
+    <li>Paste vault address <code style="color:#6ee7b7">0xb99dc519c4373e5017222bbd46f42a4e12a0ec25</code></li>
+    <li>Set gas limit to <strong style="color:#fff">2,500,000</strong></li>
+    <li>Fund with at least <strong style="color:#fff">5 LINK</strong> (get from <a href="https://app.uniswap.org" target="_blank" style="color:#93c5fd">Uniswap</a> if needed)</li>
+    <li>Confirm transaction in MetaMask</li>
+  </ol>
+
+  <a href="https://automation.chain.link/mainnet" target="_blank" class="btn btn-purple" style="text-decoration:none;text-align:center;display:block">
+    Open Chainlink Automation →
+  </a>
+  <p style="font-size:10px;color:#6b7280;margin-top:8px;text-align:center">After registering, the vault trades autonomously whenever AI signals fire. No more manual steps.</p>
+</div>
+
 <!-- LOGS -->
 <div class="card">
   <h2>Transaction Log</h2>
