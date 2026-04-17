@@ -319,20 +319,38 @@ function renderAssetGrid(addedSet) {
   document.getElementById('asset-progress-bar').style.width = Math.round(count / 25 * 100) + '%';
 }
 
-// ── Send TX via MetaMask ──────────────────────────────────────────────────────
-async function sendTx(data, gasLimit) {
+// ── Send TX via MetaMask (with retry on transient errors) ────────────────────
+async function sendTx(data, gasLimit, retries) {
+  if (retries === undefined) retries = 3;
   if (!walletAddr) throw new Error('Wallet not connected');
-  const txHash = await window.ethereum.request({
-    method: 'eth_sendTransaction',
-    params: [{
-      from:     walletAddr,
-      to:       VAULT,
-      data:     data,
-      gas:      '0x' + gasLimit.toString(16),
-    }]
-  });
-  log('TX broadcast: ' + txHash, 'log-info');
-  return txHash;
+  let lastErr;
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const txHash = await window.ethereum.request({
+        method: 'eth_sendTransaction',
+        params: [{
+          from:     walletAddr,
+          to:       VAULT,
+          data:     data,
+          gas:      '0x' + gasLimit.toString(16),
+        }]
+      });
+      log('TX broadcast: ' + txHash, 'log-info');
+      return txHash;
+    } catch(e) {
+      lastErr = e;
+      // User rejection — don't retry
+      if (e.code === 4001 || (e.message && e.message.toLowerCase().includes('user denied'))) {
+        throw e;
+      }
+      // Transient error — retry after delay
+      if (attempt < retries) {
+        log('  Retry ' + attempt + '/' + (retries-1) + ' in 4s (' + (e.message || 'unknown').slice(0,50) + ')', 'log-warn');
+        await new Promise(r => setTimeout(r, 4000));
+      }
+    }
+  }
+  throw lastErr;
 }
 
 // Wait for TX confirmation by polling eth_getTransactionReceipt
@@ -409,12 +427,13 @@ async function addAllAssets() {
     const toAdd = ASSETS.filter(a => !existingSet.has(a.addr.toLowerCase()));
     log('Need to add ' + toAdd.length + ' assets (' + existingSet.size + ' already tracked)…');
 
+    const failed = [];
     for (let i = 0; i < toAdd.length; i++) {
       const asset = toAdd[i];
       try {
         log('[' + (i+1) + '/' + toAdd.length + '] Adding ' + asset.symbol + '…');
         const data = calldata(SEL.addTrackedAsset, encodeAddr(asset.addr));
-        const tx = await sendTx(data, 150000);
+        const tx = await sendTx(data, 150000, 3);  // 3 retries on transient errors
         const ok = await waitTx(tx);
         if (ok) {
           existingSet.add(asset.addr.toLowerCase());
@@ -423,16 +442,26 @@ async function addAllAssets() {
           document.getElementById('asset-progress-label').textContent = existingSet.size + ' / 25 added';
           document.getElementById('asset-progress-bar').style.width = Math.round(existingSet.size/25*100)+'%';
           log('✓ ' + asset.symbol + ' added', 'log-ok');
+        } else {
+          failed.push(asset.symbol);
         }
       } catch(e) {
-        if (e.code === 4001 || (e.message && e.message.includes('User denied'))) {
-          log('User rejected — stopping', 'log-err');
+        if (e.code === 4001 || (e.message && e.message.toLowerCase().includes('user denied'))) {
+          log('User rejected — stopping (click "Add All 25 Assets" again to continue)', 'log-err');
           break;
         }
-        log('✗ ' + asset.symbol + ': ' + (e.message||'').slice(0,60), 'log-err');
+        failed.push(asset.symbol);
+        log('✗ ' + asset.symbol + ' FAILED after 3 retries: ' + (e.message||'').slice(0,80) + ' — continuing…', 'log-err');
+        // Small delay before next asset to let MetaMask settle
+        await new Promise(r => setTimeout(r, 2000));
       }
     }
-    log('Done! ' + existingSet.size + '/25 assets tracked', 'log-ok');
+    if (failed.length > 0) {
+      log('⚠ ' + failed.length + ' assets failed: ' + failed.join(', '), 'log-err');
+      log('→ Click "Add All 25 Assets" again to retry — it will skip already-added ones', 'log-warn');
+    } else {
+      log('🎉 All 25 assets tracked successfully!', 'log-ok');
+    }
     await readState();
   } catch(e) {
     log('Fatal: ' + e.message, 'log-err');
