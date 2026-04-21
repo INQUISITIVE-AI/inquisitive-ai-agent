@@ -58,7 +58,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // Next required action based on readiness
   const nextAction: Record<Level, string> = {
     NOT_DEPLOYED:       'Vault not yet detected on-chain. Confirm the INQUISITIVE_VAULT_ADDRESS env var is correct.',
-    DEPLOYED:           'Add tracked assets (30 ETH-mainnet ERC-20s) via /vault-setup.html → "Add All 30 Assets".',
+    DEPLOYED:           'Add the 17 DeFi blue-chip tracked assets via /vault-setup.html → "Add All 17 Assets".',
     PORTFOLIO_SET:      'Call setAutomationEnabled(true) via /vault-setup.html → "Enable Automation".',
     AUTOMATION_ACTIVE:  'Deploy InquisitiveOracleConsumer (Chainlink Functions) per chainlink-functions/SETUP_GUIDE.md, then setAIOracle(<consumer>) on the vault.',
     FULLY_OPERATIONAL:  'Vault configured. For trades to execute: (1) Oracle Consumer must be set as aiOracle, (2) both the Oracle Consumer and the Vault must be registered at automation.chain.link and funded with LINK, (3) Functions subscription must be funded with LINK.',
@@ -76,9 +76,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     },
     {
       step: 2,
-      done: portfolioLength >= 30,
-      title: `Tracked assets registered (${portfolioLength}/30)`,
-      detail: 'All 30 ETH Mainnet ERC-20s must be registered via addTrackedAsset(). Use /vault-setup.html → "Add All 30 Assets".',
+      done: portfolioLength >= 17,
+      title: `Tracked assets registered (${portfolioLength}/17)`,
+      detail: 'All 17 DeFi blue-chips (WBTC, WETH, stETH, USDC, LINK, UNI, LDO, GRT, ARB, ENA, ONDO, MKR, ENS, COMP, CRV, CVX, BAL) registered via addTrackedAsset(). Use /vault-setup.html → "Add All 17 Assets".',
       keyRequired: false,
     },
     {

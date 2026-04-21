@@ -76,12 +76,21 @@ export const ASSET_REGISTRY: RegistryEntry[] = [
   { symbol:'JUPSOL',  cgId:'jupiter-staked-sol',      name:'Jupiter Staked SOL',               category:'liquid-stake', yieldable:true,  stakeable:true,  lendable:false },
   { symbol:'INF',     cgId:'sanctum-infinity',        name:'Sanctum Infinity',                 category:'liquid-stake', yieldable:true,  stakeable:true,  lendable:false },
   { symbol:'ETHFI',   cgId:'ether-fi',                name:'EtherFi',                          category:'defi',         yieldable:true,  stakeable:true,  lendable:false },
+  // ── DeFi blue-chips currently tracked on-chain (VaultV2) ────────────────────
+  { symbol:'MKR',     cgId:'maker',                   name:'Maker',                            category:'defi',         yieldable:true,  stakeable:false, lendable:true  },
+  { symbol:'ENS',     cgId:'ethereum-name-service',   name:'Ethereum Name Service',            category:'defi',         yieldable:false, stakeable:false, lendable:true  },
+  { symbol:'COMP',    cgId:'compound-governance-token', name:'Compound',                       category:'defi',         yieldable:true,  stakeable:false, lendable:true  },
+  { symbol:'CRV',     cgId:'curve-dao-token',         name:'Curve',                            category:'defi',         yieldable:true,  stakeable:true,  lendable:true  },
+  { symbol:'CVX',     cgId:'convex-finance',          name:'Convex',                           category:'defi',         yieldable:true,  stakeable:true,  lendable:false },
+  { symbol:'BAL',     cgId:'balancer',                name:'Balancer',                         category:'defi',         yieldable:true,  stakeable:false, lendable:true  },
 ];
 
 export const PORTFOLIO_WEIGHTS: Record<string, number> = {
   BTC:18, ETH:12, SOL:8, BNB:5, XRP:4, ADA:3, AVAX:3, SUI:2, DOT:2, NEAR:1, ICP:1, TRX:1,
   AAVE:2, UNI:2, LDO:1.5, ARB:1.5, OP:1, INJ:1, JUP:1, ENA:1, HYPE:1, SKY:0.5, GRT:0.5, FET:1, RNDR:1, TAO:1, POL:1, LINK:1, STRK:0.5,
   USDC:3, PAXG:1.5, ONDO:1, XLM:0.5, LTC:0.5, BCH:0.5, HBAR:0.5, ZEC:0.25, XMR:0.25, ETC:0.5, XTZ:0.25, CHZ:0.25, HNT:0.25, VET:0.25, QNT:0.25, ALGO:0.25, FIL:0.25, AR:0.25, XDC:0.1, ZRO:0.25, ATOM:0.25, DBR:0.1, ACH:0.1, EOS:0.1, HONEY:0.1, XSGD:0.1, SOIL:0.1, BRZ:0.1, JPYC:0.1, CNGN:0.1, JITOSOL:0.5, JUPSOL:0.5, INF:0.5, CC:0.1, NIGHT:0.25, XCN:0.1, ETHFI:0.5,
+  // DeFi blue-chips tracked on-chain
+  MKR:1.5, ENS:0.5, COMP:1, CRV:1, CVX:0.5, BAL:0.5,
 };
 
 export interface AssetInput {
@@ -105,12 +114,21 @@ export type Regime = 'BULL' | 'BEAR' | 'NEUTRAL';
 export function getRegime(btcChgPct: number, ethChgPct: number, btcChg7dPct = 0, ethChg7dPct = 0): Regime {
   const avg24h = (btcChgPct + ethChgPct) / 2;
   const avg7d  = (btcChg7dPct + ethChg7dPct) / 2;
-  // Primary signal: 24h. Confirmation: 7d trend aligns
-  if (avg24h > 2.5 && avg7d > 0)  return 'BULL';
-  if (avg24h < -2.5 && avg7d < 0) return 'BEAR';
-  if (avg7d > 10)  return 'BULL';  // strong weekly trend overrides flat daily
-  if (avg7d < -10) return 'BEAR';
-  return avg24h > 2.5 ? 'BULL' : avg24h < -2.5 ? 'BEAR' : 'NEUTRAL';
+  // Primary signal: 24h. Confirmation: 7d trend aligns.
+  // BEAR detection is intentionally WIDER than BULL to protect win rate during falling markets.
+  if (avg24h > 2.5  && avg7d >  0)  return 'BULL';
+  if (avg24h < -1.5 && avg7d <  0)  return 'BEAR';   // was -2.5 — catch rollovers earlier
+  if (avg7d  >  10)                  return 'BULL';
+  if (avg7d  < -7)                   return 'BEAR';  // was -10 — a sustained weekly drawdown is a bear
+  return avg24h > 2.5 ? 'BULL' : avg24h < -1.5 ? 'BEAR' : 'NEUTRAL';
+}
+
+/// Strong-bear flag: used by scoreAsset to block new BUYs regardless of score.
+/// Capital preservation takes priority over win-rate dilution in steep drops.
+export function isStrongBear(btcChgPct: number, ethChgPct: number, btcChg7dPct = 0, ethChg7dPct = 0): boolean {
+  const avg24h = (btcChgPct + ethChgPct) / 2;
+  const avg7d  = (btcChg7dPct + ethChg7dPct) / 2;
+  return avg24h < -4 || avg7d < -15;
 }
 
 // RSI proxy (0-100) derived from 7d momentum
@@ -201,7 +219,7 @@ function patternEngine(a: AssetInput, regime: Regime): number {
 
   // ── REGIME MULTIPLIER ────────────────────────────────────────────────────
   if (regime === 'BULL') q += 0.07;
-  if (regime === 'BEAR') q -= 0.16; // Stronger bear penalty — macro headwind kills setups
+  if (regime === 'BEAR') q -= 0.22; // deepened from -0.16 — most false BUYs happen in bear rallies
 
   return Math.max(0, Math.min(1, q));
 }
@@ -390,10 +408,16 @@ export function scoreAsset(
   // If pattern engine signals counter-trend (< 0.48), block active buys
   const patternGatePass = pScore >= 0.48;
 
-  // ── Action thresholds — raised from previous 0.65/0.70 ───────────────────
-  // BEAR: 0.78 (stricter — fewer setups work in bear markets)
-  // BULL/NEUTRAL: 0.76 (high bar — only best pullback/breakout setups)
-  const threshold = regime === 'BEAR' ? 0.78 : 0.76;
+  // ── Action thresholds ──────────────────────────────────────────────────────────────
+  // BEAR: 0.82 (was 0.78 — demand higher conviction to buy into weakness)
+  // BULL/NEUTRAL: 0.76 (unchanged — only best pullback/breakout setups)
+  const threshold = regime === 'BEAR' ? 0.82 : 0.76;
+
+  // ── Strong-bear capital preservation block ─────────────────────────────────
+  // In regime === 'BEAR' combined with negative reasoning (strongBear flag from engines),
+  // do not initiate NEW buys even on oversold bounces. Prior win-rate drops came from
+  // buying dead-cat bounces in confirmed downtrends. Keep sell/reduce paths enabled.
+  const strongBearBlock = regime === 'BEAR' && pScore < 0.40;
 
   let action = 'HOLD';
   if (gate.pass) {
@@ -401,6 +425,9 @@ export function scoreAsset(
       action = 'SELL';
     } else if (finalScore <= 0.40) {
       action = 'REDUCE';
+    } else if (strongBearBlock) {
+      // Confirmed downtrend + pattern engine very weak — defensive, no new exposure
+      action = 'HOLD';
     } else if (finalScore >= threshold && hasConsensus && patternGatePass) {
       // High-confidence active execution — all signals aligned
       if      (a.category === 'stablecoin')                                         action = 'LEND';
