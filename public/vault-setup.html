@@ -3,6 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="build-version" content="2026-04-21-v3-submit-signals">
 <title>INQUISITIVE — Vault Setup</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -48,6 +52,7 @@ progress-bar{width:100%;background:#1f2937;border-radius:3px;height:4px;display:
   <div>
     <h1>INQUISITIVE — Vault Setup Console</h1>
     <div style="font-size:11px;color:#6b7280;margin-top:3px">InquisitiveVaultV2 · 0xb99dc519...ec25</div>
+    <div style="font-size:9px;color:#374151;margin-top:2px;font-family:monospace">build 2026-04-21-v3 · if you don't see card #7 below, hard-refresh (⌘⇧R)</div>
   </div>
   <span class="badge badge-red">MAINNET</span>
 </div>
@@ -114,6 +119,30 @@ progress-bar{width:100%;background:#1f2937;border-radius:3px;height:4px;display:
   <p style="font-size:10px;color:#6b7280;margin-top:8px;text-align:center">Keep LINK balance funded for continuous execution.</p>
 </div>
 
+<!-- STEP E: Submit AI Signals Now (manual oracle trigger) -->
+<div class="card" style="border-color:#6d28d9;background:#1a1033">
+  <h2 style="color:#c4b5fd">7. Submit AI Signals Now — Manual Oracle Trigger</h2>
+  <p style="font-size:12px;color:#d8b4fe;margin-bottom:6px">
+    <strong>This is the missing piece unblocking trades.</strong> The vault's <code style="color:#fcd34d">aiOracle</code>
+    is currently your connected wallet, which means you can directly submit the AI brain's live signals
+    in a single transaction. Chainlink Automation will then pick them up and execute Uniswap V3 swaps on the next upkeep run.
+  </p>
+  <p style="font-size:11px;color:#9ca3af;margin-bottom:10px">
+    Fetches live signals from <code style="color:#6ee7b7">/api/inquisitiveAI/cron/oracle</code>, maps them to the 17 tracked
+    on-chain assets, and calls <code style="color:#fcd34d">submitSignalsBatch(address[], uint8[])</code> once.
+  </p>
+  <button class="btn btn-purple" id="btn-submit-signals" onclick="submitSignalsNow()" disabled>
+    Submit Latest AI Signals (one TX)
+  </button>
+  <div id="signals-preview" style="font-size:11px;color:#9ca3af;margin-top:10px;display:none">
+    <div id="signals-preview-header" style="margin-bottom:6px"></div>
+    <div id="signals-preview-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;font-family:monospace"></div>
+  </div>
+  <p style="font-size:10px;color:#a78bfa;margin-top:10px">
+    Tip: repeat every few hours until the OracleConsumer is deployed for full autonomy (see SETUP_GUIDE.md).
+  </p>
+</div>
+
 <!-- LOGS -->
 <div class="card">
   <h2>Transaction Log</h2>
@@ -136,6 +165,8 @@ const SEL = {
   setAIOracle:      '0x1aa632b3', // setAIOracle(address)
   setAutoEnabled:   '0x79e66622', // setAutomationEnabled(bool)
   addTrackedAsset:  '0x4ef0762e', // addTrackedAsset(address)
+  submitSignalsBatch: '0x5f2f6fec', // submitSignalsBatch(address[],uint8[])
+  checkUpkeep:      '0x6e04ff0d', // checkUpkeep(bytes)
 };
 
 // 17 liquid ETH-mainnet ERC-20s (Uniswap V3). Matches vault.getTrackedAssets() and
@@ -160,7 +191,31 @@ const ASSETS = [
   { symbol:'BAL',   addr:'0xba100000625a3754423978a60c9317c58a424e3D' },
 ];
 
+// Map brain symbols (from /api/inquisitiveAI/cron/oracle) to the on-chain tracked
+// asset addresses. BTC → WBTC, ETH → both WETH and stETH (same underlying).
+// Order MUST match the on-chain trackedAssets[] array exactly.
+const SIGNAL_ASSET_ORDER = [
+  { symbol: 'BTC',  addr: '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599' }, // WBTC
+  { symbol: 'ETH',  addr: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2' }, // WETH
+  { symbol: 'ETH',  addr: '0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84' }, // stETH (same signal as ETH)
+  { symbol: 'USDC', addr: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48' },
+  { symbol: 'LINK', addr: '0x514910771AF9Ca656af840dff83E8264EcF986CA' },
+  { symbol: 'UNI',  addr: '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984' },
+  { symbol: 'LDO',  addr: '0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32' },
+  { symbol: 'GRT',  addr: '0xc944E90C64B2c07662A292be6244BDf05Cda44a7' },
+  { symbol: 'ARB',  addr: '0xB50721BCf8d664c30412Cfbc6cf7a15145234ad1' },
+  { symbol: 'ENA',  addr: '0x57e114B691Db790C35207b2e685D4A43181e6061' },
+  { symbol: 'ONDO', addr: '0xfAbA6f8e4a5E8Ab82F62fe7C39859FA577269BE3' },
+  { symbol: 'MKR',  addr: '0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2' },
+  { symbol: 'ENS',  addr: '0xC18360217D8F7Ab5e7c516566761Ea12Ce7F9D72' },
+  { symbol: 'COMP', addr: '0xc00e94Cb662C3520282E6f5717214004A7f26888' },
+  { symbol: 'CRV',  addr: '0xD533a949740bb3306d119CC777fa900bA034cd52' },
+  { symbol: 'CVX',  addr: '0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B' },
+  { symbol: 'BAL',  addr: '0xba100000625a3754423978a60c9317c58a424e3D' },
+];
+
 let walletAddr = null;
+let onchainOracle = null; // populated from readState()
 
 // ── ABI encoding helpers ──────────────────────────────────────────────────────
 function encodeAddr(addr) {
@@ -282,7 +337,19 @@ async function readState() {
 
     const oracle = oracleHex ? '0x' + oracleHex.slice(-40) : null;
     const oracleSet = oracle && oracle !== '0x0000000000000000000000000000000000000000';
+    onchainOracle = oracle;
     setEl('s-oracle', oracleSet ? oracle.slice(0,8)+'…'+oracle.slice(-4) : 'NOT SET', oracleSet ? 'val-green':'val-red');
+
+    // Enable "Submit Signals Now" only if the connected wallet IS the aiOracle.
+    // Otherwise the TX would revert with "Only AI oracle".
+    const canSubmit = walletAddr && oracle && walletAddr.toLowerCase() === oracle.toLowerCase();
+    const submitBtn = document.getElementById('btn-submit-signals');
+    if (submitBtn) {
+      submitBtn.disabled = !canSubmit;
+      submitBtn.title = canSubmit
+        ? 'Ready: connected wallet is the on-chain aiOracle'
+        : 'Connect the wallet that is set as aiOracle on the vault';
+    }
 
     const autoOn = autoHex && autoHex !== '0x' && parseInt(autoHex,16) !== 0;
     setEl('s-auto', autoOn ? 'ENABLED' : 'DISABLED', autoOn ? 'val-green':'val-red');
@@ -326,33 +393,94 @@ function renderAssetGrid(addedSet) {
   document.getElementById('asset-progress-bar').style.width = Math.round(count / 17 * 100) + '%';
 }
 
-// ── Send TX via MetaMask (with retry on transient errors) ────────────────────
+// ── Gas helpers ──────────────────────────────────────────────────────────────
+// Fetch current base fee + suggested priority fee so we can hand MetaMask
+// explicit EIP-1559 params. Prevents the "TX returned but dropped from mempool"
+// failure mode where MetaMask under-estimates and the tx falls out.
+async function getGasParams() {
+  try {
+    const hist = await fetch(RPC, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({jsonrpc:'2.0',id:1,method:'eth_feeHistory',params:['0x5','latest',[50]]})
+    }).then(r => r.json());
+    const baseFees = (hist.result?.baseFeePerGas || []).map(h => BigInt(h));
+    const baseFee = baseFees.length ? baseFees[baseFees.length - 1] : 2000000000n;
+    const priorityFee = 1500000000n; // 1.5 gwei — generous for reliable inclusion
+    // maxFee = 2 * baseFee + priorityFee  (safely covers 2+ blocks of fee volatility)
+    const maxFee = baseFee * 2n + priorityFee;
+    return {
+      maxFeePerGas:         '0x' + maxFee.toString(16),
+      maxPriorityFeePerGas: '0x' + priorityFee.toString(16),
+    };
+  } catch {
+    // Fallback: hard-coded safe defaults (5 gwei max, 1.5 gwei priority)
+    return {
+      maxFeePerGas:         '0x12a05f200', // 5 gwei
+      maxPriorityFeePerGas: '0x59682f00',  // 1.5 gwei
+    };
+  }
+}
+
+// Verify the TX actually propagated to the public mempool. MetaMask can return
+// a txHash even when broadcasting silently failed (common with Trezor hardware
+// session hiccups). If we can't see the TX within 15s, treat as dropped.
+async function verifyTxPropagated(txHash) {
+  for (let i = 0; i < 15; i++) {
+    await new Promise(r => setTimeout(r, 1000));
+    try {
+      const r = await fetch(RPC, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({jsonrpc:'2.0',id:1,method:'eth_getTransactionByHash',params:[txHash]})
+      });
+      const j = await r.json();
+      if (j.result) return true; // visible in mempool or mined
+    } catch {}
+  }
+  return false;
+}
+
+// ── Send TX via MetaMask (with retry + explicit gas + propagation check) ──────
 async function sendTx(data, gasLimit, retries) {
   if (retries === undefined) retries = 3;
   if (!walletAddr) throw new Error('Wallet not connected');
   let lastErr;
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
+      const gas = await getGasParams();
       const txHash = await window.ethereum.request({
         method: 'eth_sendTransaction',
         params: [{
-          from:     walletAddr,
-          to:       VAULT,
-          data:     data,
-          gas:      '0x' + gasLimit.toString(16),
+          from:                 walletAddr,
+          to:                   VAULT,
+          data:                 data,
+          gas:                  '0x' + gasLimit.toString(16),
+          maxFeePerGas:         gas.maxFeePerGas,
+          maxPriorityFeePerGas: gas.maxPriorityFeePerGas,
         }]
       });
       log('TX broadcast: ' + txHash, 'log-info');
+      // Crucial: verify actual propagation — MetaMask+Trezor sometimes returns a
+      // hash without the tx reaching the network. Detect and retry with a bump.
+      log('  Verifying propagation…', 'log-info');
+      const ok = await verifyTxPropagated(txHash);
+      if (!ok) {
+        log('  ✗ TX not visible in mempool after 15s — treating as dropped, will retry', 'log-warn');
+        lastErr = new Error('TX dropped silently by wallet — retry');
+        if (attempt < retries) {
+          await new Promise(r => setTimeout(r, 3000));
+          continue;
+        }
+        throw lastErr;
+      }
+      log('  ✓ TX in mempool', 'log-ok');
       return txHash;
     } catch(e) {
       lastErr = e;
-      // User rejection — don't retry
       if (e.code === 4001 || (e.message && e.message.toLowerCase().includes('user denied'))) {
         throw e;
       }
-      // Transient error — retry after delay
       if (attempt < retries) {
-        log('  Retry ' + attempt + '/' + (retries-1) + ' in 4s (' + (e.message || 'unknown').slice(0,50) + ')', 'log-warn');
+        log('  Retry ' + attempt + '/' + (retries-1) + ' in 4s (' + (e.message || 'unknown').slice(0,60) + ')', 'log-warn');
         await new Promise(r => setTimeout(r, 4000));
       }
     }
@@ -419,6 +547,110 @@ async function enableAutomation() {
   } finally {
     btn.disabled = false;
   }
+}
+
+// ── Submit AI Signals Now (manual oracle trigger) ─────────────────────────────
+// Fetches live signals from /api/inquisitiveAI/cron/oracle and submits them
+// on-chain in a single TX via MetaMask. Works because on-chain aiOracle is the
+// user's connected wallet. After this, Chainlink Automation picks up the signals
+// on its next cron run and executes Uniswap V3 swaps.
+async function submitSignalsNow() {
+  if (!walletAddr) { log('Connect wallet first', 'log-warn'); return; }
+  if (!onchainOracle || walletAddr.toLowerCase() !== onchainOracle.toLowerCase()) {
+    log('Connected wallet is NOT the on-chain aiOracle (' + (onchainOracle||'?') + ') — submit would revert', 'log-err');
+    return;
+  }
+  const btn = document.getElementById('btn-submit-signals');
+  btn.disabled = true;
+  const prevLabel = btn.textContent;
+  btn.textContent = 'Fetching signals…';
+  try {
+    // 1. Pull live signals from the AI brain
+    log('Fetching /api/inquisitiveAI/cron/oracle…');
+    const r = await fetch('/api/inquisitiveAI/cron/oracle', { cache:'no-store' });
+    if (!r.ok) throw new Error('Oracle API HTTP ' + r.status);
+    const j = await r.json();
+    if (!j.success || !Array.isArray(j.signals)) throw new Error('Malformed oracle response');
+
+    // 2. Build symbol -> signal map (BUY=1, SELL/REDUCE=2, else 0)
+    const bySymbol = Object.create(null);
+    for (const s of j.signals) bySymbol[s.symbol] = s.signal || 0;
+
+    // 3. Map to on-chain tracked order
+    const assets = SIGNAL_ASSET_ORDER.map(x => x.addr);
+    const signals = SIGNAL_ASSET_ORDER.map(x => bySymbol[x.symbol] || 0);
+
+    // 4. Render preview
+    const preview = document.getElementById('signals-preview');
+    preview.style.display = 'block';
+    const buys  = signals.filter(s => s === 1).length;
+    const sells = signals.filter(s => s === 2).length;
+    const holds = signals.filter(s => s === 0).length;
+    document.getElementById('signals-preview-header').innerHTML =
+      'Regime <code style="color:#fcd34d">' + (j.regime || '?') + '</code> · ' +
+      '<span style="color:#6ee7b7">' + buys + ' BUY</span> · ' +
+      '<span style="color:#f87171">' + sells + ' SELL</span> · ' +
+      '<span style="color:#6b7280">' + holds + ' HOLD</span>';
+    const grid = document.getElementById('signals-preview-grid');
+    grid.innerHTML = '';
+    SIGNAL_ASSET_ORDER.forEach(function(x, i) {
+      const sig = signals[i];
+      const color = sig === 1 ? '#6ee7b7' : sig === 2 ? '#f87171' : '#6b7280';
+      const label = sig === 1 ? 'BUY' : sig === 2 ? 'SELL' : 'HOLD';
+      const d = document.createElement('div');
+      d.style.cssText = 'padding:3px 5px;background:#0a0a0a;border:1px solid #1f2937;border-radius:3px;color:' + color;
+      d.textContent = x.symbol + ': ' + label;
+      grid.appendChild(d);
+    });
+
+    log('Regime ' + (j.regime || '?') + ' · ' + buys + ' BUY, ' + sells + ' SELL, ' + holds + ' HOLD', 'log-ok');
+
+    // 5. ABI-encode submitSignalsBatch(address[] assets, uint8[] signals)
+    // Layout (after 4-byte selector):
+    //   word[0] = offset of assets (0x40)
+    //   word[1] = offset of signals (0x40 + 32 + N*32)
+    //   word[2] = assets.length
+    //   word[3..3+N-1] = each address (right-padded to 32 bytes)
+    //   word[3+N] = signals.length
+    //   word[3+N+1..] = each signal byte (right-padded to 32 bytes)
+    const n = assets.length;
+    const offAssets = 0x40; // two header words precede the data
+    const offSignals = 0x40 + 32 + n * 32;
+    let body = '';
+    body += encodeUint(offAssets);
+    body += encodeUint(offSignals);
+    body += encodeUint(n);
+    for (const a of assets) body += encodeAddr(a);
+    body += encodeUint(n);
+    for (const s of signals) body += encodeUint(s);
+    const data = SEL.submitSignalsBatch + body;
+
+    // 6. Send the transaction
+    btn.textContent = 'Sign in MetaMask…';
+    log('submitSignalsBatch(' + n + ' assets)…', 'log-info');
+    const gasLimit = 120000 + n * 22000; // conservative
+    const txHash = await sendTx(data, gasLimit);
+    btn.textContent = 'Waiting for confirmation…';
+    const ok = await waitTx(txHash);
+    if (ok) {
+      log('✓ Signals submitted. Chainlink Automation will act on the next cron run.', 'log-ok');
+      log('  View: https://etherscan.io/tx/' + txHash, 'log-info');
+    } else {
+      log('✗ Transaction reverted. Check the vault owner permissions and tracked-asset list.', 'log-err');
+    }
+    await readState();
+  } catch(e) {
+    log('submitSignalsNow error: ' + (e.message || e), 'log-err');
+  } finally {
+    btn.textContent = prevLabel;
+    // Re-enable only if still the oracle
+    const canSubmit = walletAddr && onchainOracle && walletAddr.toLowerCase() === onchainOracle.toLowerCase();
+    btn.disabled = !canSubmit;
+  }
+}
+
+function encodeUint(n) {
+  return BigInt(n).toString(16).padStart(64, '0');
 }
 
 // ── Add All Assets ────────────────────────────────────────────────────────────

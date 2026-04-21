@@ -60,8 +60,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     NOT_DEPLOYED:       'Vault not yet detected on-chain. Confirm the INQUISITIVE_VAULT_ADDRESS env var is correct.',
     DEPLOYED:           'Add the 17 DeFi blue-chip tracked assets via /vault-setup.html → "Add All 17 Assets".',
     PORTFOLIO_SET:      'Call setAutomationEnabled(true) via /vault-setup.html → "Enable Automation".',
-    AUTOMATION_ACTIVE:  'Deploy InquisitiveOracleConsumer (Chainlink Functions) per chainlink-functions/SETUP_GUIDE.md, then setAIOracle(<consumer>) on the vault.',
-    FULLY_OPERATIONAL:  'Vault configured. For trades to execute: (1) Oracle Consumer must be set as aiOracle, (2) both the Oracle Consumer and the Vault must be registered at automation.chain.link and funded with LINK, (3) Functions subscription must be funded with LINK.',
+    AUTOMATION_ACTIVE:  'Two paths to start trading: (a) Quick: open /vault-setup.html → card 7 → "Submit Latest AI Signals (one TX)" as the current aiOracle wallet — Chainlink Automation will pick up and execute on the next run. (b) Full autonomy: deploy InquisitiveOracleConsumer per chainlink-functions/SETUP_GUIDE.md, then setAIOracle(<consumer>).',
+    FULLY_OPERATIONAL:  'Vault configured. Trades execute when (1) signals are submitted (either by the OracleConsumer automatically or by the oracle wallet manually via /vault-setup.html card 7), and (2) Chainlink Automation triggers vault.performUpkeep().',
   };
 
   // Deployment / go-live checklist (Chainlink Functions + Automation architecture).
