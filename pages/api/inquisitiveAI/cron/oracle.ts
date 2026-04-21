@@ -17,8 +17,22 @@ import { getPrices } from '../_priceCache';
 
 export const config = { maxDuration: 30 };
 
-// Signal map for Chainlink Functions: BUY=1, SELL/REDUCE=2, HOLD/SKIP=0
-const SIGNAL_MAP: Record<string, number> = { BUY: 1, SELL: 2, REDUCE: 2, HOLD: 0, SKIP: 0 };
+// Signal map for on-chain submission: BUY=1, SELL=2, HOLD=0.
+// The AI brain emits nuanced DeFi-composability actions, but the vault only
+// understands swap directions. We collapse every "accumulate / deploy capital"
+// action (LEND, EARN, YIELD, STAKE, BORROW, LOOP, MULTIPLY, REWARDS, SWAP)
+// into BUY=1, and every "reduce exposure" action (SELL, REDUCE) into SELL=2.
+// Stablecoin LEND is the one exception: the vault holds ETH as base, so buying
+// USDC with ETH just to park it is not meaningful — treat as HOLD instead.
+const SIGNAL_MAP: Record<string, number> = {
+  // Active accumulation / build position
+  BUY: 1, EARN: 1, YIELD: 1, STAKE: 1, LEND: 1, BORROW: 1,
+  LOOP: 1, MULTIPLY: 1, REWARDS: 1, SWAP: 1,
+  // Reduce exposure
+  SELL: 2, REDUCE: 2,
+  // Do nothing
+  HOLD: 0, SKIP: 0,
+};
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Allow GET for Chainlink Functions, POST for compatibility
