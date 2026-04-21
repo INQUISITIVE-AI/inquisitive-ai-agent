@@ -30,11 +30,20 @@
     "pages/api/inquisitiveAI/cron/oracle": {
       "maxDuration": 55
     },
+    "pages/api/inquisitiveAI/cron/submit-signals": {
+      "maxDuration": 55
+    },
     "pages/api/inquisitiveAI/execute/auto": {
       "maxDuration": 55
     },
     "pages/api/inquisitiveAI/execute/setup": {
       "maxDuration": 300
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/inquisitiveAI/cron/submit-signals",
+      "schedule": "17 * * * *"
+    }
+  ]
 }

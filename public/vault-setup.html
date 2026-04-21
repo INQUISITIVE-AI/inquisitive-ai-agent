@@ -143,6 +143,41 @@ progress-bar{width:100%;background:#1f2937;border-radius:3px;height:4px;display:
   </p>
 </div>
 
+<!-- STEP F: Vercel Cron Autonomy — zero-touch submission -->
+<div class="card" style="border-color:#1d4ed8;background:#0b1220">
+  <h2 style="color:#93c5fd">8. Autonomous Trading (Vercel Cron) — recommended</h2>
+  <p style="font-size:12px;color:#bfdbfe;margin-bottom:8px">
+    Trades happen <strong>every hour forever</strong> with zero input from you. A Vercel Cron job
+    hits <code style="color:#6ee7b7">/api/inquisitiveAI/cron/submit-signals</code> at :17 past every hour,
+    signs <code style="color:#fcd34d">submitSignalsBatch()</code> with a bot wallet, and pushes the AI brain's
+    live signals on-chain. Chainlink Automation's existing upkeep then executes the Uniswap V3 swaps.
+  </p>
+  <div id="bot-status" style="font-size:11px;background:#060a14;border:1px solid #1e3a8a;border-radius:6px;padding:10px;margin-bottom:10px;font-family:monospace;color:#93c5fd">
+    checking cron endpoint…
+  </div>
+  <p style="font-size:11px;color:#9ca3af;margin-bottom:6px;font-weight:600">4 one-time actions:</p>
+  <ol style="font-size:11.5px;color:#cbd5e1;margin:0 0 12px 18px;line-height:1.85">
+    <li><strong>Generate a bot wallet</strong> →
+      <a href="/bot-wallet" target="_blank" style="color:#6ee7b7;border-bottom:1px dashed #065f46">open generator</a>
+      (all key material stays in your browser)</li>
+    <li>Paste the private key into Vercel → Settings → Env Vars →
+      <code style="color:#fcd34d">INQUISITIVE_BOT_PRIVATE_KEY</code>, then <strong>Redeploy</strong></li>
+    <li>Paste the bot's <strong>address</strong> below, then click <em>Use this for setAIOracle</em> and confirm on Trezor</li>
+    <li>Click <em>Send 0.01 ETH to bot</em> (gas for ~100 cron runs)</li>
+  </ol>
+  <input id="bot-addr-input" type="text" placeholder="bot address 0x…" style="width:100%;padding:10px;background:#060a14;border:1px solid #1e3a8a;border-radius:6px;color:#e5e7eb;font-family:monospace;font-size:12px;margin-bottom:8px" />
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+    <button class="btn btn-blue btn-small" id="btn-use-bot-oracle" onclick="useBotForOracle()" disabled style="margin-top:0">Use this for setAIOracle →</button>
+    <button class="btn btn-green btn-small" id="btn-fund-bot" onclick="fundBotWallet()" disabled style="margin-top:0">Send 0.01 ETH to bot</button>
+  </div>
+  <button class="btn btn-blue btn-small" onclick="refreshBotStatus()" style="margin-top:8px">↻ Re-check cron readiness</button>
+  <p style="font-size:10px;color:#6b7280;margin-top:10px;line-height:1.5">
+    Security: the bot can only call <code style="color:#fcd34d">submitSignalsBatch</code> (aiOracle-gated).
+    It CANNOT withdraw the vault, transfer assets, or change admin settings. Even if compromised, an
+    attacker could only submit signals that the vault would also act on.
+  </p>
+</div>
+
 <!-- LOGS -->
 <div class="card">
   <h2>Transaction Log</h2>
@@ -716,12 +751,115 @@ async function addAllAssets() {
   }
 }
 
+// ── Card 8: Vercel Cron autonomy helpers ──────────────────────────────────────
+// Shows the cron endpoint's self-reported readiness ("bot-wallet-not-set-up",
+// "aioracle-mismatch", etc.) and enables the helper buttons accordingly.
+async function refreshBotStatus() {
+  const box = document.getElementById('bot-status');
+  if (box) box.innerHTML = 'checking <code style="color:#fcd34d">/api/inquisitiveAI/cron/submit-signals</code>…';
+  try {
+    const r = await fetch('/api/inquisitiveAI/cron/submit-signals', { cache:'no-store' });
+    const j = await r.json().catch(() => ({}));
+    if (!box) return;
+    if (r.ok && j.success) {
+      box.style.borderColor = '#065f46';
+      box.style.color = '#6ee7b7';
+      box.innerHTML = '✓ cron READY — last tx: <a href="' + j.etherscan + '" target="_blank" style="color:#6ee7b7">' + (j.txHash||'').slice(0,14) + '…</a> · bot ' + (j.bot||'').slice(0,10) + '… · ' + (j.botEth||0).toFixed(4) + ' ETH · ' + (j.submitted?.buys||0) + ' BUY / ' + (j.submitted?.sells||0) + ' SELL';
+      return;
+    }
+    const readiness = j.readiness || 'unknown';
+    const fix       = j.fix || j.hint || j.error || 'see response';
+    const colors = {
+      'bot-wallet-not-set-up':   ['#78350f', '#fcd34d'],
+      'aioracle-mismatch':       ['#7c2d12', '#fdba74'],
+      'automation-disabled':     ['#7f1d1d', '#fca5a5'],
+      'bot-wallet-underfunded':  ['#1e40af', '#93c5fd'],
+    };
+    const [bg, fg] = colors[readiness] || ['#374151', '#9ca3af'];
+    box.style.borderColor = bg;
+    box.style.color = fg;
+    box.innerHTML = '<strong>' + readiness.toUpperCase().replaceAll('-',' ') + '</strong> — ' + fix;
+    if (j.detail && j.detail.botAddress) {
+      const input = document.getElementById('bot-addr-input');
+      if (input && !input.value) input.value = j.detail.botAddress;
+      validateBotInput();
+    }
+  } catch(e) {
+    if (box) {
+      box.style.borderColor = '#7f1d1d';
+      box.style.color = '#fca5a5';
+      box.innerHTML = 'could not reach cron endpoint: ' + (e.message || e);
+    }
+  }
+}
+
+function validateBotInput() {
+  const val = (document.getElementById('bot-addr-input').value || '').trim();
+  const ok = /^0x[a-fA-F0-9]{40}$/.test(val) && val.toLowerCase() !== '0x0000000000000000000000000000000000000000';
+  document.getElementById('btn-use-bot-oracle').disabled = !ok || !walletAddr;
+  document.getElementById('btn-fund-bot').disabled       = !ok || !walletAddr;
+}
+
+// Prefill oracle input with bot address and scroll to card 3.
+function useBotForOracle() {
+  const val = (document.getElementById('bot-addr-input').value || '').trim();
+  if (!/^0x[a-fA-F0-9]{40}$/.test(val)) { log('Invalid bot address','log-err'); return; }
+  const oracleInput = document.getElementById('oracle-addr');
+  if (oracleInput) {
+    oracleInput.value = val;
+    oracleInput.scrollIntoView({ behavior:'smooth', block:'center' });
+    oracleInput.focus();
+  }
+  log('Bot address pasted into card 3 — click setAIOracle(address) to sign on Trezor','log-info');
+}
+
+// Send 0.01 ETH from connected wallet to bot address (one Trezor TX).
+async function fundBotWallet() {
+  if (!walletAddr) { log('Connect wallet first','log-warn'); return; }
+  const to = (document.getElementById('bot-addr-input').value || '').trim();
+  if (!/^0x[a-fA-F0-9]{40}$/.test(to)) { log('Invalid bot address','log-err'); return; }
+  const btn = document.getElementById('btn-fund-bot');
+  btn.disabled = true;
+  const prev = btn.textContent;
+  btn.textContent = 'Sign in MetaMask…';
+  try {
+    const gas = await getGasParams();
+    log('Sending 0.01 ETH → ' + to.slice(0,10) + '…','log-info');
+    const txHash = await window.ethereum.request({
+      method: 'eth_sendTransaction',
+      params: [{
+        from:                 walletAddr,
+        to:                   to,
+        value:                '0x' + (10000000000000000n).toString(16), // 0.01 ETH
+        gas:                  '0x5208', // 21000
+        maxFeePerGas:         gas.maxFeePerGas,
+        maxPriorityFeePerGas: gas.maxPriorityFeePerGas,
+      }]
+    });
+    log('TX broadcast: ' + txHash, 'log-info');
+    btn.textContent = 'Confirming…';
+    const ok = await waitTx(txHash);
+    if (ok) log('✓ Bot wallet funded. Re-check cron readiness.', 'log-ok');
+    setTimeout(refreshBotStatus, 2000);
+  } catch(e) {
+    log('fundBotWallet error: ' + (e.message || e), 'log-err');
+  } finally {
+    btn.textContent = prev;
+    validateBotInput();
+  }
+}
+
 // Auto-load state on page load
 window.addEventListener('load', async function() {
   // Render empty asset grid
   renderAssetGrid(new Set());
   // Read state from chain (no wallet needed for reads)
   await readState();
+  // Check cron readiness
+  refreshBotStatus();
+  // Wire bot-addr input validation
+  const botInput = document.getElementById('bot-addr-input');
+  if (botInput) botInput.addEventListener('input', validateBotInput);
   // Listen for MetaMask account/chain changes
   if (window.ethereum) {
     window.ethereum.on('accountsChanged', function() { location.reload(); });

@@ -1,19 +1,69 @@
-# Chainlink Functions Oracle — Setup
+# AI → On-Chain Signal Bridge — Setup
 
-Wires the AI brain (off-chain) to VaultV2 (on-chain) with **zero private keys**.
+Wires the AI brain (off-chain) to `InquisitiveVaultV2` (on-chain). Without
+this, `tradingSignals[asset]` stays 0 → `checkUpkeep()` returns false → no
+trades ever fire.
 
-Without this, `tradingSignals[asset]` stays 0 → `checkUpkeep()` returns false → no trades ever fire.
+Two paths, pick one:
 
-## Flow
+| Path | Complexity | Trust model | When to use |
+|---|---|---|---|
+| **A. Vercel Cron + bot wallet** (recommended) | 4 clicks | You trust Vercel's env-var encryption | Fastest unblock, no Foundry |
+| **B. Chainlink Functions OracleConsumer** | Full forge deploy + Functions + Automation | Fully decentralized DON | Long-term production |
 
+Both are supported in this repo and can coexist — if you set both up, whichever
+submits first wins the cooldown, and the other becomes a no-op.
+
+---
+
+## Path A — Vercel Cron (4 clicks, ~5 minutes)
+
+### 1. Generate a bot wallet (30 seconds)
+
+Open **https://getinqai.com/bot-wallet** — a keypair is generated locally in
+your browser (nothing leaves the tab). Copy both the address and the private
+key.
+
+### 2. Add env vars to Vercel (60 seconds)
+
+In the Vercel dashboard → your project → Settings → Environment Variables:
+
+| Name | Value | Scope |
+|---|---|---|
+| `INQUISITIVE_BOT_PRIVATE_KEY` | *the 0x-prefixed 64-hex key from step 1* | Production |
+| `CRON_SECRET` | *any random string — `openssl rand -hex 32`* | Production |
+| `MAINNET_RPC_URL` | `https://mainnet.infura.io/v3/<yours>` | Production |
+
+Then click **Deployments → Redeploy** on the latest production deployment so
+the cron job picks up the new env vars.
+
+### 3. Point the vault at the bot (one Trezor TX)
+
+Open **https://getinqai.com/vault-setup.html** → card 8 → paste the bot address →
+click **Use this for setAIOracle →**, scroll to card 3, click
+`setAIOracle(address)`, confirm on your Trezor.
+
+### 4. Fund the bot with 0.01 ETH (one Trezor TX)
+
+Card 8 → **Send 0.01 ETH to bot**. Covers ~100 hourly cron runs at ~5 gwei.
+
+Done. The Vercel Cron at `/api/inquisitiveAI/cron/submit-signals` runs at
+`:17 past every hour`, calls `submitSignalsBatch()` with live signals, and
+Chainlink Automation's existing upkeep on the vault executes the swaps.
+
+Verify anytime by hitting the endpoint manually:
+```bash
+curl -H "Authorization: Bearer $CRON_SECRET" \
+  https://getinqai.com/api/inquisitiveAI/cron/submit-signals
 ```
-Chainlink Automation → OracleConsumer.performUpkeep()
-        → Chainlink Functions DON → GET /api/inquisitiveAI/cron/oracle
-        → OracleConsumer.fulfillRequest() → vault.submitSignalsBatch()
-Chainlink Automation → vault.performUpkeep() → Uniswap V3 swap
-```
+A success response includes `txHash`, `blockNumber`, and
+`submitted: { buys, sells, holds }`.
 
-## Deploy
+---
+
+## Path B — Chainlink Functions OracleConsumer (full decentralization)
+
+### Deploy
 
 ```bash
 export MAINNET_RPC_URL="https://mainnet.infura.io/v3/<key>"
@@ -21,7 +71,8 @@ export ETHERSCAN_API_KEY="<key>"
 forge script script/DeployOracleConsumer.s.sol --rpc-url $MAINNET_RPC_URL --trezor --broadcast --verify
 ```
 
-Script calls `setTrackedAssets()` for the 30 ETH-mainnet assets in the order that matches `source.js`.
+Script calls `setTrackedAssets()` for the 17 ETH-mainnet assets in the order
+that matches `source.js`.
 
 ## Wire
 
