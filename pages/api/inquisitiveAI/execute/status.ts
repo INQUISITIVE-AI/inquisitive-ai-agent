@@ -19,6 +19,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const automationActive = snap.automationEnabled;
   const lastDeployTime   = snap.lastDeployTime;
   const ownerAddr        = snap.ownerAddr;
+  const aiOracleAddr     = snap.aiOracleAddr;
+  const DEPLOYER         = '0x4e7d700f7e1c6eeb5c9426a0297ae0765899e746';
+  const oracleIsDeployer = aiOracleAddr.toLowerCase() === DEPLOYER;
+  const oracleIsContract = aiOracleAddr.length === 42 && !oracleIsDeployer;
 
   // Vault has the new autonomous code if getPortfolioLength() returned a usable value
   const hasNewCode = portfolioLength > 0 || snap.vaultEth > 0 || ownerAddr !== '';
@@ -54,40 +58,59 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // Next required action based on readiness
   const nextAction: Record<Level, string> = {
     NOT_DEPLOYED:       'Vault not yet detected on-chain. Confirm the INQUISITIVE_VAULT_ADDRESS env var is correct.',
-    DEPLOYED:           'Call setPortfolio() on Etherscan Write Contract with the 66-asset arrays (run scripts/activate.js to generate them).',
-    PORTFOLIO_SET:      'Call setAutomationEnabled(true) on Etherscan Write Contract, then fund Chainlink Automation with LINK tokens.',
-    AUTOMATION_ACTIVE:  'Vault is fully configured. Register at automation.chain.link with vault address, gas limit 5,000,000, and fund with LINK tokens. Execution begins automatically.',
-    FULLY_OPERATIONAL:  'Vault fully operational — portfolio configured (32 assets), automation active. Fund Chainlink Automation with LINK to start autonomous execution.',
+    DEPLOYED:           'Add tracked assets (30 ETH-mainnet ERC-20s) via /vault-setup.html → "Add All 30 Assets".',
+    PORTFOLIO_SET:      'Call setAutomationEnabled(true) via /vault-setup.html → "Enable Automation".',
+    AUTOMATION_ACTIVE:  'Deploy InquisitiveOracleConsumer (Chainlink Functions) per chainlink-functions/SETUP_GUIDE.md, then setAIOracle(<consumer>) on the vault.',
+    FULLY_OPERATIONAL:  'Vault configured. For trades to execute: (1) Oracle Consumer must be set as aiOracle, (2) both the Oracle Consumer and the Vault must be registered at automation.chain.link and funded with LINK, (3) Functions subscription must be funded with LINK.',
   };
 
-  // Deployment instructions
+  // Deployment / go-live checklist (Chainlink Functions + Automation architecture).
+  // Each step is passive — it's marked done if the on-chain state shows it's done.
   const deploySteps = [
     {
       step: 1,
       done: hasNewCode,
-      title: 'Deploy upgraded vault',
-      detail: 'Run: npx hardhat run scripts/deploy-upgraded.js --network mainnet — uses PRIVATE_KEY in your local .env only, never committed. Update INQUISITIVE_VAULT_ADDRESS in .env after deploy.'    ,    
+      title: 'VaultV2 deployed',
+      detail: 'InquisitiveVaultV2 (UUPS proxy) live on mainnet with the signal-based trading interface.',
       keyRequired: false,
     },
     {
       step: 2,
-      done: portfolioLength > 0,
-      title: 'Store portfolio weights on-chain',
-      detail: 'Run: node scripts/activate.js — prints exact arrays for setPortfolio() (26 ETH-mainnet tokens) and setPhase2Registry() (13 deBridge DLN bridges). Paste into Etherscan Write Contract → sign with MetaMask. No private key needed.'   ,
+      done: portfolioLength >= 30,
+      title: `Tracked assets registered (${portfolioLength}/30)`,
+      detail: 'All 30 ETH Mainnet ERC-20s must be registered via addTrackedAsset(). Use /vault-setup.html → "Add All 30 Assets".',
       keyRequired: false,
     },
     {
       step: 3,
       done: automationActive,
-      title: 'Enable autonomous execution',
-      detail: 'Call setAutomationEnabled(true) on Etherscan Write Contract. Fund Chainlink Automation with LINK tokens at automation.chain.link. Chainlink will call performUpkeep() automatically when conditions are met.',
+      title: 'Automation flag enabled',
+      detail: 'setAutomationEnabled(true) must be called on the vault so performUpkeep() can execute.',
       keyRequired: false,
     },
     {
       step: 4,
-      done: vaultETH >= 0.005,
-      title: 'Vault funded',
-      detail: 'ETH deposited to vault triggers performUpkeep() via Chainlink Automation. Deploys across 26 ETH-mainnet (Uniswap V3) + 13 cross-chain (deBridge DLN: Solana/BSC/Avalanche/Optimism/TRON). 25 assets held as Lido stETH earning yield.', 
+      done: oracleIsContract,
+      title: oracleIsContract
+        ? 'Chainlink Functions OracleConsumer wired'
+        : 'Deploy & wire Chainlink Functions OracleConsumer',
+      detail: oracleIsContract
+        ? `aiOracle = ${aiOracleAddr} — contract is authorized to submit signals.`
+        : 'Deploy with `forge script script/DeployOracleConsumer.s.sol --rpc-url $MAINNET_RPC_URL --trezor --broadcast --verify`. Then follow chainlink-functions/SETUP_GUIDE.md steps 2–7 (Functions subscription, LINK, Automation registration, setAIOracle on the vault).',
+      keyRequired: false,
+    },
+    {
+      step: 5,
+      done: vaultETH > 0,
+      title: 'Vault funded with ETH',
+      detail: 'ETH is required for Uniswap V3 swaps. Any non-zero balance is sufficient; 1% per trade is deployed by performUpkeep().',
+      keyRequired: false,
+    },
+    {
+      step: 6,
+      done: cycleCount > 0,
+      title: `Autonomous trades executed (${cycleCount})`,
+      detail: 'Once the OracleConsumer submits signals and both Automation upkeeps are funded, Chainlink calls performUpkeep() on the vault and swaps fire on Uniswap V3.',
       keyRequired: false,
     },
   ];
@@ -105,13 +128,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     lastDeployIso:   lastDeployTime ? new Date(lastDeployTime * 1000).toISOString() : null,
     vaultETH,
     ownerAddr,
+    aiOracleAddr,
+    oracleStatus:    oracleIsContract ? 'consumer'
+                    : oracleIsDeployer ? 'deployer-manual'
+                    : aiOracleAddr ? 'external-eoa' : 'unset',
     deploySteps,
     recentTrades,
-    autonomous:      readiness === 'FULLY_OPERATIONAL',
+    autonomous:      readiness === 'FULLY_OPERATIONAL' && oracleIsContract && cycleCount > 0,
     keylessArchitecture: {
-      description:   'Zero private keys in any file, env var, or server. Chainlink Automation calls performUpkeep() automatically when conditions are met.',
-      deployMethod:  'Vault deployed via Remix IDE (MetaMask signs) — private key never in code or env. Portfolio configured via Etherscan Write Contract.',
-      executionMethod: 'Chainlink Automation: automated upkeep execution when vault conditions are met. No external keepers needed.',
+      description:      'Signals are fetched by Chainlink Functions DON (no server signer). Chainlink Automation calls both the consumer (every 10 min) and the vault (when signals fire). No private keys in code, env, or GitHub Secrets.',
+      deployMethod:     'InquisitiveVaultV2 + InquisitiveOracleConsumer deployed via Foundry with a hardware wallet (--trezor). Configuration via Etherscan Write Contract or vault-setup.html.',
+      executionMethod:  'Chainlink Functions fetches https://getinqai.com/api/inquisitiveAI/cron/oracle, returns 30-byte signal array, consumer calls vault.submitSignalsBatch(). Chainlink Automation then triggers vault.performUpkeep() which swaps via Uniswap V3.',
     },
     timestamp: new Date().toISOString(),
   });

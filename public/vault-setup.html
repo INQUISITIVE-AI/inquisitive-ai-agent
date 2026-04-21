@@ -74,9 +74,12 @@ progress-bar{width:100%;background:#1f2937;border-radius:3px;height:4px;display:
 
 <!-- STEP A: Set AI Oracle -->
 <div class="card">
-  <h2>3. Set AI Oracle (Required for Signal Submission)</h2>
-  <p style="font-size:12px;color:#9ca3af;margin-bottom:8px">Sets aiOracle to your connected wallet so it can submit trade signals.</p>
-  <button class="btn btn-purple" id="btn-oracle" onclick="setOracle()" disabled>Set aiOracle → Connected Wallet</button>
+  <h2>3. Set AI Oracle → Chainlink Functions Consumer</h2>
+  <p style="font-size:12px;color:#9ca3af;margin-bottom:8px">The aiOracle must be the <strong>InquisitiveOracleConsumer</strong> contract (Chainlink Functions). This enables keyless autonomous signal submission from the AI brain.</p>
+  <p style="font-size:11px;color:#fcd34d;margin-bottom:10px">Deploy it first: <code style="color:#93c5fd">forge script script/DeployOracleConsumer.s.sol --rpc-url $RPC --trezor --broadcast --verify</code> — see <a href="https://github.com/INQUISITIVE-AI/inquisitive-ai-agent/blob/main/chainlink-functions/SETUP_GUIDE.md" target="_blank" style="color:#6ee7b7">SETUP_GUIDE.md</a></p>
+  <input id="oracle-addr" type="text" placeholder="0x… (OracleConsumer address)" style="width:100%;padding:10px;background:#060606;border:1px solid #1f2937;border-radius:6px;color:#e5e7eb;font-family:monospace;font-size:12px;margin-bottom:6px" />
+  <button class="btn btn-purple" id="btn-oracle" onclick="setOracle()" disabled>setAIOracle(address)</button>
+  <p style="font-size:10px;color:#6b7280;margin-top:6px">Emergency override: leave blank to set to connected wallet (manual submission only).</p>
 </div>
 
 <!-- STEP B: Enable Automation -->
@@ -392,10 +395,17 @@ async function waitTx(txHash) {
 async function setOracle() {
   if (!walletAddr) { log('Connect wallet first','log-warn'); return; }
   const btn = document.getElementById('btn-oracle');
+  const input = document.getElementById('oracle-addr');
+  let target = (input && input.value || '').trim();
+  if (!target) target = walletAddr; // fallback to connected wallet
+  if (!/^0x[a-fA-F0-9]{40}$/.test(target)) {
+    log('Invalid address format — expected 0x… 40 hex chars', 'log-err');
+    return;
+  }
   btn.disabled = true;
   try {
-    log('setAIOracle(' + walletAddr + ')…');
-    const data = calldata(SEL.setAIOracle, encodeAddr(walletAddr));
+    log('setAIOracle(' + target + ')…');
+    const data = calldata(SEL.setAIOracle, encodeAddr(target));
     const tx = await sendTx(data, 80000);
     await waitTx(tx);
     await readState();
@@ -456,15 +466,15 @@ async function addAllAssets() {
           existingSet.add(asset.addr.toLowerCase());
           const el = document.getElementById('asset-' + asset.symbol);
           if (el) { el.className='asset-item added'; el.querySelector('span:last-child').textContent='✓'; }
-          document.getElementById('asset-progress-label').textContent = existingSet.size + ' / 25 added';
-          document.getElementById('asset-progress-bar').style.width = Math.round(existingSet.size/25*100)+'%';
+          document.getElementById('asset-progress-label').textContent = existingSet.size + ' / 30 added';
+          document.getElementById('asset-progress-bar').style.width = Math.round(existingSet.size/30*100)+'%';
           log('✓ ' + asset.symbol + ' added', 'log-ok');
         } else {
           failed.push(asset.symbol);
         }
       } catch(e) {
         if (e.code === 4001 || (e.message && e.message.toLowerCase().includes('user denied'))) {
-          log('User rejected — stopping (click "Add All 25 Assets" again to continue)', 'log-err');
+          log('User rejected — stopping (click "Add All 30 Assets" again to continue)', 'log-err');
           break;
         }
         failed.push(asset.symbol);
@@ -475,9 +485,9 @@ async function addAllAssets() {
     }
     if (failed.length > 0) {
       log('⚠ ' + failed.length + ' assets failed: ' + failed.join(', '), 'log-err');
-      log('→ Click "Add All 25 Assets" again to retry — it will skip already-added ones', 'log-warn');
+      log('→ Click "Add All 30 Assets" again to retry — it will skip already-added ones', 'log-warn');
     } else {
-      log('🎉 All 25 assets tracked successfully!', 'log-ok');
+      log('🎉 All 30 assets tracked successfully!', 'log-ok');
     }
     await readState();
   } catch(e) {

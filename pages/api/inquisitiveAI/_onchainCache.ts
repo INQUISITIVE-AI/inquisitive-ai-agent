@@ -49,6 +49,7 @@ export interface OnchainSnapshot {
   automationEnabled:  boolean;
   lastDeployTime:     number;
   ownerAddr:          string;
+  aiOracleAddr:       string;
   ts:                 number;
   stale:              boolean;
 }
@@ -133,6 +134,7 @@ async function fetchOnchain(): Promise<OnchainSnapshot> {
   const automationEnabled = !!(autoEnabledHex && autoEnabledHex !== '0x' && BigInt(autoEnabledHex) !== 0n);
   const lastDeployTime    = lastTradeHex && lastTradeHex !== '0x' ? parseInt(lastTradeHex, 16) : 0;
   const ownerAddr         = ownerHex && ownerHex.length >= 42 ? '0x' + ownerHex.slice(-40) : '';
+  const aiOracleAddr      = aiOracleHex && aiOracleHex.length >= 42 ? '0x' + aiOracleHex.slice(-40) : '';
   const circulatingSupply = Math.max(0, totalSupply - deployerInqai);
 
   return {
@@ -153,6 +155,7 @@ async function fetchOnchain(): Promise<OnchainSnapshot> {
     automationEnabled,
     lastDeployTime,
     ownerAddr,
+    aiOracleAddr,
     ts:                 Date.now(),
     stale:              false,
   };
@@ -191,7 +194,7 @@ export async function getOnchain(): Promise<OnchainSnapshot> {
       totalSupply: 100_000_000, deployerInqai: 0, vaultInqai: 0,
       circulatingSupply: 0, tokensSold: 0,
       portfolioLength: 0, portfolioConfigured: false,
-      cycleCount: 0, automationEnabled: false, lastDeployTime: 0, ownerAddr: '',
+      cycleCount: 0, automationEnabled: false, lastDeployTime: 0, ownerAddr: '', aiOracleAddr: '',
       ts: Date.now(), stale: true,
     };
   }
