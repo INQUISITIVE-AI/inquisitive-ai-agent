@@ -143,14 +143,15 @@ progress-bar{width:100%;background:#1f2937;border-radius:3px;height:4px;display:
   </p>
 </div>
 
-<!-- STEP F: Vercel Cron Autonomy — zero-touch submission -->
+<!-- STEP F: Hourly Autonomy — GH-Actions-driven zero-touch submission -->
 <div class="card" style="border-color:#1d4ed8;background:#0b1220">
-  <h2 style="color:#93c5fd">8. Autonomous Trading (Vercel Cron) — recommended</h2>
+  <h2 style="color:#93c5fd">8. Autonomous Trading (Hourly) — recommended</h2>
   <p style="font-size:12px;color:#bfdbfe;margin-bottom:8px">
-    Trades happen <strong>every hour forever</strong> with zero input from you. A Vercel Cron job
+    Trades happen <strong>every hour forever</strong> with zero input from you. A scheduled GitHub Action
     hits <code style="color:#6ee7b7">/api/inquisitiveAI/cron/submit-signals</code> at :17 past every hour,
-    signs <code style="color:#fcd34d">submitSignalsBatch()</code> with a bot wallet, and pushes the AI brain's
-    live signals on-chain. Chainlink Automation's existing upkeep then executes the Uniswap V3 swaps.
+    the endpoint signs <code style="color:#fcd34d">submitSignalsBatch()</code> with a bot wallet, and pushes
+    the AI brain's live signals on-chain. Chainlink Automation's existing upkeep on the vault then executes the
+    Uniswap V3 swaps.
   </p>
   <div id="bot-status" style="font-size:11px;background:#060a14;border:1px solid #1e3a8a;border-radius:6px;padding:10px;margin-bottom:10px;font-family:monospace;color:#93c5fd">
     checking cron endpoint…

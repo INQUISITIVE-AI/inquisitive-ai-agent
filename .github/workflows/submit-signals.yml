@@ -1,0 +1,55 @@
+# ── INQUISITIVE AI — Hourly Signal Submission ────────────────────────────────
+# Every hour, calls https://getinqai.com/api/inquisitiveAI/cron/submit-signals
+# which signs submitSignalsBatch() with the bot wallet and pushes live AI
+# signals to InquisitiveVaultV2 on Ethereum mainnet. Chainlink Automation's
+# existing upkeep on the vault then executes the Uniswap V3 swaps.
+#
+# Why GitHub Actions instead of Vercel Cron:
+#   Vercel Hobby plan allows only daily crons. This workflow is free, has no
+#   frequency limit, and works regardless of Vercel plan.
+#
+# Required GitHub repository secret (Settings → Secrets → Actions):
+#   CRON_SECRET — must match the CRON_SECRET set in Vercel env vars.
+#                 If unset on Vercel, the endpoint is open and no header
+#                 is required, so this workflow works either way.
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: Submit AI Signals
+
+on:
+  schedule:
+    - cron: '17 * * * *'   # :17 past every hour, 24/7
+  workflow_dispatch:        # manual trigger from the Actions tab
+
+concurrency:
+  group: submit-signals
+  cancel-in-progress: false
+
+jobs:
+  submit:
+    name: POST /api/inquisitiveAI/cron/submit-signals
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Fire submit-signals endpoint
+        env:
+          SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -euo pipefail
+          AUTH=()
+          if [ -n "$SECRET" ]; then
+            AUTH=(-H "Authorization: Bearer $SECRET")
+          fi
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            "${AUTH[@]}" \
+            --max-time 90 \
+            https://getinqai.com/api/inquisitiveAI/cron/submit-signals)
+          STATUS=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE"   | sed '$d')
+          echo "HTTP $STATUS"
+          echo "$BODY" | head -c 2000
+          # 200 = submitted. 202 = nothing to submit. Everything else = fail.
+          if [ "$STATUS" != "200" ] && [ "$STATUS" != "202" ]; then
+            echo "::error::submit-signals returned $STATUS"
+            exit 1
+          fi
